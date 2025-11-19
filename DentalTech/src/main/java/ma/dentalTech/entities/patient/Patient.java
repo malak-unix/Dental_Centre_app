@@ -1,38 +1,27 @@
 package ma.dentalTech.entities.patient;
 
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import ma.dentalTech.entities.dossierMedical.DossierMedical;
+import ma.dentalTech.entities.base.BaseEntity;
+import ma.dentalTech.entities.enums.Assurance;
+import ma.dentalTech.entities.enums.Sexe;
+
 import java.time.LocalDate;
 
-@Entity
-@Data @NoArgsConstructor @AllArgsConstructor
-@Table(name = "patients")
-public class Patient {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idPatient;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Patient extends BaseEntity {
 
-    @Column(nullable = false)
     private String nom;
-
-    @Column(nullable = false)
     private String prenom;
-
-    @Column(unique = true)
-    private String cin;
-
+    private LocalDate dateNaissance;
+    private Sexe sexe;
     private String adresse;
     private String telephone;
     private String email;
-
-    @Column(name = "date_naissance")
-    private LocalDate dateNaissance;
-
-    private String mutuelle;
-
-    @OneToOne(mappedBy = "patient", cascade = CascadeType.ALL)
-    private DossierMedical dossierMedical;
+    private Assurance assurance;
 }

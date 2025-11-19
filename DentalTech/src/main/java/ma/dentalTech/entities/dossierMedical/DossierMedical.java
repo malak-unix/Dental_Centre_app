@@ -1,38 +1,18 @@
 package ma.dentalTech.entities.dossierMedical;
 
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.antecedents.Antecedent;
-import java.time.LocalDateTime;
-import java.util.List;
+import ma.dentalTech.entities.base.BaseEntity;
 
-@Entity
-@Data @NoArgsConstructor @AllArgsConstructor
-@Table(name = "dossiers_medicaux")
-public class DossierMedical {
+import java.time.LocalDate;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idDossier;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class DossierMedical extends BaseEntity {
 
-    @Column(unique = true, nullable = false)
-    private String numeroDossier;
-
-    @Column(name = "date_creation")
-    private LocalDateTime dateCreation;
-
-    @OneToOne
-    @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient;
-
-    @OneToMany(mappedBy = "dossierMedical", cascade = CascadeType.ALL)
-    private List<Antecedent> antecedents;
-
-    @PrePersist
-    public void initDate() {
-        this.dateCreation = LocalDateTime.now();
-    }
+    private LocalDate dateCreation;
 }

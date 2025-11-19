@@ -1,14 +1,16 @@
 package ma.dentalTech.entities.admin;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import ma.dentalTech.entities.utilisateur.Utilisateur;
 
-@Entity
-@Data @EqualsAndHashCode(callSuper = true)
-@Table(name = "admins")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Admin extends Utilisateur {
 
+    private String roleAdmin;   // ou enum/liaison avec Role
 }
