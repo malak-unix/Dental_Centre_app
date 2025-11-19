@@ -17,6 +17,6 @@ public class Role extends BaseEntity {
 
     private String libelle;
 
-    @ElementCollection // Stocke la liste des privilèges dans une table séparée
+    @ElementCollection
     private List<String> privileges;
 }
