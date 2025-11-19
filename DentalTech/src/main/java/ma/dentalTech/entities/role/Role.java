@@ -1,4 +1,22 @@
 package ma.dentalTech.entities.role;
 
-public class Role {
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import ma.dentalTech.entities.base.BaseEntity;
+import java.util.List;
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
+public class Role extends BaseEntity {
+
+    private String libelle;
+
+    @ElementCollection // Stocke la liste des privilèges dans une table séparée
+    private List<String> privileges;
 }
