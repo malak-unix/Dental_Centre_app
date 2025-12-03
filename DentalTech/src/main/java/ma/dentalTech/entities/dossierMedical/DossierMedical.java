@@ -15,5 +15,4 @@ import java.time.LocalDate;
 @SuperBuilder
 public class DossierMedical extends BaseEntity {
 
-    private LocalDate dateDeCreation;
 }

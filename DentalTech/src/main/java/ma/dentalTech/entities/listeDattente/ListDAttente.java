@@ -17,4 +17,5 @@ import java.util.List;
 public class ListDAttente extends BaseEntity {
 
     private List<RDV> listRDV;
+    private String nom;
 }

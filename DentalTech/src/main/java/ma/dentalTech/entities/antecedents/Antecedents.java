@@ -16,5 +16,7 @@ public class Antecedents extends BaseEntity {
 
     private String nom;
     private String categorie;
-    private NiveauDeRisque niveauDeRisque; // Enum
+    private NiveauDeRisque niveauDeRisque;
+    private String description;
+
 }

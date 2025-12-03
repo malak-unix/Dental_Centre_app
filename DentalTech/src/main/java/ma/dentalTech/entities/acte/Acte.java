@@ -16,4 +16,6 @@ public class Acte extends BaseEntity {
     private String libelle;
     private String categorie;
     private Double prixDeBase;
+    private String description;
+
 }

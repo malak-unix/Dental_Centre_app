@@ -14,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.Assurance;
 import ma.dentalTech.entities.enums.Sexe;
+import ma.dentalTech.entities.enums.EtatCivil;
 
 @Data @AllArgsConstructor @NoArgsConstructor @SuperBuilder
 public class Patient extends BaseEntity {
@@ -24,7 +25,8 @@ public class Patient extends BaseEntity {
     private String telephone;
     private String email;
     private LocalDate dateNaissance;
-    private LocalDateTime dateCreation;
+    private String NumAffiliation;
+    private EtatCivil etatCivil;
     private Sexe sexe;
     private Assurance assurance;
 
