@@ -1,78 +1,220 @@
 package ma.dentalTech.repository.modules.patient.inMemDB_implementation;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import ma.dentalTech.entities.enums.Assurance;
-import ma.dentalTech.entities.enums.Sexe;
+import ma.dentalTech.entities.enums.*;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Implémentation FILE-BASED via NIO
+ * Lecture initiale depuis src/main/resources/fileBase/patients.psv
+ * Sauvegarde modifiable dans ~/.dentaltech/fileBase/patients.psv
+ * Format :
+ * ID|Nom|Prenom|Adresse|Telephone|Email|DateNaissance|DateCreation|Sexe|Assurance
+ */
 public class PatientRepositoryImpl implements PatientRepository {
 
-    private final List<Patient> data = new ArrayList<>();
+    private static final String CLASSPATH_FILE = "fileBase/patients.psv";
+    private static final String HEADER = "ID|Nom|Prenom|Adresse|Telephone|Email|DateNaissance|DateCreation|Sexe|Assurance";
+
+    private final Path localFilePath =
+            Paths.get(System.getProperty("user.home"), ".dentaltech", "fileBase", "patients.psv");
 
     public PatientRepositoryImpl() {
-        // Données d'exemple : 3 patients d'aujourd'hui, 1 d'hier
-        LocalDateTime now = LocalDateTime.now();
-        data.add(Patient.builder()
-                .id(1L).nom("Amal").prenom("Z.")
-                .email("amal@example.com").telephone("0611-111111")
-                .dateNaissance(LocalDate.of(1995, 5, 12))
-                .dateCreation(now.minusMinutes(5))
-                .sexe(Sexe.Femme).assurance(Assurance.CNSS)
-                .build());
-
-        data.add(Patient.builder()
-                .id(2L).nom("Hassan").prenom("B.")
-                .email("hassan@example.com").telephone("0622-222222")
-                .dateNaissance(LocalDate.of(1989, 9, 23))
-                .dateCreation(now.minusHours(1))
-                .sexe(Sexe.Homme).assurance(Assurance.CNOPS)
-                .build());
-
-        data.add(Patient.builder()
-                .id(3L).nom("Nour").prenom("C.")
-                .email("nour@example.com").telephone("0633-333333")
-                .dateNaissance(LocalDate.of(2000, 2, 2))
-                .dateCreation(now.minusMinutes(30))
-                .sexe(Sexe.Femme).assurance(Assurance.Autre)
-                .build());
-
-        data.add(Patient.builder()
-                .id(4L).nom("Youssef").prenom("D.")
-                .email("youssef@example.com").telephone("0644-444444")
-                .dateNaissance(LocalDate.of(1992, 11, 1))
-                .dateCreation(now.minusDays(1)) // hier → ne doit pas s'afficher
-                .sexe(Sexe.Homme).assurance(Assurance.Aucune)
-                .build());
-
-        // Tri stable par id pour cohérence (findAll renverra trié par date desc via service)
-        data.sort(Comparator.comparing(Patient::getId));
+        initializeLocalCopy();
     }
 
+    /** Copie initiale de /resources/fileBase → ~/.dentaltech/fileBase */
+    private void initializeLocalCopy() {
+        try {
+            if (!Files.exists(localFilePath)) {
+                Files.createDirectories(localFilePath.getParent());
+                URL resource = getClass().getClassLoader().getResource(CLASSPATH_FILE);
+                if (resource != null) {
+                    Path src = Paths.get(resource.toURI());
+                    Files.copy(src, localFilePath, StandardCopyOption.REPLACE_EXISTING);
+                } else {
+                    Files.write(localFilePath, List.of(HEADER), StandardCharsets.UTF_8);
+                }
+            }
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException("Erreur d’initialisation du fichier patients.psv", e);
+        }
+    }
+
+    private List<String> readAllLines() {
+        try {
+            return Files.readAllLines(localFilePath, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur de lecture du fichier patients.psv", e);
+        }
+    }
+
+    private void writeAllLines(List<String> lines) {
+        try {
+            Files.write(localFilePath, lines, StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur d’écriture dans patients.psv", e);
+        }
+    }
+
+    // ===================== CRUD =====================
+
     @Override
-    public List<Patient> findAll() { return List.copyOf(data); }
+    public List<Patient> findAll() {
+        return readAllLines().stream()
+                .skip(1)
+                .filter(line -> !line.isBlank())
+                .map(this::toPatient)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public Patient findById(Long id) {
-        return data.stream().filter(p -> p.getId().equals(id)).findFirst().orElse(null);
+        return findAll().stream()
+                .filter(p -> Objects.equals(p.getId(), id))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
-    public void create(Patient patient) { data.add(patient); }
+    public void create(Patient patient) {
+        List<Patient> patients = findAll();
+        long newId = patients.stream()
+                .mapToLong(p -> p.getId() == null ? 0 : p.getId())
+                .max().orElse(0) + 1;
+
+        patient.setId(newId);
+        patient.setDateCreation(LocalDateTime.now());
+
+        patients.add(patient);
+        saveAll(patients);
+    }
 
     @Override
     public void update(Patient patient) {
-        deleteById(patient.getId());
-        data.add(patient);
+        List<Patient> patients = findAll();
+        for (int i = 0; i < patients.size(); i++) {
+            if (Objects.equals(patients.get(i).getId(), patient.getId())) {
+                patients.set(i, patient);
+                saveAll(patients);
+                return;
+            }
+        }
+        throw new RuntimeException("Patient avec ID " + patient.getId() + " introuvable.");
     }
 
     @Override
-    public void delete(Patient patient) { data.removeIf(p -> p.getId().equals(patient.getId())); }
+    public void delete(Patient patient) {
+        if (patient != null && patient.getId() != null)
+            deleteById(patient.getId());
+    }
 
     @Override
-    public void deleteById(Long id) { data.removeIf(p -> p.getId().equals(id)); }
+    public void deleteById(Long id) {
+        List<Patient> patients = findAll().stream()
+                .filter(p -> !Objects.equals(p.getId(), id))
+                .collect(Collectors.toList());
+        saveAll(patients);
+    }
+
+    // ===================== UTILITAIRES =====================
+
+    private void saveAll(List<Patient> patients) {
+        List<String> lines = new ArrayList<>();
+        lines.add(HEADER);
+        for (Patient p : patients) {
+            lines.add(String.join("|",
+                    stringOrNull(p.getId()),
+                    stringOrNull(p.getNom()),
+                    stringOrNull(p.getPrenom()),
+                    stringOrNull(p.getAdresse()),
+                    stringOrNull(p.getTelephone()),
+                    stringOrNull(p.getEmail()),
+                    stringOrNull(p.getDateNaissance()),
+                    stringOrNull(p.getDateCreation()),
+                    stringOrNull(p.getSexe()),
+                    stringOrNull(p.getAssurance())
+            ));
+        }
+        writeAllLines(lines);
+    }
+
+    private Patient toPatient(String line) {
+        String[] t = line.split("\\|", -1);
+        Patient p = new Patient();
+        p.setId(parseLong(t[0]));
+        p.setNom(parseNullableString(t[1]));
+        p.setPrenom(parseNullableString(t[2]));
+        p.setAdresse(parseNullableString(t[3]));
+        p.setTelephone(parseNullableString(t[4]));
+        p.setEmail(parseNullableString(t[5]));
+        p.setDateNaissance(parseNullableLocalDate(t[6]));
+        p.setDateCreation(parseNullableLocalDateTime(t[7]));
+        p.setSexe(parseSexe(t[8]));
+        p.setAssurance(parseAssurance(t[9]));
+        return p;
+    }
+
+    // ===================== Parsing helpers =====================
+
+    private String parseNullableString(String s) {
+        return (s == null || s.isBlank() || s.equalsIgnoreCase("null")) ? null : s.trim();
+    }
+
+    private LocalDate parseNullableLocalDate(String s) {
+        if (s == null || s.isBlank() || s.equalsIgnoreCase("null")) return null;
+        return LocalDate.parse(s.trim());
+    }
+
+    private LocalDateTime parseNullableLocalDateTime(String s) {
+        if (s == null || s.isBlank() || s.equalsIgnoreCase("null")) return null;
+        return LocalDateTime.parse(s.trim());
+    }
+
+    private Sexe parseSexe(String s) {
+        if (s == null || s.isBlank() || s.equalsIgnoreCase("null")) return null;
+        try {
+            return Sexe.valueOf(s.trim().toUpperCase()); // adapte selon valeurs de l'ENUM
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Assurance parseAssurance(String s) {
+        if (s == null || s.isBlank() || s.equalsIgnoreCase("null")) return null;
+        try {
+            return Assurance.valueOf(s.trim().toUpperCase());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // ===================== Conversion helpers =====================
+
+    private String stringOrNull(Object o) {
+        if (o == null) return "null";
+        if (o instanceof Enum<?>) return ((Enum<?>) o).name();
+        return o.toString();
+    }
+
+    private Long parseLong(String s) {
+        try {
+            return (s == null || s.isBlank() || s.equalsIgnoreCase("null"))
+                    ? null
+                    : Long.parseLong(s.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }

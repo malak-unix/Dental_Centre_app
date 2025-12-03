@@ -1,18 +1,16 @@
 package ma.dentalTech.entities.cabinetMedicale;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 public class CabinetMedicale extends BaseEntity {
-
     private String nom;
     private String email;
     private String logo;

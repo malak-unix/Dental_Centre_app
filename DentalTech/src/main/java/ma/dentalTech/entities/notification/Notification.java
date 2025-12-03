@@ -1,28 +1,23 @@
 package ma.dentalTech.entities.notification;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
-import ma.dentalTech.entities.enums.PrioriteNotification;
-import ma.dentalTech.entities.enums.TitreNotification;
 import ma.dentalTech.entities.enums.TypeNotification;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 public class Notification extends BaseEntity {
 
-    private TitreNotification titre;       // Enum
+    private String titre;
     private String message;
-    private LocalDate date;
-    private LocalTime time;
-    private TypeNotification type;         // Enum
-    private PrioriteNotification priorite; // Enum
+    private TypeNotification type;   // Enum
+    private boolean lu;
+    private LocalDateTime dateEnvoi;
 }

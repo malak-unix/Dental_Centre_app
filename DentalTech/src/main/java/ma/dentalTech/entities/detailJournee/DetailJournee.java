@@ -1,7 +1,6 @@
 package ma.dentalTech.entities.detailJournee;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -14,15 +13,14 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 public class DetailJournee extends BaseEntity {
-
     private LocalDate dateJour;
     private LocalTime heureDebutTravaillee;
     private LocalTime heureFinTravaillee;
-    private StatutJournee etatJour;         // Enum
+    private StatutJournee etatJour;
     private List<RDV> listRDV;
     private String commentaire;
 }

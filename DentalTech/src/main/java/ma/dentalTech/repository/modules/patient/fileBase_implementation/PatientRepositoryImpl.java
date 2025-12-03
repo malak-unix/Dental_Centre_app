@@ -100,7 +100,7 @@ public class PatientRepositoryImpl implements PatientRepository {
                 .mapToLong(p -> p.getId() == null ? 0 : (long) p.getId())
                 .max().orElse(0) + 1;
         patient.setId(newId);
-        patient.setDateCreation(LocalDateTime.now());
+        patient.setDateCreation(LocalDateTime.from(LocalDate.from(LocalDate.now())));
         patients.add(patient);
         saveAll(patients);
     }
