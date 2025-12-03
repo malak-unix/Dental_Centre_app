@@ -4,13 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.NiveauDeRisque;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class Antecedents extends BaseEntity {
 
     private String nom;

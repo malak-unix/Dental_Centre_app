@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.EnPromo;
 import ma.dentalTech.entities.enums.StatutSituationFinanciere;
@@ -11,7 +12,7 @@ import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class SituationFinanciere extends BaseEntity {
 
     private Double totaleDesActes;

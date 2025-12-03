@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,10 +12,10 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public abstract class BaseEntity {
 
-    protected Long idEntite;
+    protected Long id;
     protected LocalDate dateCreation;
     protected LocalDateTime dateDerniereModification;
     protected String modifiePar;
