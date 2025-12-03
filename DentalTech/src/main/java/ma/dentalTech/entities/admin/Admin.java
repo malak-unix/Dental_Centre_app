@@ -1,4 +1,4 @@
 package ma.dentalTech.entities.admin;
 
-public class admin {
+public class Admin {
 }
