@@ -1,4 +1,18 @@
 package ma.dentalTech.entities.interventionMedecin;
 
-public class InterventionMedecin {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ma.dentalTech.entities.base.BaseEntity;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class InterventionMedecin extends BaseEntity {
+
+    private Long idIM;
+    private Double prixDePatient;
+    private Integer numDent;
 }

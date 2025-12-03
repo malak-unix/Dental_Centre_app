@@ -1,4 +1,4 @@
-package ma.dentalTech.entities.angendaMensuel;
+package ma.dentalTech.entities.agendaMensuel;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

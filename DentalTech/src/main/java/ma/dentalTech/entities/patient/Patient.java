@@ -10,11 +10,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.Assurance;
 import ma.dentalTech.entities.enums.Sexe;
 
 @Data @AllArgsConstructor @NoArgsConstructor @Builder
-public class Patient {
+public class Patient extends BaseEntity {
 
     private Long id;
     private String nom;

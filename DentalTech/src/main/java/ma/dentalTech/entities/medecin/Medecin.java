@@ -1,4 +1,18 @@
 package ma.dentalTech.entities.medecin;
 
-public class Medecin {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ma.dentalTech.entities.agendemensuel.AgendaMensuel;
+import ma.dentalTech.entities.staff.Staff;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Medecin extends Staff {
+
+    private String specialite;
+    private AgendaMensuel agendaMensuel;
 }

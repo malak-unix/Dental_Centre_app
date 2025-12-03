@@ -6,10 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.Sexe;
-import ma.dentalTech.entities.enums.StatutUtilisateur;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -17,18 +15,16 @@ import java.time.LocalDateTime;
 @Builder
 public class Utilisateur extends BaseEntity {
 
+    private Long idUser;
     private String nom;
-    private String prenom;
-    private LocalDate dateNaissance;
-    private Sexe sexe;
-    private String adresse;
-    private String ville;
     private String email;
-    private String telephone;
+    // sur le diagramme : adresse : Adresse -> on garde String
+    private String adresse;
     private String cin;
+    private String tel;
+    private Sexe sexe;                 // Enum
     private String login;
-    private String motDePasse;
-    private StatutUtilisateur statut;      // enum (ACTIF, INACTIF, BLOQUE…)
-    private LocalDate dateInscription;
-    private LocalDateTime derniereConnexion;
+    private String motDePass;
+    private LocalDate lastLoginDate;
+    private LocalDate dateNaissance;
 }
