@@ -16,7 +16,6 @@ import java.time.LocalTime;
 @Builder
 public class RDV extends BaseEntity {
 
-    private Long idRDV;
     private LocalDate date;
     private LocalTime heure;
     private String motif;

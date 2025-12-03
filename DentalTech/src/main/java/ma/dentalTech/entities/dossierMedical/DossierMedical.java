@@ -14,6 +14,5 @@ import java.time.LocalDate;
 @Builder
 public class DossierMedical extends BaseEntity {
 
-    private Long idDM;
     private LocalDate dateDeCreation;
 }

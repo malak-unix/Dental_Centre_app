@@ -14,6 +14,5 @@ import java.time.LocalDate;
 @Builder
 public class Ordonnance extends BaseEntity {
 
-    private Long idOrd;
     private LocalDate date;
 }

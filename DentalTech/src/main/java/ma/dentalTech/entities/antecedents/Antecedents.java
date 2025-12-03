@@ -13,7 +13,6 @@ import ma.dentalTech.entities.enums.NiveauDeRisque;
 @Builder
 public class Antecedents extends BaseEntity {
 
-    private Long idAntecedent;
     private String nom;
     private String categorie;
     private NiveauDeRisque niveauDeRisque; // Enum

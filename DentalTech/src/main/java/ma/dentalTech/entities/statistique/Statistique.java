@@ -15,7 +15,6 @@ import java.time.LocalDate;
 @Builder
 public class Statistique extends BaseEntity {
 
-    private Long idStat;
     private String nom;
     private TypeStatistique categorie;  // Enum
     private Double chiffre;

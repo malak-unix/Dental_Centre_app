@@ -15,6 +15,5 @@ import java.util.List;
 @Builder
 public class ListDAttente extends BaseEntity {
 
-    private Long idList;
     private List<RDV> listRDV;
 }

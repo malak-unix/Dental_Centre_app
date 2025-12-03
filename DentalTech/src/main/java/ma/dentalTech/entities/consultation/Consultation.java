@@ -15,7 +15,6 @@ import java.time.LocalDate;
 @Builder
 public class Consultation extends BaseEntity {
 
-    private Long idConsultation;
     private LocalDate date;
     private StatutConsultation status;  // Enum
     private String observationMedecin;

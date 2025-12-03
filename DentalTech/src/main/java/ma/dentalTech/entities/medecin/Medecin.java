@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.dentalTech.entities.agendemensuel.AgendaMensuel;
+import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
 import ma.dentalTech.entities.staff.Staff;
 
 @Data

@@ -12,7 +12,6 @@ import ma.dentalTech.entities.base.BaseEntity;
 @Builder
 public class Prescription extends BaseEntity {
 
-    private Long idPr;
     private int quantite;
     private String frequence;
     private int dureeEnJours;

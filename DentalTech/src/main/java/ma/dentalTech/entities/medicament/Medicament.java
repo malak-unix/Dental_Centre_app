@@ -13,7 +13,6 @@ import ma.dentalTech.entities.enums.FormeMedicament;
 @Builder
 public class Medicament extends BaseEntity {
 
-    private Long idMct;
     private String nom;
     private String laboratoire;
     private String type;

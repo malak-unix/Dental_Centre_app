@@ -17,7 +17,6 @@ import java.time.LocalTime;
 @Builder
 public class Logs extends BaseEntity {
 
-    private Long idLogs;
     private LocalDate dateL;
     private LocalTime timeL;
     private Long idUtilisateur;

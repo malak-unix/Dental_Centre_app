@@ -14,7 +14,6 @@ import java.time.LocalDate;
 @Builder
 public class Certificat extends BaseEntity {
 
-    private Long idCertif;
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private int duree;

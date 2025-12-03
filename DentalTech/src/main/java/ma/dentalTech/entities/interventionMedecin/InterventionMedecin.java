@@ -12,7 +12,6 @@ import ma.dentalTech.entities.base.BaseEntity;
 @Builder
 public class InterventionMedecin extends BaseEntity {
 
-    private Long idIM;
     private Double prixDePatient;
     private Integer numDent;
 }

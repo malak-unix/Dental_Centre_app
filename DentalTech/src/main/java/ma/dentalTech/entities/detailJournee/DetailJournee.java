@@ -18,7 +18,6 @@ import java.util.List;
 @Builder
 public class DetailJournee extends BaseEntity {
 
-    private Long idJournee;
     private LocalDate dateJour;
     private LocalTime heureDebutTravaillee;
     private LocalTime heureFinTravaillee;

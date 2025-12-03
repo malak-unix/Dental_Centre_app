@@ -12,7 +12,6 @@ import ma.dentalTech.entities.base.BaseEntity;
 @Builder
 public class CabinetMedicale extends BaseEntity {
 
-    private Long idUser;
     private String nom;
     private String email;
     private String logo;

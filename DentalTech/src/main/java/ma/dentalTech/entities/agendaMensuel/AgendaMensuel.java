@@ -16,7 +16,6 @@ import java.util.List;
 @Builder
 public class AgendaMensuel extends BaseEntity {
 
-    private Long idAgenda;
     private Mois mois;                        // Enum
     private int annee;
     private List<DetailJournee> listeJours;   // Liste<DetailJournee>

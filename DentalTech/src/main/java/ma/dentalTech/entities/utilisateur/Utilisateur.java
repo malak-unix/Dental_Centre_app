@@ -15,16 +15,17 @@ import java.time.LocalDate;
 @Builder
 public class Utilisateur extends BaseEntity {
 
-    private Long idUser;
     private String nom;
+    private String prenom;
     private String email;
-    // sur le diagramme : adresse : Adresse -> on garde String
     private String adresse;
     private String cin;
     private String tel;
     private Sexe sexe;                 // Enum
     private String login;
-    private String motDePass;
+    private String motDePass_hash;
     private LocalDate lastLoginDate;
     private LocalDate dateNaissance;
+    private boolean actif;
 }
+

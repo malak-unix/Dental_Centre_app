@@ -18,7 +18,6 @@ import java.time.LocalTime;
 @Builder
 public class Notification extends BaseEntity {
 
-    private Long id;
     private TitreNotification titre;       // Enum
     private String message;
     private LocalDate date;

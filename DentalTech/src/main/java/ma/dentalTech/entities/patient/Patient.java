@@ -17,7 +17,6 @@ import ma.dentalTech.entities.enums.Sexe;
 @Data @AllArgsConstructor @NoArgsConstructor @Builder
 public class Patient extends BaseEntity {
 
-    private Long id;
     private String nom;
     private String prenom;
     private String adresse;

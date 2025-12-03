@@ -14,7 +14,6 @@ import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 @Builder
 public class SituationFinanciere extends BaseEntity {
 
-    private Long idSF;
     private Double totaleDesActes;
     private Double totalPaye;
     private Double credit;

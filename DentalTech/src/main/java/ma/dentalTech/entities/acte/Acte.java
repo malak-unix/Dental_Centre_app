@@ -12,7 +12,6 @@ import ma.dentalTech.entities.base.BaseEntity;
 @Builder
 public class Acte extends BaseEntity {
 
-    private Long idActe;
     private String libelle;
     private String categorie;
     private Double prixDeBase;

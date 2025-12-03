@@ -15,7 +15,6 @@ import java.util.List;
 @Builder
 public class Role extends BaseEntity {
 
-    private Long idRole;
     private LibelleRole libelle;     // Enum
     private List<String> privilege;
 }
