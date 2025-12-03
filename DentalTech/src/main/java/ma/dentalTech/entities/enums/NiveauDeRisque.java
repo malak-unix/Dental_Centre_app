@@ -1,4 +1,4 @@
 package ma.dentalTech.entities.enums;
 
-public class NiveauDeRisque {
+public enum NiveauDeRisque {
 }

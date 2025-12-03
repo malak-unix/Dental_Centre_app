@@ -1,4 +1,4 @@
 package ma.dentalTech.entities.enums;
 
-public class TitreNotification {
+public enum TitreNotification {
 }

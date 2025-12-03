@@ -1,4 +1,4 @@
 package ma.dentalTech.entities.enums;
 
-public enum StatusConsultation {
+public enum StatutConsultation {
 }
