@@ -1,17 +1,19 @@
-package ma.dentalTech.entities.interventionMedecin;
+package ma.dentalTech.entities.listeDattente;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ma.dentalTech.entities.base.BaseEntity;
+import ma.dentalTech.entities.rdv.RDV;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class InterventionMedecin extends BaseEntity {
+public class ListDAttente extends BaseEntity {
 
-    private Double prixDePatient;
-    private Integer numDent;
+    private List<RDV> listRDV;
 }

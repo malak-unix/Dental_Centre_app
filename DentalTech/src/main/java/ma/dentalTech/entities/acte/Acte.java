@@ -1,19 +1,18 @@
-package ma.dentalTech.entities.antecedents;
+package ma.dentalTech.entities.acte;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ma.dentalTech.entities.base.BaseEntity;
-import ma.dentalTech.entities.enums.NiveauDeRisque;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Antecedents extends BaseEntity {
+public class Acte extends BaseEntity {
 
-    private String nom;
+    private String libelle;
     private String categorie;
-    private NiveauDeRisque niveauDeRisque; // Enum
+    private Double prixDeBase;
 }

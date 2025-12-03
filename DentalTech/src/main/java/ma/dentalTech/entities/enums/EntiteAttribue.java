@@ -1,4 +1,32 @@
 package ma.dentalTech.entities.enums;
 
-public class EntiteAttribue {
+public enum EntiteAttribue {
+    UTILISATEUR,
+    STAFF,
+    MEDECIN,
+    SECRETAIRE,
+    ADMIN,
+    PATIENT,
+    ANTECEDENTS,
+    DOSSIER_MEDICAL,
+    CONSULTATION,
+    ACTE,
+    INTERVENTION_MEDECIN,
+    CABINET_MEDICALE,
+    CHARGES,
+    REVENUES,
+    SITUATION_FINANCIERE,
+    STATISTIQUE,
+    FACTURE,
+    RDV,
+    LISTE_ATTENTE,
+    AGENDA_MENSUEL,
+    DETAIL_JOURNEE,
+    ORDONNANCE,
+    PRESCRIPTION,
+    MEDICAMENT,
+    CERTIFICAT,
+    NOTIFICATION,
+    ROLE,
+    LOGS
 }
