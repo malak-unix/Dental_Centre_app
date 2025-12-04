@@ -1,4 +1,8 @@
 package ma.dentalTech.entities.enums;
 
-public class EtatCivil {
+public enum EtatCivil {
+    CELIBATAIRE,
+    MARIE,
+    DIVORCE,
+    VEUF
 }
