@@ -1,6 +1,7 @@
 package ma.dentalTech.repository.modules.patient.inMemDB_implementation;
 
 import ma.dentalTech.entities.enums.*;
+import ma.dentalTech.entities.facture.Facture;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 
@@ -80,7 +81,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     }
 
     @Override
-    public Patient findById(Long id) {
+    public Facture findById(Long id) {
         return findAll().stream()
                 .filter(p -> Objects.equals(p.getId(), id))
                 .findFirst()

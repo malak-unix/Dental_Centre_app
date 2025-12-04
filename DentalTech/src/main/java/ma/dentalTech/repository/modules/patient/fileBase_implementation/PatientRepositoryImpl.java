@@ -1,6 +1,7 @@
 package ma.dentalTech.repository.modules.patient.fileBase_implementation;
 
 import ma.dentalTech.entities.enums.*;
+import ma.dentalTech.entities.facture.Facture;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 

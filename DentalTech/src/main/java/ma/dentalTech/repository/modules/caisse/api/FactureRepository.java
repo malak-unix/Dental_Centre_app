@@ -12,7 +12,8 @@ public interface FactureRepository extends CrudRepository<Facture, Long> {
 
 
     List<Facture> findByStatut(StatutFacture statut);
-    List<Facture> findByDateFactureBetween(LocalDate start, LocalDate end);
+    List<Facture> findByDateFactureBetween(LocalDateTime start, LocalDateTime end);
+
     Double calculateTotalRevenue(LocalDateTime start, LocalDateTime end);
     Double calculateTotalUnpaid();
 }
