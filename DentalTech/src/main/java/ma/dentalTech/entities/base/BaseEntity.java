@@ -1,22 +1,21 @@
 package ma.dentalTech.entities.base;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@AllArgsConstructor
+@SuperBuilder
 public abstract class BaseEntity {
 
-    protected Long idEntite;
-    protected LocalDate dateCreation;
+    protected Long id;
+    protected LocalDateTime dateCreation;
     protected LocalDateTime dateDerniereModification;
-    protected String modifiePar;
     protected String creePar;
+    protected String modifiePar;
 }

@@ -15,7 +15,6 @@ public class Db {
         try {
             Properties props = new Properties();
 
-            // Chargement du fichier dans /resources/config
             InputStream input = Db.class.getClassLoader()
                     .getResourceAsStream("config/db.properties");
 
@@ -25,18 +24,15 @@ public class Db {
 
             props.load(input);
 
-            String url = props.getProperty("url");
-            String user = props.getProperty("username");
-            String pass = props.getProperty("password");
-
-            if (url == null) {
-                throw new RuntimeException("La propriété 'url' est manquante dans db.properties !");
-            }
+            String url = props.getProperty("jdbc.url");
+            String user = props.getProperty("jdbc.username");
+            String pass = props.getProperty("jdbc.password");
 
             connection = DriverManager.getConnection(url, user, pass);
             System.out.println("Connexion réussie à MySQL !");
         } catch (Exception e) {
             System.err.println("❌ Erreur de connexion MySQL : " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

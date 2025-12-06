@@ -1,18 +1,17 @@
 package ma.dentalTech.entities.medecin;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.staff.Staff;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@AllArgsConstructor
+@SuperBuilder
 public class Medecin extends Staff {
 
     private String specialite;
-    private AgendaMensuel agendaMensuel;
+    private Double pourcentage;  // % de commission par acte
 }
