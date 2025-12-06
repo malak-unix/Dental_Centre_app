@@ -104,7 +104,7 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
 
     // =============== CRUD ===============
     @Override
-    public List<Facture> findAll() throws DaoException {
+    public List<Facture> findAll() {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = ps.executeQuery()) {
@@ -112,13 +112,13 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
             List<Facture> list = new ArrayList<>();
             while (rs.next()) list.add(map(rs));
             return list;
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findAll() Facture", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findAll() Facture", e);
         }
     }
 
     @Override
-    public Facture findById(Long id) throws DaoException {
+    public Facture findById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -127,13 +127,13 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
                 if (rs.next()) return map(rs);
                 return null;
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findById() Facture, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findById() Facture, id=" + id, e);
         }
     }
 
     @Override
-    public void create(Facture entity) throws DaoException {
+    public void create(Facture entity) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -168,14 +168,16 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) entity.setId(keys.getLong(1));
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur create() Facture", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur create() Facture", e);
         }
     }
 
     @Override
-    public void update(Facture entity) throws DaoException {
-        if (entity.getId() == null) throw new DaoException("update() Facture sans id");
+    public void update(Facture entity) {
+        if (entity.getId() == null) {
+            throw new RuntimeException("update() Facture sans id");
+        }
 
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(UPDATE_SQL)) {
@@ -208,33 +210,35 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
             ps.setLong(6, entity.getId());
 
             int updated = ps.executeUpdate();
-            if (updated == 0) throw new DaoException("Aucune facture mise à jour, id=" + entity.getId());
-        } catch (SQLException e) {
-            throw new DaoException("Erreur update() Facture", e);
+            if (updated == 0) {
+                throw new RuntimeException("Aucune facture mise à jour, id=" + entity.getId());
+            }
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur update() Facture", e);
         }
     }
 
     @Override
-    public void delete(Facture entity) throws DaoException {
+    public void delete(Facture entity) {
         if (entity.getId() == null) return;
         deleteById(entity.getId());
     }
 
     @Override
-    public void deleteById(Long id) throws DaoException {
+    public void deleteById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DaoException("Erreur deleteById() Facture, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur deleteById() Facture, id=" + id, e);
         }
     }
 
     // =============== Spécifiques ===============
     @Override
-    public List<Facture> findByDateBetween(LocalDateTime start, LocalDateTime end) throws DaoException {
+    public List<Facture> findByDateBetween(LocalDateTime start, LocalDateTime end) {
         // date_facture est un DATE → on ignore l'heure dans la requête
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BETWEEN_DATES_SQL)) {
@@ -247,29 +251,27 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
                 while (rs.next()) list.add(map(rs));
             }
             return list;
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findByDateBetween() Facture", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findByDateBetween() Facture", e);
         }
     }
 
     @Override
-    public Double calculateTotalFactures(LocalDateTime start, LocalDateTime end) throws DaoException {
+    public Double calculateTotalFactures(LocalDateTime start, LocalDateTime end) {
         return executeTotalQuery(TOTAL_FACTURES_SQL, start, end, "Erreur calculateTotalFactures()");
     }
 
     @Override
-    public Double calculateTotalRegle(LocalDateTime start, LocalDateTime end) throws DaoException {
+    public Double calculateTotalRegle(LocalDateTime start, LocalDateTime end) {
         return executeTotalQuery(TOTAL_REGLE_SQL, start, end, "Erreur calculateTotalRegle()");
     }
 
     @Override
-    public Double calculateTotalNonRegle(LocalDateTime start, LocalDateTime end) throws DaoException {
+    public Double calculateTotalNonRegle(LocalDateTime start, LocalDateTime end) {
         return executeTotalQuery(TOTAL_NON_REGLE_SQL, start, end, "Erreur calculateTotalNonRegle()");
     }
 
-    private Double executeTotalQuery(String sql, LocalDateTime start, LocalDateTime end, String errorMessage)
-            throws DaoException {
-
+    private Double executeTotalQuery(String sql, LocalDateTime start, LocalDateTime end, String errorMessage) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -284,8 +286,8 @@ public class FactureRepositoryJdbcImpl implements FactureRepository {
                 }
                 return 0.0;
             }
-        } catch (SQLException e) {
-            throw new DaoException(errorMessage, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException(errorMessage, e);
         }
     }
 }

@@ -17,9 +17,16 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 public class DetailJournee extends BaseEntity {
+
+    // ⚠ ajouté pour coller à la colonne agenda_id
+    private Long agendaId;
+
     private LocalDate dateJour;
+
+    // Noms différents de la BD, mais on va mapper à heure_debut_travail / heure_fin_travail
     private LocalTime heureDebutTravaillee;
     private LocalTime heureFinTravaillee;
+
     private StatutJournee etatJour;
     private List<RDV> listRDV;
     private String commentaire;

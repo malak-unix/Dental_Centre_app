@@ -83,7 +83,7 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
 
     // =============== CRUD ===============
     @Override
-    public List<Charges> findAll() throws DaoException {
+    public List<Charges> findAll() {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = ps.executeQuery()) {
@@ -91,13 +91,13 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
             List<Charges> list = new ArrayList<>();
             while (rs.next()) list.add(map(rs));
             return list;
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findAll() Charges", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findAll() Charges", e);
         }
     }
 
     @Override
-    public Charges findById(Long id) throws DaoException {
+    public Charges findById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -106,13 +106,13 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
                 if (rs.next()) return map(rs);
                 return null;
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findById() Charges, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findById() Charges, id=" + id, e);
         }
     }
 
     @Override
-    public void create(Charges entity) throws DaoException {
+    public void create(Charges entity) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -142,14 +142,16 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) entity.setId(keys.getLong(1));
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur create() Charges", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur create() Charges", e);
         }
     }
 
     @Override
-    public void update(Charges entity) throws DaoException {
-        if (entity.getId() == null) throw new DaoException("update() Charges sans id");
+    public void update(Charges entity) {
+        if (entity.getId() == null) {
+            throw new RuntimeException("update() Charges sans id");
+        }
 
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(UPDATE_SQL)) {
@@ -178,33 +180,36 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
             ps.setLong(6, entity.getId());
 
             int updated = ps.executeUpdate();
-            if (updated == 0) throw new DaoException("Aucune charge mise à jour, id=" + entity.getId());
-        } catch (SQLException e) {
-            throw new DaoException("Erreur update() Charges", e);
+            if (updated == 0) {
+                throw new RuntimeException("Aucune charge mise à jour, id=" + entity.getId());
+            }
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur update() Charges", e);
         }
     }
 
     @Override
-    public void delete(Charges entity) throws DaoException {
+    public void delete(Charges entity) {
         if (entity.getId() == null) return;
         deleteById(entity.getId());
     }
 
     @Override
-    public void deleteById(Long id) throws DaoException {
+    public void deleteById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DaoException("Erreur deleteById() Charges, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur deleteById() Charges, id=" + id, e);
         }
     }
 
     // =============== Spécifiques ===============
     @Override
     public List<Charges> findByDateBetween(LocalDateTime start, LocalDateTime end) throws DaoException {
+        // Méthode spécifique définie dans ChargesRepository → OK pour throws DaoException
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BETWEEN_DATES_SQL)) {
 
@@ -223,6 +228,7 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
 
     @Override
     public Double calculateTotalCharges(LocalDateTime start, LocalDateTime end) throws DaoException {
+        // Méthode spécifique aussi → on garde DaoException
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(TOTAL_CHARGES_SQL)) {
 

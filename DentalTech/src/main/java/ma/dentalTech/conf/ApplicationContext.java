@@ -12,6 +12,11 @@ import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
+// Module RDV / Agenda
+import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
+import ma.dentalTech.service.modules.rdv.api.RdvService;
+import ma.dentalTech.mvc.controllers.modules.rdv.api.RdvController;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -70,7 +75,6 @@ public final class ApplicationContext {
             //  2. MODULE CAISSE / DASHBOARD
             // ============================================================
 
-
             // FactureRepository
             String factureRepoClassName = properties.getProperty("factureRepo");
             Class<?> cFactureRepo = Class.forName(factureRepoClassName);
@@ -103,7 +107,7 @@ public final class ApplicationContext {
                             .getDeclaredConstructor(FactureRepository.class, RevenuesRepository.class, ChargesRepository.class)
                             .newInstance(factureRepository, revenuesRepository, chargesRepository);
 
-           // Constructeur CaisseDashboardControllerImpl(CaisseDashboardService)
+            // Constructeur CaisseDashboardControllerImpl(CaisseDashboardService)
             String caisseControllerClassName = properties.getProperty("caisseDashboardController");
             Class<?> cCaisseController = Class.forName(caisseControllerClassName);
             CaisseDashboardController caisseDashboardController = (CaisseDashboardController)
@@ -126,6 +130,36 @@ public final class ApplicationContext {
             contextByName.put("caisseDashboardService", caisseDashboardService);
             contextByName.put("caisseDashboardController", caisseDashboardController);
 
+            // ============================================================
+            //  3. MODULE RDV / AGENDA  (AICHA)
+            // ============================================================
+
+            // Repository RDV
+            String rdvRepoClassName = properties.getProperty("rdv.repository");
+            Class<?> cRdvRepo = Class.forName(rdvRepoClassName);
+            RdvRepository rdvRepository = (RdvRepository)
+                    cRdvRepo.getDeclaredConstructor().newInstance();
+
+            // Service RDV : constructeur RdvServiceImpl(RdvRepository)
+            String rdvServiceClassName = properties.getProperty("rdv.service");
+            Class<?> cRdvService = Class.forName(rdvServiceClassName);
+            RdvService rdvService = (RdvService)
+                    cRdvService.getDeclaredConstructor(RdvRepository.class).newInstance(rdvRepository);
+
+            // Controller RDV : constructeur RdvControllerImpl(RdvService)
+            String rdvControllerClassName = properties.getProperty("rdv.controller");
+            Class<?> cRdvController = Class.forName(rdvControllerClassName);
+            RdvController rdvController = (RdvController)
+                    cRdvController.getDeclaredConstructor(RdvService.class).newInstance(rdvService);
+
+            // Enregistrement dans les maps
+            context.put(RdvRepository.class, rdvRepository);
+            context.put(RdvService.class, rdvService);
+            context.put(RdvController.class, rdvController);
+
+            contextByName.put("rdv.repository", rdvRepository);
+            contextByName.put("rdv.service", rdvService);
+            contextByName.put("rdv.controller", rdvController);
 
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors du chargement de config/beans.properties", e);
@@ -136,7 +170,6 @@ public final class ApplicationContext {
 
     private ApplicationContext() {
     }
-
 
     public static Object getBean(String beanName) {
         return contextByName.get(beanName);

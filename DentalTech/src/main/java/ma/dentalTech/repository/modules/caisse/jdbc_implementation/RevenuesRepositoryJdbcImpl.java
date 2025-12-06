@@ -84,7 +84,7 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
     // ===================== CRUD =====================
 
     @Override
-    public List<Revenues> findAll() throws DaoException {
+    public List<Revenues> findAll() {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = ps.executeQuery()) {
@@ -94,13 +94,13 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
                 list.add(map(rs));
             }
             return list;
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findAll() Revenues", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findAll() Revenues", e);
         }
     }
 
     @Override
-    public Revenues findById(Long id) throws DaoException {
+    public Revenues findById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -109,13 +109,13 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
                 if (rs.next()) return map(rs);
                 return null;
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findById() Revenues, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findById() Revenues, id=" + id, e);
         }
     }
 
     @Override
-    public void create(Revenues entity) throws DaoException {
+    public void create(Revenues entity) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -145,15 +145,15 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) entity.setId(keys.getLong(1));
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur create() Revenues", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur create() Revenues", e);
         }
     }
 
     @Override
-    public void update(Revenues entity) throws DaoException {
+    public void update(Revenues entity) {
         if (entity.getId() == null) {
-            throw new DaoException("update() Revenues sans id");
+            throw new RuntimeException("update() Revenues sans id");
         }
 
         try (Connection conn = JdbcUtils.getConnection();
@@ -184,28 +184,28 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
 
             int updated = ps.executeUpdate();
             if (updated == 0) {
-                throw new DaoException("Aucun revenu mis à jour, id=" + entity.getId());
+                throw new RuntimeException("Aucun revenu mis à jour, id=" + entity.getId());
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur update() Revenues", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur update() Revenues", e);
         }
     }
 
     @Override
-    public void delete(Revenues entity) throws DaoException {
+    public void delete(Revenues entity) {
         if (entity.getId() == null) return;
         deleteById(entity.getId());
     }
 
     @Override
-    public void deleteById(Long id) throws DaoException {
+    public void deleteById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DaoException("Erreur deleteById() Revenues, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur deleteById() Revenues, id=" + id, e);
         }
     }
 
@@ -213,6 +213,7 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
 
     @Override
     public List<Revenues> findByDateBetween(LocalDateTime start, LocalDateTime end) throws DaoException {
+        // Méthode spécifique déclarée dans RevenuesRepository → OK pour throws DaoException
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BETWEEN_DATES_SQL)) {
 
@@ -231,6 +232,7 @@ public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
 
     @Override
     public Double calculateTotalOtherRevenue(LocalDateTime start, LocalDateTime end) throws DaoException {
+        // Méthode spécifique aussi → on garde throws DaoException
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(TOTAL_REVENUS_SQL)) {
 
