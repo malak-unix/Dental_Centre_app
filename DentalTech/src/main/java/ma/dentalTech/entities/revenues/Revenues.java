@@ -13,8 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SuperBuilder
 public class Revenues extends BaseEntity {
+
+    private Long cabinetId;
     private String titre;
     private String description;
     private Double montant;
-    private LocalDateTime date;
+    private LocalDateTime dateRevenu;
 }

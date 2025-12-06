@@ -2,7 +2,6 @@ package ma.dentalTech.repository.modules.caisse.jdbc_implementation;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.charges.Charges;
-import ma.dentalTech.entities.facture.Facture;
 import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 
@@ -13,102 +12,233 @@ import java.util.List;
 
 public class ChargesRepositoryJdbcImpl implements ChargesRepository {
 
-    private Charges mapResultSetToCharges(ResultSet rs) throws SQLException {
+    private static final String INSERT_SQL = """
+        INSERT INTO charge (cabinet_id, titre, description, montant, date_charge)
+        VALUES (?, ?, ?, ?, ?)
+        """;
+
+    private static final String UPDATE_SQL = """
+        UPDATE charge
+           SET cabinet_id = ?,
+               titre = ?,
+               description = ?,
+               montant = ?,
+               date_charge = ?
+         WHERE id = ?
+        """;
+
+    private static final String DELETE_BY_ID_SQL =
+            "DELETE FROM charge WHERE id = ?";
+
+    private static final String SELECT_BY_ID_SQL = """
+        SELECT id, cabinet_id, titre, description, montant, date_charge
+          FROM charge
+         WHERE id = ?
+        """;
+
+    private static final String SELECT_ALL_SQL = """
+        SELECT id, cabinet_id, titre, description, montant, date_charge
+          FROM charge
+        """;
+
+    private static final String SELECT_BETWEEN_DATES_SQL = """
+        SELECT id, cabinet_id, titre, description, montant, date_charge
+          FROM charge
+         WHERE date_charge BETWEEN ? AND ?
+         ORDER BY date_charge ASC
+        """;
+
+    private static final String TOTAL_CHARGES_SQL = """
+        SELECT SUM(montant) AS total
+          FROM charge
+         WHERE date_charge BETWEEN ? AND ?
+        """;
+
+    // =============== MAPPER ===============
+    private Charges map(ResultSet rs) throws SQLException {
+        Long id = rs.getLong("id");
+        if (rs.wasNull()) id = null;
+
+        Long cabinetId = rs.getLong("cabinet_id");
+        if (rs.wasNull()) cabinetId = null;
+
+        String titre = rs.getString("titre");
+        String description = rs.getString("description");
+
+        Double montant = rs.getDouble("montant");
+        if (rs.wasNull()) montant = null;
+
+        Timestamp ts = rs.getTimestamp("date_charge");
+        LocalDateTime dateCharge = ts != null ? ts.toLocalDateTime() : null;
+
         return Charges.builder()
-                .id(rs.getLong("id"))
-                .titre(rs.getString("titre"))
-                .description(rs.getString("description"))
-                .montant(rs.getDouble("montant"))
-                .date(rs.getTimestamp("date_charge").toLocalDateTime())
-                // TODO: Inclure cabinet_id si nécessaire pour les relations
+                .id(id)
+                .cabinetId(cabinetId)
+                .titre(titre)
+                .description(description)
+                .montant(montant)
+                .dateCharge(dateCharge)
                 .build();
     }
 
-    // =========================================================================================
-    // CRUD Implémentation
-    // =========================================================================================
+    // =============== CRUD ===============
     @Override
-    public List<Charges> findAll() {
-        List<Charges> chargesList = new ArrayList<>();
-        final String SQL = "SELECT * FROM charge ORDER BY date_charge DESC";
+    public List<Charges> findAll() throws DaoException {
         try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL);
+             PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                chargesList.add(mapResultSetToCharges(rs));
-            }
-        } catch (DaoException | SQLException e) {
-            throw new RuntimeException(e);
+            List<Charges> list = new ArrayList<>();
+            while (rs.next()) list.add(map(rs));
+            return list;
+        } catch (SQLException e) {
+            throw new DaoException("Erreur findAll() Charges", e);
         }
-        return chargesList;
     }
 
     @Override
-    public void create(Charges charge) {
-        final String SQL = "INSERT INTO charge (cabinet_id, titre, description, montant, date_charge) VALUES (?, ?, ?, ?, ?)";
+    public Charges findById(Long id) throws DaoException {
         try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
-            // TODO: Remplacer 1L par l'ID du cabinet actif
-            ps.setLong(1, 1L); // Exemple : cabinet_id
-            ps.setString(2, charge.getTitre());
-            ps.setString(3, charge.getDescription());
-            ps.setDouble(4, charge.getMontant());
-            ps.setTimestamp(5, Timestamp.valueOf(charge.getDate()));
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return map(rs);
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new DaoException("Erreur findById() Charges, id=" + id, e);
+        }
+    }
+
+    @Override
+    public void create(Charges entity) throws DaoException {
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
+
+            if (entity.getCabinetId() != null) {
+                ps.setLong(1, entity.getCabinetId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
+
+            ps.setString(2, entity.getTitre());
+            ps.setString(3, entity.getDescription());
+
+            if (entity.getMontant() != null) {
+                ps.setDouble(4, entity.getMontant());
+            } else {
+                ps.setNull(4, Types.DECIMAL);
+            }
+
+            if (entity.getDateCharge() != null) {
+                ps.setTimestamp(5, Timestamp.valueOf(entity.getDateCharge()));
+            } else {
+                ps.setNull(5, Types.TIMESTAMP);
+            }
 
             ps.executeUpdate();
 
-            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    charge.setId(generatedKeys.getLong(1));
-                }
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) entity.setId(keys.getLong(1));
             }
-        } catch (DaoException | SQLException e) {
-            throw new RuntimeException("Erreur de création de la charge : " + e.getMessage(), e);
+        } catch (SQLException e) {
+            throw new DaoException("Erreur create() Charges", e);
         }
     }
 
-    // =========================================================================================
-    // Méthodes Spécifiques à ChargesRepository
-    // =========================================================================================
-
     @Override
-    public List<Charges> findByDateBetween(LocalDateTime start, LocalDateTime end) {
-        // Implémentation pour filtrer par date
-        //...
-        return List.of();
+    public void update(Charges entity) throws DaoException {
+        if (entity.getId() == null) throw new DaoException("update() Charges sans id");
+
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(UPDATE_SQL)) {
+
+            if (entity.getCabinetId() != null) {
+                ps.setLong(1, entity.getCabinetId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
+
+            ps.setString(2, entity.getTitre());
+            ps.setString(3, entity.getDescription());
+
+            if (entity.getMontant() != null) {
+                ps.setDouble(4, entity.getMontant());
+            } else {
+                ps.setNull(4, Types.DECIMAL);
+            }
+
+            if (entity.getDateCharge() != null) {
+                ps.setTimestamp(5, Timestamp.valueOf(entity.getDateCharge()));
+            } else {
+                ps.setNull(5, Types.TIMESTAMP);
+            }
+
+            ps.setLong(6, entity.getId());
+
+            int updated = ps.executeUpdate();
+            if (updated == 0) throw new DaoException("Aucune charge mise à jour, id=" + entity.getId());
+        } catch (SQLException e) {
+            throw new DaoException("Erreur update() Charges", e);
+        }
     }
 
     @Override
-    public Double calculateTotalExpenses(LocalDateTime start, LocalDateTime end) {
-        final String SQL = "SELECT SUM(montant) FROM charge WHERE date_charge BETWEEN ? AND ?";
+    public void delete(Charges entity) throws DaoException {
+        if (entity.getId() == null) return;
+        deleteById(entity.getId());
+    }
+
+    @Override
+    public void deleteById(Long id) throws DaoException {
         try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL)) {
+             PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
+
+            ps.setLong(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DaoException("Erreur deleteById() Charges, id=" + id, e);
+        }
+    }
+
+    // =============== Spécifiques ===============
+    @Override
+    public List<Charges> findByDateBetween(LocalDateTime start, LocalDateTime end) throws DaoException {
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SELECT_BETWEEN_DATES_SQL)) {
+
+            ps.setTimestamp(1, Timestamp.valueOf(start));
+            ps.setTimestamp(2, Timestamp.valueOf(end));
+
+            List<Charges> list = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(map(rs));
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new DaoException("Erreur findByDateBetween() Charges", e);
+        }
+    }
+
+    @Override
+    public Double calculateTotalCharges(LocalDateTime start, LocalDateTime end) throws DaoException {
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(TOTAL_CHARGES_SQL)) {
 
             ps.setTimestamp(1, Timestamp.valueOf(start));
             ps.setTimestamp(2, Timestamp.valueOf(end));
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble(1);
+                    double total = rs.getDouble("total");
+                    if (rs.wasNull()) return 0.0;
+                    return total;
                 }
+                return 0.0;
             }
-        } catch (DaoException | SQLException e) {
-            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new DaoException("Erreur calculateTotalCharges()", e);
         }
-        return 0.0;
     }
-
-    @Override
-    public Facture findById(Long id) { /* ... */ return null; }
-
-    @Override
-    public void update(Charges charge) { /* ... */ }
-
-    @Override
-    public void delete(Charges charge) { /* ... */ }
-
-    @Override
-    public void deleteById(Long id) { /* ... */ }
 }

@@ -11,8 +11,9 @@ import ma.dentalTech.entities.base.BaseEntity;
 @AllArgsConstructor
 @SuperBuilder
 public class Acte extends BaseEntity {
+
     private String libelle;
     private String categorie;
-    private Double prixDeBase;
+    private Double prixBase;
     private String description;
 }

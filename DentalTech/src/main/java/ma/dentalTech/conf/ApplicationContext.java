@@ -12,8 +12,6 @@ import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
-import ma.dentalTech.service.modules.caisse.api.FactureService;
-import ma.dentalTech.service.modules.caisse.api.FinancialReportingService;
 
 
 public class ApplicationContext {
