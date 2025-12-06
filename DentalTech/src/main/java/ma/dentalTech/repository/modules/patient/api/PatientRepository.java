@@ -16,7 +16,7 @@ public interface PatientRepository extends CrudRepository<Patient, Long> {
     long count();
     List<Patient> findPage(int limit, int offset);
 
-    // ---- Liaison Many-to-Many ----
+    // ---- Liaison Many-to-Many / antécédents ----
     void addAntecedentToPatient(Long patientId, Long antecedentId);
     void removeAntecedentFromPatient(Long patientId, Long antecedentId);
     void removeAllAntecedentsFromPatient(Long patientId);

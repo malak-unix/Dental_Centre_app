@@ -1,20 +1,21 @@
 package ma.dentalTech.repository.common;
 
-import ma.dentalTech.common.exceptions.DaoException;
-
 import java.util.List;
 
+/**
+ * Interface générique CRUD pour toutes les entités.
+ */
 public interface CrudRepository<T, ID> {
 
-    List<T> findAll() throws DaoException;
+    List<T> findAll();
 
-    T findById(ID id) throws DaoException;
+    T findById(ID id);
 
-    void create(T entity) throws DaoException;
+    void create(T entity);
 
-    void update(T entity) throws DaoException;
+    void update(T entity);
 
-    void delete(T entity) throws DaoException;
+    void delete(T entity);
 
-    void deleteById(ID id) throws DaoException;
+    void deleteById(ID id);
 }
