@@ -1,9 +1,9 @@
 package ma.dentalTech.entities.enums;
 
 public enum StatutJournee {
-    OUVERTE,      // journée normale
+    OUVERT,      // journée normale
     DEMI_JOURNEE,
-    FERMEE,
+    FERME,
     FERIE,
     VACANCES,
     SATUREE       // agenda complètement rempli
