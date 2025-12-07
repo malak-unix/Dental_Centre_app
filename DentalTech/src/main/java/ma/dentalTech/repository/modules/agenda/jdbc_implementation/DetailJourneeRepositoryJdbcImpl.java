@@ -9,14 +9,15 @@ import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository {
 
-    // ============================
-    //  MAPPER ResultSet -> Entity
-    // ============================
+    // =========================================
+    //  MAPPER ResultSet -> Entity DetailJournee
+    // =========================================
     private DetailJournee map(ResultSet rs) throws SQLException {
         Long id = rs.getLong("id");
         if (rs.wasNull()) id = null;
@@ -24,10 +25,25 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
         Long agendaId = rs.getLong("agenda_id");
         if (rs.wasNull()) agendaId = null;
 
-        Date d = rs.getDate("date_jour");
-        Time hDebut = rs.getTime("heure_debut_travail");
-        Time hFin = rs.getTime("heure_fin_travail");
+        Date dateSql = rs.getDate("date_jour");
+        LocalDate dateJour = dateSql != null ? dateSql.toLocalDate() : null;
+
+        Time tDebut = rs.getTime("heure_debut_travail");
+        LocalTime heureDebut = tDebut != null ? tDebut.toLocalTime() : null;
+
+        Time tFin = rs.getTime("heure_fin_travail");
+        LocalTime heureFin = tFin != null ? tFin.toLocalTime() : null;
+
         String etatStr = rs.getString("etat_jour");
+        StatutJournee etat = null;
+        if (etatStr != null) {
+            try {
+                etat = StatutJournee.valueOf(etatStr);
+            } catch (IllegalArgumentException e) {
+                // Valeur inconnue en DB → on laisse etat = null
+            }
+        }
+
         String commentaire = rs.getString("commentaire");
 
         Timestamp tsCreation = rs.getTimestamp("date_creation");
@@ -35,24 +51,24 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
 
         return DetailJournee.builder()
                 .id(id)
-                .agendaId(agendaId)
-                .dateJour(d != null ? d.toLocalDate() : null)
-                .heureDebutTravaillee(hDebut != null ? hDebut.toLocalTime() : null)
-                .heureFinTravaillee(hFin != null ? hFin.toLocalTime() : null)
-                .etatJour(etatStr != null ? StatutJournee.valueOf(etatStr) : null)
+                .agendaId(agendaId) // assure-toi que tu as bien ce champ dans l'entité DetailJournee
+                .dateJour(dateJour)
+                .heureDebutTravaillee(heureDebut)
+                .heureFinTravaillee(heureFin)
+                .etatJour(etat)
                 .commentaire(commentaire)
                 .dateCreation(tsCreation != null ? tsCreation.toLocalDateTime() : null)
                 .dateDerniereModification(tsModification != null ? tsModification.toLocalDateTime() : null)
                 .build();
     }
 
-    // ============================
-    //  CRUD
-    // ============================
+    // ====================================================
+    // Implémentation CrudRepository<DetailJournee, Long>
+    // ====================================================
 
     @Override
     public List<DetailJournee> findAll() {
-        String sql = "SELECT * FROM detail_journee";
+        String sql = "SELECT * FROM detail_journee ORDER BY date_jour";
         List<DetailJournee> list = new ArrayList<>();
 
         try (Connection cn = JdbcUtils.getConnection();
@@ -81,9 +97,7 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
             ps.setLong(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return map(rs);
-                }
+                if (rs.next()) return map(rs);
                 return null;
             }
 
@@ -93,48 +107,52 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
     }
 
     @Override
-    public void create(DetailJournee d) {
+    public void create(DetailJournee entity) {
         String sql = """
-                INSERT INTO detail_journee
-                    (agenda_id, date_jour, heure_debut_travail, heure_fin_travail, etat_jour, commentaire)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO detail_journee
+                (agenda_id, date_jour, heure_debut_travail, heure_fin_travail, etat_jour, commentaire)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """;
 
         try (Connection cn = JdbcUtils.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (d.getAgendaId() == null) {
+            if (entity.getAgendaId() == null) {
                 throw new IllegalArgumentException("agendaId obligatoire pour créer une DetailJournee");
             }
+            ps.setLong(1, entity.getAgendaId());
 
-            ps.setLong(1, d.getAgendaId());
-
-            if (d.getDateJour() != null) {
-                ps.setDate(2, Date.valueOf(d.getDateJour()));
+            if (entity.getDateJour() != null) {
+                ps.setDate(2, Date.valueOf(entity.getDateJour()));
             } else {
                 ps.setNull(2, Types.DATE);
             }
 
-            if (d.getHeureDebutTravaillee() != null) {
-                ps.setTime(3, Time.valueOf(d.getHeureDebutTravaillee()));
+            if (entity.getHeureDebutTravaillee() != null) {
+                ps.setTime(3, Time.valueOf(entity.getHeureDebutTravaillee()));
             } else {
                 ps.setNull(3, Types.TIME);
             }
 
-            if (d.getHeureFinTravaillee() != null) {
-                ps.setTime(4, Time.valueOf(d.getHeureFinTravaillee()));
+            if (entity.getHeureFinTravaillee() != null) {
+                ps.setTime(4, Time.valueOf(entity.getHeureFinTravaillee()));
             } else {
                 ps.setNull(4, Types.TIME);
             }
 
-            ps.setString(5, d.getEtatJour() != null ? d.getEtatJour().name() : null);
-            ps.setString(6, d.getCommentaire());
+            if (entity.getEtatJour() != null) {
+                ps.setString(5, entity.getEtatJour().name());
+            } else {
+                ps.setNull(5, Types.VARCHAR);
+            }
+
+            ps.setString(6, entity.getCommentaire());
 
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
-                    d.setId(keys.getLong(1));
+                    entity.setId(keys.getLong(1));
                 }
             }
 
@@ -144,57 +162,61 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
     }
 
     @Override
-    public void update(DetailJournee d) {
-        if (d.getId() == null) {
+    public void update(DetailJournee entity) {
+        if (entity.getId() == null) {
             throw new IllegalArgumentException("Impossible de mettre à jour une DetailJournee sans id");
         }
 
         String sql = """
-                UPDATE detail_journee
-                   SET agenda_id = ?,
-                       date_jour = ?,
-                       heure_debut_travail = ?,
-                       heure_fin_travail = ?,
-                       etat_jour = ?,
-                       commentaire = ?
-                 WHERE id = ?
-                """;
+            UPDATE detail_journee
+               SET agenda_id = ?,
+                   date_jour = ?,
+                   heure_debut_travail = ?,
+                   heure_fin_travail = ?,
+                   etat_jour = ?,
+                   commentaire = ?
+             WHERE id = ?
+            """;
 
         try (Connection cn = JdbcUtils.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            if (d.getAgendaId() == null) {
-                throw new IllegalArgumentException("agendaId obligatoire pour update");
+            if (entity.getAgendaId() == null) {
+                throw new IllegalArgumentException("agendaId obligatoire pour mettre à jour une DetailJournee");
             }
+            ps.setLong(1, entity.getAgendaId());
 
-            ps.setLong(1, d.getAgendaId());
-
-            if (d.getDateJour() != null) {
-                ps.setDate(2, Date.valueOf(d.getDateJour()));
+            if (entity.getDateJour() != null) {
+                ps.setDate(2, Date.valueOf(entity.getDateJour()));
             } else {
                 ps.setNull(2, Types.DATE);
             }
 
-            if (d.getHeureDebutTravaillee() != null) {
-                ps.setTime(3, Time.valueOf(d.getHeureDebutTravaillee()));
+            if (entity.getHeureDebutTravaillee() != null) {
+                ps.setTime(3, Time.valueOf(entity.getHeureDebutTravaillee()));
             } else {
                 ps.setNull(3, Types.TIME);
             }
 
-            if (d.getHeureFinTravaillee() != null) {
-                ps.setTime(4, Time.valueOf(d.getHeureFinTravaillee()));
+            if (entity.getHeureFinTravaillee() != null) {
+                ps.setTime(4, Time.valueOf(entity.getHeureFinTravaillee()));
             } else {
                 ps.setNull(4, Types.TIME);
             }
 
-            ps.setString(5, d.getEtatJour() != null ? d.getEtatJour().name() : null);
-            ps.setString(6, d.getCommentaire());
-            ps.setLong(7, d.getId());
+            if (entity.getEtatJour() != null) {
+                ps.setString(5, entity.getEtatJour().name());
+            } else {
+                ps.setNull(5, Types.VARCHAR);
+            }
+
+            ps.setString(6, entity.getCommentaire());
+            ps.setLong(7, entity.getId());
 
             ps.executeUpdate();
 
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur update() DetailJournee, id=" + d.getId(), e);
+            throw new RuntimeException("Erreur update() DetailJournee, id=" + entity.getId(), e);
         }
     }
 
@@ -221,12 +243,12 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
         }
     }
 
-    // ============================
+    // ====================================================
     //  Méthodes spécifiques
-    // ============================
+    // ====================================================
 
     @Override
-    public List<DetailJournee> findByAgenda(Long agendaId) {
+    public List<DetailJournee> findByAgendaId(Long agendaId) {
         String sql = "SELECT * FROM detail_journee WHERE agenda_id = ? ORDER BY date_jour";
         List<DetailJournee> list = new ArrayList<>();
 
@@ -236,24 +258,26 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
             ps.setLong(1, agendaId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(map(rs));
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
             }
             return list;
 
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur findByAgenda(), agendaId=" + agendaId, e);
+            throw new RuntimeException("Erreur findByAgendaId(), agendaId=" + agendaId, e);
         }
     }
 
     @Override
-    public DetailJournee findByAgendaAndDate(Long agendaId, LocalDate date) {
+    public DetailJournee findByAgendaIdAndDateJour(Long agendaId, LocalDate dateJour) {
         String sql = "SELECT * FROM detail_journee WHERE agenda_id = ? AND date_jour = ?";
 
         try (Connection cn = JdbcUtils.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, agendaId);
-            ps.setDate(2, Date.valueOf(date));
+            ps.setDate(2, Date.valueOf(dateJour));
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return map(rs);
@@ -261,10 +285,7 @@ public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository 
             }
 
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException(
-                    "Erreur findByAgendaAndDate(), agendaId=" + agendaId + ", date=" + date,
-                    e
-            );
+            throw new RuntimeException("Erreur findByAgendaIdAndDateJour(), agendaId=" + agendaId, e);
         }
     }
 }

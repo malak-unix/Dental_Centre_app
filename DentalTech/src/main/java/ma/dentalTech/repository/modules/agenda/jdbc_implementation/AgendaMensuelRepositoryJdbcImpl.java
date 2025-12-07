@@ -88,8 +88,8 @@ public class AgendaMensuelRepositoryJdbcImpl implements AgendaMensuelRepository 
     @Override
     public void create(AgendaMensuel agenda) {
         String sql = """
-            INSERT INTO agenda_mensuel (medecin_id, mois, annee)
-            VALUES (?, ?, ?)
+            INSERT INTO agenda_mensuel (medecin_id, mois, annee, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?)
             """;
 
         try (Connection cn = JdbcUtils.getConnection();
@@ -98,10 +98,18 @@ public class AgendaMensuelRepositoryJdbcImpl implements AgendaMensuelRepository 
             if (agenda.getMedecinId() == null) {
                 throw new IllegalArgumentException("medecinId obligatoire pour créer un AgendaMensuel");
             }
+            if (agenda.getMois() == null) {
+                throw new IllegalArgumentException("mois obligatoire pour créer un AgendaMensuel");
+            }
 
             ps.setLong(1, agenda.getMedecinId());
-            ps.setString(2, agenda.getMois() != null ? agenda.getMois().name() : null);
+            // mois est un ENUM côté DB => on envoie le nom (JANVIER, FEVRIER, ...)
+            ps.setString(2, agenda.getMois().name());
             ps.setInt(3, agenda.getAnnee());
+
+            // audit (optionnel)
+            ps.setString(4, agenda.getCreePar());
+            ps.setString(5, agenda.getModifiePar());
 
             ps.executeUpdate();
 
@@ -126,7 +134,8 @@ public class AgendaMensuelRepositoryJdbcImpl implements AgendaMensuelRepository 
             UPDATE agenda_mensuel
                SET medecin_id = ?,
                    mois       = ?,
-                   annee      = ?
+                   annee      = ?,
+                   modifie_par = ?
              WHERE id = ?
             """;
 
@@ -136,11 +145,15 @@ public class AgendaMensuelRepositoryJdbcImpl implements AgendaMensuelRepository 
             if (agenda.getMedecinId() == null) {
                 throw new IllegalArgumentException("medecinId obligatoire pour mettre à jour un AgendaMensuel");
             }
+            if (agenda.getMois() == null) {
+                throw new IllegalArgumentException("mois obligatoire pour mettre à jour un AgendaMensuel");
+            }
 
             ps.setLong(1, agenda.getMedecinId());
-            ps.setString(2, agenda.getMois() != null ? agenda.getMois().name() : null);
+            ps.setString(2, agenda.getMois().name());
             ps.setInt(3, agenda.getAnnee());
-            ps.setLong(4, agenda.getId());
+            ps.setString(4, agenda.getModifiePar());
+            ps.setLong(5, agenda.getId());
 
             ps.executeUpdate();
 

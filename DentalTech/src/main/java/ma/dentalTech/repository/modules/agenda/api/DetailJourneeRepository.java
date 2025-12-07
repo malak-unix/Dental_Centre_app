@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface DetailJourneeRepository extends CrudRepository<DetailJournee, Long> {
 
-    List<DetailJournee> findByAgenda(Long agendaId);
+    List<DetailJournee> findByAgendaId(Long agendaId);
 
-    DetailJournee findByAgendaAndDate(Long agendaId, LocalDate date);
+    DetailJournee findByAgendaIdAndDateJour(Long agendaId, LocalDate dateJour);
 }
