@@ -15,6 +15,11 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @SuperBuilder
 public class RDV extends BaseEntity {
+    // 🔗 Liens vers les autres entités
+    private Long patientId;
+    private Long detailJourneeId;
+    private Long listeAttenteId;
+
     private LocalDate date;
     private LocalTime heure;
     private String motif;

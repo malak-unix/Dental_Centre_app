@@ -26,6 +26,15 @@ public class RdvRepositoryJdbcImpl implements RdvRepository {
         Long id = rs.getLong("id");
         if (rs.wasNull()) id = null;
 
+        Long patientId = rs.getLong("patient_id");
+        if (rs.wasNull()) patientId = null;
+
+        Long detailJourneeId = rs.getLong("detail_journee_id");
+        if (rs.wasNull()) detailJourneeId = null;
+
+        Long listeAttenteId = rs.getLong("liste_attente_id");
+        if (rs.wasNull()) listeAttenteId = null;
+
         Date dateRdvSql = rs.getDate("date_rdv");
         LocalDate dateRdv = (dateRdvSql != null) ? dateRdvSql.toLocalDate() : null;
 
@@ -58,6 +67,9 @@ public class RdvRepositoryJdbcImpl implements RdvRepository {
 
         return RDV.builder()
                 .id(id)
+                .patientId(patientId)
+                .detailJourneeId(detailJourneeId)
+                .listeAttenteId(listeAttenteId)
                 .date(dateRdv)
                 .heure(heure)
                 .motif(motif)
@@ -126,10 +138,26 @@ public class RdvRepositoryJdbcImpl implements RdvRepository {
         try (Connection cn = JdbcUtils.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // Pour l’instant on ne gère pas patient_id / detail_journee_id / liste_attente_id dans l’entité RDV
-            ps.setNull(1, Types.BIGINT); // patient_id
-            ps.setNull(2, Types.BIGINT); // detail_journee_id
-            ps.setNull(3, Types.BIGINT); // liste_attente_id
+            // patient_id
+            if (entity.getPatientId() != null) {
+                ps.setLong(1, entity.getPatientId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
+
+            // detail_journee_id
+            if (entity.getDetailJourneeId() != null) {
+                ps.setLong(2, entity.getDetailJourneeId());
+            } else {
+                ps.setNull(2, Types.BIGINT);
+            }
+
+            // liste_attente_id
+            if (entity.getListeAttenteId() != null) {
+                ps.setLong(3, entity.getListeAttenteId());
+            } else {
+                ps.setNull(3, Types.BIGINT);
+            }
 
             // date_rdv
             if (entity.getDate() != null) {
@@ -182,43 +210,48 @@ public class RdvRepositoryJdbcImpl implements RdvRepository {
         }
 
         String sql = "UPDATE rdv SET " +
-                "date_rdv = ?, heure = ?, motif = ?, statut = ?, note_medecin = ?, modifie_par = ? " +
+                "date_rdv = ?, " +
+                "heure = ?, " +
+                "motif = ?, " +
+                "statut = ?, " +
+                "note_medecin = ?, " +
+                "modifie_par = ? " +
                 "WHERE id = ?";
 
         try (Connection cn = JdbcUtils.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            // date_rdv
+            // 1 - date_rdv
             if (entity.getDate() != null) {
                 ps.setDate(1, Date.valueOf(entity.getDate()));
             } else {
                 ps.setNull(1, Types.DATE);
             }
 
-            // heure
+            // 2 - heure
             if (entity.getHeure() != null) {
                 ps.setTime(2, Time.valueOf(entity.getHeure()));
             } else {
                 ps.setNull(2, Types.TIME);
             }
 
-            // motif
+            // 3 - motif
             ps.setString(3, entity.getMotif());
 
-            // statut enum -> string DB
+            // 4 - statut
             if (entity.getStatus() != null) {
                 ps.setString(4, entity.getStatus().name());
             } else {
                 ps.setNull(4, Types.VARCHAR);
             }
 
-            // note_medecin
+            // 5 - note_medecin
             ps.setString(5, entity.getNoteMedecin());
 
-            // modifie_par
+            // 6 - modifie_par
             ps.setString(6, entity.getModifiePar());
 
-            // id
+            // 7 - id (WHERE id = ?)
             ps.setLong(7, entity.getId());
 
             ps.executeUpdate();
@@ -227,6 +260,7 @@ public class RdvRepositoryJdbcImpl implements RdvRepository {
             throw new RuntimeException("Erreur lors de la mise à jour du RDV", e);
         }
     }
+
 
     @Override
     public void delete(RDV entity) {
@@ -344,4 +378,27 @@ public class RdvRepositoryJdbcImpl implements RdvRepository {
             throw new RuntimeException("Erreur lors de la recherche des RDV à venir", e);
         }
     }
+    @Override
+    public List<RDV> findByListeAttenteId(Long listeAttenteId) {
+        String sql = "SELECT * FROM rdv WHERE liste_attente_id = ?";
+        List<RDV> result = new ArrayList<>();
+
+        try (Connection cn = JdbcUtils.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, listeAttenteId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(map(rs));
+                }
+            }
+
+            return result;
+
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur lors de la recherche des RDV pour liste_attente_id=" + listeAttenteId, e);
+        }
+    }
+
 }

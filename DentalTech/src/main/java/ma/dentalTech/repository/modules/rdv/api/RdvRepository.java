@@ -28,4 +28,6 @@ public interface RdvRepository extends CrudRepository<RDV, Long> {
      * Liste des prochains rendez-vous à partir d’aujourd’hui (optionnel mais pratique).
      */
     List<RDV> findUpcomingFromToday();
+
+    List<RDV> findByListeAttenteId(Long listeAttenteId);
 }
