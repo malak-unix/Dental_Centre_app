@@ -15,7 +15,13 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 public class AgendaMensuel extends BaseEntity {
+
+    // ⚠ ajouté pour coller à la colonne medecin_id en base
+    private Long medecinId;
+
     private Mois mois;
     private int annee;
+
+    // Non stocké directement dans la table, mais utile côté objet
     private List<DetailJournee> listeJours;
 }

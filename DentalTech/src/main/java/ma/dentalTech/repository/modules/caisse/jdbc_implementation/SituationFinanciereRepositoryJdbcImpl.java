@@ -86,7 +86,7 @@ public class SituationFinanciereRepositoryJdbcImpl implements SituationFinancier
 
     // =============== CRUD ===============
     @Override
-    public List<SituationFinanciere> findAll() throws DaoException {
+    public List<SituationFinanciere> findAll() {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = ps.executeQuery()) {
@@ -94,13 +94,13 @@ public class SituationFinanciereRepositoryJdbcImpl implements SituationFinancier
             List<SituationFinanciere> list = new ArrayList<>();
             while (rs.next()) list.add(map(rs));
             return list;
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findAll() SituationFinanciere", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findAll() SituationFinanciere", e);
         }
     }
 
     @Override
-    public SituationFinanciere findById(Long id) throws DaoException {
+    public SituationFinanciere findById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -109,17 +109,18 @@ public class SituationFinanciereRepositoryJdbcImpl implements SituationFinancier
                 if (rs.next()) return map(rs);
                 return null;
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur findById() SituationFinanciere, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur findById() SituationFinanciere, id=" + id, e);
         }
     }
 
     @Override
-    public void create(SituationFinanciere entity) throws DaoException {
+    public void create(SituationFinanciere entity) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setLong(1, entity.getDossierId()); // NOT NULL en base
+            // dossier_id NOT NULL en base
+            ps.setLong(1, entity.getDossierId());
 
             if (entity.getMedecinId() != null) {
                 ps.setLong(2, entity.getMedecinId());
@@ -152,14 +153,16 @@ public class SituationFinanciereRepositoryJdbcImpl implements SituationFinancier
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) entity.setId(keys.getLong(1));
             }
-        } catch (SQLException e) {
-            throw new DaoException("Erreur create() SituationFinanciere", e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur create() SituationFinanciere", e);
         }
     }
 
     @Override
-    public void update(SituationFinanciere entity) throws DaoException {
-        if (entity.getId() == null) throw new DaoException("update() SituationFinanciere sans id");
+    public void update(SituationFinanciere entity) {
+        if (entity.getId() == null) {
+            throw new RuntimeException("update() SituationFinanciere sans id");
+        }
 
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(UPDATE_SQL)) {
@@ -194,32 +197,36 @@ public class SituationFinanciereRepositoryJdbcImpl implements SituationFinancier
             ps.setLong(7, entity.getId());
 
             int updated = ps.executeUpdate();
-            if (updated == 0) throw new DaoException("Aucune situation financière mise à jour, id=" + entity.getId());
-        } catch (SQLException e) {
-            throw new DaoException("Erreur update() SituationFinanciere", e);
+            if (updated == 0) {
+                throw new RuntimeException("Aucune situation financière mise à jour, id=" + entity.getId());
+            }
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur update() SituationFinanciere", e);
         }
     }
 
     @Override
-    public void delete(SituationFinanciere entity) throws DaoException {
+    public void delete(SituationFinanciere entity) {
         if (entity.getId() == null) return;
         deleteById(entity.getId());
     }
 
     @Override
-    public void deleteById(Long id) throws DaoException {
+    public void deleteById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DaoException("Erreur deleteById() SituationFinanciere, id=" + id, e);
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur deleteById() SituationFinanciere, id=" + id, e);
         }
     }
 
     @Override
     public SituationFinanciere findLast() throws DaoException {
+        // ⚠️ findLast() vient de SituationFinanciereRepository, PAS de CrudRepository,
+        // donc ici on PEUT garder "throws DaoException" sans problème.
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_LAST_SQL);
              ResultSet rs = ps.executeQuery()) {
