@@ -1,15 +1,15 @@
 package ma.dentalTech.service.modules.patient.api;
 
-
-import java.util.List;
+import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.mvc.dto.PatientDTO;
 
+import java.util.List;
+
+/**
+ * Service métier pour le module Patient.
+ */
 public interface PatientService {
 
-    /**
-     * Récupère les patients ajoutés aujourd'hui,
-     * triés par ordre de création (plus récent -> plus ancien),
-     * et les expose sous forme de PatientDTO (nom complet, âge, date formatée).
-     */
-    List<PatientDTO> getTodayPatientsAsDTO();
+
+    List<PatientDTO> getTodayPatientsAsDTO() throws ServiceException;
 }

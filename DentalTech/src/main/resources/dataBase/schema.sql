@@ -1,7 +1,3 @@
-DROP DATABASE IF EXISTS dentalsoft_db;
-CREATE DATABASE dentalsoft_db;
-USE dentalsoft_db;
-
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- =========================================================
@@ -52,7 +48,6 @@ CREATE INDEX idx_utilisateur_role ON utilisateur(role_id);
 CREATE TABLE cabinet_medical (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   nom VARCHAR(150) NOT NULL,
-  nom_medecin VARCHAR(150),
   logo VARCHAR(255),
   adresse VARCHAR(255),
   telephone1 VARCHAR(30),
@@ -158,7 +153,7 @@ CREATE TABLE detail_journee (
   modifie_par VARCHAR(100),
   CONSTRAINT fk_detail_agenda
     FOREIGN KEY (agenda_id) REFERENCES agenda_mensuel(id)
-    ON DELETE CASCADE         -- composition : suppression des journées si agenda supprimé
+    ON DELETE CASCADE     -- composition : suppression des journées si agenda supprimé
 );
 
 -- =========================================================
@@ -209,9 +204,9 @@ CREATE TABLE dossier_medical (
   medecin_id BIGINT,
   date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
   date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  notes TEXT,
   cree_par VARCHAR(100),
   modifie_par VARCHAR(100),
-  notes TEXT,
   CONSTRAINT fk_dossier_patient
     FOREIGN KEY (patient_id) REFERENCES patient(id)
     ON DELETE CASCADE,
@@ -237,7 +232,7 @@ CREATE TABLE situation_financiere (
   modifie_par VARCHAR(100),
   CONSTRAINT fk_sitfin_dossier
     FOREIGN KEY (dossier_id) REFERENCES dossier_medical(id)
-    ON DELETE CASCADE,      -- composition
+    ON DELETE CASCADE,   -- composition
   CONSTRAINT fk_sitfin_medecin
     FOREIGN KEY (medecin_id) REFERENCES medecin(id)
     ON DELETE SET NULL
@@ -320,7 +315,7 @@ CREATE TABLE rdv (
   date_rdv DATE NOT NULL,
   heure TIME,
   motif VARCHAR(255),
-  statut ENUM('PLANIFIE','ANNULE','TERMINE') DEFAULT 'PLANIFIE',
+  statut ENUM('PREVU','CONFIRME','EN_COURS','TERMINE','ANNULE','ABSENT') DEFAULT 'PREVU',
   note_medecin TEXT,
   date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
   date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -24,9 +24,9 @@ public class Db {
 
             props.load(input);
 
-            String url = props.getProperty("jdbc.url");
-            String user = props.getProperty("jdbc.username");
-            String pass = props.getProperty("jdbc.password");
+            String url = props.getProperty("url");
+            String user = props.getProperty("username");
+            String pass = props.getProperty("password");
 
             connection = DriverManager.getConnection(url, user, pass);
             System.out.println("Connexion réussie à MySQL !");
