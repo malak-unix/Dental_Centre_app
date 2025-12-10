@@ -22,6 +22,14 @@ import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import ma.dentalTech.service.modules.agenda.api.AgendaService;
 
+// Module Liste d'attente
+import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
+import ma.dentalTech.service.modules.listeAttente.api.ListeAttenteService;
+
+// Module Plage Horaire
+import ma.dentalTech.repository.modules.plageHoraire.api.PlageHoraireRepository;
+import ma.dentalTech.service.modules.plageHoraire.api.PlageHoraireService;
+
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -184,11 +192,50 @@ public final class ApplicationContext {
             contextByName.put("detailJourneeRepo", detailJourneeRepo);
             contextByName.put("agendaService", agendaService);
 
+            // ============================================================
+            // 5. MODULE LISTE D'ATTENTE
+            // ============================================================
+            currentBean = "listeAttente.repository";
+            ListeAttenteRepository listeAttenteRepository =
+                    (ListeAttenteRepository) Class.forName(properties.getProperty("listeAttente.repository"))
+                            .getDeclaredConstructor().newInstance();
+
+            currentBean = "listeAttente.service";
+            ListeAttenteService listeAttenteService =
+                    (ListeAttenteService) Class.forName(properties.getProperty("listeAttente.service"))
+                            .getDeclaredConstructor(ListeAttenteRepository.class, RdvRepository.class)
+                            .newInstance(listeAttenteRepository, rdvRepository);
+
+            context.put(ListeAttenteRepository.class, listeAttenteRepository);
+            context.put(ListeAttenteService.class, listeAttenteService);
+
+            contextByName.put("listeAttente.repository", listeAttenteRepository);
+            contextByName.put("listeAttente.service", listeAttenteService);
+
+            // ============================================================
+            // 6. MODULE PLAGE HORAIRE
+            // ============================================================
+            currentBean = "plageHoraire.repository";
+            PlageHoraireRepository plageHoraireRepository =
+                    (PlageHoraireRepository) Class.forName(properties.getProperty("plageHoraire.repository"))
+                            .getDeclaredConstructor().newInstance();
+
+            currentBean = "plageHoraire.service";
+            PlageHoraireService plageHoraireService =
+                    (PlageHoraireService) Class.forName(properties.getProperty("plageHoraire.service"))
+                            .getDeclaredConstructor(PlageHoraireRepository.class)
+                            .newInstance(plageHoraireRepository);
+
+            context.put(PlageHoraireRepository.class, plageHoraireRepository);
+            context.put(PlageHoraireService.class, plageHoraireService);
+
+            contextByName.put("plageHoraire.repository", plageHoraireRepository);
+            contextByName.put("plageHoraire.service", plageHoraireService);
 
         } catch (Exception e) {
             throw new RuntimeException(
                     "Erreur lors de l'initialisation de l'ApplicationContext (bean courant = "
-                    + currentBean + ")", e);
+                            + currentBean + ")", e);
         }
     }
 
