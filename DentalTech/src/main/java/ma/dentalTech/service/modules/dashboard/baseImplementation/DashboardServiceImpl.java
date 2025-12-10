@@ -1,6 +1,6 @@
 /**package ma.dentalTech.service.modules.dashboard.baseImplementation;
  BIDMAN YSALIW LBNAT W Y9ADO LES REPO DYALHOM
- 7IT HNA I NEED BZF FHAL RDV NOTIFICATION AGENDA ...
+ #7IT HNA I NEED BZF FHAL RDV NOTIFICATION AGENDA ...
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +12,7 @@ import ma.dentalTech.mvc.dto.DashboardAdminDTO;
 import ma.dentalTech.mvc.dto.DashboardMedecinDTO;
 import ma.dentalTech.mvc.dto.DashboardSecretaireDTO;
 import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
-import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
+import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
 import ma.dentalTech.repository.modules.notification.api.NotificationRepository;
 import ma.dentalTech.repository.modules.consultation.api.ConsultationRepository;
 import ma.dentalTech.repository.modules.consultation.api.ActeRepository;
@@ -175,4 +175,4 @@ public class DashboardServiceImpl implements DashboardService {
         return value != null ? value : 0.0;
     }
 }
-**/
+*/

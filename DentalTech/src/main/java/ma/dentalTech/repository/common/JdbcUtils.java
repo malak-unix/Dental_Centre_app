@@ -1,54 +1,61 @@
 package ma.dentalTech.repository.common;
 
 import ma.dentalTech.common.exceptions.DaoException;
-import ma.dentalTech.conf.SessionFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
-/**
- * Utilitaires JDBC communs pour tout le projet.
- * - Fournit une connexion via SessionFactory
- * - Méthodes utilitaires pour fermer / rollback proprement
- */
 public final class JdbcUtils {
 
-    private JdbcUtils() {
-        // utilitaire : pas d'instance
+    private static final String CONFIG_FILE = "config/db.properties";
+    private static final Properties props = new Properties();
+
+    static {
+        try (InputStream input = Thread.currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream(CONFIG_FILE)) {
+
+            if (input == null) {
+                throw new IOException("Fichier de configuration JDBC introuvable: " + CONFIG_FILE);
+            }
+
+            // Charge les propriétés
+            props.load(input);
+
+            // Lit le driver, avec une valeur par défaut pour MySQL
+            String driverClass = props.getProperty("driver", "com.mysql.cj.jdbc.Driver");
+            Class.forName(driverClass);
+
+            System.out.println("[JdbcUtils] Driver chargé : " + driverClass);
+            System.out.println("[JdbcUtils] URL utilisée : " + props.getProperty("url"));
+
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException("Erreur de chargement du driver/config JDBC", e);
+        }
     }
 
-    /**
-     * Récupère une connexion JDBC en s'appuyant sur SessionFactory.
-     */
+    private JdbcUtils() {
+        // utilitaire, pas d'instance
+    }
+
     public static Connection getConnection() throws DaoException {
         try {
-            return SessionFactory.getInstance().getConnection();
+            String url = props.getProperty("url");
+            String user = props.getProperty("username");
+            String pass = props.getProperty("password");
+
+            if (url == null || url.isBlank()) {
+                throw new DaoException("Propriété 'url' absente ou vide dans " + CONFIG_FILE);
+            }
+
+            return DriverManager.getConnection(url, user, pass);
+
         } catch (SQLException e) {
-            throw new DaoException("Erreur lors de l'obtention de la connexion JDBC", e);
-        }
-    }
-
-    /**
-     * Ferme silencieusement un AutoCloseable (ResultSet, Statement, Connection, ...).
-     */
-    public static void closeQuietly(AutoCloseable ac) {
-        if (ac == null) return;
-        try {
-            ac.close();
-        } catch (Exception ignored) {
-            // on ignore l'erreur volontairement
-        }
-    }
-
-    /**
-     * Effectue un rollback silencieux sur une connexion.
-     */
-    public static void rollbackQuietly(Connection conn) {
-        if (conn == null) return;
-        try {
-            conn.rollback();
-        } catch (SQLException ignored) {
-            // on ignore aussi ici
+            throw new DaoException("Erreur de connexion à la base de données : " + e.getMessage(), e);
         }
     }
 }
