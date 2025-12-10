@@ -531,4 +531,23 @@ CREATE TABLE logs (
     ON DELETE SET NULL
 );
 
+-- =========================================================
+--  Plage Horaire  (BaseEntity)
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS plage_horaire (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  detail_journee_id BIGINT NOT NULL,
+  heure_debut TIME NOT NULL,
+  heure_fin TIME NOT NULL,
+  disponible BOOLEAN NOT NULL DEFAULT TRUE,
+  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  cree_par VARCHAR(100),
+  modifie_par VARCHAR(100),
+  CONSTRAINT fk_plage_detail_journee
+      FOREIGN KEY (detail_journee_id) REFERENCES detail_journee(id)
+      ON DELETE CASCADE
+);
+
 SET FOREIGN_KEY_CHECKS = 1;
