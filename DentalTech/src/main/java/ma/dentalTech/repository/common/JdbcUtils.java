@@ -1,42 +1,54 @@
 package ma.dentalTech.repository.common;
 
 import ma.dentalTech.common.exceptions.DaoException;
+import ma.dentalTech.conf.SessionFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
+/**
+ * Utilitaires JDBC communs pour tout le projet.
+ * - Fournit une connexion via SessionFactory
+ * - Méthodes utilitaires pour fermer / rollback proprement
+ */
 public final class JdbcUtils {
 
-    private static final String CONFIG_FILE = "config/db.properties";
-    private static Properties props = new Properties();
+    private JdbcUtils() {
+        // utilitaire : pas d'instance
+    }
 
-    static {
-        try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIG_FILE)) {
-            if (input == null) {
-                throw new IOException("Fichier de configuration JDBC introuvable: " + CONFIG_FILE);
-            }
-            props.load(input);
-            Class.forName(props.getProperty("driver"));
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("Erreur de chargement du driver/config JDBC", e);
+    /**
+     * Récupère une connexion JDBC en s'appuyant sur SessionFactory.
+     */
+    public static Connection getConnection() throws DaoException {
+        try {
+            return SessionFactory.getInstance().getConnection();
+        } catch (SQLException e) {
+            throw new DaoException("Erreur lors de l'obtention de la connexion JDBC", e);
         }
     }
 
-    private JdbcUtils() { }
-
-    public static Connection getConnection() throws DaoException {
+    /**
+     * Ferme silencieusement un AutoCloseable (ResultSet, Statement, Connection, ...).
+     */
+    public static void closeQuietly(AutoCloseable ac) {
+        if (ac == null) return;
         try {
-            return DriverManager.getConnection(
-                    props.getProperty("url"),
-                    props.getProperty("username"),
-                    props.getProperty("password")
-            );
-        } catch (SQLException e) {
-            throw new DaoException("Erreur de connexion à la base de données : " + e.getMessage(), e);
+            ac.close();
+        } catch (Exception ignored) {
+            // on ignore l'erreur volontairement
+        }
+    }
+
+    /**
+     * Effectue un rollback silencieux sur une connexion.
+     */
+    public static void rollbackQuietly(Connection conn) {
+        if (conn == null) return;
+        try {
+            conn.rollback();
+        } catch (SQLException ignored) {
+            // on ignore aussi ici
         }
     }
 }
