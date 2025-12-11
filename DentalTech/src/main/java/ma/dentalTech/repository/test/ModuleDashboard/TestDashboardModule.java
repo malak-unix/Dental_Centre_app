@@ -1,4 +1,4 @@
-package ma.dentalTech.tests.ModuleDashboard;
+package ma.dentalTech.repository.test.ModuleDashboard;
 
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.facture.Facture;
@@ -23,7 +23,7 @@ public class TestDashboardModule {
     public static void main(String[] args) {
         System.out.println("=== TEST MODULE DASHBOARD (avec module CAISSE) - aya ===");
 
-        // 1) On instancie les repos de CAISSE (déjà prêts et testés)
+
         FactureRepository factureRepo   = new FactureRepositoryJdbcImpl();
         RevenuesRepository revenuesRepo = new RevenuesRepositoryJdbcImpl();
         ChargesRepository chargesRepo   = new ChargesRepositoryJdbcImpl();
@@ -31,13 +31,12 @@ public class TestDashboardModule {
         CaisseDashboardService caisseService =
                 new CaisseDashboardServiceImpl(factureRepo, revenuesRepo, chargesRepo);
 
-        // 2) On choisit une date de test (par ex. une date de ton seed : 2025-01-15)
+        // On choisit une date de test (par ex. une date de ton seed : 2025-01-15)
         LocalDate dateJour = LocalDate.of(2025, 1, 15);
         LocalDateTime start = dateJour.atStartOfDay();
         LocalDateTime end   = dateJour.plusDays(1).atStartOfDay().minusNanos(1);
 
         try {
-            // 3) On récupère la caisse réelle du jour via ton service Caisse
             CaisseDashboardDTO caisseDuJour = caisseService.getDashboardBetween(start, end);
 
             System.out.println("--- Résumé Caisse du " + dateJour + " ---");
@@ -48,8 +47,6 @@ public class TestDashboardModule {
             System.out.println("Charges        : " + safe(caisseDuJour.getTotalCharges()));
             System.out.println("Solde net      : " + safe(caisseDuJour.getSoldeNet()));
 
-            // 4) On construit un Dashboard Secrétaire de DÉMO,
-            //    en utilisant la caisse réelle + des chiffres simples pour le reste.
             DashboardSecretaireDTO dashSec = DashboardSecretaireDTO.builder()
                     .dateJour(dateJour)
                     .caisseDuJour(caisseDuJour)
@@ -68,7 +65,7 @@ public class TestDashboardModule {
             System.out.println("Notif non lues            : " + dashSec.getNombreNotificationsNonLues());
             System.out.println("Alertes importantes       : " + dashSec.getNombreAlertesImportantes());
 
-            // 5) Dashboard Médecin (DEMO)
+            // Dashboard Médecin (DEMO)
             DashboardMedecinDTO dashMed = DashboardMedecinDTO.builder()
                     .dateJour(dateJour)
                     .nombreRdvDuJour(3)
@@ -94,7 +91,7 @@ public class TestDashboardModule {
             System.out.println("Total réglé (jour)        : " + dashMed.getTotalRegleDuJour());
             System.out.println("Total non réglé (jour)    : " + dashMed.getTotalNonRegleDuJour());
 
-            // 6) Dashboard Admin (DEMO)
+            //  Dashboard Admin (DEMO)
             DashboardAdminDTO dashAdmin = DashboardAdminDTO.builder()
                     .dateJour(dateJour)
                     .nombreUtilisateursTotal(5)
@@ -104,7 +101,7 @@ public class TestDashboardModule {
                     .nombrePatientsTotal(3)
                     .nombreDossiersActifs(3)
                     .chiffreAffairesJour(caisseDuJour.getTotalFactures())
-                    .chiffreAffairesMois(caisseDuJour.getTotalFactures()) // ici tu peux adapter plus tard
+                    .chiffreAffairesMois(caisseDuJour.getTotalFactures())
                     .totalChargesMois(caisseDuJour.getTotalCharges())
                     .nombreConnexionsJour(10)
                     .nombreNotificationsSysteme(2)
