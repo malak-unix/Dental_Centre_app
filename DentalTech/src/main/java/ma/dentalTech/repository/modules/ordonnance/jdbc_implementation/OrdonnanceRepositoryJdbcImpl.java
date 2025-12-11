@@ -18,14 +18,27 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
     // =========================================================================================
     private Ordonnance map(ResultSet rs) throws SQLException {
         Timestamp tsCreation = rs.getTimestamp("date_creation");
+        Timestamp tsModification = rs.getTimestamp("date_modification");
+
+        Long dossierId = rs.getLong("dossier_id");
+        if (rs.wasNull()) {
+            dossierId = null;
+        }
+
+        Long consultationId = rs.getLong("consultation_id");
+        if (rs.wasNull()) {
+            consultationId = null;
+        }
+
+        Date dateOrdo = rs.getDate("date_ordo");
 
         return Ordonnance.builder()
                 .id(rs.getLong("id"))
-                // pour l’instant on ne mappe que la date + métadonnées de base
-                .date(rs.getDate("date_ordo") != null
-                        ? rs.getDate("date_ordo").toLocalDate()
-                        : null)
+                .dossierId(dossierId)
+                .consultationId(consultationId)
+                .date(dateOrdo != null ? dateOrdo.toLocalDate() : null)
                 .dateCreation(tsCreation != null ? tsCreation.toLocalDateTime() : null)
+                .dateDerniereModification(tsModification != null ? tsModification.toLocalDateTime() : null)
                 .build();
     }
 
@@ -43,17 +56,28 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // TODO : quand ton entité Ordonnance aura dossier / consultation,
-            //       remplace ces null par les vraies valeurs.
-            ps.setObject(1, null); // dossier_id
-            ps.setObject(2, null); // consultation_id
+            // dossier_id
+            if (ordonnance.getDossierId() != null) {
+                ps.setLong(1, ordonnance.getDossierId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
 
+            // consultation_id
+            if (ordonnance.getConsultationId() != null) {
+                ps.setLong(2, ordonnance.getConsultationId());
+            } else {
+                ps.setNull(2, Types.BIGINT);
+            }
+
+            // date_ordo
             if (ordonnance.getDate() != null) {
                 ps.setDate(3, Date.valueOf(ordonnance.getDate()));
             } else {
                 ps.setNull(3, Types.DATE);
             }
 
+            // date_creation
             LocalDateTime dc = ordonnance.getDateCreation() != null
                     ? ordonnance.getDateCreation()
                     : LocalDateTime.now();
@@ -78,27 +102,39 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                    SET dossier_id = ?,
                        consultation_id = ?,
                        date_ordo = ?,
-                       date_creation = ?
+                       date_modification = ?
                  WHERE id = ?
                 """;
 
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // TODO : idem, à adapter quand tu ajoutes dossier / consultation dans l'entité
-            ps.setObject(1, null); // dossier_id
-            ps.setObject(2, null); // consultation_id
+            // dossier_id
+            if (ordonnance.getDossierId() != null) {
+                ps.setLong(1, ordonnance.getDossierId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
 
+            // consultation_id
+            if (ordonnance.getConsultationId() != null) {
+                ps.setLong(2, ordonnance.getConsultationId());
+            } else {
+                ps.setNull(2, Types.BIGINT);
+            }
+
+            // date_ordo
             if (ordonnance.getDate() != null) {
                 ps.setDate(3, Date.valueOf(ordonnance.getDate()));
             } else {
                 ps.setNull(3, Types.DATE);
             }
 
-            LocalDateTime dc = ordonnance.getDateCreation() != null
-                    ? ordonnance.getDateCreation()
+            // date_modification -> mapped sur BaseEntity.dateDerniereModification
+            LocalDateTime dm = ordonnance.getDateDerniereModification() != null
+                    ? ordonnance.getDateDerniereModification()
                     : LocalDateTime.now();
-            ps.setTimestamp(4, Timestamp.valueOf(dc));
+            ps.setTimestamp(4, Timestamp.valueOf(dm));
 
             ps.setLong(5, ordonnance.getId());
 
@@ -170,6 +206,50 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
     // =========================================================================================
     // Méthodes spécifiques de OrdonnanceRepository
     // =========================================================================================
+
+    @Override
+    public List<Ordonnance> findByDossierId(Long dossierId) {
+        String sql = "SELECT * FROM ordonnance WHERE dossier_id = ? ORDER BY date_ordo, id";
+        List<Ordonnance> list = new ArrayList<>();
+
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, dossierId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur lors de la récupération des ordonnances par dossier", e);
+        }
+
+        return list;
+    }
+
+    @Override
+    public List<Ordonnance> findByConsultationId(Long consultationId) {
+        String sql = "SELECT * FROM ordonnance WHERE consultation_id = ? ORDER BY date_ordo, id";
+        List<Ordonnance> list = new ArrayList<>();
+
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, consultationId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur lors de la récupération des ordonnances par consultation", e);
+        }
+
+        return list;
+    }
 
     @Override
     public List<Ordonnance> findByDate(LocalDate date) {

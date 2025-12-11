@@ -15,5 +15,7 @@ import java.time.LocalDate;
 @SuperBuilder
 public class Ordonnance extends BaseEntity {
 
+    private Long dossierId;
+    private Long consultationId;
     private LocalDate date;
 }

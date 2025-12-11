@@ -63,3 +63,41 @@ INSERT INTO charge (id, cabinet_id, titre, description, montant, date_charge) VA
 
 INSERT INTO revenu (id, cabinet_id, titre, description, montant, date_revenu) VALUES
 (1, 1, 'Vente de produits', 'Vente de brosses et dentifrices', 500.00, NOW() - INTERVAL 1 DAY);
+
+-- 9. MEDICAMENTS (Module Ordonnance)
+INSERT INTO medicament (id, nom, laboratoire, type_medicament, forme, remboursable, prix_unitaire, description, date_creation)
+VALUES
+(1, 'Doliprane 1000mg', 'Sanofi', 'Antalgique', 'COMPRIME', 1, 12.50, 'Douleurs modérées', NOW()),
+(2, 'Amoxicilline 1g', 'Sandoz', 'Antibiotique', 'COMPRIME', 1, 28.00, 'Infections ORL', NOW())
+ON DUPLICATE KEY UPDATE prix_unitaire = VALUES(prix_unitaire);
+-- 10. ORDONNANCE pour la consultation 1
+INSERT INTO ordonnance (id, dossier_id, consultation_id, date_ordo, date_creation)
+VALUES
+(1, 1, 1, CURRENT_DATE(), NOW())
+ON DUPLICATE KEY UPDATE date_ordo = VALUES(date_ordo);
+-- 11. PRESCRIPTIONS liées à l'ordonnance 1
+INSERT INTO prescription (id, ordonnance_id, medicament_id, quantite, frequence, duree_en_jours, date_creation)
+VALUES
+(1, 1, 1, 1, '1 comprimé matin et soir', 5, NOW()),
+(2, 1, 2, 2, '1 comprimé matin', 7, NOW())
+ON DUPLICATE KEY UPDATE frequence = VALUES(frequence);
+-- 12. CERTIFICAT pour le dossier 1
+INSERT INTO certificat (id, dossier_id, date_debut, date_fin, duree, note_medecin, date_creation)
+VALUES
+(1, 1, CURRENT_DATE(), CURRENT_DATE() + INTERVAL 3 DAY, 3,
+ 'Arrêt de travail suite à intervention dentaire',
+ NOW())
+ON DUPLICATE KEY UPDATE duree = VALUES(duree);
+-- 13. INTERVENTION MEDECIN (Acte sur la consultation 1)
+INSERT INTO intervention_medecin (id, consultation_id, acte_id, prix_patient, num_dent, date_creation)
+VALUES
+(1, 1, 101, 300.00, 26, NOW())
+ON DUPLICATE KEY UPDATE prix_patient = VALUES(prix_patient);
+-- 14. NOTIFICATIONS (pour l'admin et la secrétaire)
+INSERT INTO notification (id, utilisateur_id, titre, message, priorite,
+                          date_notification, date_creation)
+VALUES
+(1, 1, 'Sauvegarde système', 'Sauvegarde quotidienne terminée avec succès.', 'MOYENNE', NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY),
+(2, 3, 'Rappel RDV', 'Vous avez 5 rendez-vous à confirmer aujourd''hui.', 'HAUTE', NOW(), NOW())
+ON DUPLICATE KEY UPDATE message = VALUES(message);
+

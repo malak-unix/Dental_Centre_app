@@ -1,3 +1,5 @@
+package ma.dentalTech.repository.common;
+
 import ma.dentalTech.entities.ordonnance.Ordonnance;
 
 import java.sql.ResultSet;

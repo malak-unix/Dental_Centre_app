@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @SuperBuilder
 public class Certificat extends BaseEntity {
+    private Long dossierId;
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private int duree;

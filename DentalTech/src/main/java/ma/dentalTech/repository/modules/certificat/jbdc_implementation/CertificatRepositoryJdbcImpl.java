@@ -20,6 +20,9 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
         Long id = rs.getLong("id");
         if (rs.wasNull()) id = null;
 
+        Long dossierId = rs.getLong("dossier_id");
+        if (rs.wasNull()) dossierId = null;
+
         LocalDate dateDebut = null;
         Date d1 = rs.getDate("date_debut");
         if (d1 != null) dateDebut = d1.toLocalDate();
@@ -38,6 +41,7 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
 
         return Certificat.builder()
                 .id(id)
+                .dossierId(dossierId)
                 .dateDebut(dateDebut)
                 .dateFin(dateFin)
                 .duree(rs.getInt("duree"))
@@ -57,28 +61,42 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
     public void create(Certificat c) {
         String sql = """
                 INSERT INTO certificat
-                (date_debut, date_fin, duree, note_medecin,
+                (dossier_id, date_debut, date_fin, duree, note_medecin,
                  date_creation, cree_par, modifie_par)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (c.getDateDebut() != null) ps.setDate(1, Date.valueOf(c.getDateDebut()));
-            else ps.setNull(1, Types.DATE);
+            // dossier_id
+            if (c.getDossierId() != null) {
+                ps.setLong(1, c.getDossierId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
 
-            if (c.getDateFin() != null) ps.setDate(2, Date.valueOf(c.getDateFin()));
+            // date_debut
+            if (c.getDateDebut() != null) ps.setDate(2, Date.valueOf(c.getDateDebut()));
             else ps.setNull(2, Types.DATE);
 
-            ps.setInt(3, c.getDuree());
-            ps.setString(4, c.getNoteMedecin());
+            // date_fin
+            if (c.getDateFin() != null) ps.setDate(3, Date.valueOf(c.getDateFin()));
+            else ps.setNull(3, Types.DATE);
 
+            // duree
+            ps.setInt(4, c.getDuree());
+
+            // note_medecin
+            ps.setString(5, c.getNoteMedecin());
+
+            // date_creation
             LocalDateTime dc = (c.getDateCreation() != null) ? c.getDateCreation() : LocalDateTime.now();
-            ps.setTimestamp(5, Timestamp.valueOf(dc));
+            ps.setTimestamp(6, Timestamp.valueOf(dc));
 
-            ps.setString(6, c.getCreePar());
-            ps.setString(7, c.getModifiePar());
+            // cree_par / modifie_par
+            ps.setString(7, c.getCreePar());
+            ps.setString(8, c.getModifiePar());
 
             ps.executeUpdate();
 
@@ -94,7 +112,8 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
     public void update(Certificat c) {
         String sql = """
                 UPDATE certificat
-                   SET date_debut = ?,
+                   SET dossier_id = ?,
+                       date_debut = ?,
                        date_fin = ?,
                        duree = ?,
                        note_medecin = ?,
@@ -106,22 +125,38 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            if (c.getDateDebut() != null) ps.setDate(1, Date.valueOf(c.getDateDebut()));
-            else ps.setNull(1, Types.DATE);
+            // dossier_id
+            if (c.getDossierId() != null) {
+                ps.setLong(1, c.getDossierId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
+            }
 
-            if (c.getDateFin() != null) ps.setDate(2, Date.valueOf(c.getDateFin()));
+            // date_debut
+            if (c.getDateDebut() != null) ps.setDate(2, Date.valueOf(c.getDateDebut()));
             else ps.setNull(2, Types.DATE);
 
-            ps.setInt(3, c.getDuree());
-            ps.setString(4, c.getNoteMedecin());
+            // date_fin
+            if (c.getDateFin() != null) ps.setDate(3, Date.valueOf(c.getDateFin()));
+            else ps.setNull(3, Types.DATE);
 
+            // duree
+            ps.setInt(4, c.getDuree());
+
+            // note_medecin
+            ps.setString(5, c.getNoteMedecin());
+
+            // date_modification
             LocalDateTime dm = (c.getDateDerniereModification() != null)
                     ? c.getDateDerniereModification()
                     : LocalDateTime.now();
-            ps.setTimestamp(5, Timestamp.valueOf(dm));
+            ps.setTimestamp(6, Timestamp.valueOf(dm));
 
-            ps.setString(6, c.getModifiePar());
-            ps.setLong(7, c.getId());
+            // modifie_par
+            ps.setString(7, c.getModifiePar());
+
+            // id
+            ps.setLong(8, c.getId());
 
             ps.executeUpdate();
         } catch (SQLException | DaoException e) {
@@ -187,6 +222,26 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
     // =====================================================================================
     // Méthodes spécifiques
     // =====================================================================================
+
+    @Override
+    public List<Certificat> findByDossierId(Long dossierId) {
+        String sql = "SELECT * FROM certificat WHERE dossier_id = ? ORDER BY date_debut, id";
+        List<Certificat> list = new ArrayList<>();
+
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, dossierId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(map(rs));
+            }
+        } catch (SQLException | DaoException e) {
+            throw new RuntimeException("Erreur lors de la récupération des certificats par dossier", e);
+        }
+
+        return list;
+    }
 
     @Override
     public List<Certificat> findByDateDebut(LocalDate dateDebut) {
