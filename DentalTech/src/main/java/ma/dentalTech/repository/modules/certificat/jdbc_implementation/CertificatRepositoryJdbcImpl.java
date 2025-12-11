@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.certificat.jbdc_implementation;
+package ma.dentalTech.repository.modules.certificat.jdbc_implementation;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.certificat.Certificat;

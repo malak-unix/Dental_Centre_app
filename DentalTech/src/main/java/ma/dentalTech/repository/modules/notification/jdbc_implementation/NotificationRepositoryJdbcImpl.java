@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.notification.jbdc_implementation;
+package ma.dentalTech.repository.modules.notification.jdbc_implementation;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.enums.PrioriteNotification;

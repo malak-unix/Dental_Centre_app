@@ -24,10 +24,10 @@ public class TestConsultationModule {
 
         System.out.println("=== [Consultation] INSERT (Intervention) ===");
 
-        // consultation_id = 1 et acte_id = 101 doivent exister (seeds.sql)
+        // consultation_id = 1 et id = 101 doivent exister (seeds.sql)
         InterventionMedecin inter = InterventionMedecin.builder()
                 .consultationId(1L)
-                .acteId(101L)
+                .acteId(1L)
                 .prixDePatient(300.0)
                 .numDent(26)
                 .creePar("TEST")
