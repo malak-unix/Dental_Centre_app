@@ -1,7 +1,7 @@
 package ma.dentalTech.tests;
 
 import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.conf.ApplicationContext;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.rdv.RDV;
 import ma.dentalTech.service.modules.rdv.api.RdvService;

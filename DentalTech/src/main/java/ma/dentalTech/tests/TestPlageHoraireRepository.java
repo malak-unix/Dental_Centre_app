@@ -1,6 +1,6 @@
 package ma.dentalTech.tests;
 
-import ma.dentalTech.conf.ApplicationContext;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.plageHoraire.PlageHoraire;
 import ma.dentalTech.repository.modules.plageHoraire.api.PlageHoraireRepository;
 

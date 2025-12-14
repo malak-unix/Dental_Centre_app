@@ -1,404 +1,199 @@
 package ma.dentalTech.repository.modules.rdv.impl;
 
-import ma.dentalTech.common.exceptions.DaoException;
-import ma.dentalTech.entities.enums.EtatRendezVous;
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.rdv.RDV;
-import ma.dentalTech.repository.common.JdbcUtils;
+import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
 
 import java.sql.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implémentation JDBC du RdvRepository.
- * Utilise la table RDV définie dans schema.sql.
- */
 public class RdvRepositoryImpl implements RdvRepository {
-
-    // =========================================================================
-    //  Mapping ResultSet -> RDV
-    // =========================================================================
-    private RDV map(ResultSet rs) throws SQLException {
-        Long id = rs.getLong("id");
-        if (rs.wasNull()) id = null;
-
-        Long patientId = rs.getLong("patient_id");
-        if (rs.wasNull()) patientId = null;
-
-        Long detailJourneeId = rs.getLong("detail_journee_id");
-        if (rs.wasNull()) detailJourneeId = null;
-
-        Long listeAttenteId = rs.getLong("liste_attente_id");
-        if (rs.wasNull()) listeAttenteId = null;
-
-        Date dateRdvSql = rs.getDate("date_rdv");
-        LocalDate dateRdv = (dateRdvSql != null) ? dateRdvSql.toLocalDate() : null;
-
-        Time timeSql = rs.getTime("heure");
-        LocalTime heure = (timeSql != null) ? timeSql.toLocalTime() : null;
-
-        String motif = rs.getString("motif");
-        String statutDb = rs.getString("statut");
-        String noteMedecin = rs.getString("note_medecin");
-
-        Timestamp tsCreation = rs.getTimestamp("date_creation");
-        Timestamp tsModification = rs.getTimestamp("date_modification");
-        LocalDateTime dateCreation = (tsCreation != null) ? tsCreation.toLocalDateTime() : null;
-        LocalDateTime dateModification = (tsModification != null) ? tsModification.toLocalDateTime() : null;
-
-        String creePar = rs.getString("cree_par");
-        String modifiePar = rs.getString("modifie_par");
-
-        // Mapping statut DB -> enum EtatRendezVous
-        EtatRendezVous statut = null;
-        if (statutDb != null) {
-            try {
-                // La colonne SQL est ENUM('PREVU','CONFIRME','EN_COURS','TERMINE','ANNULE','ABSENT')
-                // et l'enum Java a exactement les mêmes noms
-                statut = EtatRendezVous.valueOf(statutDb.toUpperCase());
-            } catch (IllegalArgumentException ex) {
-                // Valeur inconnue en base : on laisse statut = null
-            }
-        }
-
-        return RDV.builder()
-                .id(id)
-                .patientId(patientId)
-                .detailJourneeId(detailJourneeId)
-                .listeAttenteId(listeAttenteId)
-                .date(dateRdv)
-                .heure(heure)
-                .motif(motif)
-                .status(statut)
-                .noteMedecin(noteMedecin)
-                .dateCreation(dateCreation)
-                .dateDerniereModification(dateModification)
-                .creePar(creePar)
-                .modifiePar(modifiePar)
-                .build();
-    }
-
-    // =========================================================================
-    //  CRUD de base
-    // =========================================================================
 
     @Override
     public List<RDV> findAll() {
         String sql = "SELECT * FROM rdv";
-        List<RDV> result = new ArrayList<>();
+        List<RDV> list = new ArrayList<>();
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                result.add(map(rs));
-            }
-            return result;
+            while (rs.next()) list.add(RowMappers.mapRdv(rs));
+            return list;
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des RDV", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findAll() RDV", e);
         }
     }
 
     @Override
     public RDV findById(Long id) {
         if (id == null) return null;
-
         String sql = "SELECT * FROM rdv WHERE id = ?";
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
-
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return map(rs);
-                }
+                return rs.next() ? RowMappers.mapRdv(rs) : null;
             }
-            return null;
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche du RDV par id", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findById() RDV, id=" + id, e);
         }
     }
 
     @Override
-    public void create(RDV entity) {
-        String sql = "INSERT INTO rdv " +
-                "(patient_id, detail_journee_id, liste_attente_id, " +
-                " date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public void create(RDV r) {
+        String sql = """
+            INSERT INTO rdv
+            (patient_id, detail_journee_id, liste_attente_id, date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // patient_id
-            if (entity.getPatientId() != null) {
-                ps.setLong(1, entity.getPatientId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+            ps.setObject(1, r.getPatientId(), Types.BIGINT);
+            ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
+            ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
-            // detail_journee_id
-            if (entity.getDetailJourneeId() != null) {
-                ps.setLong(2, entity.getDetailJourneeId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
+            ps.setDate(4, Date.valueOf(r.getDateRdv())); // date_rdv NOT NULL
+            ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
-            // liste_attente_id
-            if (entity.getListeAttenteId() != null) {
-                ps.setLong(3, entity.getListeAttenteId());
-            } else {
-                ps.setNull(3, Types.BIGINT);
-            }
+            ps.setString(6, r.getMotif());
+            ps.setString(7, r.getStatut());       // si enum -> r.getStatut().name()
+            ps.setString(8, r.getNoteMedecin());
 
-            // date_rdv
-            if (entity.getDate() != null) {
-                ps.setDate(4, Date.valueOf(entity.getDate()));
-            } else {
-                ps.setNull(4, Types.DATE);
-            }
-
-            // heure
-            if (entity.getHeure() != null) {
-                ps.setTime(5, Time.valueOf(entity.getHeure()));
-            } else {
-                ps.setNull(5, Types.TIME);
-            }
-
-            // motif
-            ps.setString(6, entity.getMotif());
-
-            // statut enum -> string DB (exactement PREVU, CONFIRME, EN_COURS, TERMINE, ANNULE, ABSENT)
-            if (entity.getStatus() != null) {
-                ps.setString(7, entity.getStatus().name());
-            } else {
-                ps.setNull(7, Types.VARCHAR);
-            }
-
-            // note_medecin
-            ps.setString(8, entity.getNoteMedecin());
-
-            // cree_par / modifie_par
-            ps.setString(9, entity.getCreePar());
-            ps.setString(10, entity.getModifiePar());
+            ps.setString(9, r.getCreePar());
+            ps.setString(10, r.getModifiePar());
 
             ps.executeUpdate();
-
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) {
-                    entity.setId(keys.getLong(1));
-                }
+                if (keys.next()) r.setId(keys.getLong(1));
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la création du RDV", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur create() RDV", e);
         }
     }
 
     @Override
-    public void update(RDV entity) {
-        if (entity.getId() == null) {
-            throw new IllegalArgumentException("Impossible de mettre à jour un RDV sans id");
-        }
+    public void update(RDV r) {
+        if (r.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
-        String sql = "UPDATE rdv SET " +
-                "date_rdv = ?, " +
-                "heure = ?, " +
-                "motif = ?, " +
-                "statut = ?, " +
-                "note_medecin = ?, " +
-                "modifie_par = ? " +
-                "WHERE id = ?";
+        String sql = """
+            UPDATE rdv
+               SET patient_id = ?,
+                   detail_journee_id = ?,
+                   liste_attente_id = ?,
+                   date_rdv = ?,
+                   heure = ?,
+                   motif = ?,
+                   statut = ?,
+                   note_medecin = ?,
+                   modifie_par = ?
+             WHERE id = ?
+            """;
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            // 1 - date_rdv
-            if (entity.getDate() != null) {
-                ps.setDate(1, Date.valueOf(entity.getDate()));
-            } else {
-                ps.setNull(1, Types.DATE);
-            }
+            ps.setObject(1, r.getPatientId(), Types.BIGINT);
+            ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
+            ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
-            // 2 - heure
-            if (entity.getHeure() != null) {
-                ps.setTime(2, Time.valueOf(entity.getHeure()));
-            } else {
-                ps.setNull(2, Types.TIME);
-            }
+            ps.setDate(4, Date.valueOf(r.getDateRdv()));
+            ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
-            // 3 - motif
-            ps.setString(3, entity.getMotif());
+            ps.setString(6, r.getMotif());
+            ps.setString(7, r.getStatut());
+            ps.setString(8, r.getNoteMedecin());
 
-            // 4 - statut
-            if (entity.getStatus() != null) {
-                ps.setString(4, entity.getStatus().name());
-            } else {
-                ps.setNull(4, Types.VARCHAR);
-            }
-
-            // 5 - note_medecin
-            ps.setString(5, entity.getNoteMedecin());
-
-            // 6 - modifie_par
-            ps.setString(6, entity.getModifiePar());
-
-            // 7 - id (WHERE id = ?)
-            ps.setLong(7, entity.getId());
+            ps.setString(9, r.getModifiePar());
+            ps.setLong(10, r.getId());
 
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour du RDV", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur update() RDV, id=" + r.getId(), e);
         }
-    }
-
-
-    @Override
-    public void delete(RDV entity) {
-        if (entity == null || entity.getId() == null) return;
-        deleteById(entity.getId());
     }
 
     @Override
     public void deleteById(Long id) {
         if (id == null) return;
-
         String sql = "DELETE FROM rdv WHERE id = ?";
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression du RDV", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur deleteById() RDV, id=" + id, e);
         }
     }
 
-    // =========================================================================
-    //  Méthodes spécifiques
-    // =========================================================================
-
-    @Override
-    public List<RDV> findByDate(LocalDate date) {
-        String sql = "SELECT * FROM rdv WHERE date_rdv = ? ORDER BY heure";
-        List<RDV> result = new ArrayList<>();
-
-        try (Connection cn = JdbcUtils.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setDate(1, Date.valueOf(date));
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    result.add(map(rs));
-                }
-            }
-            return result;
-
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des RDV par date", e);
-        }
-    }
-
+    // -------- spécifiques relations --------
     @Override
     public List<RDV> findByPatientId(Long patientId) {
-        String sql = "SELECT * FROM rdv WHERE patient_id = ? ORDER BY date_rdv, heure";
-        List<RDV> result = new ArrayList<>();
+        String sql = "SELECT * FROM rdv WHERE patient_id = ?";
+        List<RDV> list = new ArrayList<>();
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, patientId);
-
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    result.add(map(rs));
-                }
+                while (rs.next()) list.add(RowMappers.mapRdv(rs));
             }
-            return result;
+            return list;
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des RDV par patient", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByPatientId(), patientId=" + patientId, e);
         }
     }
 
     @Override
-    public List<RDV> findByStatus(EtatRendezVous status) {
-        if (status == null) return new ArrayList<>();
+    public List<RDV> findByDetailJourneeId(Long detailJourneeId) {
+        String sql = "SELECT * FROM rdv WHERE detail_journee_id = ?";
+        List<RDV> list = new ArrayList<>();
 
-        // On utilise directement le nom de l'enum, qui correspond à l'ENUM SQL
-        String statutDb = status.name();
-
-        String sql = "SELECT * FROM rdv WHERE statut = ? ORDER BY date_rdv, heure";
-        List<RDV> result = new ArrayList<>();
-
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, statutDb);
-
+            ps.setLong(1, detailJourneeId);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    result.add(map(rs));
-                }
+                while (rs.next()) list.add(RowMappers.mapRdv(rs));
             }
-            return result;
+            return list;
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des RDV par statut", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByDetailJourneeId(), id=" + detailJourneeId, e);
         }
     }
 
-    @Override
-    public List<RDV> findUpcomingFromToday() {
-        String sql = "SELECT * FROM rdv WHERE date_rdv >= CURRENT_DATE ORDER BY date_rdv, heure";
-        List<RDV> result = new ArrayList<>();
-
-        try (Connection cn = JdbcUtils.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                result.add(map(rs));
-            }
-            return result;
-
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des RDV à venir", e);
-        }
-    }
     @Override
     public List<RDV> findByListeAttenteId(Long listeAttenteId) {
         String sql = "SELECT * FROM rdv WHERE liste_attente_id = ?";
-        List<RDV> result = new ArrayList<>();
+        List<RDV> list = new ArrayList<>();
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, listeAttenteId);
-
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    result.add(map(rs));
-                }
+                while (rs.next()) list.add(RowMappers.mapRdv(rs));
             }
+            return list;
 
-            return result;
-
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des RDV pour liste_attente_id=" + listeAttenteId, e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByListeAttenteId(), id=" + listeAttenteId, e);
         }
     }
-
 }

@@ -1,6 +1,6 @@
 package ma.dentalTech.tests;
 
-import ma.dentalTech.conf.ApplicationContext;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.rdv.RDV;
 import ma.dentalTech.repository.modules.rdv.api.RdvRepository;

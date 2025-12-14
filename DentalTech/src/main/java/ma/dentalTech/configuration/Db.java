@@ -1,4 +1,4 @@
-package ma.dentalTech.conf;
+package ma.dentalTech.configuration;
 
 import lombok.Getter;
 import java.sql.Connection;

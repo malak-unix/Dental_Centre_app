@@ -1,6 +1,6 @@
 package ma.dentalTech.tests;
 
-import ma.dentalTech.conf.ApplicationContext;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
 import ma.dentalTech.entities.enums.Mois;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;

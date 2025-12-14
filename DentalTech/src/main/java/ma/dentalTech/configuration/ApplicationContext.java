@@ -1,4 +1,4 @@
-package ma.dentalTech.conf;
+package ma.dentalTech.configuration;
 
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;

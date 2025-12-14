@@ -1,4 +1,4 @@
-import ma.dentalTech.conf.Db;
+import ma.dentalTech.configuration.Db;
 import java.sql.Connection;
 
 public class TestConnexion {

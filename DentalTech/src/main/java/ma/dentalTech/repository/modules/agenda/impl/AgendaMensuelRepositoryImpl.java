@@ -1,9 +1,8 @@
 package ma.dentalTech.repository.modules.agenda.impl;
 
-import ma.dentalTech.common.exceptions.DaoException;
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
-import ma.dentalTech.entities.enums.Mois;
-import ma.dentalTech.repository.common.JdbcUtils;
+import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 
 import java.sql.*;
@@ -13,34 +12,7 @@ import java.util.List;
 public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
     // ============================
-    //  MAPPER ResultSet -> Entity
-    // ============================
-    private AgendaMensuel map(ResultSet rs) throws SQLException {
-        Long id = rs.getLong("id");
-        if (rs.wasNull()) id = null;
-
-        Long medecinId = rs.getLong("medecin_id");
-        if (rs.wasNull()) medecinId = null;
-
-        String moisStr = rs.getString("mois");
-        Integer annee = rs.getInt("annee");
-        if (rs.wasNull()) annee = null;
-
-        Timestamp tsCreation = rs.getTimestamp("date_creation");
-        Timestamp tsModification = rs.getTimestamp("date_modification");
-
-        return AgendaMensuel.builder()
-                .id(id)
-                .medecinId(medecinId)
-                .mois(moisStr != null ? Mois.valueOf(moisStr) : null)
-                .annee(annee != null ? annee : 0)
-                .dateCreation(tsCreation != null ? tsCreation.toLocalDateTime() : null)
-                .dateDerniereModification(tsModification != null ? tsModification.toLocalDateTime() : null)
-                .build();
-    }
-
-    // ============================
-    //  CRUD (impl CrudRepository)
+    //  CRUD
     // ============================
 
     @Override
@@ -48,16 +20,16 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
         String sql = "SELECT * FROM agenda_mensuel";
         List<AgendaMensuel> list = new ArrayList<>();
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                list.add(map(rs));
+                list.add(RowMappers.mapAgendaMensuel(rs));
             }
             return list;
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findAll() AgendaMensuel", e);
         }
     }
@@ -68,19 +40,19 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
         String sql = "SELECT * FROM agenda_mensuel WHERE id = ?";
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return map(rs);
+                    return RowMappers.mapAgendaMensuel(rs);
                 }
                 return null;
             }
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findById() AgendaMensuel, id=" + id, e);
         }
     }
@@ -92,7 +64,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
             VALUES (?, ?, ?, ?, ?)
             """;
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             if (agenda.getMedecinId() == null) {
@@ -103,11 +75,8 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
             }
 
             ps.setLong(1, agenda.getMedecinId());
-            // mois est un ENUM côté DB => on envoie le nom (JANVIER, FEVRIER, ...)
             ps.setString(2, agenda.getMois().name());
             ps.setInt(3, agenda.getAnnee());
-
-            // audit (optionnel)
             ps.setString(4, agenda.getCreePar());
             ps.setString(5, agenda.getModifiePar());
 
@@ -119,7 +88,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur create() AgendaMensuel", e);
         }
     }
@@ -139,7 +108,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
              WHERE id = ?
             """;
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             if (agenda.getMedecinId() == null) {
@@ -157,7 +126,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur update() AgendaMensuel, id=" + agenda.getId(), e);
         }
     }
@@ -174,13 +143,13 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
         String sql = "DELETE FROM agenda_mensuel WHERE id = ?";
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById() AgendaMensuel, id=" + id, e);
         }
     }
@@ -193,7 +162,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     public AgendaMensuel findByMedecinAndMonth(Long medecinId, String mois, int annee) {
         String sql = "SELECT * FROM agenda_mensuel WHERE medecin_id = ? AND mois = ? AND annee = ?";
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, medecinId);
@@ -201,11 +170,11 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
             ps.setInt(3, annee);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return map(rs);
+                if (rs.next()) return RowMappers.mapAgendaMensuel(rs);
                 return null;
             }
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findByMedecinAndMonth(), medecinId=" + medecinId, e);
         }
     }
@@ -215,19 +184,19 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
         String sql = "SELECT * FROM agenda_mensuel WHERE medecin_id = ?";
         List<AgendaMensuel> list = new ArrayList<>();
 
-        try (Connection cn = JdbcUtils.getConnection();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, medecinId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(map(rs));
+                    list.add(RowMappers.mapAgendaMensuel(rs));
                 }
             }
             return list;
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findByMedecin(), medecinId=" + medecinId, e);
         }
     }
