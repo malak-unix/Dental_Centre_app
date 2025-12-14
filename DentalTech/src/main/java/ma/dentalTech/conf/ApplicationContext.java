@@ -41,39 +41,43 @@ public final class ApplicationContext {
     private static final Map<String, Object> contextByName = new HashMap<>();
 
     static {
-
         String currentBean = "aucun";
 
         try {
-            // ===============================
-            // Chargement du fichier properties
-            // ===============================
             Properties properties = new Properties();
 
             try (InputStream in = ApplicationContext.class.getResourceAsStream("/config/beans.properties")) {
-                if (in == null)
+                if (in == null) {
                     throw new IllegalStateException("Impossible de trouver /config/beans.properties dans le classpath");
-
+                }
                 properties.load(in);
             }
 
-            // ============================================================
-            // 1. MODULE PATIENT
-            // ============================================================
+            java.util.function.Function<String, String> mustGet = (key) -> {
+                String value = properties.getProperty(key);
+                if (value == null || value.trim().isEmpty()) {
+                    throw new IllegalStateException("Clé manquante dans beans.properties : " + key);
+                }
+                return value.trim();
+            };
+
+            // =========================
+            // 1) PATIENT
+            // =========================
             currentBean = "patientRepo";
             PatientRepository patientRepository =
-                    (PatientRepository) Class.forName(properties.getProperty("patientRepo"))
+                    (PatientRepository) Class.forName(mustGet.apply("patientRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "patientService";
             PatientService patientService =
-                    (PatientService) Class.forName(properties.getProperty("patientService"))
+                    (PatientService) Class.forName(mustGet.apply("patientService"))
                             .getDeclaredConstructor(PatientRepository.class)
                             .newInstance(patientRepository);
 
             currentBean = "patientController";
             PatientController patientController =
-                    (PatientController) Class.forName(properties.getProperty("patientController"))
+                    (PatientController) Class.forName(mustGet.apply("patientController"))
                             .getDeclaredConstructor(PatientService.class)
                             .newInstance(patientService);
 
@@ -85,42 +89,40 @@ public final class ApplicationContext {
             contextByName.put("patientService", patientService);
             contextByName.put("patientController", patientController);
 
-            // ============================================================
-            // 2. MODULE CAISSE
-            // ============================================================
+            // =========================
+            // 2) CAISSE
+            // =========================
             currentBean = "factureRepo";
             FactureRepository factureRepository =
-                    (FactureRepository) Class.forName(properties.getProperty("factureRepo"))
+                    (FactureRepository) Class.forName(mustGet.apply("factureRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "chargesRepo";
             ChargesRepository chargesRepository =
-                    (ChargesRepository) Class.forName(properties.getProperty("chargesRepo"))
+                    (ChargesRepository) Class.forName(mustGet.apply("chargesRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "revenusRepo";
             RevenuesRepository revenusRepository =
-                    (RevenuesRepository) Class.forName(properties.getProperty("revenusRepo"))
+                    (RevenuesRepository) Class.forName(mustGet.apply("revenusRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "sitFinRepo";
             SituationFinanciereRepository sitFinRepository =
-                    (SituationFinanciereRepository) Class.forName(properties.getProperty("sitFinRepo"))
+                    (SituationFinanciereRepository) Class.forName(mustGet.apply("sitFinRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "caisseDashboardService";
             CaisseDashboardService caisseService =
-                    (CaisseDashboardService)
-                            Class.forName(properties.getProperty("caisseDashboardService"))
-                                    .getDeclaredConstructor(FactureRepository.class, RevenuesRepository.class, ChargesRepository.class)
-                                    .newInstance(factureRepository, revenusRepository, chargesRepository);
+                    (CaisseDashboardService) Class.forName(mustGet.apply("caisseDashboardService"))
+                            .getDeclaredConstructor(FactureRepository.class, RevenuesRepository.class, ChargesRepository.class)
+                            .newInstance(factureRepository, revenusRepository, chargesRepository);
 
             currentBean = "caisseDashboardController";
             CaisseDashboardController caisseController =
-                    (CaisseDashboardController)
-                            Class.forName(properties.getProperty("caisseDashboardController"))
-                                    .getDeclaredConstructor(CaisseDashboardService.class)
-                                    .newInstance(caisseService);
+                    (CaisseDashboardController) Class.forName(mustGet.apply("caisseDashboardController"))
+                            .getDeclaredConstructor(CaisseDashboardService.class)
+                            .newInstance(caisseService);
 
             context.put(FactureRepository.class, factureRepository);
             context.put(ChargesRepository.class, chargesRepository);
@@ -136,23 +138,23 @@ public final class ApplicationContext {
             contextByName.put("caisseDashboardService", caisseService);
             contextByName.put("caisseDashboardController", caisseController);
 
-            // ============================================================
-            // 3. MODULE RDV
-            // ============================================================
+            // =========================
+            // 3) RDV
+            // =========================
             currentBean = "rdv.repository";
             RdvRepository rdvRepository =
-                    (RdvRepository) Class.forName(properties.getProperty("rdv.repository"))
+                    (RdvRepository) Class.forName(mustGet.apply("rdv.repository"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "rdv.service";
             RdvService rdvService =
-                    (RdvService) Class.forName(properties.getProperty("rdv.service"))
+                    (RdvService) Class.forName(mustGet.apply("rdv.service"))
                             .getDeclaredConstructor(RdvRepository.class)
                             .newInstance(rdvRepository);
 
             currentBean = "rdv.controller";
             RdvController rdvController =
-                    (RdvController) Class.forName(properties.getProperty("rdv.controller"))
+                    (RdvController) Class.forName(mustGet.apply("rdv.controller"))
                             .getDeclaredConstructor(RdvService.class)
                             .newInstance(rdvService);
 
@@ -164,25 +166,24 @@ public final class ApplicationContext {
             contextByName.put("rdv.service", rdvService);
             contextByName.put("rdv.controller", rdvController);
 
-            // ============================================================
-            // 4. MODULE AGENDA
-            // ============================================================
+            // =========================
+            // 4) AGENDA
+            // =========================
             currentBean = "agendaMensuelRepo";
             AgendaMensuelRepository agendaMensuelRepo =
-                    (AgendaMensuelRepository) Class.forName(properties.getProperty("agendaMensuelRepo"))
+                    (AgendaMensuelRepository) Class.forName(mustGet.apply("agendaMensuelRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "detailJourneeRepo";
             DetailJourneeRepository detailJourneeRepo =
-                    (DetailJourneeRepository) Class.forName(properties.getProperty("detailJourneeRepo"))
+                    (DetailJourneeRepository) Class.forName(mustGet.apply("detailJourneeRepo"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "agendaService";
             AgendaService agendaService =
-                    (AgendaService)
-                            Class.forName(properties.getProperty("agendaService"))
-                                    .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
-                                    .newInstance(agendaMensuelRepo, detailJourneeRepo);
+                    (AgendaService) Class.forName(mustGet.apply("agendaService"))
+                            .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
+                            .newInstance(agendaMensuelRepo, detailJourneeRepo);
 
             context.put(AgendaMensuelRepository.class, agendaMensuelRepo);
             context.put(DetailJourneeRepository.class, detailJourneeRepo);
@@ -192,17 +193,17 @@ public final class ApplicationContext {
             contextByName.put("detailJourneeRepo", detailJourneeRepo);
             contextByName.put("agendaService", agendaService);
 
-            // ============================================================
-            // 5. MODULE LISTE D'ATTENTE
-            // ============================================================
+            // =========================
+            // 5) LISTE D'ATTENTE
+            // =========================
             currentBean = "listeAttente.repository";
             ListeAttenteRepository listeAttenteRepository =
-                    (ListeAttenteRepository) Class.forName(properties.getProperty("listeAttente.repository"))
+                    (ListeAttenteRepository) Class.forName(mustGet.apply("listeAttente.repository"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "listeAttente.service";
             ListeAttenteService listeAttenteService =
-                    (ListeAttenteService) Class.forName(properties.getProperty("listeAttente.service"))
+                    (ListeAttenteService) Class.forName(mustGet.apply("listeAttente.service"))
                             .getDeclaredConstructor(ListeAttenteRepository.class, RdvRepository.class)
                             .newInstance(listeAttenteRepository, rdvRepository);
 
@@ -212,17 +213,17 @@ public final class ApplicationContext {
             contextByName.put("listeAttente.repository", listeAttenteRepository);
             contextByName.put("listeAttente.service", listeAttenteService);
 
-            // ============================================================
-            // 6. MODULE PLAGE HORAIRE
-            // ============================================================
+            // =========================
+            // 6) PLAGE HORAIRE
+            // =========================
             currentBean = "plageHoraire.repository";
             PlageHoraireRepository plageHoraireRepository =
-                    (PlageHoraireRepository) Class.forName(properties.getProperty("plageHoraire.repository"))
+                    (PlageHoraireRepository) Class.forName(mustGet.apply("plageHoraire.repository"))
                             .getDeclaredConstructor().newInstance();
 
             currentBean = "plageHoraire.service";
             PlageHoraireService plageHoraireService =
-                    (PlageHoraireService) Class.forName(properties.getProperty("plageHoraire.service"))
+                    (PlageHoraireService) Class.forName(mustGet.apply("plageHoraire.service"))
                             .getDeclaredConstructor(PlageHoraireRepository.class)
                             .newInstance(plageHoraireRepository);
 
@@ -234,19 +235,28 @@ public final class ApplicationContext {
 
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Erreur lors de l'initialisation de l'ApplicationContext (bean courant = "
-                            + currentBean + ")", e);
+                    "Erreur lors de l'initialisation de l'ApplicationContext (bean courant = " + currentBean + ")",
+                    e
+            );
         }
     }
 
     private ApplicationContext() {}
 
     public static Object getBean(String name) {
-        return contextByName.get(name);
+        Object bean = contextByName.get(name);
+        if (bean == null) {
+            throw new IllegalArgumentException("Bean introuvable : " + name);
+        }
+        return bean;
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T getBean(Class<T> clazz) {
-        return (T) context.get(clazz);
+        Object bean = context.get(clazz);
+        if (bean == null) {
+            throw new IllegalArgumentException("Bean introuvable pour type : " + clazz.getName());
+        }
+        return (T) bean;
     }
 }
