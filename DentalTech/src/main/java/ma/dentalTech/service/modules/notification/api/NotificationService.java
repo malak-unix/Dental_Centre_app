@@ -7,13 +7,7 @@ import java.util.List;
 
 public interface NotificationService {
 
-    Notification envoyerNotification(
-            Long utilisateurId,
-            String titre,
-            String message,
-            PrioriteNotification priorite,
-            String utilisateurSysteme
-    );
+    Notification envoyerNotification(Long utilisateurId, String titre, String message, PrioriteNotification priorite, String utilisateurSysteme);
 
     List<Notification> getNotificationsUtilisateur(Long utilisateurId);
 
