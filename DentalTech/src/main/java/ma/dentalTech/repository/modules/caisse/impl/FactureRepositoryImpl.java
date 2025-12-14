@@ -1,9 +1,9 @@
 package ma.dentalTech.repository.modules.caisse.impl;
 
-import ma.dentalTech.common.exceptions.DaoException;
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.StatutFacture;
 import ma.dentalTech.entities.facture.Facture;
-import ma.dentalTech.repository.common.JdbcUtils;
+import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 
 import java.sql.*;
@@ -14,280 +14,215 @@ import java.util.List;
 
 public class FactureRepositoryImpl implements FactureRepository {
 
-    private static final String INSERT_SQL = """
-        INSERT INTO facture (consultation_id, date_facture, total_facture, total_paye, statut)
-        VALUES (?, ?, ?, ?, ?)
-        """;
-
-    private static final String UPDATE_SQL = """
-        UPDATE facture
-           SET consultation_id = ?,
-               date_facture = ?,
-               total_facture = ?,
-               total_paye = ?,
-               statut = ?
-         WHERE id = ?
-        """;
-
-    private static final String DELETE_BY_ID_SQL =
-            "DELETE FROM facture WHERE id = ?";
-
-    private static final String SELECT_BY_ID_SQL = """
-        SELECT id, consultation_id, date_facture, total_facture, total_paye, reste, statut
-          FROM facture
-         WHERE id = ?
-        """;
-
-    private static final String SELECT_ALL_SQL = """
-        SELECT id, consultation_id, date_facture, total_facture, total_paye, reste, statut
-          FROM facture
-        """;
-
-    private static final String SELECT_BETWEEN_DATES_SQL = """
-        SELECT id, consultation_id, date_facture, total_facture, total_paye, reste, statut
-          FROM facture
-         WHERE date_facture BETWEEN ? AND ?
-         ORDER BY date_facture ASC
-        """;
-
-    private static final String TOTAL_FACTURES_SQL = """
-        SELECT SUM(total_facture) AS total
-          FROM facture
-         WHERE date_facture BETWEEN ? AND ?
-        """;
-
-    private static final String TOTAL_REGLE_SQL = """
-        SELECT SUM(total_paye) AS total
-          FROM facture
-         WHERE date_facture BETWEEN ? AND ?
-        """;
-
-    private static final String TOTAL_NON_REGLE_SQL = """
-        SELECT SUM(total_facture - total_paye) AS total
-          FROM facture
-         WHERE date_facture BETWEEN ? AND ?
-        """;
-
-    // =============== MAPPER ===============
-    private Facture map(ResultSet rs) throws SQLException {
-        Long id = rs.getLong("id");
-        if (rs.wasNull()) id = null;
-
-        Long consultationId = rs.getLong("consultation_id");
-        if (rs.wasNull()) consultationId = null;
-
-        Date sqlDate = rs.getDate("date_facture");
-        LocalDate dateFacture = sqlDate != null ? sqlDate.toLocalDate() : null;
-
-        Double totalFacture = rs.getDouble("total_facture");
-        if (rs.wasNull()) totalFacture = null;
-
-        Double totalPaye = rs.getDouble("total_paye");
-        if (rs.wasNull()) totalPaye = null;
-
-        Double reste = rs.getDouble("reste");
-        if (rs.wasNull()) reste = null;
-
-        String statutStr = rs.getString("statut");
-        StatutFacture statut = statutStr != null ? StatutFacture.valueOf(statutStr) : null;
-
-        return Facture.builder()
-                .id(id)
-                .consultationId(consultationId)
-                .dateFacture(dateFacture)
-                .totalFacture(totalFacture)
-                .totalPaye(totalPaye)
-                .reste(reste)
-                .statut(statut)
-                .build();
-    }
-
-    // =============== CRUD ===============
     @Override
     public List<Facture> findAll() {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
+        String sql = "SELECT * FROM facture";
+        List<Facture> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            List<Facture> list = new ArrayList<>();
-            while (rs.next()) list.add(map(rs));
+            while (rs.next()) list.add(RowMappers.mapFacture(rs));
             return list;
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findAll() Facture", e);
         }
     }
 
     @Override
     public Facture findById(Long id) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
+        if (id == null) return null;
+        String sql = "SELECT * FROM facture WHERE id = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return map(rs);
-                return null;
+                return rs.next() ? RowMappers.mapFacture(rs) : null;
             }
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findById() Facture, id=" + id, e);
         }
     }
 
     @Override
-    public void create(Facture entity) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
+    public void create(Facture f) {
+        String sql = """
+            INSERT INTO facture (consultation_id, date_facture, total_facture, total_paye, statut, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """;
 
-            if (entity.getConsultationId() != null) {
-                ps.setLong(1, entity.getConsultationId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (entity.getDateFacture() != null) {
-                ps.setDate(2, Date.valueOf(entity.getDateFacture()));
-            } else {
-                ps.setNull(2, Types.DATE);
-            }
-
-            if (entity.getTotalFacture() != null) {
-                ps.setDouble(3, entity.getTotalFacture());
-            } else {
-                ps.setNull(3, Types.DECIMAL);
-            }
-
-            if (entity.getTotalPaye() != null) {
-                ps.setDouble(4, entity.getTotalPaye());
-            } else {
-                ps.setNull(4, Types.DECIMAL);
-            }
-
-            ps.setString(5, entity.getStatut() != null ? entity.getStatut().name() : null);
+            ps.setObject(1, f.getConsultationId(), Types.BIGINT);
+            ps.setDate(2, f.getDateFacture() != null ? Date.valueOf(f.getDateFacture()) : null);
+            ps.setDouble(3, f.getTotalFacture() == null ? 0.0 : f.getTotalFacture());
+            ps.setDouble(4, f.getTotalPaye() == null ? 0.0 : f.getTotalPaye());
+            ps.setString(5, f.getStatut() != null ? f.getStatut().name() : StatutFacture.NON_PAYEE.name());
+            ps.setString(6, f.getCreePar());
+            ps.setString(7, f.getModifiePar());
 
             ps.executeUpdate();
-
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) entity.setId(keys.getLong(1));
+                if (keys.next()) f.setId(keys.getLong(1));
             }
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur create() Facture", e);
         }
     }
 
     @Override
-    public void update(Facture entity) {
-        if (entity.getId() == null) {
-            throw new RuntimeException("update() Facture sans id");
-        }
+    public void update(Facture f) {
+        if (f.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(UPDATE_SQL)) {
+        String sql = """
+            UPDATE facture
+               SET consultation_id = ?, date_facture = ?, total_facture = ?, total_paye = ?, statut = ?, modifie_par = ?
+             WHERE id = ?
+            """;
 
-            if (entity.getConsultationId() != null) {
-                ps.setLong(1, entity.getConsultationId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            if (entity.getDateFacture() != null) {
-                ps.setDate(2, Date.valueOf(entity.getDateFacture()));
-            } else {
-                ps.setNull(2, Types.DATE);
-            }
+            ps.setObject(1, f.getConsultationId(), Types.BIGINT);
+            ps.setDate(2, f.getDateFacture() != null ? Date.valueOf(f.getDateFacture()) : null);
+            ps.setDouble(3, f.getTotalFacture() == null ? 0.0 : f.getTotalFacture());
+            ps.setDouble(4, f.getTotalPaye() == null ? 0.0 : f.getTotalPaye());
+            ps.setString(5, f.getStatut() != null ? f.getStatut().name() : null);
+            ps.setString(6, f.getModifiePar());
+            ps.setLong(7, f.getId());
 
-            if (entity.getTotalFacture() != null) {
-                ps.setDouble(3, entity.getTotalFacture());
-            } else {
-                ps.setNull(3, Types.DECIMAL);
-            }
+            ps.executeUpdate();
 
-            if (entity.getTotalPaye() != null) {
-                ps.setDouble(4, entity.getTotalPaye());
-            } else {
-                ps.setNull(4, Types.DECIMAL);
-            }
-
-            ps.setString(5, entity.getStatut() != null ? entity.getStatut().name() : null);
-            ps.setLong(6, entity.getId());
-
-            int updated = ps.executeUpdate();
-            if (updated == 0) {
-                throw new RuntimeException("Aucune facture mise à jour, id=" + entity.getId());
-            }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur update() Facture", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur update() Facture, id=" + f.getId(), e);
         }
     }
 
     @Override
     public void delete(Facture entity) {
-        if (entity.getId() == null) return;
+        if (entity == null || entity.getId() == null) return;
         deleteById(entity.getId());
     }
 
     @Override
     public void deleteById(Long id) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
+        if (id == null) return;
+        String sql = "DELETE FROM facture WHERE id = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById() Facture, id=" + id, e);
         }
     }
 
-    // =============== Spécifiques ===============
     @Override
     public List<Facture> findByDateBetween(LocalDateTime start, LocalDateTime end) {
-        // date_facture est un DATE → on ignore l'heure dans la requête
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_BETWEEN_DATES_SQL)) {
+        // facture.date_facture est DATE
+        LocalDate d1 = start.toLocalDate();
+        LocalDate d2 = end.toLocalDate();
 
-            ps.setDate(1, Date.valueOf(start.toLocalDate()));
-            ps.setDate(2, Date.valueOf(end.toLocalDate()));
+        String sql = "SELECT * FROM facture WHERE date_facture BETWEEN ? AND ?";
+        List<Facture> list = new ArrayList<>();
 
-            List<Facture> list = new ArrayList<>();
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDate(1, Date.valueOf(d1));
+            ps.setDate(2, Date.valueOf(d2));
+
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(map(rs));
+                while (rs.next()) list.add(RowMappers.mapFacture(rs));
             }
             return list;
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findByDateBetween() Facture", e);
         }
     }
 
     @Override
     public Double calculateTotalFactures(LocalDateTime start, LocalDateTime end) {
-        return executeTotalQuery(TOTAL_FACTURES_SQL, start, end, "Erreur calculateTotalFactures()");
+        LocalDate d1 = start.toLocalDate();
+        LocalDate d2 = end.toLocalDate();
+
+        String sql = "SELECT COALESCE(SUM(total_facture),0) AS total FROM facture WHERE date_facture BETWEEN ? AND ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDate(1, Date.valueOf(d1));
+            ps.setDate(2, Date.valueOf(d2));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble("total") : 0.0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur calculateTotalFactures()", e);
+        }
     }
 
     @Override
     public Double calculateTotalRegle(LocalDateTime start, LocalDateTime end) {
-        return executeTotalQuery(TOTAL_REGLE_SQL, start, end, "Erreur calculateTotalRegle()");
+        LocalDate d1 = start.toLocalDate();
+        LocalDate d2 = end.toLocalDate();
+
+        String sql = """
+            SELECT COALESCE(SUM(total_paye),0) AS total
+            FROM facture
+            WHERE date_facture BETWEEN ? AND ?
+            """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDate(1, Date.valueOf(d1));
+            ps.setDate(2, Date.valueOf(d2));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble("total") : 0.0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur calculateTotalRegle()", e);
+        }
     }
 
     @Override
     public Double calculateTotalNonRegle(LocalDateTime start, LocalDateTime end) {
-        return executeTotalQuery(TOTAL_NON_REGLE_SQL, start, end, "Erreur calculateTotalNonRegle()");
-    }
+        LocalDate d1 = start.toLocalDate();
+        LocalDate d2 = end.toLocalDate();
 
-    private Double executeTotalQuery(String sql, LocalDateTime start, LocalDateTime end, String errorMessage) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = """
+            SELECT COALESCE(SUM(reste),0) AS total
+            FROM facture
+            WHERE date_facture BETWEEN ? AND ?
+            """;
 
-            ps.setDate(1, Date.valueOf(start.toLocalDate()));
-            ps.setDate(2, Date.valueOf(end.toLocalDate()));
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDate(1, Date.valueOf(d1));
+            ps.setDate(2, Date.valueOf(d2));
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    double total = rs.getDouble("total");
-                    if (rs.wasNull()) return 0.0;
-                    return total;
-                }
-                return 0.0;
+                return rs.next() ? rs.getDouble("total") : 0.0;
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException(errorMessage, e);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur calculateTotalNonRegle()", e);
         }
     }
 }

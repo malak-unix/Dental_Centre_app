@@ -56,12 +56,10 @@ public class PlageHoraireRepositoryImpl implements PlageHoraireRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (p.getDetailJourneeId() == null) throw new IllegalArgumentException("detailJourneeId obligatoire");
-
             ps.setLong(1, p.getDetailJourneeId());
             ps.setTime(2, Time.valueOf(p.getHeureDebut()));
             ps.setTime(3, Time.valueOf(p.getHeureFin()));
-            ps.setBoolean(4, p.isDisponible());
+            ps.setBoolean(4, Boolean.TRUE.equals(p.getDisponible()));
             ps.setString(5, p.getCreePar());
             ps.setString(6, p.getModifiePar());
 
@@ -81,23 +79,17 @@ public class PlageHoraireRepositoryImpl implements PlageHoraireRepository {
 
         String sql = """
             UPDATE plage_horaire
-               SET detail_journee_id = ?,
-                   heure_debut = ?,
-                   heure_fin = ?,
-                   disponible = ?,
-                   modifie_par = ?
+               SET detail_journee_id = ?, heure_debut = ?, heure_fin = ?, disponible = ?, modifie_par = ?
              WHERE id = ?
             """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            if (p.getDetailJourneeId() == null) throw new IllegalArgumentException("detailJourneeId obligatoire");
-
             ps.setLong(1, p.getDetailJourneeId());
             ps.setTime(2, Time.valueOf(p.getHeureDebut()));
             ps.setTime(3, Time.valueOf(p.getHeureFin()));
-            ps.setBoolean(4, p.isDisponible());
+            ps.setBoolean(4, Boolean.TRUE.equals(p.getDisponible()));
             ps.setString(5, p.getModifiePar());
             ps.setLong(6, p.getId());
 
@@ -109,9 +101,14 @@ public class PlageHoraireRepositoryImpl implements PlageHoraireRepository {
     }
 
     @Override
+    public void delete(PlageHoraire entity) {
+        if (entity == null || entity.getId() == null) return;
+        deleteById(entity.getId());
+    }
+
+    @Override
     public void deleteById(Long id) {
         if (id == null) return;
-
         String sql = "DELETE FROM plage_horaire WHERE id = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -125,23 +122,32 @@ public class PlageHoraireRepositoryImpl implements PlageHoraireRepository {
         }
     }
 
-    // spécifique
     @Override
     public List<PlageHoraire> findByDetailJourneeId(Long detailJourneeId) {
         String sql = "SELECT * FROM plage_horaire WHERE detail_journee_id = ?";
+        return selectList(sql, detailJourneeId);
+    }
+
+    @Override
+    public List<PlageHoraire> findDisponiblesByDetailJournee(Long detailJourneeId) {
+        String sql = "SELECT * FROM plage_horaire WHERE detail_journee_id = ? AND disponible = 1";
+        return selectList(sql, detailJourneeId);
+    }
+
+    private List<PlageHoraire> selectList(String sql, Long id) {
         List<PlageHoraire> list = new ArrayList<>();
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setLong(1, detailJourneeId);
+            ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(RowMappers.mapPlageHoraire(rs));
             }
             return list;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByDetailJourneeId(), id=" + detailJourneeId, e);
+            throw new RuntimeException("Erreur selectList() PlageHoraire", e);
         }
     }
 }

@@ -1,11 +1,13 @@
 package ma.dentalTech.repository.modules.rdv.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.rdv.RDV;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,11 +63,11 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
-            ps.setDate(4, Date.valueOf(r.getDateRdv())); // date_rdv NOT NULL
+            ps.setDate(4, Date.valueOf(r.getDate())); // date_rdv NOT NULL
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatut());       // si enum -> r.getStatut().name()
+            ps.setString(7, r.getStatus() != null ? r.getStatus().name() : EtatRendezVous.PREVU.name());
             ps.setString(8, r.getNoteMedecin());
 
             ps.setString(9, r.getCreePar());
@@ -87,15 +89,8 @@ public class RdvRepositoryImpl implements RdvRepository {
 
         String sql = """
             UPDATE rdv
-               SET patient_id = ?,
-                   detail_journee_id = ?,
-                   liste_attente_id = ?,
-                   date_rdv = ?,
-                   heure = ?,
-                   motif = ?,
-                   statut = ?,
-                   note_medecin = ?,
-                   modifie_par = ?
+               SET patient_id = ?, detail_journee_id = ?, liste_attente_id = ?, date_rdv = ?, heure = ?,
+                   motif = ?, statut = ?, note_medecin = ?, modifie_par = ?
              WHERE id = ?
             """;
 
@@ -105,12 +100,11 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
-
-            ps.setDate(4, Date.valueOf(r.getDateRdv()));
+            ps.setDate(4, Date.valueOf(r.getDate()));
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatut());
+            ps.setString(7, r.getStatus() != null ? r.getStatus().name() : null);
             ps.setString(8, r.getNoteMedecin());
 
             ps.setString(9, r.getModifiePar());
@@ -121,6 +115,12 @@ public class RdvRepositoryImpl implements RdvRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Erreur update() RDV, id=" + r.getId(), e);
         }
+    }
+
+    @Override
+    public void delete(RDV entity) {
+        if (entity == null || entity.getId() == null) return;
+        deleteById(entity.getId());
     }
 
     @Override
@@ -139,61 +139,93 @@ public class RdvRepositoryImpl implements RdvRepository {
         }
     }
 
-    // -------- spécifiques relations --------
     @Override
     public List<RDV> findByPatientId(Long patientId) {
         String sql = "SELECT * FROM rdv WHERE patient_id = ?";
-        List<RDV> list = new ArrayList<>();
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, patientId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(RowMappers.mapRdv(rs));
-            }
-            return list;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByPatientId(), patientId=" + patientId, e);
-        }
+        return selectList(sql, patientId);
     }
 
     @Override
     public List<RDV> findByDetailJourneeId(Long detailJourneeId) {
         String sql = "SELECT * FROM rdv WHERE detail_journee_id = ?";
-        List<RDV> list = new ArrayList<>();
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, detailJourneeId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(RowMappers.mapRdv(rs));
-            }
-            return list;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByDetailJourneeId(), id=" + detailJourneeId, e);
-        }
+        return selectList(sql, detailJourneeId);
     }
 
     @Override
     public List<RDV> findByListeAttenteId(Long listeAttenteId) {
         String sql = "SELECT * FROM rdv WHERE liste_attente_id = ?";
+        return selectList(sql, listeAttenteId);
+    }
+
+    @Override
+    public List<RDV> findByDate(LocalDate date) {
+        String sql = "SELECT * FROM rdv WHERE date_rdv = ?";
         List<RDV> list = new ArrayList<>();
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setLong(1, listeAttenteId);
+            ps.setDate(1, Date.valueOf(date));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(RowMappers.mapRdv(rs));
             }
             return list;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByListeAttenteId(), id=" + listeAttenteId, e);
+            throw new RuntimeException("Erreur findByDate()", e);
+        }
+    }
+
+    @Override
+    public List<RDV> findByStatus(EtatRendezVous status) {
+        String sql = "SELECT * FROM rdv WHERE statut = ?";
+        List<RDV> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, status.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(RowMappers.mapRdv(rs));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByStatus()", e);
+        }
+    }
+
+    @Override
+    public List<RDV> findUpcomingFromToday() {
+        String sql = "SELECT * FROM rdv WHERE date_rdv >= CURDATE() ORDER BY date_rdv, heure";
+        List<RDV> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) list.add(RowMappers.mapRdv(rs));
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findUpcomingFromToday()", e);
+        }
+    }
+
+    private List<RDV> selectList(String sql, Long id) {
+        List<RDV> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(RowMappers.mapRdv(rs));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur selectList()", e);
         }
     }
 }

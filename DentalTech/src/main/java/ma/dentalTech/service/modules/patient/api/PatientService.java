@@ -1,15 +1,17 @@
 package ma.dentalTech.service.modules.patient.api;
 
-import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.mvc.dto.PatientDTO;
+import ma.dentalTech.entities.patient.Patient;
 
 import java.util.List;
 
-/**
- * Service métier pour le module Patient.
- */
 public interface PatientService {
+    List<Patient> getAll();
+    Patient getById(Long id);
+    void create(Patient p);
+    void update(Patient p);
+    void delete(Patient p);
+    void deleteById(Long id);
 
-
-    List<PatientDTO> getTodayPatientsAsDTO() throws ServiceException;
+    List<Patient> searchByNom(String nomPart);
+    Patient getByTelephone(String telephone);
 }

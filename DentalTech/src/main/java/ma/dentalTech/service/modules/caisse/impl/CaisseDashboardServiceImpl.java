@@ -1,64 +1,72 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import ma.dentalTech.common.exceptions.DaoException;
-import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
+import ma.dentalTech.entities.charges.Charges;
+import ma.dentalTech.entities.facture.Facture;
+import ma.dentalTech.entities.revenues.Revenues;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CaisseDashboardServiceImpl implements CaisseDashboardService {
 
-    private FactureRepository factureRepository;
-    private RevenuesRepository revenuesRepository;
-    private ChargesRepository chargesRepository;
+    private final FactureRepository factureRepository;
+    private final RevenuesRepository revenuesRepository;
+    private final ChargesRepository chargesRepository;
 
-    @Override
-    public CaisseDashboardDTO getDashboardBetween(LocalDateTime start, LocalDateTime end) throws ServiceException {
-        if (start == null || end == null) {
-            throw new ServiceException("Les dates de début et de fin ne doivent pas être null.");
-        }
-        if (end.isBefore(start)) {
-            throw new ServiceException("La date de fin doit être >= la date de début.");
-        }
-
-        try {
-            Double totalFactures   = safeDouble(factureRepository.calculateTotalFactures(start, end));
-            Double totalRegle      = safeDouble(factureRepository.calculateTotalRegle(start, end));
-            Double totalNonRegle   = safeDouble(factureRepository.calculateTotalNonRegle(start, end));
-
-            Double totalRevenus    = safeDouble(revenuesRepository.calculateTotalOtherRevenue(start, end));
-
-           Double totalCharges    = safeDouble(chargesRepository.calculateTotalCharges(start, end));
-
-            Double soldeNet        = (totalFactures + totalRevenus) - totalCharges;
-
-            return CaisseDashboardDTO.builder()
-                    .dateDebut(start)
-                    .dateFin(end)
-                    .totalFactures(totalFactures)
-                    .totalRegle(totalRegle)
-                    .totalNonRegle(totalNonRegle)
-                    .totalRevenus(totalRevenus)
-                    .totalCharges(totalCharges)
-                    .soldeNet(soldeNet)
-                    .build();
-
-        } catch (DaoException e) {
-            throw new ServiceException("Erreur lors du calcul du Dashboard Caisse.", e);
-        }
+    public CaisseDashboardServiceImpl(FactureRepository factureRepository,
+                                      RevenuesRepository revenuesRepository,
+                                      ChargesRepository chargesRepository) {
+        this.factureRepository = factureRepository;
+        this.revenuesRepository = revenuesRepository;
+        this.chargesRepository = chargesRepository;
     }
 
-    private Double safeDouble(Double value) {
-        return value != null ? value : 0.0;
+    @Override
+    public List<Facture> getFacturesBetween(LocalDateTime start, LocalDateTime end) {
+        return factureRepository.findByDateBetween(start, end);
+    }
+
+    @Override
+    public List<Revenues> getRevenusBetween(LocalDateTime start, LocalDateTime end) {
+        return revenuesRepository.findByDateBetween(start, end);
+    }
+
+    @Override
+    public List<Charges> getChargesBetween(LocalDateTime start, LocalDateTime end) {
+        return chargesRepository.findByDateBetween(start, end);
+    }
+
+    @Override
+    public Double totalFactures(LocalDateTime start, LocalDateTime end) {
+        return factureRepository.calculateTotalFactures(start, end);
+    }
+
+    @Override
+    public Double totalRegle(LocalDateTime start, LocalDateTime end) {
+        return factureRepository.calculateTotalRegle(start, end);
+    }
+
+    @Override
+    public Double totalNonRegle(LocalDateTime start, LocalDateTime end) {
+        return factureRepository.calculateTotalNonRegle(start, end);
+    }
+
+    @Override
+    public Double totalRevenus(LocalDateTime start, LocalDateTime end) {
+        return revenuesRepository.calculateTotalOtherRevenue(start, end);
+    }
+
+    @Override
+    public Double totalCharges(LocalDateTime start, LocalDateTime end) {
+        return chargesRepository.calculateTotalCharges(start, end);
+    }
+
+    @Override
+    public Double solde(LocalDateTime start, LocalDateTime end) {
+        return totalRevenus(start, end) - totalCharges(start, end);
     }
 }

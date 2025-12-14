@@ -1,9 +1,8 @@
 package ma.dentalTech.repository.modules.caisse.impl;
 
-import ma.dentalTech.common.exceptions.DaoException;
-import ma.dentalTech.entities.enums.StatutSituationFinanciere;
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.situationFinanciere.SituationFinanciere;
-import ma.dentalTech.repository.common.JdbcUtils;
+import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 
 import java.sql.*;
@@ -12,229 +11,134 @@ import java.util.List;
 
 public class SituationFinanciereRepositoryImpl implements SituationFinanciereRepository {
 
-    private static final String INSERT_SQL = """
-        INSERT INTO situation_financiere
-            (dossier_id, medecin_id, total_des_actes, total_paye, credit, statut)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """;
-
-    private static final String UPDATE_SQL = """
-        UPDATE situation_financiere
-           SET dossier_id = ?,
-               medecin_id = ?,
-               total_des_actes = ?,
-               total_paye = ?,
-               credit = ?,
-               statut = ?
-         WHERE id = ?
-        """;
-
-    private static final String DELETE_BY_ID_SQL =
-            "DELETE FROM situation_financiere WHERE id = ?";
-
-    private static final String SELECT_BY_ID_SQL = """
-        SELECT id, dossier_id, medecin_id, total_des_actes, total_paye, credit, statut
-          FROM situation_financiere
-         WHERE id = ?
-        """;
-
-    private static final String SELECT_ALL_SQL = """
-        SELECT id, dossier_id, medecin_id, total_des_actes, total_paye, credit, statut
-          FROM situation_financiere
-        """;
-
-    private static final String SELECT_LAST_SQL = """
-        SELECT id, dossier_id, medecin_id, total_des_actes, total_paye, credit, statut
-          FROM situation_financiere
-         ORDER BY id DESC
-         LIMIT 1
-        """;
-
-    // =============== MAPPER ===============
-    private SituationFinanciere map(ResultSet rs) throws SQLException {
-        Long id = rs.getLong("id");
-        if (rs.wasNull()) id = null;
-
-        Long dossierId = rs.getLong("dossier_id");
-        if (rs.wasNull()) dossierId = null;
-
-        Long medecinId = rs.getLong("medecin_id");
-        if (rs.wasNull()) medecinId = null;
-
-        Double totalDesActes = rs.getDouble("total_des_actes");
-        if (rs.wasNull()) totalDesActes = null;
-
-        Double totalPaye = rs.getDouble("total_paye");
-        if (rs.wasNull()) totalPaye = null;
-
-        Double credit = rs.getDouble("credit");
-        if (rs.wasNull()) credit = null;
-
-        String statutStr = rs.getString("statut");
-        StatutSituationFinanciere statut = statutStr != null ? StatutSituationFinanciere.valueOf(statutStr) : null;
-
-        return SituationFinanciere.builder()
-                .id(id)
-                .dossierId(dossierId)
-                .medecinId(medecinId)
-                .totalDesActes(totalDesActes)
-                .totalPaye(totalPaye)
-                .credit(credit)
-                .statut(statut)
-                .build();
-    }
-
-    // =============== CRUD ===============
     @Override
     public List<SituationFinanciere> findAll() {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
+        String sql = "SELECT * FROM situation_financiere";
+        List<SituationFinanciere> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            List<SituationFinanciere> list = new ArrayList<>();
-            while (rs.next()) list.add(map(rs));
+            while (rs.next()) list.add(RowMappers.mapSituationFinanciere(rs));
             return list;
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findAll() SituationFinanciere", e);
         }
     }
 
     @Override
     public SituationFinanciere findById(Long id) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
+        if (id == null) return null;
+        String sql = "SELECT * FROM situation_financiere WHERE id = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return map(rs);
-                return null;
+                return rs.next() ? RowMappers.mapSituationFinanciere(rs) : null;
             }
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur findById() SituationFinanciere, id=" + id, e);
         }
     }
 
     @Override
-    public void create(SituationFinanciere entity) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
+    public void create(SituationFinanciere s) {
+        String sql = """
+            INSERT INTO situation_financiere
+            (dossier_id, medecin_id, total_des_actes, total_paye, credit, statut, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """;
 
-            // dossier_id NOT NULL en base
-            ps.setLong(1, entity.getDossierId());
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (entity.getMedecinId() != null) {
-                ps.setLong(2, entity.getMedecinId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
-
-            if (entity.getTotalDesActes() != null) {
-                ps.setDouble(3, entity.getTotalDesActes());
-            } else {
-                ps.setNull(3, Types.DECIMAL);
-            }
-
-            if (entity.getTotalPaye() != null) {
-                ps.setDouble(4, entity.getTotalPaye());
-            } else {
-                ps.setNull(4, Types.DECIMAL);
-            }
-
-            if (entity.getCredit() != null) {
-                ps.setDouble(5, entity.getCredit());
-            } else {
-                ps.setNull(5, Types.DECIMAL);
-            }
-
-            ps.setString(6, entity.getStatut() != null ? entity.getStatut().name() : null);
+            ps.setLong(1, s.getDossierId());
+            ps.setObject(2, s.getMedecinId(), Types.BIGINT);
+            ps.setDouble(3, s.getTotalDesActes() == null ? 0.0 : s.getTotalDesActes());
+            ps.setDouble(4, s.getTotalPaye() == null ? 0.0 : s.getTotalPaye());
+            ps.setDouble(5, s.getCredit() == null ? 0.0 : s.getCredit());
+            ps.setString(6, s.getStatut() != null ? s.getStatut().name() : null);
+            ps.setString(7, s.getCreePar());
+            ps.setString(8, s.getModifiePar());
 
             ps.executeUpdate();
-
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) entity.setId(keys.getLong(1));
+                if (keys.next()) s.setId(keys.getLong(1));
             }
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur create() SituationFinanciere", e);
         }
     }
 
     @Override
-    public void update(SituationFinanciere entity) {
-        if (entity.getId() == null) {
-            throw new RuntimeException("update() SituationFinanciere sans id");
-        }
+    public void update(SituationFinanciere s) {
+        if (s.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(UPDATE_SQL)) {
+        String sql = """
+            UPDATE situation_financiere
+               SET dossier_id = ?, medecin_id = ?, total_des_actes = ?, total_paye = ?, credit = ?, statut = ?, modifie_par = ?
+             WHERE id = ?
+            """;
 
-            ps.setLong(1, entity.getDossierId());
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            if (entity.getMedecinId() != null) {
-                ps.setLong(2, entity.getMedecinId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
+            ps.setLong(1, s.getDossierId());
+            ps.setObject(2, s.getMedecinId(), Types.BIGINT);
+            ps.setDouble(3, s.getTotalDesActes() == null ? 0.0 : s.getTotalDesActes());
+            ps.setDouble(4, s.getTotalPaye() == null ? 0.0 : s.getTotalPaye());
+            ps.setDouble(5, s.getCredit() == null ? 0.0 : s.getCredit());
+            ps.setString(6, s.getStatut() != null ? s.getStatut().name() : null);
+            ps.setString(7, s.getModifiePar());
+            ps.setLong(8, s.getId());
 
-            if (entity.getTotalDesActes() != null) {
-                ps.setDouble(3, entity.getTotalDesActes());
-            } else {
-                ps.setNull(3, Types.DECIMAL);
-            }
+            ps.executeUpdate();
 
-            if (entity.getTotalPaye() != null) {
-                ps.setDouble(4, entity.getTotalPaye());
-            } else {
-                ps.setNull(4, Types.DECIMAL);
-            }
-
-            if (entity.getCredit() != null) {
-                ps.setDouble(5, entity.getCredit());
-            } else {
-                ps.setNull(5, Types.DECIMAL);
-            }
-
-            ps.setString(6, entity.getStatut() != null ? entity.getStatut().name() : null);
-            ps.setLong(7, entity.getId());
-
-            int updated = ps.executeUpdate();
-            if (updated == 0) {
-                throw new RuntimeException("Aucune situation financière mise à jour, id=" + entity.getId());
-            }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur update() SituationFinanciere", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur update() SituationFinanciere, id=" + s.getId(), e);
         }
     }
 
     @Override
     public void delete(SituationFinanciere entity) {
-        if (entity.getId() == null) return;
+        if (entity == null || entity.getId() == null) return;
         deleteById(entity.getId());
     }
 
     @Override
     public void deleteById(Long id) {
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(DELETE_BY_ID_SQL)) {
+        if (id == null) return;
+        String sql = "DELETE FROM situation_financiere WHERE id = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById() SituationFinanciere, id=" + id, e);
         }
     }
 
     @Override
-    public SituationFinanciere findLast() throws DaoException {
-        // ⚠️ findLast() vient de SituationFinanciereRepository, PAS de CrudRepository,
-        // donc ici on PEUT garder "throws DaoException" sans problème.
-        try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_LAST_SQL);
+    public SituationFinanciere findLast() {
+        String sql = "SELECT * FROM situation_financiere ORDER BY id DESC LIMIT 1";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) return map(rs);
-            return null;
+            return rs.next() ? RowMappers.mapSituationFinanciere(rs) : null;
+
         } catch (SQLException e) {
-            throw new DaoException("Erreur findLast() SituationFinanciere", e);
+            throw new RuntimeException("Erreur findLast() SituationFinanciere", e);
         }
     }
 }

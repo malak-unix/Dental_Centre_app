@@ -1,32 +1,24 @@
 package ma.dentalTech.configuration;
 
-import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.service.modules.patient.api.PatientService;
 
-// Module Caisse
-import ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseDashboardController;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
-// Module RDV
 import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
 import ma.dentalTech.service.modules.rdv.api.RdvService;
-import ma.dentalTech.mvc.controllers.modules.rdv.api.RdvController;
 
-// Module Agenda
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import ma.dentalTech.service.modules.agenda.api.AgendaService;
 
-// Module Liste d'attente
 import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
 import ma.dentalTech.service.modules.listeAttente.api.ListeAttenteService;
 
-// Module Plage Horaire
 import ma.dentalTech.repository.modules.plageHoraire.api.PlageHoraireRepository;
 import ma.dentalTech.service.modules.plageHoraire.api.PlageHoraireService;
 
@@ -42,221 +34,182 @@ public final class ApplicationContext {
 
     static {
         String currentBean = "aucun";
-
         try {
-            Properties properties = new Properties();
-
+            Properties props = new Properties();
             try (InputStream in = ApplicationContext.class.getResourceAsStream("/config/beans.properties")) {
                 if (in == null) {
                     throw new IllegalStateException("Impossible de trouver /config/beans.properties dans le classpath");
                 }
-                properties.load(in);
+                props.load(in);
             }
 
-            java.util.function.Function<String, String> mustGet = (key) -> {
-                String value = properties.getProperty(key);
-                if (value == null || value.trim().isEmpty()) {
-                    throw new IllegalStateException("Clé manquante dans beans.properties : " + key);
-                }
-                return value.trim();
-            };
-
-            // =========================
-            // 1) PATIENT
-            // =========================
+            // ==========================================
+            // PATIENT : repo -> service -> (controller optional)
+            // ==========================================
             currentBean = "patientRepo";
-            PatientRepository patientRepository =
-                    (PatientRepository) Class.forName(mustGet.apply("patientRepo"))
-                            .getDeclaredConstructor().newInstance();
+            PatientRepository patientRepo = newInstance(props, "patientRepo", PatientRepository.class);
 
             currentBean = "patientService";
-            PatientService patientService =
-                    (PatientService) Class.forName(mustGet.apply("patientService"))
-                            .getDeclaredConstructor(PatientRepository.class)
-                            .newInstance(patientRepository);
+            PatientService patientService = newInstance(props, "patientService", PatientService.class,
+                    new Class<?>[]{PatientRepository.class},
+                    new Object[]{patientRepo});
 
-            currentBean = "patientController";
-            PatientController patientController =
-                    (PatientController) Class.forName(mustGet.apply("patientController"))
-                            .getDeclaredConstructor(PatientService.class)
-                            .newInstance(patientService);
+            put(PatientRepository.class, patientRepo, "patientRepo");
+            put(PatientService.class, patientService, "patientService");
 
-            context.put(PatientRepository.class, patientRepository);
-            context.put(PatientService.class, patientService);
-            context.put(PatientController.class, patientController);
+            // Optional controllers (si tu les ajoutes plus tard)
+            createOptional(props, "patientController", PatientService.class, patientService);
+            createOptional(props, "patientControllerSwing", PatientService.class, patientService);
 
-            contextByName.put("patientRepo", patientRepository);
-            contextByName.put("patientService", patientService);
-            contextByName.put("patientController", patientController);
-
-            // =========================
-            // 2) CAISSE
-            // =========================
+            // ==========================================
+            // CAISSE : repos -> service -> (controller optional)
+            // ==========================================
             currentBean = "factureRepo";
-            FactureRepository factureRepository =
-                    (FactureRepository) Class.forName(mustGet.apply("factureRepo"))
-                            .getDeclaredConstructor().newInstance();
+            FactureRepository factureRepo = newInstance(props, "factureRepo", FactureRepository.class);
+            put(FactureRepository.class, factureRepo, "factureRepo");
 
             currentBean = "chargesRepo";
-            ChargesRepository chargesRepository =
-                    (ChargesRepository) Class.forName(mustGet.apply("chargesRepo"))
-                            .getDeclaredConstructor().newInstance();
+            ChargesRepository chargesRepo = newInstance(props, "chargesRepo", ChargesRepository.class);
+            put(ChargesRepository.class, chargesRepo, "chargesRepo");
 
             currentBean = "revenusRepo";
-            RevenuesRepository revenusRepository =
-                    (RevenuesRepository) Class.forName(mustGet.apply("revenusRepo"))
-                            .getDeclaredConstructor().newInstance();
+            RevenuesRepository revenusRepo = newInstance(props, "revenusRepo", RevenuesRepository.class);
+            put(RevenuesRepository.class, revenusRepo, "revenusRepo");
 
             currentBean = "sitFinRepo";
-            SituationFinanciereRepository sitFinRepository =
-                    (SituationFinanciereRepository) Class.forName(mustGet.apply("sitFinRepo"))
-                            .getDeclaredConstructor().newInstance();
+            SituationFinanciereRepository sitFinRepo = newInstance(props, "sitFinRepo", SituationFinanciereRepository.class);
+            put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
 
             currentBean = "caisseDashboardService";
-            CaisseDashboardService caisseService =
-                    (CaisseDashboardService) Class.forName(mustGet.apply("caisseDashboardService"))
-                            .getDeclaredConstructor(FactureRepository.class, RevenuesRepository.class, ChargesRepository.class)
-                            .newInstance(factureRepository, revenusRepository, chargesRepository);
+            CaisseDashboardService caisseService = newInstance(props, "caisseDashboardService", CaisseDashboardService.class,
+                    new Class<?>[]{FactureRepository.class, RevenuesRepository.class, ChargesRepository.class},
+                    new Object[]{factureRepo, revenusRepo, chargesRepo});
+            put(CaisseDashboardService.class, caisseService, "caisseDashboardService");
 
-            currentBean = "caisseDashboardController";
-            CaisseDashboardController caisseController =
-                    (CaisseDashboardController) Class.forName(mustGet.apply("caisseDashboardController"))
-                            .getDeclaredConstructor(CaisseDashboardService.class)
-                            .newInstance(caisseService);
+            // Optional controller
+            createOptional(props, "caisseDashboardController", CaisseDashboardService.class, caisseService);
 
-            context.put(FactureRepository.class, factureRepository);
-            context.put(ChargesRepository.class, chargesRepository);
-            context.put(RevenuesRepository.class, revenusRepository);
-            context.put(SituationFinanciereRepository.class, sitFinRepository);
-            context.put(CaisseDashboardService.class, caisseService);
-            context.put(CaisseDashboardController.class, caisseController);
-
-            contextByName.put("factureRepo", factureRepository);
-            contextByName.put("chargesRepo", chargesRepository);
-            contextByName.put("revenusRepo", revenusRepository);
-            contextByName.put("sitFinRepo", sitFinRepository);
-            contextByName.put("caisseDashboardService", caisseService);
-            contextByName.put("caisseDashboardController", caisseController);
-
-            // =========================
-            // 3) RDV
-            // =========================
+            // ==========================================
+            // RDV : repo -> service -> (controller optional)
+            // ==========================================
             currentBean = "rdv.repository";
-            RdvRepository rdvRepository =
-                    (RdvRepository) Class.forName(mustGet.apply("rdv.repository"))
-                            .getDeclaredConstructor().newInstance();
+            RdvRepository rdvRepo = newInstance(props, "rdv.repository", RdvRepository.class);
+            put(RdvRepository.class, rdvRepo, "rdv.repository");
 
             currentBean = "rdv.service";
-            RdvService rdvService =
-                    (RdvService) Class.forName(mustGet.apply("rdv.service"))
-                            .getDeclaredConstructor(RdvRepository.class)
-                            .newInstance(rdvRepository);
+            RdvService rdvService = newInstance(props, "rdv.service", RdvService.class,
+                    new Class<?>[]{RdvRepository.class},
+                    new Object[]{rdvRepo});
+            put(RdvService.class, rdvService, "rdv.service");
 
-            currentBean = "rdv.controller";
-            RdvController rdvController =
-                    (RdvController) Class.forName(mustGet.apply("rdv.controller"))
-                            .getDeclaredConstructor(RdvService.class)
-                            .newInstance(rdvService);
+            createOptional(props, "rdv.controller", RdvService.class, rdvService);
 
-            context.put(RdvRepository.class, rdvRepository);
-            context.put(RdvService.class, rdvService);
-            context.put(RdvController.class, rdvController);
-
-            contextByName.put("rdv.repository", rdvRepository);
-            contextByName.put("rdv.service", rdvService);
-            contextByName.put("rdv.controller", rdvController);
-
-            // =========================
-            // 4) AGENDA
-            // =========================
+            // ==========================================
+            // AGENDA : repos -> service
+            // ==========================================
             currentBean = "agendaMensuelRepo";
-            AgendaMensuelRepository agendaMensuelRepo =
-                    (AgendaMensuelRepository) Class.forName(mustGet.apply("agendaMensuelRepo"))
-                            .getDeclaredConstructor().newInstance();
+            AgendaMensuelRepository agendaMensuelRepo = newInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class);
+            put(AgendaMensuelRepository.class, agendaMensuelRepo, "agendaMensuelRepo");
 
             currentBean = "detailJourneeRepo";
-            DetailJourneeRepository detailJourneeRepo =
-                    (DetailJourneeRepository) Class.forName(mustGet.apply("detailJourneeRepo"))
-                            .getDeclaredConstructor().newInstance();
+            DetailJourneeRepository detailJourneeRepo = newInstance(props, "detailJourneeRepo", DetailJourneeRepository.class);
+            put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
 
             currentBean = "agendaService";
-            AgendaService agendaService =
-                    (AgendaService) Class.forName(mustGet.apply("agendaService"))
-                            .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
-                            .newInstance(agendaMensuelRepo, detailJourneeRepo);
+            AgendaService agendaService = newInstance(props, "agendaService", AgendaService.class,
+                    new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
+                    new Object[]{agendaMensuelRepo, detailJourneeRepo});
+            put(AgendaService.class, agendaService, "agendaService");
 
-            context.put(AgendaMensuelRepository.class, agendaMensuelRepo);
-            context.put(DetailJourneeRepository.class, detailJourneeRepo);
-            context.put(AgendaService.class, agendaService);
-
-            contextByName.put("agendaMensuelRepo", agendaMensuelRepo);
-            contextByName.put("detailJourneeRepo", detailJourneeRepo);
-            contextByName.put("agendaService", agendaService);
-
-            // =========================
-            // 5) LISTE D'ATTENTE
-            // =========================
+            // ==========================================
+            // LISTE D'ATTENTE : repo -> service
+            // ==========================================
             currentBean = "listeAttente.repository";
-            ListeAttenteRepository listeAttenteRepository =
-                    (ListeAttenteRepository) Class.forName(mustGet.apply("listeAttente.repository"))
-                            .getDeclaredConstructor().newInstance();
+            ListeAttenteRepository listeRepo = newInstance(props, "listeAttente.repository", ListeAttenteRepository.class);
+            put(ListeAttenteRepository.class, listeRepo, "listeAttente.repository");
 
             currentBean = "listeAttente.service";
-            ListeAttenteService listeAttenteService =
-                    (ListeAttenteService) Class.forName(mustGet.apply("listeAttente.service"))
-                            .getDeclaredConstructor(ListeAttenteRepository.class, RdvRepository.class)
-                            .newInstance(listeAttenteRepository, rdvRepository);
+            ListeAttenteService listeService = newInstance(props, "listeAttente.service", ListeAttenteService.class,
+                    new Class<?>[]{ListeAttenteRepository.class},
+                    new Object[]{listeRepo});
+            put(ListeAttenteService.class, listeService, "listeAttente.service");
 
-            context.put(ListeAttenteRepository.class, listeAttenteRepository);
-            context.put(ListeAttenteService.class, listeAttenteService);
-
-            contextByName.put("listeAttente.repository", listeAttenteRepository);
-            contextByName.put("listeAttente.service", listeAttenteService);
-
-            // =========================
-            // 6) PLAGE HORAIRE
-            // =========================
+            // ==========================================
+            // PLAGE HORAIRE : repo -> service
+            // ==========================================
             currentBean = "plageHoraire.repository";
-            PlageHoraireRepository plageHoraireRepository =
-                    (PlageHoraireRepository) Class.forName(mustGet.apply("plageHoraire.repository"))
-                            .getDeclaredConstructor().newInstance();
+            PlageHoraireRepository plageRepo = newInstance(props, "plageHoraire.repository", PlageHoraireRepository.class);
+            put(PlageHoraireRepository.class, plageRepo, "plageHoraire.repository");
 
             currentBean = "plageHoraire.service";
-            PlageHoraireService plageHoraireService =
-                    (PlageHoraireService) Class.forName(mustGet.apply("plageHoraire.service"))
-                            .getDeclaredConstructor(PlageHoraireRepository.class)
-                            .newInstance(plageHoraireRepository);
-
-            context.put(PlageHoraireRepository.class, plageHoraireRepository);
-            context.put(PlageHoraireService.class, plageHoraireService);
-
-            contextByName.put("plageHoraire.repository", plageHoraireRepository);
-            contextByName.put("plageHoraire.service", plageHoraireService);
+            PlageHoraireService plageService = newInstance(props, "plageHoraire.service", PlageHoraireService.class,
+                    new Class<?>[]{PlageHoraireRepository.class},
+                    new Object[]{plageRepo});
+            put(PlageHoraireService.class, plageService, "plageHoraire.service");
 
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Erreur lors de l'initialisation de l'ApplicationContext (bean courant = " + currentBean + ")",
-                    e
-            );
+            throw new RuntimeException("Erreur lors de l'initialisation ApplicationContext (bean courant = " + currentBean + ")", e);
         }
     }
 
     private ApplicationContext() {}
 
+    // ==========================
+    // Public API
+    // ==========================
     public static Object getBean(String name) {
-        Object bean = contextByName.get(name);
-        if (bean == null) {
-            throw new IllegalArgumentException("Bean introuvable : " + name);
-        }
-        return bean;
+        return contextByName.get(name);
+    }
+
+    public static boolean hasBean(String name) {
+        return contextByName.containsKey(name);
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T getBean(Class<T> clazz) {
-        Object bean = context.get(clazz);
-        if (bean == null) {
-            throw new IllegalArgumentException("Bean introuvable pour type : " + clazz.getName());
+        return (T) context.get(clazz);
+    }
+
+    // ==========================
+    // Internal helpers
+    // ==========================
+    private static void put(Class<?> type, Object instance, String name) {
+        context.put(type, instance);
+        contextByName.put(name, instance);
+    }
+
+    private static <T> T newInstance(Properties props, String key, Class<T> expectedType) throws Exception {
+        String className = props.getProperty(key);
+        if (className == null || className.isBlank()) {
+            throw new IllegalStateException("Bean '" + key + "' introuvable dans beans.properties");
         }
-        return (T) bean;
+        Object obj = Class.forName(className).getDeclaredConstructor().newInstance();
+        return expectedType.cast(obj);
+    }
+
+    private static <T> T newInstance(Properties props, String key, Class<T> expectedType,
+                                     Class<?>[] ctorTypes, Object[] ctorArgs) throws Exception {
+        String className = props.getProperty(key);
+        if (className == null || className.isBlank()) {
+            throw new IllegalStateException("Bean '" + key + "' introuvable dans beans.properties");
+        }
+        Object obj = Class.forName(className).getDeclaredConstructor(ctorTypes).newInstance(ctorArgs);
+        return expectedType.cast(obj);
+    }
+
+    /**
+     * Crée un bean seulement si la clé existe dans beans.properties.
+     * Exemple: controller pas encore codé => pas d'erreur.
+     */
+    private static void createOptional(Properties props, String key, Class<?> depType, Object depInstance) {
+        String className = props.getProperty(key);
+        if (className == null || className.isBlank()) return;
+
+        try {
+            Object obj = Class.forName(className).getDeclaredConstructor(depType).newInstance(depInstance);
+            contextByName.put(key, obj);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur création bean optionnel '" + key + "'", e);
+        }
     }
 }

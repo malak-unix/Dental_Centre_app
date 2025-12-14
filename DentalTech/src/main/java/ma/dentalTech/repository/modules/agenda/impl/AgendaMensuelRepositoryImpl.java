@@ -11,10 +11,6 @@ import java.util.List;
 
 public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
-    // ============================
-    //  CRUD
-    // ============================
-
     @Override
     public List<AgendaMensuel> findAll() {
         String sql = "SELECT * FROM agenda_mensuel";
@@ -24,9 +20,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                list.add(RowMappers.mapAgendaMensuel(rs));
-            }
+            while (rs.next()) list.add(RowMappers.mapAgendaMensuel(rs));
             return list;
 
         } catch (SQLException e) {
@@ -37,19 +31,14 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public AgendaMensuel findById(Long id) {
         if (id == null) return null;
-
         String sql = "SELECT * FROM agenda_mensuel WHERE id = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
-
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return RowMappers.mapAgendaMensuel(rs);
-                }
-                return null;
+                return rs.next() ? RowMappers.mapAgendaMensuel(rs) : null;
             }
 
         } catch (SQLException e) {
@@ -67,12 +56,8 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (agenda.getMedecinId() == null) {
-                throw new IllegalArgumentException("medecinId obligatoire pour créer un AgendaMensuel");
-            }
-            if (agenda.getMois() == null) {
-                throw new IllegalArgumentException("mois obligatoire pour créer un AgendaMensuel");
-            }
+            if (agenda.getMedecinId() == null) throw new IllegalArgumentException("medecinId obligatoire");
+            if (agenda.getMois() == null) throw new IllegalArgumentException("mois obligatoire");
 
             ps.setLong(1, agenda.getMedecinId());
             ps.setString(2, agenda.getMois().name());
@@ -81,11 +66,8 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
             ps.setString(5, agenda.getModifiePar());
 
             ps.executeUpdate();
-
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) {
-                    agenda.setId(keys.getLong(1));
-                }
+                if (keys.next()) agenda.setId(keys.getLong(1));
             }
 
         } catch (SQLException e) {
@@ -95,28 +77,16 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
     @Override
     public void update(AgendaMensuel agenda) {
-        if (agenda.getId() == null) {
-            throw new IllegalArgumentException("Impossible de mettre à jour un AgendaMensuel sans id");
-        }
+        if (agenda.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
         String sql = """
             UPDATE agenda_mensuel
-               SET medecin_id = ?,
-                   mois       = ?,
-                   annee      = ?,
-                   modifie_par = ?
+               SET medecin_id = ?, mois = ?, annee = ?, modifie_par = ?
              WHERE id = ?
             """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            if (agenda.getMedecinId() == null) {
-                throw new IllegalArgumentException("medecinId obligatoire pour mettre à jour un AgendaMensuel");
-            }
-            if (agenda.getMois() == null) {
-                throw new IllegalArgumentException("mois obligatoire pour mettre à jour un AgendaMensuel");
-            }
 
             ps.setLong(1, agenda.getMedecinId());
             ps.setString(2, agenda.getMois().name());
@@ -140,7 +110,6 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void deleteById(Long id) {
         if (id == null) return;
-
         String sql = "DELETE FROM agenda_mensuel WHERE id = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -154,10 +123,6 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
         }
     }
 
-    // ============================
-    //  Méthodes spécifiques
-    // ============================
-
     @Override
     public AgendaMensuel findByMedecinAndMonth(Long medecinId, String mois, int annee) {
         String sql = "SELECT * FROM agenda_mensuel WHERE medecin_id = ? AND mois = ? AND annee = ?";
@@ -170,12 +135,11 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
             ps.setInt(3, annee);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return RowMappers.mapAgendaMensuel(rs);
-                return null;
+                return rs.next() ? RowMappers.mapAgendaMensuel(rs) : null;
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByMedecinAndMonth(), medecinId=" + medecinId, e);
+            throw new RuntimeException("Erreur findByMedecinAndMonth()", e);
         }
     }
 
@@ -188,16 +152,13 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, medecinId);
-
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(RowMappers.mapAgendaMensuel(rs));
-                }
+                while (rs.next()) list.add(RowMappers.mapAgendaMensuel(rs));
             }
             return list;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByMedecin(), medecinId=" + medecinId, e);
+            throw new RuntimeException("Erreur findByMedecin()", e);
         }
     }
 }

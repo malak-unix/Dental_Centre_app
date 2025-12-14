@@ -1,69 +1,60 @@
 package ma.dentalTech.service.modules.patient.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.mvc.dto.PatientDTO;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.service.modules.patient.api.PatientService;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Implémentation de base du service Patient.
- */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class PatientServiceImpl implements PatientService {
 
-    private PatientRepository repository;
+    private final PatientRepository patientRepository;
+
+    public PatientServiceImpl(PatientRepository patientRepository) {
+        this.patientRepository = patientRepository;
+    }
 
     @Override
-    public List<PatientDTO> getTodayPatientsAsDTO() {
-        LocalDate today = LocalDate.now();
-
-        return repository.findAll().stream()
-                .filter(p -> p.getDateCreation() != null
-                        && p.getDateCreation().toLocalDate().equals(today))
-                .sorted(Comparator.comparing(Patient::getDateCreation).reversed())
-                .map(this::toDto)
-                .collect(Collectors.toList());
+    public List<Patient> getAll() {
+        return patientRepository.findAll();
     }
 
-    private PatientDTO toDto(Patient p) {
-        String nom = p.getNom() != null ? p.getNom().trim() : "";
-        String prenom = p.getPrenom() != null ? p.getPrenom().trim() : "";
-        String nomComplet = (nom + " " + prenom).trim();
-
-        int age = computeAge(p.getDateNaissance());
-        String dateFormatee = formatDate(p.getDateCreation());
-
-        return PatientDTO.builder()
-                .nomComplet(nomComplet)
-                .age(age)
-                .dateCreationFormatee(dateFormatee)
-                .build();
+    @Override
+    public Patient getById(Long id) {
+        return patientRepository.findById(id);
     }
 
-    private int computeAge(LocalDate dateNaissance) {
-        if (dateNaissance == null) {
-            return 0;
-        }
-        return Period.between(dateNaissance, LocalDate.now()).getYears();
+    @Override
+    public void create(Patient p) {
+        if (p == null) throw new IllegalArgumentException("Patient null");
+        if (p.getNom() == null || p.getNom().isBlank()) throw new IllegalArgumentException("Nom obligatoire");
+        if (p.getPrenom() == null || p.getPrenom().isBlank()) throw new IllegalArgumentException("Prenom obligatoire");
+        patientRepository.create(p);
     }
 
-    private String formatDate(java.time.LocalDateTime dateTime) {
-        if (dateTime == null) {
-            return "";
-        }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        return dateTime.format(formatter);
+    @Override
+    public void update(Patient p) {
+        if (p == null || p.getId() == null) throw new IllegalArgumentException("Patient id obligatoire");
+        patientRepository.update(p);
+    }
+
+    @Override
+    public void delete(Patient p) {
+        patientRepository.delete(p);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        patientRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Patient> searchByNom(String nomPart) {
+        return patientRepository.findByNomLike(nomPart);
+    }
+
+    @Override
+    public Patient getByTelephone(String telephone) {
+        return patientRepository.findByTelephone(telephone);
     }
 }

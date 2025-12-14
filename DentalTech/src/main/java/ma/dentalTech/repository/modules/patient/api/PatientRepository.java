@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface PatientRepository extends CrudRepository<Patient, Long> {
 
-    // optionnel (utile)
     List<Patient> findByNomLike(String nomPart);
+
+    // optionnel utile
+    Patient findByTelephone(String telephone);
 }

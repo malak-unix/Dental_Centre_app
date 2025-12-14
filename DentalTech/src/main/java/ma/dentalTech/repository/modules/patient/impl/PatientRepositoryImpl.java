@@ -31,6 +31,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     @Override
     public Patient findById(Long id) {
         if (id == null) return null;
+
         String sql = "SELECT * FROM patient WHERE id = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -57,15 +58,47 @@ public class PatientRepositoryImpl implements PatientRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+            if (p == null) throw new IllegalArgumentException("Patient null");
+
             ps.setString(1, p.getNom());
             ps.setString(2, p.getPrenom());
             ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
-            ps.setString(4, p.getSexe()); // si enum -> p.getSexe().name()
+
+            // ⚠️ sexe en DB = 'H'/'F' (script), ton RowMappers gère la lecture.
+            // Pour écrire: si ton enum est Sexe.Homme/Femme -> on met H/F
+            if (p.getSexe() == null) {
+                ps.setString(4, null);
+            } else {
+                String dbSexe = switch (p.getSexe().name().toUpperCase()) {
+                    case "HOMME" -> "H";
+                    case "FEMME" -> "F";
+                    default -> "H";
+                };
+                ps.setString(4, dbSexe);
+            }
+
             ps.setString(5, p.getTelephone());
             ps.setString(6, p.getAdresse());
             ps.setString(7, p.getNumAffiliation());
-            ps.setString(8, p.getEtatCivil());
-            ps.setString(9, p.getAssurance());
+
+            // enums -> DB stocke les noms (CELIBATAIRE / CNSS / ...)
+            ps.setString(8, p.getEtatCivil() != null ? p.getEtatCivil().name() : null);
+
+            if (p.getAssurance() == null) {
+                ps.setString(9, null);
+            } else {
+                // ton enum : Mutuelle/Autre/Aucune... mais DB = MUTUELLE/AUTRE/AUCUNE
+                String dbAssurance = switch (p.getAssurance().name().toUpperCase()) {
+                    case "MUTUELLE" -> "MUTUELLE";
+                    case "CNSS" -> "CNSS";
+                    case "CNOPS" -> "CNOPS";
+                    case "AUTRE" -> "AUTRE";
+                    case "AUCUNE" -> "AUCUNE";
+                    default -> p.getAssurance().name().toUpperCase();
+                };
+                ps.setString(9, dbAssurance);
+            }
+
             ps.setString(10, p.getCreePar());
             ps.setString(11, p.getModifiePar());
 
@@ -81,7 +114,7 @@ public class PatientRepositoryImpl implements PatientRepository {
 
     @Override
     public void update(Patient p) {
-        if (p.getId() == null) throw new IllegalArgumentException("id obligatoire");
+        if (p == null || p.getId() == null) throw new IllegalArgumentException("Patient id obligatoire");
 
         String sql = """
             UPDATE patient
@@ -96,12 +129,37 @@ public class PatientRepositoryImpl implements PatientRepository {
             ps.setString(1, p.getNom());
             ps.setString(2, p.getPrenom());
             ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
-            ps.setString(4, p.getSexe());
+
+            if (p.getSexe() == null) {
+                ps.setString(4, null);
+            } else {
+                String dbSexe = switch (p.getSexe().name().toUpperCase()) {
+                    case "HOMME" -> "H";
+                    case "FEMME" -> "F";
+                    default -> "H";
+                };
+                ps.setString(4, dbSexe);
+            }
+
             ps.setString(5, p.getTelephone());
             ps.setString(6, p.getAdresse());
             ps.setString(7, p.getNumAffiliation());
-            ps.setString(8, p.getEtatCivil());
-            ps.setString(9, p.getAssurance());
+            ps.setString(8, p.getEtatCivil() != null ? p.getEtatCivil().name() : null);
+
+            if (p.getAssurance() == null) {
+                ps.setString(9, null);
+            } else {
+                String dbAssurance = switch (p.getAssurance().name().toUpperCase()) {
+                    case "MUTUELLE" -> "MUTUELLE";
+                    case "CNSS" -> "CNSS";
+                    case "CNOPS" -> "CNOPS";
+                    case "AUTRE" -> "AUTRE";
+                    case "AUCUNE" -> "AUCUNE";
+                    default -> p.getAssurance().name().toUpperCase();
+                };
+                ps.setString(9, dbAssurance);
+            }
+
             ps.setString(10, p.getModifiePar());
             ps.setLong(11, p.getId());
 
@@ -113,8 +171,15 @@ public class PatientRepositoryImpl implements PatientRepository {
     }
 
     @Override
+    public void delete(Patient entity) {
+        if (entity == null || entity.getId() == null) return;
+        deleteById(entity.getId());
+    }
+
+    @Override
     public void deleteById(Long id) {
         if (id == null) return;
+
         String sql = "DELETE FROM patient WHERE id = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -144,6 +209,25 @@ public class PatientRepositoryImpl implements PatientRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findByNomLike() Patient", e);
+        }
+    }
+
+    @Override
+    public Patient findByTelephone(String telephone) {
+        if (telephone == null || telephone.isBlank()) return null;
+
+        String sql = "SELECT * FROM patient WHERE telephone = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, telephone);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? RowMappers.mapPatient(rs) : null;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByTelephone() Patient", e);
         }
     }
 }

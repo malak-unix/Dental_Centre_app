@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.listeAttente.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.listeAttente.ListeAttente;
+import ma.dentalTech.entities.listeDattente.ListeAttente;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
 
@@ -48,15 +48,12 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
 
     @Override
     public void create(ListeAttente l) {
-        String sql = """
-            INSERT INTO liste_attente (nom, cree_par, modifie_par)
-            VALUES (?, ?, ?)
-            """;
+        String sql = "INSERT INTO liste_attente (nom, cree_par, modifie_par) VALUES (?, ?, ?)";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, l.getNom());
+            ps.setString(1, l.getNomListe());
             ps.setString(2, l.getCreePar());
             ps.setString(3, l.getModifiePar());
 
@@ -74,17 +71,12 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
     public void update(ListeAttente l) {
         if (l.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
-        String sql = """
-            UPDATE liste_attente
-               SET nom = ?,
-                   modifie_par = ?
-             WHERE id = ?
-            """;
+        String sql = "UPDATE liste_attente SET nom = ?, modifie_par = ? WHERE id = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, l.getNom());
+            ps.setString(1, l.getNomListe());
             ps.setString(2, l.getModifiePar());
             ps.setLong(3, l.getId());
 
@@ -93,6 +85,12 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Erreur update() ListeAttente, id=" + l.getId(), e);
         }
+    }
+
+    @Override
+    public void delete(ListeAttente entity) {
+        if (entity == null || entity.getId() == null) return;
+        deleteById(entity.getId());
     }
 
     @Override
@@ -108,6 +106,25 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById() ListeAttente, id=" + id, e);
+        }
+    }
+
+    @Override
+    public List<ListeAttente> findByNomListe(String nomListe) {
+        String sql = "SELECT * FROM liste_attente WHERE nom LIKE ?";
+        List<ListeAttente> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + (nomListe == null ? "" : nomListe) + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(RowMappers.mapListeAttente(rs));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByNomListe()", e);
         }
     }
 }
