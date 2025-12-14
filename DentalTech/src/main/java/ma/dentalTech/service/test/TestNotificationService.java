@@ -5,7 +5,7 @@ import ma.dentalTech.entities.enums.PrioriteNotification;
 import ma.dentalTech.entities.notification.Notification;
 import ma.dentalTech.repository.modules.notification.api.NotificationRepository;
 import ma.dentalTech.service.modules.notification.api.NotificationService;
-import ma.dentalTech.service.modules.notification.baseImplementation.NotificationServiceImpl;
+import ma.dentalTech.service.modules.notification.impl.NotificationServiceImpl;
 
 import java.util.List;
 

@@ -4,7 +4,7 @@ import ma.dentalTech.conf.ApplicationContext;
 import ma.dentalTech.entities.ordonnance.Ordonnance;
 import ma.dentalTech.repository.modules.ordonnance.api.OrdonnanceRepository;
 import ma.dentalTech.service.modules.ordonnance.api.OrdonnanceService;
-import ma.dentalTech.service.modules.ordonnance.baseImplementation.OrdonnanceServiceImpl;
+import ma.dentalTech.service.modules.ordonnance.impl.OrdonnanceServiceImpl;
 
 import java.time.LocalDate;
 import java.util.List;

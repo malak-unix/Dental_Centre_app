@@ -1,0 +1,45 @@
+package ma.dentalTech.service.modules.rdv.impl;
+
+import ma.dentalTech.entities.enums.EtatRendezVous;
+import ma.dentalTech.entities.rdv.RDV;
+import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
+import ma.dentalTech.service.modules.rdv.api.RdvService;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public class RdvServiceImpl implements RdvService {
+
+    private final RdvRepository rdvRepository;
+
+    public RdvServiceImpl(RdvRepository rdvRepository) {
+        this.rdvRepository = rdvRepository;
+    }
+
+    @Override public List<RDV> getAll() { return rdvRepository.findAll(); }
+    @Override public RDV getById(Long id) { return rdvRepository.findById(id); }
+
+    @Override
+    public void create(RDV r) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
+        if (r.getDate() == null) throw new IllegalArgumentException("date obligatoire");
+        if (r.getStatus() == null) r.setStatus(EtatRendezVous.PREVU);
+        rdvRepository.create(r);
+    }
+
+    @Override
+    public void update(RDV r) {
+        if (r == null || r.getId() == null) throw new IllegalArgumentException("RDV id obligatoire");
+        rdvRepository.update(r);
+    }
+
+    @Override public void delete(RDV r) { rdvRepository.delete(r); }
+    @Override public void deleteById(Long id) { rdvRepository.deleteById(id); }
+
+    @Override public List<RDV> getByPatient(Long patientId) { return rdvRepository.findByPatientId(patientId); }
+    @Override public List<RDV> getByDetailJournee(Long detailJourneeId) { return rdvRepository.findByDetailJourneeId(detailJourneeId); }
+    @Override public List<RDV> getByListeAttente(Long listeAttenteId) { return rdvRepository.findByListeAttenteId(listeAttenteId); }
+    @Override public List<RDV> getByDate(LocalDate date) { return rdvRepository.findByDate(date); }
+    @Override public List<RDV> getByStatus(EtatRendezVous status) { return rdvRepository.findByStatus(status); }
+    @Override public List<RDV> getUpcomingFromToday() { return rdvRepository.findUpcomingFromToday(); }
+}

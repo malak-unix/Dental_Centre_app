@@ -22,4 +22,6 @@ public interface PatientRepository extends CrudRepository<Patient, Long> {
     void removeAllAntecedentsFromPatient(Long patientId);
     List<Antecedents> getAntecedentsOfPatient(Long patientId);
     List<Patient> getPatientsByAntecedent(Long antecedentId);
+    List<Patient> searchByNom(String nomPart);
+
 }

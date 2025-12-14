@@ -1,6 +1,5 @@
 package ma.dentalTech.repository.modules.certificat.jdbc_implementation;
 
-import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.certificat.Certificat;
 import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.certificat.api.CertificatRepository;
@@ -103,9 +102,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) c.setId(rs.getLong(1));
             }
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -159,9 +159,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             ps.setLong(8, c.getId());
 
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour du certificat", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -176,9 +177,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return map(rs);
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche du certificat par ID", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return null;
     }
 
@@ -192,9 +194,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) list.add(map(rs));
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de tous les certificats", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 
@@ -214,9 +217,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression du certificat", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     // =====================================================================================
@@ -236,9 +240,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des certificats par dossier", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -256,9 +261,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des certificats par dateDebut", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -281,9 +287,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des certificats par période", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -297,9 +304,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
              ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) return rs.getLong("total");
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors du comptage des certificats", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return 0;
     }
@@ -322,9 +330,10 @@ public class CertificatRepositoryJdbcImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de la page de certificats", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }

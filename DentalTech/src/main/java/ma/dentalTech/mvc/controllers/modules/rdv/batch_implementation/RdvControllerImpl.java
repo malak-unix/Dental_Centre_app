@@ -1,50 +1,58 @@
 package ma.dentalTech.mvc.controllers.modules.rdv.batch_implementation;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.rdv.RDV;
 import ma.dentalTech.mvc.controllers.modules.rdv.api.RdvController;
 import ma.dentalTech.service.modules.rdv.api.RdvService;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RdvControllerImpl implements RdvController {
 
-    private RdvService service;
+    private final RdvService service;
 
-    @Override
-    public void showRdvsOfDay(LocalDate date) {
-        try {
-            List<RDV> rdvs = service.listerRdvsParDate(date)
-                    ;
-            if (rdvs.isEmpty()) {
-                System.out.println("Aucun RDV pour le " + date);
-                return;
-            }
-
-            DateTimeFormatter tf = DateTimeFormatter.ofPattern("HH:mm");
-
-            System.out.println("=== RDV du " + date + " ===");
-            for (RDV rdv : rdvs) {
-                String heure = (rdv.getHeure() != null) ? rdv.getHeure().format(tf) : "--:--";
-                String statut = (rdv.getStatus() != null) ? rdv.getStatus().name() : "N/A";
-                System.out.printf("- [%s] %s | %s%n", heure, statut, rdv.getMotif());
-            }
-
-        } catch (Exception e) {
-            System.err.println("Erreur lors de l’affichage des RDV : " + e.getMessage());
-            e.printStackTrace();
-        }
+    public RdvControllerImpl(RdvService service) {
+        this.service = service;
     }
 
     @Override
-    public void showTodayRdvs() {
-        showRdvsOfDay(LocalDate.now());
+    public List<RDV> findAll() {
+        return service.getAll();
+    }
+
+    @Override
+    public RDV findById(Long id) {
+        return service.getById(id);
+    }
+
+    @Override
+    public void create(RDV r) {
+        service.create(r);
+    }
+
+    @Override
+    public void update(RDV r) {
+        service.update(r);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        service.deleteById(id);
+    }
+
+    @Override
+    public List<RDV> findByDate(LocalDate date) {
+        return service.getByDate(date);
+    }
+
+    @Override
+    public List<RDV> findByStatus(EtatRendezVous status) {
+        return service.getByStatus(status);
+    }
+
+    @Override
+    public List<RDV> upcomingFromToday() {
+        return service.getUpcomingFromToday();
     }
 }

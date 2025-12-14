@@ -1,27 +1,32 @@
 package ma.dentalTech.service.modules.agenda.api;
 
-import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
 import ma.dentalTech.entities.detailJournee.DetailJournee;
-import ma.dentalTech.entities.enums.Mois;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 public interface AgendaService {
 
-    AgendaMensuel creerAgendaMensuel(Long medecinId, Mois mois, int annee) throws ServiceException;
+    // AgendaMensuel
+    List<AgendaMensuel> getAllAgendas();
+    AgendaMensuel getAgendaById(Long id);
+    void createAgenda(AgendaMensuel agenda);
+    void updateAgenda(AgendaMensuel agenda);
+    void deleteAgenda(AgendaMensuel agenda);
+    void deleteAgendaById(Long id);
 
-    AgendaMensuel trouverAgenda(Long medecinId, Mois mois, int annee) throws ServiceException;
+    AgendaMensuel getAgendaByMedecinMonth(Long medecinId, String mois, int annee);
+    List<AgendaMensuel> getAgendasByMedecin(Long medecinId);
 
-    List<AgendaMensuel> listerAgendasMedecin(Long medecinId) throws ServiceException;
+    // DetailJournee
+    List<DetailJournee> getAllDetails();
+    DetailJournee getDetailById(Long id);
+    void createDetail(DetailJournee d);
+    void updateDetail(DetailJournee d);
+    void deleteDetail(DetailJournee d);
+    void deleteDetailById(Long id);
 
-    DetailJournee ajouterJournee(Long agendaId, LocalDate date) throws ServiceException;
-
-    DetailJournee definirHoraires(Long detailJourneeId, LocalTime debut, LocalTime fin) throws ServiceException;
-
-    DetailJournee changerStatutJournee(Long detailJourneeId, String statutJournee) throws ServiceException;
-
-    List<DetailJournee> listerJoursAgenda(Long agendaId) throws ServiceException;
+    List<DetailJournee> getDetailsByAgenda(Long agendaId);
+    DetailJournee getDetailByAgendaAndDate(Long agendaId, LocalDate dateJour);
 }

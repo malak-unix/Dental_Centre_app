@@ -110,9 +110,10 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la création de l'intervention médecin", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -164,9 +165,10 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
 
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour de l'intervention médecin", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -184,9 +186,10 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche de l'intervention médecin par ID", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return null;
     }
@@ -204,9 +207,10 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
                 list.add(map(rs));
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de toutes les interventions médecin", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -228,9 +232,10 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression de l'intervention médecin", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     // =========================================================================
@@ -253,9 +258,10 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des interventions par consultation", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -270,8 +276,9 @@ public class InterventionMedecinJdbcImpl implements InterventionMedecinRepositor
             ps.setLong(1, consultationId);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression des interventions par consultation", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 }
