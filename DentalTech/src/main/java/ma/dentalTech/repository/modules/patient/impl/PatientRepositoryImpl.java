@@ -26,7 +26,7 @@ import java.util.Optional;
  * Implémentation JDBC du PatientRepository.
  * Utilise la table PATIENT définie dans schema.sql.
  */
-public class PatientRepositoryJdbcImpl implements PatientRepository {
+public class PatientRepositoryImpl implements PatientRepository {
 
     // =====================================================================================
     //  MAPPING ResultSet -> Patient

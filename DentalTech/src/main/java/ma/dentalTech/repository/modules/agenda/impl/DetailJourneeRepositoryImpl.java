@@ -12,7 +12,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DetailJourneeRepositoryJdbcImpl implements DetailJourneeRepository {
+public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
     // =========================================
     //  MAPPER ResultSet -> Entity DetailJournee

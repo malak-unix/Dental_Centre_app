@@ -10,7 +10,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SituationFinanciereRepositoryJdbcImpl implements SituationFinanciereRepository {
+public class SituationFinanciereRepositoryImpl implements SituationFinanciereRepository {
 
     private static final String INSERT_SQL = """
         INSERT INTO situation_financiere

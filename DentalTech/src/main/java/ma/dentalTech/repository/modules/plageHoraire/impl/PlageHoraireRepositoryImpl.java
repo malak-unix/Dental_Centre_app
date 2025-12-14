@@ -11,7 +11,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlageHoraireRepositoryJdbcImpl implements PlageHoraireRepository {
+public class PlageHoraireRepositoryImpl implements PlageHoraireRepository {
 
     @Override
     public void create(PlageHoraire entity) {

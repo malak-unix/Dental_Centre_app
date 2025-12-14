@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
+public class RevenuesRepositoryImpl implements RevenuesRepository {
 
     private static final String INSERT_SQL = """
         INSERT INTO revenu (cabinet_id, titre, description, montant, date_revenu)

@@ -10,7 +10,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AgendaMensuelRepositoryJdbcImpl implements AgendaMensuelRepository {
+public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
     // ============================
     //  MAPPER ResultSet -> Entity

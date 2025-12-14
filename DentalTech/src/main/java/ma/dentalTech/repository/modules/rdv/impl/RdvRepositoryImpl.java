@@ -17,7 +17,7 @@ import java.util.List;
  * Implémentation JDBC du RdvRepository.
  * Utilise la table RDV définie dans schema.sql.
  */
-public class RdvRepositoryJdbcImpl implements RdvRepository {
+public class RdvRepositoryImpl implements RdvRepository {
 
     // =========================================================================
     //  Mapping ResultSet -> RDV

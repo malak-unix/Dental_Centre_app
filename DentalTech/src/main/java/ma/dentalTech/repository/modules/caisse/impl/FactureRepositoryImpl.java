@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FactureRepositoryJdbcImpl implements FactureRepository {
+public class FactureRepositoryImpl implements FactureRepository {
 
     private static final String INSERT_SQL = """
         INSERT INTO facture (consultation_id, date_facture, total_facture, total_paye, statut)
