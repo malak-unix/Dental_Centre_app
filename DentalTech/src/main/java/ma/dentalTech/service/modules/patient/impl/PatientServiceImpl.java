@@ -21,6 +21,8 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     public Patient getById(Long id) {
+        if (id == null) return null;
+        // CrudRepository<Patient, Long> doit retourner Patient (pas Optional)
         return patientRepository.findById(id);
     }
 
@@ -40,21 +42,25 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     public void delete(Patient p) {
+        if (p == null) return;
         patientRepository.delete(p);
     }
 
     @Override
     public void deleteById(Long id) {
+        if (id == null) return;
         patientRepository.deleteById(id);
     }
 
     @Override
     public List<Patient> searchByNom(String nomPart) {
-        return patientRepository.findByNomLike(nomPart);
+        if (nomPart == null) nomPart = "";
+        return patientRepository.searchByNom(nomPart);
     }
 
     @Override
     public Patient getByTelephone(String telephone) {
-        return patientRepository.findByTelephone(telephone);
+        if (telephone == null || telephone.isBlank()) return null;
+        return patientRepository.findByTelephone(telephone).orElse(null); // ✅ FIX
     }
 }

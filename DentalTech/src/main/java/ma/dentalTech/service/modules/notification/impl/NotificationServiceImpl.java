@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.notification.baseImplementation;
+package ma.dentalTech.service.modules.notification.impl;
 
 import ma.dentalTech.service.common.ServiceException;
 import ma.dentalTech.entities.enums.PrioriteNotification;

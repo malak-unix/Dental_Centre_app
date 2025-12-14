@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.ordonnance.baseImplementation;
+package ma.dentalTech.service.modules.ordonnance.impl;
 
 import ma.dentalTech.service.common.ServiceException;
 import ma.dentalTech.entities.ordonnance.Ordonnance;

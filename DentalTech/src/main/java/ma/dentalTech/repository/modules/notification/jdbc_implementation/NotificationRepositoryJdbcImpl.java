@@ -105,7 +105,7 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException  e) {
             throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
     }
@@ -156,8 +156,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
 
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour de la notification", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
     }
 
@@ -176,8 +176,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche de la notification par ID", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
 
         return null;
@@ -196,8 +196,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 list.add(map(rs));
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de toutes les notifications", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
 
         return list;
@@ -220,8 +220,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression de la notification", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
     }
 
@@ -249,8 +249,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des notifications par utilisateur", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
 
         return list;
@@ -279,8 +279,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des notifications par priorité", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
 
         return list;
@@ -311,8 +311,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des notifications par période", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
 
         return list;
@@ -340,8 +340,8 @@ public class NotificationRepositoryJdbcImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des notifications récentes", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
 
         return list;

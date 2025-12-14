@@ -102,9 +102,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la création du médicament", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -156,9 +157,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
 
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour du médicament", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -176,9 +178,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche du médicament par ID", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return null;
     }
@@ -196,9 +199,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 list.add(map(rs));
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de tous les médicaments", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -220,9 +224,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression du médicament", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     // =========================================================================
@@ -245,9 +250,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des médicaments par nom", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -268,9 +274,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des médicaments remboursables", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }
@@ -287,9 +294,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 return rs.getLong("total");
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors du comptage des médicaments", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return 0;
     }
@@ -315,9 +323,10 @@ public class MedicamentRepositoryJdbcImpl implements MedicamentRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de la page de médicaments", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
 
         return list;
     }

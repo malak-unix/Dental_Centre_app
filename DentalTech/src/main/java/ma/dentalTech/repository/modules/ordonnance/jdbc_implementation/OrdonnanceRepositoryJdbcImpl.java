@@ -90,7 +90,7 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     ordonnance.setId(rs.getLong(1));
                 }
             }
-        } catch (SQLException | DaoException e) {
+        } catch (SQLException  e) {
             throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
@@ -139,8 +139,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
             ps.setLong(5, ordonnance.getId());
 
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour de l'ordonnance", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 
@@ -158,8 +158,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     return map(rs);
                 }
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche de l'ordonnance par ID", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
         return null;
     }
@@ -176,8 +176,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
             while (rs.next()) {
                 list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de toutes les ordonnances", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
         return list;
     }
@@ -198,8 +198,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression de l'ordonnance", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 
@@ -222,8 +222,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     list.add(map(rs));
                 }
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des ordonnances par dossier", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;
@@ -244,8 +244,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     list.add(map(rs));
                 }
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des ordonnances par consultation", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;
@@ -266,8 +266,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     list.add(map(rs));
                 }
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des ordonnances par date", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;
@@ -293,8 +293,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     list.add(map(rs));
                 }
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des ordonnances par période", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;
@@ -311,8 +311,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
             if (rs.next()) {
                 return rs.getLong("total");
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors du comptage des ordonnances", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return 0;
@@ -338,8 +338,8 @@ public class OrdonnanceRepositoryJdbcImpl implements OrdonnanceRepository {
                     list.add(map(rs));
                 }
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de la page d'ordonnances", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;

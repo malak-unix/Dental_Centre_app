@@ -89,8 +89,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la création de la prescription", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 
@@ -133,8 +133,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
 
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour de la prescription", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 
@@ -153,8 +153,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche de la prescription par ID", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return null;
@@ -173,8 +173,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
                 list.add(map(rs));
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de toutes les prescriptions", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;
@@ -197,8 +197,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression de la prescription", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 
@@ -222,8 +222,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
                 }
             }
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération des prescriptions par ordonnance", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
 
         return list;
@@ -239,8 +239,8 @@ public class PrescriptionRepositoryJdbcImpl implements PrescriptionRepository {
             ps.setLong(1, ordonnanceId);
             ps.executeUpdate();
 
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression des prescriptions par ordonnance", e);
+        } catch (SQLException  e) {
+            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 }

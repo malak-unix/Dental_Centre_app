@@ -107,9 +107,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) c.setId(rs.getLong(1));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la création de la consultation", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -152,9 +153,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             ps.setLong(7, c.getId());
 
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la mise à jour de la consultation", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     @Override
@@ -169,9 +171,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return map(rs);
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche de la consultation par ID", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return null;
     }
 
@@ -185,9 +188,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) list.add(map(rs));
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de toutes les consultations", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 
@@ -205,9 +209,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la suppression de la consultation", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
     }
 
     // =========================================================================
@@ -227,9 +232,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des consultations par dossier", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 
@@ -250,9 +256,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des consultations par date", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 
@@ -274,9 +281,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des consultations par période", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 
@@ -293,9 +301,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la recherche des consultations par statut", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 
@@ -308,9 +317,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
              ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) return rs.getLong("total");
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors du comptage des consultations", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return 0;
     }
 
@@ -332,9 +342,10 @@ public class ConsultationRepositoryJdbcImpl implements ConsultationRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
-        } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur lors de la récupération de la page de consultations", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la création du certificat", e);
         }
+
         return list;
     }
 }
