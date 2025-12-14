@@ -199,22 +199,29 @@ public class ModulePlanningGlobalRepoTest {
 
     private static Long ensurePatientExists() throws SQLException {
         try (Connection cn = SessionFactory.getInstance().getConnection()) {
+
             try (PreparedStatement ps = cn.prepareStatement("SELECT id FROM patient LIMIT 1");
                  ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getLong(1);
             }
+
+            long patientId;
             try (PreparedStatement ps = cn.prepareStatement(
-                    "INSERT INTO patient(nom, prenom, telephone, cree_par, modifie_par) VALUES ('PAT','TEST',?, 'TEST','TEST')",
+                    "INSERT INTO patient(nom, prenom, telephone) VALUES ('PAT','TEST', ?)",
                     Statement.RETURN_GENERATED_KEYS)) {
+
                 ps.setString(1, "06" + (System.currentTimeMillis() % 1000000000));
                 ps.executeUpdate();
+
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     keys.next();
-                    return keys.getLong(1);
+                    patientId = keys.getLong(1);
                 }
             }
+            return patientId;
         }
     }
+
 
     private static Long ensureMedecinExists() throws SQLException {
         try (Connection cn = SessionFactory.getInstance().getConnection()) {
@@ -230,8 +237,8 @@ public class ModulePlanningGlobalRepoTest {
 
                 long utilisateurId;
                 try (PreparedStatement ps = cn.prepareStatement(
-                        "INSERT INTO utilisateur(nom, prenom, email, login, mot_de_passe, actif, role_id, cree_par, modifie_par) " +
-                                "VALUES ('MED','TEST', ?, ?, 'pass', 1, ?, 'TEST','TEST')",
+                        "INSERT INTO utilisateur(nom, prenom, email, login, mot_de_passe, actif, role_id) " +
+                                "VALUES ('MED','TEST', ?, ?, 'pass', 1, ?)",
                         Statement.RETURN_GENERATED_KEYS)) {
                     String u = "med_" + System.currentTimeMillis();
                     ps.setString(1, u + "@mail.com");
@@ -244,14 +251,16 @@ public class ModulePlanningGlobalRepoTest {
                     }
                 }
 
+
                 try (PreparedStatement ps = cn.prepareStatement(
-                        "INSERT INTO staff(id, salaire, prime, cree_par, modifie_par) VALUES (?,0,0,'TEST','TEST')")) {
+                        "INSERT INTO staff(id, salaire, prime) VALUES (?,0,0)")) {
                     ps.setLong(1, utilisateurId);
                     ps.executeUpdate();
                 }
 
+
                 try (PreparedStatement ps = cn.prepareStatement(
-                        "INSERT INTO medecin(id, specialite, cree_par, modifie_par) VALUES (?, 'GENERAL', 'TEST', 'TEST')")) {
+                        "INSERT INTO medecin(id, specialite) VALUES (?, 'GENERAL')")) {
                     ps.setLong(1, utilisateurId);
                     ps.executeUpdate();
                 }
@@ -277,14 +286,17 @@ public class ModulePlanningGlobalRepoTest {
         }
 
         try (PreparedStatement ps = cn.prepareStatement(
-                "INSERT INTO role(libelle, cree_par, modifie_par) VALUES (?, 'TEST', 'TEST')",
+                "INSERT INTO role(libelle) VALUES (?)",
                 Statement.RETURN_GENERATED_KEYS)) {
+
             ps.setString(1, libelle);
             ps.executeUpdate();
+
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
                 return keys.getLong(1);
             }
         }
     }
+
 }
