@@ -1,13 +1,21 @@
-import ma.dentalTech.configuration.Db;
+import ma.dentalTech.configuration.SessionFactory;
+
 import java.sql.Connection;
 
 public class TestConnexion {
+
     public static void main(String[] args) {
-        Connection cn = Db.getConnection();
-        if (cn != null) {
-            System.out.println(" Test OK : la connexion fonctionne !");
-        } else {
-            System.out.println(" Test échoué : pas de connexion.");
+
+        try (Connection cn = SessionFactory.getInstance().getConnection()) {
+
+            if (cn != null && !cn.isClosed()) {
+                System.out.println("✅ Connexion OK via SessionFactory");
+            } else {
+                System.out.println("❌ Connexion échouée");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
