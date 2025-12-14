@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.plageHoraire.jdbc_implementation;
+package ma.dentalTech.repository.modules.plageHoraire.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.plageHoraire.PlageHoraire;

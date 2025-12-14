@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.agenda.jdbc_implementation;
+package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.detailJournee.DetailJournee;
@@ -9,7 +9,6 @@ import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

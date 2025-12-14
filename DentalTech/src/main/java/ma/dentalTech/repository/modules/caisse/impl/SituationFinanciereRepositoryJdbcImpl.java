@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.caisse.jdbc_implementation;
+package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.enums.StatutSituationFinanciere;

@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.listeAttente.jdbc_implementation;
+package ma.dentalTech.repository.modules.listeAttente.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.listeDattente.ListeAttente;

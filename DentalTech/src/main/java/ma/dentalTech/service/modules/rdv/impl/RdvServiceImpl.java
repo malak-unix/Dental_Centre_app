@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.rdv.baseImplementation;
+package ma.dentalTech.service.modules.rdv.impl;
 
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.enums.EtatRendezVous;

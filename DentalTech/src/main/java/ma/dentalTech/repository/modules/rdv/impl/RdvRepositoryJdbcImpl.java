@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.rdv.jdbc_implementation;
+package ma.dentalTech.repository.modules.rdv.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.enums.EtatRendezVous;

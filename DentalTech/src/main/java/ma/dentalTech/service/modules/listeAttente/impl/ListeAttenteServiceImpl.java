@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.listeAttente.baseImplementation;
+package ma.dentalTech.service.modules.listeAttente.impl;
 
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.listeDattente.ListeAttente;

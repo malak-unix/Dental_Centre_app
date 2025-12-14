@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.caisse.baseImplementation;
+package ma.dentalTech.service.modules.caisse.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.patient.jdbc_implementation;
+package ma.dentalTech.repository.modules.patient.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.antecedents.Antecedents;

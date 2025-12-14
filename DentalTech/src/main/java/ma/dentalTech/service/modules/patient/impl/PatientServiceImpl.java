@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.patient.baseImplementation;
+package ma.dentalTech.service.modules.patient.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

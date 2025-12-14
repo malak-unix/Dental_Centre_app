@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.agenda.baseImplementation;
+package ma.dentalTech.service.modules.agenda.impl;
 
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;

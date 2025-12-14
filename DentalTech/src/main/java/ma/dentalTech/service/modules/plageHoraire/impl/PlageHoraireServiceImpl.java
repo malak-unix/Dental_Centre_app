@@ -1,4 +1,4 @@
-package ma.dentalTech.service.modules.plageHoraire.baseImplementation;
+package ma.dentalTech.service.modules.plageHoraire.impl;
 
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.plageHoraire.PlageHoraire;

@@ -1,61 +1,61 @@
-package ma.dentalTech.repository.modules.caisse.jdbc_implementation;
+package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
-import ma.dentalTech.entities.charges.Charges;
+import ma.dentalTech.entities.revenues.Revenues;
 import ma.dentalTech.repository.common.JdbcUtils;
-import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
+import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChargesRepositoryJdbcImpl implements ChargesRepository {
+public class RevenuesRepositoryJdbcImpl implements RevenuesRepository {
 
     private static final String INSERT_SQL = """
-        INSERT INTO charge (cabinet_id, titre, description, montant, date_charge)
+        INSERT INTO revenu (cabinet_id, titre, description, montant, date_revenu)
         VALUES (?, ?, ?, ?, ?)
         """;
 
     private static final String UPDATE_SQL = """
-        UPDATE charge
+        UPDATE revenu
            SET cabinet_id = ?,
                titre = ?,
                description = ?,
                montant = ?,
-               date_charge = ?
+               date_revenu = ?
          WHERE id = ?
         """;
 
     private static final String DELETE_BY_ID_SQL =
-            "DELETE FROM charge WHERE id = ?";
+            "DELETE FROM revenu WHERE id = ?";
 
     private static final String SELECT_BY_ID_SQL = """
-        SELECT id, cabinet_id, titre, description, montant, date_charge
-          FROM charge
+        SELECT id, cabinet_id, titre, description, montant, date_revenu
+          FROM revenu
          WHERE id = ?
         """;
 
     private static final String SELECT_ALL_SQL = """
-        SELECT id, cabinet_id, titre, description, montant, date_charge
-          FROM charge
+        SELECT id, cabinet_id, titre, description, montant, date_revenu
+          FROM revenu
         """;
 
     private static final String SELECT_BETWEEN_DATES_SQL = """
-        SELECT id, cabinet_id, titre, description, montant, date_charge
-          FROM charge
-         WHERE date_charge BETWEEN ? AND ?
-         ORDER BY date_charge ASC
+        SELECT id, cabinet_id, titre, description, montant, date_revenu
+          FROM revenu
+         WHERE date_revenu BETWEEN ? AND ?
+         ORDER BY date_revenu ASC
         """;
 
-    private static final String TOTAL_CHARGES_SQL = """
+    private static final String TOTAL_REVENUS_SQL = """
         SELECT SUM(montant) AS total
-          FROM charge
-         WHERE date_charge BETWEEN ? AND ?
+          FROM revenu
+         WHERE date_revenu BETWEEN ? AND ?
         """;
 
-    // =============== MAPPER ===============
-    private Charges map(ResultSet rs) throws SQLException {
+    // ===================== MAPPER =====================
+    private Revenues map(ResultSet rs) throws SQLException {
         Long id = rs.getLong("id");
         if (rs.wasNull()) id = null;
 
@@ -68,36 +68,39 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
         Double montant = rs.getDouble("montant");
         if (rs.wasNull()) montant = null;
 
-        Timestamp ts = rs.getTimestamp("date_charge");
-        LocalDateTime dateCharge = ts != null ? ts.toLocalDateTime() : null;
+        Timestamp ts = rs.getTimestamp("date_revenu");
+        LocalDateTime dateRevenu = ts != null ? ts.toLocalDateTime() : null;
 
-        return Charges.builder()
+        return Revenues.builder()
                 .id(id)
                 .cabinetId(cabinetId)
                 .titre(titre)
                 .description(description)
                 .montant(montant)
-                .dateCharge(dateCharge)
+                .dateRevenu(dateRevenu)
                 .build();
     }
 
-    // =============== CRUD ===============
+    // ===================== CRUD =====================
+
     @Override
-    public List<Charges> findAll() {
+    public List<Revenues> findAll() {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = ps.executeQuery()) {
 
-            List<Charges> list = new ArrayList<>();
-            while (rs.next()) list.add(map(rs));
+            List<Revenues> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(map(rs));
+            }
             return list;
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur findAll() Charges", e);
+            throw new RuntimeException("Erreur findAll() Revenues", e);
         }
     }
 
     @Override
-    public Charges findById(Long id) {
+    public Revenues findById(Long id) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BY_ID_SQL)) {
 
@@ -107,12 +110,12 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
                 return null;
             }
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur findById() Charges, id=" + id, e);
+            throw new RuntimeException("Erreur findById() Revenues, id=" + id, e);
         }
     }
 
     @Override
-    public void create(Charges entity) {
+    public void create(Revenues entity) {
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -131,8 +134,8 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
                 ps.setNull(4, Types.DECIMAL);
             }
 
-            if (entity.getDateCharge() != null) {
-                ps.setTimestamp(5, Timestamp.valueOf(entity.getDateCharge()));
+            if (entity.getDateRevenu() != null) {
+                ps.setTimestamp(5, Timestamp.valueOf(entity.getDateRevenu()));
             } else {
                 ps.setNull(5, Types.TIMESTAMP);
             }
@@ -143,14 +146,14 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
                 if (keys.next()) entity.setId(keys.getLong(1));
             }
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur create() Charges", e);
+            throw new RuntimeException("Erreur create() Revenues", e);
         }
     }
 
     @Override
-    public void update(Charges entity) {
+    public void update(Revenues entity) {
         if (entity.getId() == null) {
-            throw new RuntimeException("update() Charges sans id");
+            throw new RuntimeException("update() Revenues sans id");
         }
 
         try (Connection conn = JdbcUtils.getConnection();
@@ -171,8 +174,8 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
                 ps.setNull(4, Types.DECIMAL);
             }
 
-            if (entity.getDateCharge() != null) {
-                ps.setTimestamp(5, Timestamp.valueOf(entity.getDateCharge()));
+            if (entity.getDateRevenu() != null) {
+                ps.setTimestamp(5, Timestamp.valueOf(entity.getDateRevenu()));
             } else {
                 ps.setNull(5, Types.TIMESTAMP);
             }
@@ -181,15 +184,15 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
 
             int updated = ps.executeUpdate();
             if (updated == 0) {
-                throw new RuntimeException("Aucune charge mise à jour, id=" + entity.getId());
+                throw new RuntimeException("Aucun revenu mis à jour, id=" + entity.getId());
             }
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur update() Charges", e);
+            throw new RuntimeException("Erreur update() Revenues", e);
         }
     }
 
     @Override
-    public void delete(Charges entity) {
+    public void delete(Revenues entity) {
         if (entity.getId() == null) return;
         deleteById(entity.getId());
     }
@@ -202,35 +205,36 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException | DaoException e) {
-            throw new RuntimeException("Erreur deleteById() Charges, id=" + id, e);
+            throw new RuntimeException("Erreur deleteById() Revenues, id=" + id, e);
         }
     }
 
-    // =============== Spécifiques ===============
+    // ===================== Spécifiques =====================
+
     @Override
-    public List<Charges> findByDateBetween(LocalDateTime start, LocalDateTime end) throws DaoException {
-        // Méthode spécifique définie dans ChargesRepository → OK pour throws DaoException
+    public List<Revenues> findByDateBetween(LocalDateTime start, LocalDateTime end) throws DaoException {
+        // Méthode spécifique déclarée dans RevenuesRepository → OK pour throws DaoException
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(SELECT_BETWEEN_DATES_SQL)) {
 
             ps.setTimestamp(1, Timestamp.valueOf(start));
             ps.setTimestamp(2, Timestamp.valueOf(end));
 
-            List<Charges> list = new ArrayList<>();
+            List<Revenues> list = new ArrayList<>();
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
             return list;
         } catch (SQLException e) {
-            throw new DaoException("Erreur findByDateBetween() Charges", e);
+            throw new DaoException("Erreur findByDateBetween() Revenues", e);
         }
     }
 
     @Override
-    public Double calculateTotalCharges(LocalDateTime start, LocalDateTime end) throws DaoException {
-        // Méthode spécifique aussi → on garde DaoException
+    public Double calculateTotalOtherRevenue(LocalDateTime start, LocalDateTime end) throws DaoException {
+        // Méthode spécifique aussi → on garde throws DaoException
         try (Connection conn = JdbcUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(TOTAL_CHARGES_SQL)) {
+             PreparedStatement ps = conn.prepareStatement(TOTAL_REVENUS_SQL)) {
 
             ps.setTimestamp(1, Timestamp.valueOf(start));
             ps.setTimestamp(2, Timestamp.valueOf(end));
@@ -244,7 +248,7 @@ public class ChargesRepositoryJdbcImpl implements ChargesRepository {
                 return 0.0;
             }
         } catch (SQLException e) {
-            throw new DaoException("Erreur calculateTotalCharges()", e);
+            throw new DaoException("Erreur calculateTotalOtherRevenue()", e);
         }
     }
 }

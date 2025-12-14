@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.agenda.jdbc_implementation;
+package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
