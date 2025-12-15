@@ -55,4 +55,28 @@ public class RdvControllerImpl implements RdvController {
     public List<RDV> upcomingFromToday() {
         return service.getUpcomingFromToday();
     }
+
+    @Override
+    public void confirm(Long id) {
+        RDV r = service.getById(id);
+        if (r == null) return;
+        r.setStatus(EtatRendezVous.CONFIRME);
+        service.update(r);
+    }
+
+    @Override
+    public void cancel(Long id) {
+        RDV r = service.getById(id);
+        if (r == null) return;
+        r.setStatus(EtatRendezVous.ANNULE);
+        service.update(r);
+    }
+
+    @Override
+    public void runDemo() {
+        System.out.println("RDV total=" + service.getAll().size());
+        System.out.println("RDV today=" + service.getByDate(LocalDate.now()).size());
+        System.out.println("RDV upcoming=" + service.getUpcomingFromToday().size());
+    }
+
 }

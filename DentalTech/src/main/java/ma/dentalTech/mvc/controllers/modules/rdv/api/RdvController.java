@@ -16,4 +16,8 @@ public interface RdvController {
     List<RDV> findByDate(LocalDate date);
     List<RDV> findByStatus(EtatRendezVous status);
     List<RDV> upcomingFromToday();
+    void confirm(Long id);
+    void cancel(Long id);
+    void runDemo();
+
 }
