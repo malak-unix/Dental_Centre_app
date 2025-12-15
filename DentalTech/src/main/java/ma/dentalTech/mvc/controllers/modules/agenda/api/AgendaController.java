@@ -8,25 +8,27 @@ import java.util.List;
 
 public interface AgendaController {
 
-    AgendaMensuel createAgendaMensuel(AgendaMensuel agenda);
+    // AgendaMensuel
+    List<AgendaMensuel> getAllAgendas();
+    AgendaMensuel getAgendaById(Long id);
+    void createAgenda(AgendaMensuel agenda);
+    void updateAgenda(AgendaMensuel agenda);
+    void deleteAgenda(AgendaMensuel agenda);
+    void deleteAgendaById(Long id);
 
-    void updateAgendaMensuel(AgendaMensuel agenda);
-
-    AgendaMensuel getAgendaMensuelById(Long id);
-
+    AgendaMensuel getAgendaByMedecinMonth(Long medecinId, String mois, int annee);
     List<AgendaMensuel> getAgendasByMedecin(Long medecinId);
 
-    DetailJournee createDetailJournee(DetailJournee d);
-
-    void updateDetailJournee(DetailJournee d);
+    // DetailJournee
+    List<DetailJournee> getAllDetails();
+    DetailJournee getDetailById(Long id);
+    void createDetail(DetailJournee d);
+    void updateDetail(DetailJournee d);
+    void deleteDetail(DetailJournee d);
+    void deleteDetailById(Long id);
 
     List<DetailJournee> getDetailsByAgenda(Long agendaId);
-
-    DetailJournee getDetailByDate(Long agendaId, LocalDate dateJour);
-
-    void deleteAgendaMensuelById(Long id);
-
-    void deleteDetailJourneeById(Long id);
+    DetailJournee getDetailByAgendaAndDate(Long agendaId, LocalDate dateJour);
 
     void runDemo();
 }
