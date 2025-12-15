@@ -1,19 +1,23 @@
 package ma.dentalTech.service.modules.caisse.api;
 
-import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
+import ma.dentalTech.entities.facture.Facture;
+import ma.dentalTech.entities.revenues.Revenues;
+import ma.dentalTech.entities.charges.Charges;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface CaisseDashboardService {
 
-    CaisseDashboardDTO getDashboardBetween(LocalDateTime start, LocalDateTime end) throws ServiceException;
+    List<Facture> getFacturesBetween(LocalDateTime start, LocalDateTime end);
+    List<Revenues> getRevenusBetween(LocalDateTime start, LocalDateTime end);
+    List<Charges> getChargesBetween(LocalDateTime start, LocalDateTime end);
 
-    default CaisseDashboardDTO getDashboardToday() throws ServiceException {
-        LocalDate today = LocalDate.now();
-        LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end   = today.plusDays(1).atStartOfDay().minusNanos(1);
-        return getDashboardBetween(start, end);
-    }
+    Double totalFactures(LocalDateTime start, LocalDateTime end);
+    Double totalRegle(LocalDateTime start, LocalDateTime end);
+    Double totalNonRegle(LocalDateTime start, LocalDateTime end);
+    Double totalRevenus(LocalDateTime start, LocalDateTime end);
+    Double totalCharges(LocalDateTime start, LocalDateTime end);
+
+    Double solde(LocalDateTime start, LocalDateTime end); // revenus - charges
 }

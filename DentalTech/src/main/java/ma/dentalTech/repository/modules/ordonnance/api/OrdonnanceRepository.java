@@ -9,6 +9,16 @@ import java.util.List;
 public interface OrdonnanceRepository extends CrudRepository<Ordonnance, Long> {
 
     /**
+     * Toutes les ordonnances d'un dossier médical.
+     */
+    List<Ordonnance> findByDossierId(Long dossierId);
+
+    /**
+     * Ordonnances générées pour une consultation donnée.
+     */
+    List<Ordonnance> findByConsultationId(Long consultationId);
+
+    /**
      * Toutes les ordonnances d'une date donnée.
      */
     List<Ordonnance> findByDate(LocalDate date);
@@ -19,7 +29,7 @@ public interface OrdonnanceRepository extends CrudRepository<Ordonnance, Long> {
     List<Ordonnance> findByDateBetween(LocalDate start, LocalDate end);
 
     /**
-     * Nombre total d’ordonnances.
+     * Nombre total d’ordonnances (pour stats / pagination).
      */
     long count();
 

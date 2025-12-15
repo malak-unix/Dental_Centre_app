@@ -1,7 +1,7 @@
 package ma.dentalTech;
 
 
-import ma.dentalTech.conf.ApplicationContext;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 
 public class MainApp

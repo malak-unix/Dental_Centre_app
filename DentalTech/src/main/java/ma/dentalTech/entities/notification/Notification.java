@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
+import ma.dentalTech.entities.enums.PrioriteNotification;
 import ma.dentalTech.entities.enums.TypeNotification;
 
 import java.time.LocalDateTime;
@@ -15,9 +16,12 @@ import java.time.LocalDateTime;
 @SuperBuilder
 public class Notification extends BaseEntity {
 
+    private Long utilisateurId;
+    private LocalDateTime dateNotification;
+    private PrioriteNotification priorite;
     private String titre;
     private String message;
-    private TypeNotification type;   // Enum
-    private boolean lu;
+    //private TypeNotification type;   // Enum
+    //private boolean lu;
     private LocalDateTime dateEnvoi;
 }

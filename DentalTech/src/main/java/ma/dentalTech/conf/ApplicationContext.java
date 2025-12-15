@@ -1,7 +1,11 @@
 package ma.dentalTech.conf;
 
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.repository.modules.notification.api.NotificationRepository;
+import ma.dentalTech.repository.modules.ordonnance.api.OrdonnanceRepository;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
+import ma.dentalTech.service.modules.notification.api.NotificationService;
+import ma.dentalTech.service.modules.ordonnance.api.OrdonnanceService;
 import ma.dentalTech.service.modules.patient.api.PatientService;
 
 // Module Caisse
@@ -29,6 +33,8 @@ import ma.dentalTech.service.modules.listeAttente.api.ListeAttenteService;
 // Module Plage Horaire
 import ma.dentalTech.repository.modules.plageHoraire.api.PlageHoraireRepository;
 import ma.dentalTech.service.modules.plageHoraire.api.PlageHoraireService;
+
+
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -232,12 +238,113 @@ public final class ApplicationContext {
             contextByName.put("plageHoraire.repository", plageHoraireRepository);
             contextByName.put("plageHoraire.service", plageHoraireService);
 
+            // ============================================================
+            // 7. MODULE DOCUMENTS MÉDICAUX / NOTIFICATIONS (Malak)
+            // ============================================================
+
+            // Consultation
+            currentBean = "consultation.repository";
+            ma.dentalTech.repository.modules.consultation.api.ConsultationRepository consultationRepository =
+                    newBean(properties,
+                            "consultation.repository",
+                            ma.dentalTech.repository.modules.consultation.api.ConsultationRepository.class);
+
+            currentBean = "interventionMedecin.repository";
+            ma.dentalTech.repository.modules.consultation.api.InterventionMedecinRepository interventionMedecinRepository =
+                    newBean(properties,
+                            "interventionMedecin.repository",
+                            ma.dentalTech.repository.modules.consultation.api.InterventionMedecinRepository.class);
+
+            // Ordonnance / Prescription / Medicament
+            currentBean = "ordonnance.repository";
+            ma.dentalTech.repository.modules.ordonnance.api.OrdonnanceRepository ordonnanceRepository =
+                    newBean(properties,
+                            "ordonnance.repository",
+                            ma.dentalTech.repository.modules.ordonnance.api.OrdonnanceRepository.class);
+
+            currentBean = "prescription.repository";
+            ma.dentalTech.repository.modules.ordonnance.api.PrescriptionRepository prescriptionRepository =
+                    newBean(properties,
+                            "prescription.repository",
+                            ma.dentalTech.repository.modules.ordonnance.api.PrescriptionRepository.class);
+
+            currentBean = "medicament.repository";
+            ma.dentalTech.repository.modules.ordonnance.api.MedicamentRepository medicamentRepository =
+                    newBean(properties,
+                            "medicament.repository",
+                            ma.dentalTech.repository.modules.ordonnance.api.MedicamentRepository.class);
+
+            // Certificat
+            currentBean = "certificat.repository";
+            ma.dentalTech.repository.modules.certificat.api.CertificatRepository certificatRepository =
+                    newBean(properties,
+                            "certificat.repository",
+                            ma.dentalTech.repository.modules.certificat.api.CertificatRepository.class);
+
+            // Notification
+            currentBean = "notification.repository";
+            ma.dentalTech.repository.modules.notification.api.NotificationRepository notificationRepository =
+                    newBean(properties,
+                            "notification.repository",
+                            ma.dentalTech.repository.modules.notification.api.NotificationRepository.class);
+
+            // OrdonnanceService
+            currentBean = "ordonnance.service";
+            OrdonnanceService ordonnanceService =
+                    (OrdonnanceService) Class.forName(properties.getProperty("ordonnance.service"))
+                            .getDeclaredConstructor(OrdonnanceRepository.class)
+                            .newInstance(ordonnanceRepository);
+
+// NotificationService
+            currentBean = "notification.service";
+            NotificationService notificationService =
+                    (NotificationService) Class.forName(properties.getProperty("notification.service"))
+                            .getDeclaredConstructor(NotificationRepository.class)
+                            .newInstance(notificationRepository);
+
+            // --- Enregistrement dans les maps du contexte ---
+            context.put(ma.dentalTech.repository.modules.consultation.api.ConsultationRepository.class, consultationRepository);
+            context.put(ma.dentalTech.repository.modules.consultation.api.InterventionMedecinRepository.class, interventionMedecinRepository);
+            context.put(ma.dentalTech.repository.modules.ordonnance.api.OrdonnanceRepository.class, ordonnanceRepository);
+            context.put(ma.dentalTech.repository.modules.ordonnance.api.PrescriptionRepository.class, prescriptionRepository);
+            context.put(ma.dentalTech.repository.modules.ordonnance.api.MedicamentRepository.class, medicamentRepository);
+            context.put(ma.dentalTech.repository.modules.certificat.api.CertificatRepository.class, certificatRepository);
+            context.put(ma.dentalTech.repository.modules.notification.api.NotificationRepository.class, notificationRepository);
+
+            context.put(OrdonnanceService.class, ordonnanceService);
+            context.put(NotificationService.class, notificationService);
+
+            contextByName.put("consultation.repository", consultationRepository);
+            contextByName.put("interventionMedecin.repository", interventionMedecinRepository);
+            contextByName.put("ordonnance.repository", ordonnanceRepository);
+            contextByName.put("prescription.repository", prescriptionRepository);
+            contextByName.put("medicament.repository", medicamentRepository);
+            contextByName.put("certificat.repository", certificatRepository);
+            contextByName.put("notification.repository", notificationRepository);
+
+            contextByName.put("ordonnance.service", ordonnanceService);
+            contextByName.put("notification.service", notificationService);
+
         } catch (Exception e) {
             throw new RuntimeException(
                     "Erreur lors de l'initialisation de l'ApplicationContext (bean courant = "
                             + currentBean + ")", e);
         }
     }
+
+    private static <T> T newBean(Properties properties, String key, Class<T> type) throws Exception {
+        String className = properties.getProperty(key);
+        if (className == null || className.isBlank()) {
+            throw new IllegalStateException("Bean non défini dans beans.properties : " + key);
+        }
+
+        Class<?> clazz = Class.forName(className);
+        Object instance = clazz.getDeclaredConstructor().newInstance();
+
+        return type.cast(instance);
+    }
+
+
 
     private ApplicationContext() {}
 
