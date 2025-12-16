@@ -24,4 +24,6 @@ public class AgendaMensuel extends BaseEntity {
 
     // Non stocké directement dans la table, mais utile côté objet
     private List<DetailJournee> listeJours;
+
 }
+
