@@ -127,4 +127,17 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
             throw new RuntimeException("Erreur findByNomListe()", e);
         }
     }
+
+    @Override
+    public Integer countActifs() {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+    @Override
+    public Integer countPourMedecin(Long medecinId) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
 }

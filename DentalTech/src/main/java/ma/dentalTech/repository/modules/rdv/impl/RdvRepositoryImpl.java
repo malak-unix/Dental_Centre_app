@@ -228,4 +228,22 @@ public class RdvRepositoryImpl implements RdvRepository {
             throw new RuntimeException("Erreur selectList()", e);
         }
     }
+    @Override
+    public Integer countByDate(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+    @Override
+    public Integer countRdvEnRetard(java.time.LocalDate today) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+    @Override
+    public Integer countByMedecinAndDate(Long medecinId, java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
 }

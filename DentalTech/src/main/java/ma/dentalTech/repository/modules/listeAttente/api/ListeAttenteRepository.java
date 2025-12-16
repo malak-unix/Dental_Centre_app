@@ -8,4 +8,8 @@ import java.util.List;
 public interface ListeAttenteRepository extends CrudRepository<ListeAttente, Long> {
 
     List<ListeAttente> findByNomListe(String nomListe);
+//Methodes ajoute par AYA BERDAY kan st3mlhom f dashboard
+    Integer countActifs();
+    Integer countPourMedecin(Long medecinId);
+
 }

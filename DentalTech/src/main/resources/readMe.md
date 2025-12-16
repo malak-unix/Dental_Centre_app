@@ -104,6 +104,63 @@ Chaque couche communique uniquement avec la couche inférieure (respect du princ
 
 ---
 
+## 📊 Module Dashboard (Tableau de Bord)
+
+### 🎯 Objectif
+Le module **Dashboard** offre une vue synthétique et centralisée de l’activité du cabinet.  
+Il permet d’éviter la duplication de code en proposant **un seul tableau de bord** dont le contenu varie selon le **rôle de l’utilisateur**.
+
+### 🧠 Principe de conception
+- Utilisation d’un **DTO unique (`DashboardDTO`)**
+- Activation/désactivation des sections via `DashboardFeaturesDTO`
+- Consommation des données via des **interfaces de services et repositories**
+- Respect strict de l’architecture **MVC**
+
+### 👥 Gestion par rôles
+| Rôle | Informations affichées |
+|-----|------------------------|
+| **Secrétaire** | Caisse du jour, RDV, file d’attente, notifications |
+| **Médecin** | Consultations, actes réalisés, résumé financier |
+| **Administrateur** | Statistiques globales (utilisateurs, patients, dossiers, CA, charges) |
+
+### 🧩 Blocs du Dashboard
+- **Caisse** : factures, revenus, charges, solde (calculé dynamiquement)
+- **Rendez-vous & file d’attente**
+- **Notifications**
+- **Consultations & actes**
+- **Statistiques administratives**
+
+### 🏗️ Classes principales
+- `DashboardDTO`
+- `DashboardFeaturesDTO`
+- `CaisseDashboardDTO`
+- `DashboardService`
+- `DashboardController`
+- `DashboardConsoleUI`
+
+### ✅ Avantages
+- Maintenance simplifiée
+- Extensible sans refonte
+- Conforme à la méthodologie recommandée par le professeur
+
+---
+
+## 🗄️ Base de données
+- **Script SQL** : `schema.sql`
+- **Jeu de données** : `seed.sql`
+- **Connexion JDBC** : `db.properties`
+
+---
+
+## 🧪 Scénario de démo
+1. Connexion avec un compte secrétaire
+2. Ajout d’un patient
+3. Création d’un rendez-vous
+4. Saisie d’une consultation
+5. Génération d’une facture PDF
+6. Affichage du dashboard
+
+---
 ## Base de données
 - **Script SQL** : `schema.sql` → création du schéma complet.  
 - **Jeu de données** : `seed.sql` → initialisation (patients, rendez-vous, factures ...etc).  

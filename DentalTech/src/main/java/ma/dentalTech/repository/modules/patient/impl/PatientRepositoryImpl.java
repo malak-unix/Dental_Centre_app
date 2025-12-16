@@ -357,5 +357,20 @@ public class PatientRepositoryImpl implements PatientRepository {
     public List<Patient> getPatientsByAntecedent(Long antecedentId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
+//an7tajha f dahboard
+    @Override
+    public Integer countAll() {
+        String sql = "SELECT COUNT(*) c FROM patient";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getInt("c") : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countAll Patient", e);
+        }
+    }
+
 
 }

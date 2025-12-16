@@ -348,4 +348,17 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
         return list;
     }
+    @Override
+    public Integer countTermineesPourMedecin(Long medecinId, java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+    @Override
+    public Integer countEnCoursPourMedecin(Long medecinId, java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+
 }

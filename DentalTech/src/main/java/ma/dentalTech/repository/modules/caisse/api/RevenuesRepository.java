@@ -11,4 +11,7 @@ public interface RevenuesRepository extends CrudRepository<Revenues, Long> {
     List<Revenues> findByDateBetween(LocalDateTime start, LocalDateTime end);
 
     Double calculateTotalOtherRevenue(LocalDateTime start, LocalDateTime end);
+
+    Double calculateTotalRevenus(LocalDateTime start, LocalDateTime end);
+
 }

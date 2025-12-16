@@ -4,6 +4,4 @@ public enum LibelleRole {
     ADMIN,
     MEDECIN,
     SECRETAIRE,
-    ASSISTANT,
-    COMPTABLE
 }

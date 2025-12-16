@@ -1,26 +1,26 @@
-/**package ma.dentalTech.service.modules.dashboard.baseImplementation;
- BIDMAN YSALIW LBNAT W Y9ADO LES REPO DYALHOM
- #7IT HNA I NEED BZF FHAL RDV NOTIFICATION AGENDA ...
+package ma.dentalTech.service.modules.dashboard.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardAdminDTO;
-import ma.dentalTech.mvc.dto.DashboardMedecinDTO;
-import ma.dentalTech.mvc.dto.DashboardSecretaireDTO;
-import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
-import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
-import ma.dentalTech.repository.modules.users.api.NotificationRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
-import ma.dentalTech.repository.modules.consultation.api.ActeRepository;
-import ma.dentalTech.repository.modules.security.api.UtilisateurRepository;
-import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.repository.modules.dossier.api.DossierMedicalRepository;
-import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
+import ma.dentalTech.mvc.dto.DashboardDTO;
+import ma.dentalTech.mvc.dto.DashboardFeaturesDTO;
+
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
+import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
+
+import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
+
+import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
+import ma.dentalTech.repository.modules.patient.api.PatientRepository;
+import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
+import ma.dentalTech.repository.modules.users.api.NotificationRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
@@ -32,147 +32,120 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    // Services / repositories nécessaires
     private CaisseDashboardService caisseDashboardService;
 
     private RdvRepository rdvRepository;
     private ListeAttenteRepository listeAttenteRepository;
     private NotificationRepository notificationRepository;
 
+    // ✅ CORRIGÉ : dossierMedical.api
     private ConsultationRepository consultationRepository;
     private ActeRepository acteRepository;
+    private DossierMedicalRepository dossierMedicalRepository;
 
     private UtilisateurRepository utilisateurRepository;
     private PatientRepository patientRepository;
-    private DossierMedicalRepository dossierMedicalRepository;
 
     private FactureRepository factureRepository;
     private ChargesRepository chargesRepository;
 
     @Override
-    public DashboardSecretaireDTO getDashboardSecretaire(Long secretaireId) throws ServiceException {
+    public DashboardDTO getDashboard(Long utilisateurId) throws ServiceException {
         try {
             LocalDate today = LocalDate.now();
             LocalDateTime start = today.atStartOfDay();
-            LocalDateTime end   = today.plusDays(1).atStartOfDay().minusNanos(1);
+            LocalDateTime end = today.plusDays(1).atStartOfDay().minusNanos(1);
 
-            // Stats caisse du jour
-            CaisseDashboardDTO caisseDuJour = caisseDashboardService.getDashboardToday();
+            String role = utilisateurRepository.findRoleByUtilisateurId(utilisateurId);
+            if (role == null) throw new ServiceException("Role introuvable pour utilisateurId=" + utilisateurId);
 
-            // Rdv / file d'attente
-            Integer nbRdvJour = rdvRepository.countByDate(start, end);
-            Integer nbEnFileAttente = listeAttenteRepository.countActifs();
-            Integer nbRdvEnRetard = rdvRepository.countRdvEnRetard(today);
+            DashboardFeaturesDTO features = featuresForRole(role);
 
-            // Notifications
-            Integer nbNotifNonLues = notificationRepository.countNonLuesPourSecretaire(secretaireId);
-            Integer nbAlertesImportantes = notificationRepository.countAlertesImportantesPourSecretaire(secretaireId);
-
-            return DashboardSecretaireDTO.builder()
+            DashboardDTO.DashboardDTOBuilder out = DashboardDTO.builder()
                     .dateJour(today)
-                    .caisseDuJour(caisseDuJour)
-                    .nombreRdvDuJour(nbRdvJour)
-                    .nombrePatientsEnFileAttente(nbEnFileAttente)
-                    .nombreRdvEnRetard(nbRdvEnRetard)
-                    .nombreNotificationsNonLues(nbNotifNonLues)
-                    .nombreAlertesImportantes(nbAlertesImportantes)
-                    .build();
+                    .role(role)
+                    .features(features);
 
-        } catch (DaoException e) {
-            throw new ServiceException("Erreur lors du chargement du dashboard Secrétaire.", e);
+            // Secrétaire
+            if (features.isVoirCaisse()) {
+                CaisseDashboardDTO caisse = caisseDashboardService.getDashboardToday();
+                out.caisseDuJour(caisse);
+            }
+            if (features.isVoirRdvEtFileAttente()) {
+                out.nombreRdvDuJour(rdvRepository.countByDate(start, end));
+                out.nombrePatientsEnFileAttente(listeAttenteRepository.countActifs());
+                out.nombreRdvEnRetard(rdvRepository.countRdvEnRetard(today));
+            }
+            if (features.isVoirNotifications()) {
+                out.nombreNotificationsNonLues(notificationRepository.countNonLuesPourSecretaire(utilisateurId));
+                out.nombreAlertesImportantes(notificationRepository.countAlertesImportantesPourSecretaire(utilisateurId));
+            }
+
+            // Médecin
+            if (features.isVoirConsultationsEtActes()) {
+                Long medecinId = utilisateurId;
+
+                out.nombreConsultationsTerminees(consultationRepository.countTermineesPourMedecin(medecinId, start, end));
+                out.nombreConsultationsEnCours(consultationRepository.countEnCoursPourMedecin(medecinId, start, end));
+
+                out.nombreActesRealisesDuJour(acteRepository.countActesPourMedecinEtDate(medecinId, start, end));
+                out.montantTotalActesDuJour(safeDouble(acteRepository.sumMontantActesPourMedecinEtDate(medecinId, start, end)));
+
+                out.totalFacturesDuJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
+                out.totalRegleDuJour(safeDouble(factureRepository.calculateTotalRegle(start, end)));
+                out.totalNonRegleDuJour(safeDouble(factureRepository.calculateTotalNonRegle(start, end)));
+            }
+
+            // Admin
+            if (features.isVoirStatsAdmin()) {
+                out.nombreUtilisateursTotal(utilisateurRepository.countAll());
+                out.nombreMedecins(utilisateurRepository.countByRole("MEDECIN"));
+                out.nombreSecretaires(utilisateurRepository.countByRole("SECRETAIRE"));
+                out.nombreAdmins(utilisateurRepository.countByRole("ADMIN"));
+
+                out.nombrePatientsTotal(patientRepository.countAll());
+                out.nombreDossiersActifs(dossierMedicalRepository.countActifs());
+
+                out.chiffreAffairesJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
+
+                LocalDate firstDay = today.withDayOfMonth(1);
+                LocalDateTime startMonth = firstDay.atStartOfDay();
+                LocalDateTime endMonth = firstDay.plusMonths(1).atStartOfDay().minusNanos(1);
+
+                out.chiffreAffairesMois(safeDouble(factureRepository.calculateTotalFactures(startMonth, endMonth)));
+                out.totalChargesMois(safeDouble(chargesRepository.calculateTotalCharges(startMonth, endMonth)));
+
+                out.nombreConnexionsJour(utilisateurRepository.countConnexionsJour(today));
+                out.nombreNotificationsSysteme(notificationRepository.countNotificationsSystemeNonLues());
+            }
+
+            return out.build();
+
+        } catch (Exception e) {
+            throw new ServiceException("Erreur getDashboard (DTO unique).", e);
         }
     }
 
-    @Override
-    public DashboardMedecinDTO getDashboardMedecin(Long medecinId) throws ServiceException {
-        try {
-            LocalDate today = LocalDate.now();
-            LocalDateTime start = today.atStartOfDay();
-            LocalDateTime end   = today.plusDays(1).atStartOfDay().minusNanos(1);
-
-            Integer nbRdvJour = rdvRepository.countByMedecinAndDate(medecinId, start, end);
-            Integer nbConsultTerminees = consultationRepository.countTermineesPourMedecin(medecinId, start, end);
-            Integer nbConsultEnCours = consultationRepository.countEnCoursPourMedecin(medecinId, start, end);
-            Integer nbEnFileAttente = listeAttenteRepository.countPourMedecin(medecinId);
-
-            Integer nbActesJour = acteRepository.countActesPourMedecinEtDate(medecinId, start, end);
-            Double montantActesJour = safeDouble(acteRepository.sumMontantActesPourMedecinEtDate(medecinId, start, end));
-
-            Double totalFacturesJour = safeDouble(factureRepository.calculateTotalFactures(start, end));
-            Double totalRegleJour    = safeDouble(factureRepository.calculateTotalRegle(start, end));
-            Double totalNonRegleJour = safeDouble(factureRepository.calculateTotalNonRegle(start, end));
-
-            return DashboardMedecinDTO.builder()
-                    .dateJour(today)
-                    .nombreRdvDuJour(nbRdvJour)
-                    .nombreConsultationsTerminees(nbConsultTerminees)
-                    .nombreConsultationsEnCours(nbConsultEnCours)
-                    .nombrePatientsEnFileAttente(nbEnFileAttente)
-                    .nombreActesRealisesDuJour(nbActesJour)
-                    .montantTotalActesDuJour(montantActesJour)
-                    .totalFacturesDuJour(totalFacturesJour)
-                    .totalRegleDuJour(totalRegleJour)
-                    .totalNonRegleDuJour(totalNonRegleJour)
+    private DashboardFeaturesDTO featuresForRole(String role) {
+        role = role == null ? "" : role.trim().toUpperCase();
+        return switch (role) {
+            case "SECRETAIRE" -> DashboardFeaturesDTO.builder()
+                    .voirCaisse(true).voirRdvEtFileAttente(true).voirNotifications(true)
+                    .voirConsultationsEtActes(false).voirStatsAdmin(false)
                     .build();
-
-        } catch (DaoException e) {
-            throw new ServiceException("Erreur lors du chargement du dashboard Médecin.", e);
-        }
+            case "MEDECIN" -> DashboardFeaturesDTO.builder()
+                    .voirCaisse(false).voirRdvEtFileAttente(true).voirNotifications(false)
+                    .voirConsultationsEtActes(true).voirStatsAdmin(false)
+                    .build();
+            case "ADMIN" -> DashboardFeaturesDTO.builder()
+                    .voirCaisse(true).voirRdvEtFileAttente(false).voirNotifications(true)
+                    .voirConsultationsEtActes(false).voirStatsAdmin(true)
+                    .build();
+            default -> DashboardFeaturesDTO.builder().build();
+        };
     }
 
-    @Override
-    public DashboardAdminDTO getDashboardAdmin(Long adminId) throws ServiceException {
-        try {
-            LocalDate today = LocalDate.now();
-            LocalDateTime startJour = today.atStartOfDay();
-            LocalDateTime endJour   = today.plusDays(1).atStartOfDay().minusNanos(1);
-
-            // Utilisateurs
-            Integer nbUsers    = utilisateurRepository.countAll();
-            Integer nbMedecins = utilisateurRepository.countByRole("MEDECIN");
-            Integer nbSecs     = utilisateurRepository.countByRole("SECRETAIRE");
-            Integer nbAdmins   = utilisateurRepository.countByRole("ADMIN");
-
-            // Patients / dossiers
-            Integer nbPatients = patientRepository.countAll();
-            Integer nbDossiersActifs = dossierMedicalRepository.countActifs();
-
-            // Financier
-            Double caJour  = safeDouble(factureRepository.calculateTotalFactures(startJour, endJour));
-            // Ici tu peux adapter pour le mois en cours :
-            LocalDate firstDayMonth = today.withDayOfMonth(1);
-            LocalDateTime startMois = firstDayMonth.atStartOfDay();
-            LocalDateTime endMois   = firstDayMonth.plusMonths(1).atStartOfDay().minusNanos(1);
-
-            Double caMois = safeDouble(factureRepository.calculateTotalFactures(startMois, endMois));
-            Double chargesMois = safeDouble(chargesRepository.calculateTotalCharges(startMois, endMois));
-
-            // Sécurité / monitoring (à adapter selon ton modèle)
-            Integer nbConnexionsJour = utilisateurRepository.countConnexionsJour(today);
-            Integer nbNotifSysteme   = notificationRepository.countNotificationsSystemeNonLues();
-
-            return DashboardAdminDTO.builder()
-                    .dateJour(today)
-                    .nombreUtilisateursTotal(nbUsers)
-                    .nombreMedecins(nbMedecins)
-                    .nombreSecretaires(nbSecs)
-                    .nombreAdmins(nbAdmins)
-                    .nombrePatientsTotal(nbPatients)
-                    .nombreDossiersActifs(nbDossiersActifs)
-                    .chiffreAffairesJour(caJour)
-                    .chiffreAffairesMois(caMois)
-                    .totalChargesMois(chargesMois)
-                    .nombreConnexionsJour(nbConnexionsJour)
-                    .nombreNotificationsSysteme(nbNotifSysteme)
-                    .build();
-
-        } catch (DaoException e) {
-            throw new ServiceException("Erreur lors du chargement du dashboard Admin.", e);
-        }
-    }
-
-    private Double safeDouble(Double value) {
-        return value != null ? value : 0.0;
+    private Double safeDouble(Double v) {
+        return v != null ? v : 0.0;
     }
 }
-*/
