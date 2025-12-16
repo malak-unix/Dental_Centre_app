@@ -3,6 +3,7 @@ package ma.dentalTech.service.modules.caisse.impl;
 import ma.dentalTech.entities.charges.Charges;
 import ma.dentalTech.entities.facture.Facture;
 import ma.dentalTech.entities.revenues.Revenues;
+import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
@@ -68,5 +69,10 @@ public class CaisseDashboardServiceImpl implements CaisseDashboardService {
     @Override
     public Double solde(LocalDateTime start, LocalDateTime end) {
         return totalRevenus(start, end) - totalCharges(start, end);
+    }
+
+    @Override
+    public CaisseDashboardDTO getDashboardToday() {
+        return null;
     }
 }

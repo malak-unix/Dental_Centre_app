@@ -145,6 +145,28 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             throw new RuntimeException("Erreur findByDateBetween() Revenues", e);
         }
     }
+    @Override
+    public Double calculateTotalRevenus(LocalDateTime start, LocalDateTime end) {
+        String sql = """
+        SELECT COALESCE(SUM(montant), 0)
+        FROM revenus
+        WHERE date_creation BETWEEN ? AND ?
+    """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setTimestamp(1, Timestamp.valueOf(start));
+            ps.setTimestamp(2, Timestamp.valueOf(end));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0.0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur calculateTotalRevenus", e);
+        }
+    }
 
     @Override
     public Double calculateTotalOtherRevenue(LocalDateTime start, LocalDateTime end) {

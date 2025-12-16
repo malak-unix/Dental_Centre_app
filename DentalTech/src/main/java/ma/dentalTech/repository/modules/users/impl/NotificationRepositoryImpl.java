@@ -345,4 +345,25 @@ public class NotificationRepositoryImpl implements NotificationRepository {
 
         return list;
     }
+
+    @Override
+    public Integer countNonLuesPourSecretaire(Long utilisateurId) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+
+        return 0;
+    }
+
+    @Override
+    public Integer countAlertesImportantesPourSecretaire(Long utilisateurId) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+
+        return 0;
+    }
+
+    @Override
+    public Integer countNotificationsSystemeNonLues() {
+        return 0;
+    }
+
+
 }
