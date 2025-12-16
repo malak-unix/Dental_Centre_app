@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.ordonnance.Ordonnance;
-import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepository;
 
 import java.sql.*;
@@ -52,7 +52,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
                 VALUES (?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // dossier_id
@@ -105,7 +105,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             // dossier_id
@@ -147,7 +147,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
     public Ordonnance findById(Long id) {
         String sql = "SELECT * FROM ordonnance WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -168,7 +168,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
         String sql = "SELECT * FROM ordonnance ORDER BY id";
         List<Ordonnance> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -192,7 +192,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM ordonnance WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -211,7 +211,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
         String sql = "SELECT * FROM ordonnance WHERE dossier_id = ? ORDER BY date_ordo, id";
         List<Ordonnance> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, dossierId);
@@ -233,7 +233,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
         String sql = "SELECT * FROM ordonnance WHERE consultation_id = ? ORDER BY date_ordo, id";
         List<Ordonnance> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, consultationId);
@@ -255,7 +255,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
         String sql = "SELECT * FROM ordonnance WHERE date_ordo = ? ORDER BY id";
         List<Ordonnance> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, Date.valueOf(date));
@@ -281,7 +281,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
                 """;
         List<Ordonnance> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, Date.valueOf(start));
@@ -303,7 +303,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
     public long count() {
         String sql = "SELECT COUNT(*) AS total FROM ordonnance";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -326,7 +326,7 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
                 """;
         List<Ordonnance> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);

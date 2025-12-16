@@ -1,9 +1,8 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.interventionMedecin.InterventionMedecin;
-import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepository;
-
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -63,7 +62,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // consultation_id (NOT NULL en base)
@@ -128,7 +127,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             if (i.getConsultationId() == null) {
@@ -174,7 +173,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
     public InterventionMedecin findById(Long id) {
         String sql = "SELECT * FROM intervention_medecin WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -198,7 +197,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
         String sql = "SELECT * FROM intervention_medecin ORDER BY id";
         List<InterventionMedecin> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -225,7 +224,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM intervention_medecin WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -246,7 +245,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
         String sql = "SELECT * FROM intervention_medecin WHERE consultation_id = ? ORDER BY id";
         List<InterventionMedecin> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, consultationId);
@@ -269,7 +268,7 @@ public class InterventionMedecinImpl implements InterventionMedecinRepository {
     public void deleteByConsultationId(Long consultationId) {
         String sql = "DELETE FROM intervention_medecin WHERE consultation_id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, consultationId);

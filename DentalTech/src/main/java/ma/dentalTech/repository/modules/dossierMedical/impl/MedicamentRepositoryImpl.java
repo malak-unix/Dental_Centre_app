@@ -1,10 +1,9 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.FormeMedicament;
 import ma.dentalTech.entities.medicament.Medicament;
-import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
-
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -64,7 +63,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, m.getNom());
@@ -123,7 +122,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, m.getNom());
@@ -166,7 +165,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
     public Medicament findById(Long id) {
         String sql = "SELECT * FROM medicament WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -190,7 +189,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
         String sql = "SELECT * FROM medicament ORDER BY nom, id";
         List<Medicament> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -217,7 +216,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM medicament WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -238,7 +237,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
         String sql = "SELECT * FROM medicament WHERE nom LIKE ? ORDER BY nom, id";
         List<Medicament> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, "%" + keyword + "%");
@@ -262,7 +261,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
         String sql = "SELECT * FROM medicament WHERE remboursable = ? ORDER BY nom, id";
         List<Medicament> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setBoolean(1, remboursable);
@@ -285,7 +284,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
     public long count() {
         String sql = "SELECT COUNT(*) AS total FROM medicament";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -310,7 +309,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
                 """;
         List<Medicament> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);

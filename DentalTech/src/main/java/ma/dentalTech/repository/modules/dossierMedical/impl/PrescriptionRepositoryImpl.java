@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.prescription.Prescription;
-import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepository;
 
 import java.sql.*;
@@ -57,7 +57,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // ordonnance_id (NOT NULL en base)
@@ -107,7 +107,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, p.getOrdonnanceId());
@@ -141,7 +141,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
     public Prescription findById(Long id) {
         String sql = "SELECT * FROM prescription WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -164,7 +164,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
         String sql = "SELECT * FROM prescription ORDER BY id";
         List<Prescription> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -190,7 +190,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM prescription WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -210,7 +210,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
         String sql = "SELECT * FROM prescription WHERE ordonnance_id = ? ORDER BY id";
         List<Prescription> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, ordonnanceId);
@@ -232,7 +232,7 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
     public void deleteByOrdonnanceId(Long ordonnanceId) {
         String sql = "DELETE FROM prescription WHERE ordonnance_id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, ordonnanceId);
