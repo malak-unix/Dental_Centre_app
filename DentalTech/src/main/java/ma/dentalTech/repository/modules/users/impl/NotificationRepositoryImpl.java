@@ -1,8 +1,8 @@
 package ma.dentalTech.repository.modules.users.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.PrioriteNotification;
 import ma.dentalTech.entities.notification.Notification;
-import ma.dentalTech.repository.common.JdbcUtils;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 
 import java.sql.*;
@@ -66,7 +66,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             if (n.getUtilisateurId() == null) {
@@ -123,7 +123,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             if (n.getUtilisateurId() == null) {
@@ -164,7 +164,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public Notification findById(Long id) {
         String sql = "SELECT * FROM notification WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -187,7 +187,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         String sql = "SELECT * FROM notification ORDER BY date_notification DESC, id DESC";
         List<Notification> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -213,7 +213,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM notification WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -237,7 +237,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 """;
         List<Notification> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, utilisateurId);
@@ -266,7 +266,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 """;
         List<Notification> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, utilisateurId);
@@ -297,7 +297,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 """;
         List<Notification> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, utilisateurId);
@@ -327,7 +327,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 """;
         List<Notification> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, utilisateurId);

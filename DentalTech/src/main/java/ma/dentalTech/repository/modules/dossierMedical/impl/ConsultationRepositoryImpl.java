@@ -1,8 +1,9 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.consultation.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
-import ma.dentalTech.repository.common.JdbcUtils;
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
 
 import java.sql.*;
@@ -74,7 +75,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // dossier_id (NOT NULL selon script SQL)
@@ -125,7 +126,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, c.getDossierId());
@@ -162,7 +163,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
     public Consultation findById(Long id) {
         String sql = "SELECT * FROM consultation WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -182,7 +183,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
         String sql = "SELECT * FROM consultation ORDER BY date_consultation DESC, id DESC";
         List<Consultation> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -203,7 +204,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM consultation WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -223,7 +224,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
         String sql = "SELECT * FROM consultation WHERE dossier_id = ? ORDER BY date_consultation DESC, id DESC";
         List<Consultation> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, dossierId);
@@ -247,7 +248,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
                 """;
         List<Consultation> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, Date.valueOf(date));
@@ -271,7 +272,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
                 """;
         List<Consultation> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, Date.valueOf(start));
@@ -292,7 +293,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
         String sql = "SELECT * FROM consultation WHERE statut = ? ORDER BY date_consultation DESC, id DESC";
         List<Consultation> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, statut.name());
@@ -311,7 +312,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
     public long count() {
         String sql = "SELECT COUNT(*) AS total FROM consultation";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -332,7 +333,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
                 """;
         List<Consultation> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);

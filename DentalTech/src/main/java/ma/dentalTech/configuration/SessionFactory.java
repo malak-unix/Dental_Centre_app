@@ -29,10 +29,10 @@ public final class SessionFactory {
     private Connection connection;
     /** Propriétés de configuration (fichier .properties) */
     private static final String PROPS_PATH = "config/db.properties";
-    private static final String URL_KEY    = "datasource.url";
-    private static final String USER_KEY   = "datasource.user";
-    private static final String PASS_KEY   = "datasource.password";
-    private static final String DRIVER_KEY = "datasource.driver";
+    private static final String URL_KEY    = "jdbc.url";
+    private static final String USER_KEY   = "jdbc.username";
+    private static final String PASS_KEY   = "jdbc.password";
+    private static final String DRIVER_KEY = "jdbc.driver";
 
     /** Valeurs lues depuis le fichier de configuration */
     private String url;

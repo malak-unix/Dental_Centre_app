@@ -3,7 +3,8 @@ package ma.dentalTech.repository.common;
 import java.util.List;
 
 
-public interface CrudRepository<T, ID> {
+public interface
+CrudRepository<T, ID> {
 
     List<T> findAll();
 

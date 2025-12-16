@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.entities.certificat.Certificat;
-import ma.dentalTech.repository.common.JdbcUtils;
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository;
 
 import java.sql.*;
@@ -65,7 +65,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // dossier_id
@@ -122,7 +122,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
                  WHERE id = ?
                 """;
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             // dossier_id
@@ -169,7 +169,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
     public Certificat findById(Long id) {
         String sql = "SELECT * FROM certificat WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -189,7 +189,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
         String sql = "SELECT * FROM certificat ORDER BY id";
         List<Certificat> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -212,7 +212,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM certificat WHERE id = ?";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
@@ -232,7 +232,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
         String sql = "SELECT * FROM certificat WHERE dossier_id = ? ORDER BY date_debut, id";
         List<Certificat> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, dossierId);
@@ -253,7 +253,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
         String sql = "SELECT * FROM certificat WHERE date_debut = ? ORDER BY id";
         List<Certificat> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, Date.valueOf(dateDebut));
@@ -278,7 +278,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
                 """;
         List<Certificat> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, Date.valueOf(start));
@@ -299,7 +299,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
     public long count() {
         String sql = "SELECT COUNT(*) AS total FROM certificat";
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -321,7 +321,7 @@ public class CertificatRepositoryImpl implements CertificatRepository {
                 """;
         List<Certificat> list = new ArrayList<>();
 
-        try (Connection conn = JdbcUtils.getConnection();
+        try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);
