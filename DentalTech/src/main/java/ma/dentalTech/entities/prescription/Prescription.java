@@ -11,6 +11,8 @@ import ma.dentalTech.entities.base.BaseEntity;
 @AllArgsConstructor
 @SuperBuilder
 public class Prescription extends BaseEntity {
+    private Long ordonnanceId;
+    private Long medicamentId;
     private int quantite;
     private String frequence;
     private int dureeEnJours;

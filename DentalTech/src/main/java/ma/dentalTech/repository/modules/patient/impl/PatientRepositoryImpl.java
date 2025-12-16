@@ -8,6 +8,7 @@ import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class PatientRepositoryImpl implements PatientRepository {
 
@@ -194,7 +195,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     }
 
     @Override
-    public List<Patient> findByNomLike(String nomPart) {
+    public List<Patient> searchByNom(String nomPart) {
         String sql = "SELECT * FROM patient WHERE nom LIKE ?";
         List<Patient> out = new ArrayList<>();
 
@@ -213,21 +214,148 @@ public class PatientRepositoryImpl implements PatientRepository {
     }
 
     @Override
-    public Patient findByTelephone(String telephone) {
-        if (telephone == null || telephone.isBlank()) return null;
+    public Optional<Patient> findByEmail(String email) {
+        String sql = "SELECT * FROM patient WHERE email = ? LIMIT 1";
 
-        String sql = "SELECT * FROM patient WHERE telephone = ?";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(RowMappers.mapPatient(rs));
+                return Optional.empty();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByEmail()", e);
+        }
+    }
+
+
+    @Override
+    public Optional<Patient> findByTelephone(String telephone) {
+        String sql = "SELECT * FROM patient WHERE telephone = ? LIMIT 1";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setString(1, telephone);
+
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? RowMappers.mapPatient(rs) : null;
+                if (rs.next()) return Optional.of(RowMappers.mapPatient(rs));
+                return Optional.empty();
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByTelephone() Patient", e);
+            throw new RuntimeException("Erreur findByTelephone()", e);
         }
     }
+
+
+    @Override
+    public List<Patient> searchByNomPrenom(String keyword) {
+        String sql = "SELECT * FROM patient WHERE nom LIKE ? OR prenom LIKE ? ORDER BY id DESC";
+        String k = "%" + (keyword == null ? "" : keyword) + "%";
+        List<Patient> out = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, k);
+            ps.setString(2, k);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(RowMappers.mapPatient(rs));
+            }
+            return out;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur searchByNomPrenom()", e);
+        }
+    }
+
+
+    @Override
+    public boolean existsById(Long id) {
+        if (id == null) return false;
+        String sql = "SELECT 1 FROM patient WHERE id = ? LIMIT 1";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur existsById()", e);
+        }
+    }
+
+
+    @Override
+    public long count() {
+        String sql = "SELECT COUNT(*) AS total FROM patient";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getLong("total") : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur count()", e);
+        }
+    }
+
+
+    @Override
+    public List<Patient> findPage(int limit, int offset) {
+        String sql = "SELECT * FROM patient ORDER BY id DESC LIMIT ? OFFSET ?";
+        List<Patient> out = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(RowMappers.mapPatient(rs));
+            }
+            return out;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findPage()", e);
+        }
+    }
+
+
+    @Override
+    public void addAntecedentToPatient(Long patientId, Long antecedentId) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public void removeAntecedentFromPatient(Long patientId, Long antecedentId) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public void removeAllAntecedentsFromPatient(Long patientId) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public List<ma.dentalTech.entities.antecedents.Antecedents> getAntecedentsOfPatient(Long patientId) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public List<Patient> getPatientsByAntecedent(Long antecedentId) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
 }

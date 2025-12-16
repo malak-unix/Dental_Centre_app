@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @SuperBuilder
 public class Consultation extends BaseEntity {
+    private Long dossierId;               // 🔹 FK vers DossierMedical
     private LocalDate date;
     private StatutConsultation status;
     private String observationMedecin;

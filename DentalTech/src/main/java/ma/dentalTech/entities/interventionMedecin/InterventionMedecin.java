@@ -11,6 +11,8 @@ import ma.dentalTech.entities.base.BaseEntity;
 @AllArgsConstructor
 @SuperBuilder
 public class InterventionMedecin extends BaseEntity {
+    private Long consultationId;
+    private Long acteId;
     private Double prixDePatient;
     private Integer numDent;
 }

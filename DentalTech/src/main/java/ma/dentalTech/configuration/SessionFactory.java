@@ -3,72 +3,121 @@ package ma.dentalTech.configuration;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
-import java.io.InputStream;
+import java.util.Locale;
+
+import ma.dentalTech.configuration.util.PropertiesExtractor;
+
+/**
+ * Classe responsable de la création et de la gestion d'une connexion JDBC unique.
+ *
+ * Pattern utilisé : Singleton (avec double-checked locking)
+ * ------------------------------------------------------------
+ * - Une seule instance de SessionFactory pour toute l'application
+ * - Une seule connexion JDBC réutilisée
+ * - Thread-safe (sécurité multi-thread)
+ *
+ * Principe :
+ * -------------
+ * - getInstance() → retourne toujours la même fabrique unique
+ * - getConnection() → retourne une connexion valide (et la recrée si besoin)
+ */
 
 public final class SessionFactory {
 
-    private static SessionFactory instance;
+    private static volatile SessionFactory instance;
+    /** Objet connexion JDBC unique */
+    private Connection connection;
+    /** Propriétés de configuration (fichier .properties) */
+    private static final String PROPS_PATH = "config/db.properties";
+    private static final String URL_KEY    = "datasource.url";
+    private static final String USER_KEY   = "datasource.user";
+    private static final String PASS_KEY   = "datasource.password";
+    private static final String DRIVER_KEY = "datasource.driver";
 
+    /** Valeurs lues depuis le fichier de configuration */
     private String url;
     private String user;
     private String password;
     private String driver;
 
-    // constructeur privé (singleton)
+    /**
+     * Constructeur privé → empêche toute instanciation directe.
+     * Initialise la configuration et le driver JDBC.
+     */
     private SessionFactory() {
-        loadConfiguration();
-        loadDriver();
+        var properties = PropertiesExtractor.loadConfigFile(PROPS_PATH);
+        this.url = PropertiesExtractor.getPropertyValue(URL_KEY, properties);
+        this.user = PropertiesExtractor.getPropertyValue(USER_KEY, properties);
+        this.password = PropertiesExtractor.getPropertyValue(PASS_KEY, properties);
+        this.driver = PropertiesExtractor.getPropertyValue(DRIVER_KEY, properties);
+        // Charger explicitement le driver si défini (bonne pratique)
+        if (driver != null && !driver.isBlank()) {
+            try {
+                Class.forName(driver);
+                System.out.println(" Driver JDBC chargé avec succès : " + driver);
+            } catch (ClassNotFoundException e) {
+                System.err.println(" Driver JDBC introuvable : " + driver);
+            }
+        }
     }
 
-    // Singleton
-    public static synchronized SessionFactory getInstance() {
+    /**
+     * Retourne l'unique instance du Singleton.
+     * Utilise le pattern "Double Checked Locking" pour être thread safe.
+     * Car au moment de verrouillage, un autre Thread pourrait créer déjà l'instance
+     */
+    public static SessionFactory getInstance() {
         if (instance == null) {
-            instance = new SessionFactory();
+            synchronized (SessionFactory.class) {
+                if (instance == null) {
+                    instance = new SessionFactory();
+                }
+            }
         }
         return instance;
     }
 
-    // Lire db.properties
-    private void loadConfiguration() {
+    /**
+     * Retourne une connexion JDBC active et valide.
+     * Si la connexion n'existe pas, est fermée ou n'est plus valide, elle est recréée.
+     *
+     * @return une instance valide de {@link Connection}.
+     * @throws SQLException en cas d'erreur de création.
+     */
+    public synchronized Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed() || !isValid(connection)) {
+            connection = DriverManager.getConnection(url, user, password);
+            System.out.println(" Nouvelle connexion JDBC établie avec succès !");
+        }
+        return connection;
+    }
+
+    /**
+     * Vérifie si la connexion est encore valide.
+     *
+     * @param conn la connexion à tester
+     * @return true si la connexion est encore utilisable, sinon false
+     */
+    private boolean isValid(Connection conn) {
         try {
-            Properties props = new Properties();
-
-            try (InputStream in = SessionFactory.class
-                    .getResourceAsStream("/config/db.properties")) {
-
-                if (in == null) {
-                    throw new RuntimeException("Fichier /config/db.properties introuvable");
-                }
-
-                props.load(in);
-            }
-
-            this.url = props.getProperty("datasource.url");
-            this.user = props.getProperty("datasource.user");
-            this.password = props.getProperty("datasource.password");
-            this.driver = props.getProperty("datasource.driver");
-
-            if (url == null || user == null || driver == null) {
-                throw new RuntimeException("Paramètres DB manquants dans db.properties");
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur chargement configuration DB", e);
+            return conn != null && conn.isValid(2);
+        } catch (SQLException e) {
+            return false;
         }
     }
 
-    // Charger le driver JDBC
-    private void loadDriver() {
+    /**
+     * Ferme proprement la connexion si elle est ouverte.
+     * À appeler à la fermeture de l'application.
+     */
+    public void closeConnection() {
         try {
-            Class.forName(driver);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Driver JDBC introuvable : " + driver, e);
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+                System.out.println("Connexion JDBC fermée proprement.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la fermeture de la connexion : " + e.getMessage());
         }
-    }
-
-    // Méthode utilisée par les repositories
-    public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, user, password);
     }
 }
