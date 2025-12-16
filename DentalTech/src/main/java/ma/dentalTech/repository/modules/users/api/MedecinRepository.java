@@ -1,4 +1,9 @@
 package ma.dentalTech.repository.modules.users.api;
 
-public interface MedecinRepository {
+import ma.dentalTech.entities.medecin.Medecin;
+import ma.dentalTech.repository.common.CrudRepository;
+import java.util.List;
+
+public interface MedecinRepository extends CrudRepository<Medecin, Long> {
+    List<Medecin> findBySpecialite(String specialite);
 }

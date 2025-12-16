@@ -13,48 +13,57 @@ import java.util.List;
 public class NotificationRepositoryImpl implements NotificationRepository {
 
     // =========================================================================
-    // Mapping ResultSet -> Notification
+    // MAPPING (ResultSet -> Notification)
     // =========================================================================
     private Notification map(ResultSet rs) throws SQLException {
+        Notification n = new Notification();
+
+        // --- Champs hérités de BaseEntity ---
         Long id = rs.getLong("id");
-        if (rs.wasNull()) id = null;
+        if (!rs.wasNull()) {
+            n.setId(id);
+        }
 
-        Long utilisateurId = rs.getLong("utilisateur_id");
-        if (rs.wasNull()) utilisateurId = null;
+        Timestamp dateCrea = rs.getTimestamp("date_creation");
+        if (dateCrea != null) n.setDateCreation(dateCrea.toLocalDateTime());
 
+        // Adaptez le nom du setter selon votre BaseEntity (setDateModification ou setDateDerniereModification)
+        Timestamp dateModif = rs.getTimestamp("date_modification");
+// CORRECTION
+        if (dateModif != null) n.setDateDerniereModification(dateModif.toLocalDateTime());
+        n.setCreePar(rs.getString("cree_par"));
+        n.setModifiePar(rs.getString("modifie_par"));
+
+        // --- Champs de Notification ---
+        Long uId = rs.getLong("utilisateur_id");
+        if (!rs.wasNull()) {
+            n.setUtilisateurId(uId);
+        }
+
+        n.setTitre(rs.getString("titre"));
+        n.setMessage(rs.getString("message"));
+
+        // Gestion de l'Enum Priorité
         String prioriteStr = rs.getString("priorite");
-        PrioriteNotification priorite = null;
         if (prioriteStr != null) {
-            priorite = PrioriteNotification.valueOf(prioriteStr);
+            try {
+                n.setPriorite(PrioriteNotification.valueOf(prioriteStr));
+            } catch (IllegalArgumentException e) {
+                n.setPriorite(null);
+            }
         }
 
         Timestamp tNotif = rs.getTimestamp("date_notification");
-        LocalDateTime dateNotif = (tNotif != null) ? tNotif.toLocalDateTime() : null;
+        if (tNotif != null) n.setDateNotification(tNotif.toLocalDateTime());
 
-        Timestamp tCreate = rs.getTimestamp("date_creation");
-        LocalDateTime dateCreation = (tCreate != null) ? tCreate.toLocalDateTime() : null;
+        Timestamp tEnvoi = rs.getTimestamp("date_envoi");
+        if (tEnvoi != null) n.setDateEnvoi(tEnvoi.toLocalDateTime());
 
-        Timestamp tModif = rs.getTimestamp("date_modification");
-        LocalDateTime dateModif = (tModif != null) ? tModif.toLocalDateTime() : null;
-
-        // Ici, on mappe aussi dateEnvoi sur date_notification, à toi de l’exploiter côté métier
-        return Notification.builder()
-                .id(id)
-                .utilisateurId(utilisateurId)
-                .titre(rs.getString("titre"))
-                .message(rs.getString("message"))
-                .priorite(priorite)
-                .dateNotification(dateNotif)
-                .dateEnvoi(dateNotif)
-                .dateCreation(dateCreation)
-                .dateDerniereModification(dateModif)
-                .creePar(rs.getString("cree_par"))
-                .modifiePar(rs.getString("modifie_par"))
-                .build();
+        return n;
     }
 
     // =========================================================================
-    // CRUD (CrudRepository)
+    // CRUD
     // =========================================================================
 
     @Override
@@ -62,39 +71,50 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         String sql = """
                 INSERT INTO notification
                 (utilisateur_id, titre, message, priorite,
-                 date_notification, date_creation, cree_par, modifie_par)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 date_notification, date_envoi,
+                 date_creation, cree_par, modifie_par)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            if (n.getUtilisateurId() == null) {
-                throw new IllegalArgumentException("utilisateurId ne doit pas être null pour Notification");
+            // 1. Utilisateur ID
+            if (n.getUtilisateurId() != null) {
+                ps.setLong(1, n.getUtilisateurId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
             }
-            ps.setLong(1, n.getUtilisateurId());
 
+            // 2. Titre & Message
             ps.setString(2, n.getTitre());
             ps.setString(3, n.getMessage());
 
+            // 4. Priorité
             if (n.getPriorite() != null) {
                 ps.setString(4, n.getPriorite().name());
             } else {
                 ps.setNull(4, Types.VARCHAR);
             }
 
-            // date_notification : on prend dateNotification si fournie, sinon maintenant
-            LocalDateTime dn = (n.getDateNotification() != null)
-                    ? n.getDateNotification()
-                    : LocalDateTime.now();
-            ps.setTimestamp(5, Timestamp.valueOf(dn));
+            // 5. Date Notification
+            if (n.getDateNotification() != null) {
+                ps.setTimestamp(5, Timestamp.valueOf(n.getDateNotification()));
+            } else {
+                ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            }
 
-            // date_creation
-            LocalDateTime dc = (n.getDateCreation() != null) ? n.getDateCreation() : LocalDateTime.now();
-            ps.setTimestamp(6, Timestamp.valueOf(dc));
+            // 6. Date Envoi
+            if (n.getDateEnvoi() != null) {
+                ps.setTimestamp(6, Timestamp.valueOf(n.getDateEnvoi()));
+            } else {
+                ps.setNull(6, Types.TIMESTAMP);
+            }
 
-            ps.setString(7, n.getCreePar());
-            ps.setString(8, n.getModifiePar());
+            // 7, 8, 9. Audit (Date Creation, Cree Par, Modifie Par)
+            ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(8, n.getCreePar());
+            ps.setString(9, n.getModifiePar());
 
             ps.executeUpdate();
 
@@ -104,7 +124,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 }
             }
 
-        } catch (SQLException  e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la création de la notification", e);
         }
     }
@@ -118,6 +138,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                        message = ?,
                        priorite = ?,
                        date_notification = ?,
+                       date_envoi = ?,
                        date_modification = ?,
                        modifie_par = ?
                  WHERE id = ?
@@ -126,10 +147,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            if (n.getUtilisateurId() == null) {
-                throw new IllegalArgumentException("utilisateurId ne doit pas être null pour Notification");
+            if (n.getUtilisateurId() != null) {
+                ps.setLong(1, n.getUtilisateurId());
+            } else {
+                ps.setNull(1, Types.BIGINT);
             }
-            ps.setLong(1, n.getUtilisateurId());
 
             ps.setString(2, n.getTitre());
             ps.setString(3, n.getMessage());
@@ -140,30 +162,34 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                 ps.setNull(4, Types.VARCHAR);
             }
 
-            LocalDateTime dn = (n.getDateNotification() != null)
-                    ? n.getDateNotification()
-                    : LocalDateTime.now();
-            ps.setTimestamp(5, Timestamp.valueOf(dn));
+            if (n.getDateNotification() != null) {
+                ps.setTimestamp(5, Timestamp.valueOf(n.getDateNotification()));
+            } else {
+                ps.setNull(5, Types.TIMESTAMP);
+            }
 
-            LocalDateTime dm = (n.getDateDerniereModification() != null)
-                    ? n.getDateDerniereModification()
-                    : LocalDateTime.now();
-            ps.setTimestamp(6, Timestamp.valueOf(dm));
+            if (n.getDateEnvoi() != null) {
+                ps.setTimestamp(6, Timestamp.valueOf(n.getDateEnvoi()));
+            } else {
+                ps.setNull(6, Types.TIMESTAMP);
+            }
 
-            ps.setString(7, n.getModifiePar());
-            ps.setLong(8, n.getId());
+            // Date Modification = Maintenant
+            ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(8, n.getModifiePar());
+
+            ps.setLong(9, n.getId());
 
             ps.executeUpdate();
 
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la mise à jour de la notification id=" + n.getId(), e);
         }
     }
 
     @Override
     public Notification findById(Long id) {
         String sql = "SELECT * FROM notification WHERE id = ?";
-
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -174,17 +200,15 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                     return map(rs);
                 }
             }
-
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur recherche notification id=" + id, e);
         }
-
         return null;
     }
 
     @Override
     public List<Notification> findAll() {
-        String sql = "SELECT * FROM notification ORDER BY date_notification DESC, id DESC";
+        String sql = "SELECT * FROM notification ORDER BY date_notification DESC";
         List<Notification> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -194,11 +218,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             while (rs.next()) {
                 list.add(map(rs));
             }
-
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la récupération des notifications", e);
         }
-
         return list;
     }
 
@@ -212,15 +234,14 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM notification WHERE id = ?";
-
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
 
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur suppression notification id=" + id, e);
         }
     }
 
@@ -230,40 +251,27 @@ public class NotificationRepositoryImpl implements NotificationRepository {
 
     @Override
     public List<Notification> findByUtilisateurId(Long utilisateurId) {
-        String sql = """
-                SELECT * FROM notification
-                 WHERE utilisateur_id = ?
-                 ORDER BY date_notification DESC, id DESC
-                """;
+        String sql = "SELECT * FROM notification WHERE utilisateur_id = ? ORDER BY date_notification DESC";
         List<Notification> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, utilisateurId);
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(map(rs));
                 }
             }
-
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur recherche notifications pour utilisateur=" + utilisateurId, e);
         }
-
         return list;
     }
 
     @Override
-    public List<Notification> findByUtilisateurIdAndPriorite(Long utilisateurId,
-                                                             PrioriteNotification priorite) {
-        String sql = """
-                SELECT * FROM notification
-                 WHERE utilisateur_id = ?
-                   AND priorite = ?
-                 ORDER BY date_notification DESC, id DESC
-                """;
+    public List<Notification> findByUtilisateurIdAndPriorite(Long utilisateurId, PrioriteNotification priorite) {
+        String sql = "SELECT * FROM notification WHERE utilisateur_id = ? AND priorite = ? ORDER BY date_notification DESC";
         List<Notification> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -277,24 +285,15 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                     list.add(map(rs));
                 }
             }
-
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur recherche notif user=" + utilisateurId + " prio=" + priorite, e);
         }
-
         return list;
     }
 
     @Override
-    public List<Notification> findByUtilisateurIdAndDateBetween(Long utilisateurId,
-                                                                LocalDateTime start,
-                                                                LocalDateTime end) {
-        String sql = """
-                SELECT * FROM notification
-                 WHERE utilisateur_id = ?
-                   AND date_notification BETWEEN ? AND ?
-                 ORDER BY date_notification DESC, id DESC
-                """;
+    public List<Notification> findByUtilisateurIdAndDateBetween(Long utilisateurId, LocalDateTime start, LocalDateTime end) {
+        String sql = "SELECT * FROM notification WHERE utilisateur_id = ? AND date_notification BETWEEN ? AND ? ORDER BY date_notification DESC";
         List<Notification> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -309,22 +308,15 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                     list.add(map(rs));
                 }
             }
-
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur recherche notif par date", e);
         }
-
         return list;
     }
 
     @Override
     public List<Notification> findRecentForUser(Long utilisateurId, int limit) {
-        String sql = """
-                SELECT * FROM notification
-                 WHERE utilisateur_id = ?
-                 ORDER BY date_notification DESC, id DESC
-                 LIMIT ?
-                """;
+        String sql = "SELECT * FROM notification WHERE utilisateur_id = ? ORDER BY date_notification DESC LIMIT ?";
         List<Notification> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -338,11 +330,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
                     list.add(map(rs));
                 }
             }
-
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de la notification", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur recherche notif récentes", e);
         }
-
         return list;
     }
 }

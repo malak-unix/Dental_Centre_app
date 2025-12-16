@@ -1,3 +1,4 @@
+
 package ma.dentalTech.entities.notification;
 
 import lombok.Data;
