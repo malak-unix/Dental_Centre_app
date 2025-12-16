@@ -1,4 +1,4 @@
-package ma.dentalTech.repository.modules.rdv.impl;
+package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.EtatRendezVous;
@@ -63,11 +63,11 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
-            ps.setDate(4, Date.valueOf(r.getDate())); // date_rdv NOT NULL
+            ps.setDate(4, Date.valueOf(r.getDateRdv())); // date_rdv NOT NULL
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatus() != null ? r.getStatus().name() : EtatRendezVous.PREVU.name());
+            ps.setString(7, r.getStatut() != null ? r.getStatut() : EtatRendezVous.PREVU.name());
             ps.setString(8, r.getNoteMedecin());
 
             ps.setString(9, r.getCreePar());
@@ -100,11 +100,11 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
-            ps.setDate(4, Date.valueOf(r.getDate()));
+            ps.setDate(4, Date.valueOf(r.getDateRdv()));
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatus() != null ? r.getStatus().name() : null);
+            ps.setString(7, r.getStatut());
             ps.setString(8, r.getNoteMedecin());
 
             ps.setString(9, r.getModifiePar());

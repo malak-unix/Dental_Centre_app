@@ -53,7 +53,8 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, l.getNomListe());
+            ps.setString(1, l.getNom()
+            );
             ps.setString(2, l.getCreePar());
             ps.setString(3, l.getModifiePar());
 
@@ -76,7 +77,8 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, l.getNomListe());
+            ps.setString(1, l.getNom()
+            );
             ps.setString(2, l.getModifiePar());
             ps.setLong(3, l.getId());
 

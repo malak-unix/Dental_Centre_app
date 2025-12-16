@@ -3,123 +3,78 @@ package ma.dentalTech.mvc.controllers.modules.agenda.batch_implementation;
 import ma.dentalTech.entities.agenda.AgendaMensuel;
 import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController;
-import ma.dentalTech.service.modules.agenda.api.AgendaService;
+import ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto;
+import ma.dentalTech.mvc.dto.agenda.DetailJourneeDto;
+import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
+import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public class AgendaControllerImpl implements AgendaController {
 
-    private final AgendaService service;
+    private final AgendaMensuelRepository agendaRepo;
+    private final DetailJourneeRepository detailRepo;
 
-    public AgendaControllerImpl(AgendaService service) {
-        this.service = service;
-    }
-
-    // ==========================
-    // AgendaMensuel
-    // ==========================
-
-    @Override
-    public List<AgendaMensuel> getAllAgendas() {
-        return service.getAllAgendas();
+    // ✅ Constructeur injecté par ApplicationContext (createOptional)
+    public AgendaControllerImpl(AgendaMensuelRepository agendaRepo,
+                                DetailJourneeRepository detailRepo) {
+        this.agendaRepo = agendaRepo;
+        this.detailRepo = detailRepo;
     }
 
     @Override
-    public AgendaMensuel getAgendaById(Long id) {
-        return service.getAgendaById(id);
+    public List<AgendaMensuelDto> getAllAgendas() {
+        return agendaRepo.findAll().stream().map(this::toDto).toList();
     }
 
     @Override
-    public void createAgenda(AgendaMensuel agenda) {
-        service.createAgenda(agenda);
-        System.out.println("[AGENDA] created AgendaMensuel id=" + agenda.getId());
+    public AgendaMensuelDto getAgendaById(Long id) {
+        AgendaMensuel a = agendaRepo.findById(id);
+        return a == null ? null : toDto(a);
     }
 
     @Override
-    public void updateAgenda(AgendaMensuel agenda) {
-        service.updateAgenda(agenda);
-        System.out.println("[AGENDA] updated AgendaMensuel id=" + (agenda != null ? agenda.getId() : null));
+    public List<DetailJourneeDto> getDetailJourneesByAgendaId(Long agendaId) {
+        return detailRepo.findByAgendaId(agendaId).stream().map(this::toDto).toList();
     }
 
     @Override
-    public void deleteAgenda(AgendaMensuel agenda) {
-        service.deleteAgenda(agenda);
-        System.out.println("[AGENDA] deleted AgendaMensuel entity");
+    public DetailJourneeDto getDetailJourneeById(Long id) {
+        DetailJournee d = detailRepo.findById(id);
+        return d == null ? null : toDto(d);
     }
 
     @Override
-    public void deleteAgendaById(Long id) {
-        service.deleteAgendaById(id);
-        System.out.println("[AGENDA] deleted AgendaMensuel id=" + id);
+    public DetailJourneeDto getDetailJourneeByAgendaIdAndDate(Long agendaId, LocalDate dateJour) {
+        DetailJournee d = detailRepo.findByAgendaIdAndDateJour(agendaId, dateJour);
+        return d == null ? null : toDto(d);
     }
 
-    @Override
-    public AgendaMensuel getAgendaByMedecinMonth(Long medecinId, String mois, int annee) {
-        return service.getAgendaByMedecinMonth(medecinId, mois, annee);
+    // =========================
+    // Mappers (Entity -> DTO)
+    // =========================
+
+    private AgendaMensuelDto toDto(AgendaMensuel a) {
+        return AgendaMensuelDto.builder()
+                .id(a.getId())
+                .medecinId(a.getMedecinId())
+                // ⚠️ chez toi mois est String, donc pas .name()
+                .mois(String.valueOf(a.getMois()))
+                .annee(a.getAnnee())
+                .build();
     }
 
-    @Override
-    public List<AgendaMensuel> getAgendasByMedecin(Long medecinId) {
-        return service.getAgendasByMedecin(medecinId);
-    }
-
-    // ==========================
-    // DetailJournee
-    // ==========================
-
-    @Override
-    public List<DetailJournee> getAllDetails() {
-        return service.getAllDetails();
-    }
-
-    @Override
-    public DetailJournee getDetailById(Long id) {
-        return service.getDetailById(id);
-    }
-
-    @Override
-    public void createDetail(DetailJournee d) {
-        service.createDetail(d);
-        System.out.println("[AGENDA] created DetailJournee id=" + d.getId());
-    }
-
-    @Override
-    public void updateDetail(DetailJournee d) {
-        service.updateDetail(d);
-        System.out.println("[AGENDA] updated DetailJournee id=" + (d != null ? d.getId() : null));
-    }
-
-    @Override
-    public void deleteDetail(DetailJournee d) {
-        service.deleteDetail(d);
-        System.out.println("[AGENDA] deleted DetailJournee entity");
-    }
-
-    @Override
-    public void deleteDetailById(Long id) {
-        service.deleteDetailById(id);
-        System.out.println("[AGENDA] deleted DetailJournee id=" + id);
-    }
-
-    @Override
-    public List<DetailJournee> getDetailsByAgenda(Long agendaId) {
-        return service.getDetailsByAgenda(agendaId);
-    }
-
-    @Override
-    public DetailJournee getDetailByAgendaAndDate(Long agendaId, LocalDate dateJour) {
-        return service.getDetailByAgendaAndDate(agendaId, dateJour);
-    }
-
-    // ==========================
-    // Demo batch
-    // ==========================
-    @Override
-    public void runDemo() {
-        System.out.println("=== AGENDA Controller DEMO ===");
-        System.out.println("Agendas total: " + getAllAgendas().size());
-        System.out.println("Details total: " + getAllDetails().size());
-        System.out.println("==============================");
+    private DetailJourneeDto toDto(DetailJournee d) {
+        return DetailJourneeDto.builder()
+                .id(d.getId())
+                .agendaId(d.getAgendaId())
+                .dateJour(d.getDateJour())
+                .heureDebutTravail(d.getHeureDebutTravail())
+                .heureFinTravail(d.getHeureFinTravail())
+                // si etatJour est enum => .name() ok ; si String => direct
+                .etatJour(d.getEtatJour() == null ? null : d.getEtatJour().toString())
+                .commentaire(d.getCommentaire())
+                .build();
     }
 }

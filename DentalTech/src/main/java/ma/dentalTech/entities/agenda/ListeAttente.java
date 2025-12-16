@@ -1,4 +1,4 @@
-package ma.dentalTech.entities.listeAttente;
+package ma.dentalTech.entities.agenda;
 
 import java.time.LocalDateTime;
 import lombok.*;

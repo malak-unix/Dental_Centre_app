@@ -149,7 +149,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
     public Double calculateTotalRevenus(LocalDateTime start, LocalDateTime end) {
         String sql = """
         SELECT COALESCE(SUM(montant), 0)
-        FROM revenus
+        FROM revenu
         WHERE date_creation BETWEEN ? AND ?
     """;
 

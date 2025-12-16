@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-//hado les imports l module d dashboard w li tal3in erreurs ce sont des repo li ba9i ntuma masawbthomch
+
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 
@@ -47,6 +47,7 @@ public final class ApplicationContext {
                 }
                 props.load(in);
             }
+
             // ==========================================
             // PATIENT : repo -> service -> (controller optional)
             // ==========================================
@@ -61,7 +62,6 @@ public final class ApplicationContext {
             put(PatientRepository.class, patientRepo, "patientRepo");
             put(PatientService.class, patientService, "patientService");
 
-            // Optional controllers (si tu les ajoutes plus tard)
             createOptional(props, "patientController", PatientService.class, patientService);
             createOptional(props, "patientControllerSwing", PatientService.class, patientService);
 
@@ -124,6 +124,16 @@ public final class ApplicationContext {
             put(AgendaService.class, agendaService, "agendaService");
 
             // ==========================================
+            // AGENDA CONTROLLER : repos -> controller
+            // ==========================================
+            if (props.getProperty("agenda.controller") != null && !props.getProperty("agenda.controller").isBlank()) {
+                Object obj = Class.forName(props.getProperty("agenda.controller"))
+                        .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
+                        .newInstance(agendaMensuelRepo, detailJourneeRepo);
+                contextByName.put("agenda.controller", obj);
+            }
+
+            // ==========================================
             // LISTE D'ATTENTE : repo -> service
             // ==========================================
             currentBean = "listeAttente.repository";
@@ -135,6 +145,8 @@ public final class ApplicationContext {
                     new Class<?>[]{ListeAttenteRepository.class},
                     new Object[]{listeRepo});
             put(ListeAttenteService.class, listeService, "listeAttente.service");
+
+            createOptional(props, "listeAttente.controller", ListeAttenteService.class, listeService);
 
             // ==========================================
             // PLAGE HORAIRE : repo -> service
@@ -150,9 +162,8 @@ public final class ApplicationContext {
             put(PlageHoraireService.class, plageService, "plageHoraire.service");
 
             // ==========================================
-// DASHBOARD : repos -> service
-// ==========================================
-
+            // DASHBOARD : repos (optionnels si pas encore alignés)
+            // ==========================================
             currentBean = "notificationRepo";
             NotificationRepository notificationRepo =
                     newInstance(props, "notificationRepo", NotificationRepository.class);
@@ -163,54 +174,70 @@ public final class ApplicationContext {
                     newInstance(props, "utilisateurRepo", UtilisateurRepository.class);
             put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
 
-// ✅ CORRIGÉ : dossierMedical.api
-            currentBean = "consultationRepo";
-            ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository consultationRepo =
-                    newInstance(props, "consultationRepo", ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class);
-            put(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class, consultationRepo, "consultationRepo");
+            // ---- Repos dossierMedical : OPTIONNELS (pour éviter ClassCastException)
+            Object consultationRepoObj = createOptionalRepo(props, "consultationRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class,
+                    "consultationRepo");
 
-            currentBean = "acteRepo";
-            ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository acteRepo =
-                    newInstance(props, "acteRepo", ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
-            put(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, acteRepo, "acteRepo");
+            Object acteRepoObj = createOptionalRepo(props, "acteRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class,
+                    "acteRepo");
 
-            currentBean = "dossierMedicalRepo";
-            ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository dossierMedicalRepo =
-                    newInstance(props, "dossierMedicalRepo", ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class);
-            put(ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class, dossierMedicalRepo, "dossierMedicalRepo");
+            Object dossierMedicalRepoObj = createOptionalRepo(props, "dossierMedicalRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class,
+                    "dossierMedicalRepo");
 
-            currentBean = "dashboardService";
-            DashboardService dashboardService =
-                    newInstance(props, "dashboardService", DashboardService.class,
-                            new Class<?>[]{
-                                    CaisseDashboardService.class,
-                                    RdvRepository.class,
-                                    ListeAttenteRepository.class,
-                                    NotificationRepository.class,
-                                    ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class,
-                                    ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class,
-                                    UtilisateurRepository.class,
-                                    PatientRepository.class,
-                                    ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class,
-                                    FactureRepository.class,
-                                    ChargesRepository.class
-                            },
-                            new Object[]{
-                                    caisseService,
-                                    rdvRepo,
-                                    listeRepo,
-                                    notificationRepo,
-                                    consultationRepo,
-                                    acteRepo,
-                                    utilisateurRepo,
-                                    patientRepo,
-                                    dossierMedicalRepo,
-                                    factureRepo,
-                                    chargesRepo
-                            });
-            put(DashboardService.class, dashboardService, "dashboardService");
+            // ---- DashboardService : seulement si tout est présent
+            boolean canCreateDashboard =
+                    consultationRepoObj != null &&
+                            acteRepoObj != null &&
+                            dossierMedicalRepoObj != null &&
+                            caisseService != null &&
+                            rdvRepo != null &&
+                            listeRepo != null &&
+                            notificationRepo != null &&
+                            utilisateurRepo != null &&
+                            patientRepo != null &&
+                            factureRepo != null &&
+                            chargesRepo != null;
 
-            createOptional(props, "dashboardController", DashboardService.class, dashboardService);
+            if (canCreateDashboard) {
+                currentBean = "dashboardService";
+                DashboardService dashboardService =
+                        newInstance(props, "dashboardService", DashboardService.class,
+                                new Class<?>[]{
+                                        CaisseDashboardService.class,
+                                        RdvRepository.class,
+                                        ListeAttenteRepository.class,
+                                        NotificationRepository.class,
+                                        ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class,
+                                        ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class,
+                                        UtilisateurRepository.class,
+                                        PatientRepository.class,
+                                        ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class,
+                                        FactureRepository.class,
+                                        ChargesRepository.class
+                                },
+                                new Object[]{
+                                        caisseService,
+                                        rdvRepo,
+                                        listeRepo,
+                                        notificationRepo,
+                                        (ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository) consultationRepoObj,
+                                        (ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository) acteRepoObj,
+                                        utilisateurRepo,
+                                        patientRepo,
+                                        (ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository) dossierMedicalRepoObj,
+                                        factureRepo,
+                                        chargesRepo
+                                });
+
+                put(DashboardService.class, dashboardService, "dashboardService");
+                createOptional(props, "dashboardController", DashboardService.class, dashboardService);
+            } else {
+                // pas bloquant : dashboard sera activé quand les repos seront alignés
+                // System.out.println("INFO: DashboardService non créé (dépendances manquantes ou non alignées).");
+            }
 
         } catch (Exception e) {
             throw new RuntimeException("Erreur lors de l'initialisation ApplicationContext (bean courant = " + currentBean + ")", e);
@@ -262,10 +289,6 @@ public final class ApplicationContext {
         return expectedType.cast(obj);
     }
 
-    /**
-     * Crée un bean seulement si la clé existe dans beans.properties.
-     * Exemple: controller pas encore codé => pas d'erreur.
-     */
     private static void createOptional(Properties props, String key, Class<?> depType, Object depInstance) {
         String className = props.getProperty(key);
         if (className == null || className.isBlank()) return;
@@ -275,6 +298,24 @@ public final class ApplicationContext {
             contextByName.put(key, obj);
         } catch (Exception e) {
             throw new RuntimeException("Erreur création bean optionnel '" + key + "'", e);
+        }
+    }
+
+    /**
+     * Repo/service optionnel : si la classe est absente OU ne cast pas => on ignore (pas bloquant).
+     */
+    private static <T> Object createOptionalRepo(Properties props, String key, Class<T> expectedType, String name) {
+        String className = props.getProperty(key);
+        if (className == null || className.isBlank()) return null;
+
+        try {
+            Object obj = Class.forName(className).getDeclaredConstructor().newInstance();
+            T casted = expectedType.cast(obj); // peut lancer ClassCastException
+            put(expectedType, casted, name);
+            return casted;
+        } catch (Exception e) {
+            // on ignore pour ne pas bloquer l'app (utile pendant l'intégration)
+            return null;
         }
     }
 }
