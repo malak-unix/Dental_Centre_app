@@ -23,5 +23,7 @@ public interface PatientRepository extends CrudRepository<Patient, Long> {
     List<Antecedents> getAntecedentsOfPatient(Long patientId);
     List<Patient> getPatientsByAntecedent(Long antecedentId);
     List<Patient> searchByNom(String nomPart);
+//Utiliser f dahsboard aya berday
+    Integer countAll();
 
 }

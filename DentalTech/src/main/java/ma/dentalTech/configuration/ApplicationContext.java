@@ -26,6 +26,15 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+//hado les imports l module d dashboard w li tal3in erreurs ce sont des repo li ba9i ntuma masawbthomch
+import ma.dentalTech.repository.modules.users.api.NotificationRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+
+import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
+
+import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 public final class ApplicationContext {
 
@@ -42,7 +51,6 @@ public final class ApplicationContext {
                 }
                 props.load(in);
             }
-
             // ==========================================
             // PATIENT : repo -> service -> (controller optional)
             // ==========================================
@@ -85,8 +93,6 @@ public final class ApplicationContext {
                     new Class<?>[]{FactureRepository.class, RevenuesRepository.class, ChargesRepository.class},
                     new Object[]{factureRepo, revenusRepo, chargesRepo});
             put(CaisseDashboardService.class, caisseService, "caisseDashboardService");
-
-            // Optional controller
             createOptional(props, "caisseDashboardController", CaisseDashboardService.class, caisseService);
 
             // ==========================================
@@ -146,6 +152,69 @@ public final class ApplicationContext {
                     new Class<?>[]{PlageHoraireRepository.class},
                     new Object[]{plageRepo});
             put(PlageHoraireService.class, plageService, "plageHoraire.service");
+
+            // ==========================================
+// DASHBOARD : repos -> service
+// ==========================================
+
+            currentBean = "notificationRepo";
+            NotificationRepository notificationRepo =
+                    newInstance(props, "notificationRepo", NotificationRepository.class);
+            put(NotificationRepository.class, notificationRepo, "notificationRepo");
+
+            currentBean = "utilisateurRepo";
+            UtilisateurRepository utilisateurRepo =
+                    newInstance(props, "utilisateurRepo", UtilisateurRepository.class);
+            put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
+
+// ✅ CORRIGÉ : dossierMedical.api
+            currentBean = "consultationRepo";
+            ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository consultationRepo =
+                    newInstance(props, "consultationRepo", ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class, consultationRepo, "consultationRepo");
+
+            currentBean = "acteRepo";
+            ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository acteRepo =
+                    newInstance(props, "acteRepo", ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, acteRepo, "acteRepo");
+
+            currentBean = "dossierMedicalRepo";
+            ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository dossierMedicalRepo =
+                    newInstance(props, "dossierMedicalRepo", ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class, dossierMedicalRepo, "dossierMedicalRepo");
+
+            currentBean = "dashboardService";
+            DashboardService dashboardService =
+                    newInstance(props, "dashboardService", DashboardService.class,
+                            new Class<?>[]{
+                                    CaisseDashboardService.class,
+                                    RdvRepository.class,
+                                    ListeAttenteRepository.class,
+                                    NotificationRepository.class,
+                                    ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class,
+                                    ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class,
+                                    UtilisateurRepository.class,
+                                    PatientRepository.class,
+                                    ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class,
+                                    FactureRepository.class,
+                                    ChargesRepository.class
+                            },
+                            new Object[]{
+                                    caisseService,
+                                    rdvRepo,
+                                    listeRepo,
+                                    notificationRepo,
+                                    consultationRepo,
+                                    acteRepo,
+                                    utilisateurRepo,
+                                    patientRepo,
+                                    dossierMedicalRepo,
+                                    factureRepo,
+                                    chargesRepo
+                            });
+            put(DashboardService.class, dashboardService, "dashboardService");
+
+            createOptional(props, "dashboardController", DashboardService.class, dashboardService);
 
         } catch (Exception e) {
             throw new RuntimeException("Erreur lors de l'initialisation ApplicationContext (bean courant = " + currentBean + ")", e);
