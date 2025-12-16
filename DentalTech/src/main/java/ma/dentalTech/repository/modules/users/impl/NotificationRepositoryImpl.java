@@ -2,7 +2,7 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.PrioriteNotification;
-import ma.dentalTech.entities.notification.Notification;
+import ma.dentalTech.entities.users.Notification;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 
 import java.sql.*;

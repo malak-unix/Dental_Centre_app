@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
-import ma.dentalTech.entities.certificat.Certificat;
+import ma.dentalTech.entities.dossierMedical.Certificat;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDate;

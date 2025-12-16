@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
-import ma.dentalTech.entities.certificat.Certificat;
+import ma.dentalTech.entities.dossierMedical.Certificat;
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository;
 

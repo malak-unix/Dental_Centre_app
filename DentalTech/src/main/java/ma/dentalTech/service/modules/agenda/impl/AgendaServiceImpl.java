@@ -1,7 +1,7 @@
 package ma.dentalTech.service.modules.agenda.impl;
 
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
-import ma.dentalTech.entities.detailJournee.DetailJournee;
+import ma.dentalTech.entities.agenda.AgendaMensuel;
+import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import ma.dentalTech.service.modules.agenda.api.AgendaService;

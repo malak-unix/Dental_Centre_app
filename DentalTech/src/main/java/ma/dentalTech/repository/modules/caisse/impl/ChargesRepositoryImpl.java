@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.charges.Charges;
+import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 

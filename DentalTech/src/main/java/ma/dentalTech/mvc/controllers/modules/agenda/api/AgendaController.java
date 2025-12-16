@@ -1,7 +1,7 @@
 package ma.dentalTech.mvc.controllers.modules.agenda.api;
 
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
-import ma.dentalTech.entities.detailJournee.DetailJournee;
+import ma.dentalTech.entities.agenda.AgendaMensuel;
+import ma.dentalTech.entities.agenda.DetailJournee;
 
 import java.time.LocalDate;
 import java.util.List;

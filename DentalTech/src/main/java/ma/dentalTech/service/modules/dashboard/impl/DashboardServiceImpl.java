@@ -15,9 +15,9 @@ import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
 
-import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
+import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
+import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 

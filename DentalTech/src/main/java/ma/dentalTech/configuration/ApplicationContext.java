@@ -9,18 +9,18 @@ import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
-import ma.dentalTech.repository.modules.rdv.api.RdvRepository;
-import ma.dentalTech.service.modules.rdv.api.RdvService;
+import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
+import ma.dentalTech.service.modules.agenda.api.RdvService;
 
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import ma.dentalTech.service.modules.agenda.api.AgendaService;
 
-import ma.dentalTech.repository.modules.listeAttente.api.ListeAttenteRepository;
-import ma.dentalTech.service.modules.listeAttente.api.ListeAttenteService;
+import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
+import ma.dentalTech.service.modules.agenda.api.ListeAttenteService;
 
-import ma.dentalTech.repository.modules.plageHoraire.api.PlageHoraireRepository;
-import ma.dentalTech.service.modules.plageHoraire.api.PlageHoraireService;
+import ma.dentalTech.repository.modules.agenda.api.PlageHoraireRepository;
+import ma.dentalTech.service.modules.agenda.api.PlageHoraireService;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -29,10 +29,6 @@ import java.util.Properties;
 //hado les imports l module d dashboard w li tal3in erreurs ce sont des repo li ba9i ntuma masawbthomch
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-
-import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
 
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 

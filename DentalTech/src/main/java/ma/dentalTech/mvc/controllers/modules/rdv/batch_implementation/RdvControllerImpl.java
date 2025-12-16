@@ -1,9 +1,9 @@
 package ma.dentalTech.mvc.controllers.modules.rdv.batch_implementation;
 
 import ma.dentalTech.entities.enums.EtatRendezVous;
-import ma.dentalTech.entities.rdv.RDV;
+import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.mvc.controllers.modules.rdv.api.RdvController;
-import ma.dentalTech.service.modules.rdv.api.RdvService;
+import ma.dentalTech.service.modules.agenda.api.RdvService;
 
 import java.time.LocalDate;
 import java.util.List;

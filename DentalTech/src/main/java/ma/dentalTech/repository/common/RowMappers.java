@@ -1,16 +1,16 @@
 package ma.dentalTech.repository.common;
 
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
-import ma.dentalTech.entities.charges.Charges;
-import ma.dentalTech.entities.detailJournee.DetailJournee;
+import ma.dentalTech.entities.agenda.AgendaMensuel;
+import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.entities.enums.*;
-import ma.dentalTech.entities.facture.Facture;
-import ma.dentalTech.entities.listeDattente.ListeAttente;
+import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.agenda.ListeAttente;
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.plageHoraire.PlageHoraire;
-import ma.dentalTech.entities.rdv.RDV;
-import ma.dentalTech.entities.revenues.Revenues;
-import ma.dentalTech.entities.situationFinanciere.SituationFinanciere;
+import ma.dentalTech.entities.agenda.PlageHoraire;
+import ma.dentalTech.entities.agenda.RDV;
+import ma.dentalTech.entities.cabinet.Revenues;
+import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

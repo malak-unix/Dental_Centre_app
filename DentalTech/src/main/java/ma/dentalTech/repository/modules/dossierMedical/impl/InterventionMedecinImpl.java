@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.interventionMedecin.InterventionMedecin;
+import ma.dentalTech.entities.dossierMedical.InterventionMedecin;
 import ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepository;
 import java.math.BigDecimal;
 import java.sql.*;

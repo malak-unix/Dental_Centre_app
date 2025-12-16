@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.patient.api;
 
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.antecedents.Antecedents;
+import ma.dentalTech.entities.patient.Antecedents;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.util.List;

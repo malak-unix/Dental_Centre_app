@@ -1,9 +1,8 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.consultation.Consultation;
+import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
-import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
 
 import java.sql.*;

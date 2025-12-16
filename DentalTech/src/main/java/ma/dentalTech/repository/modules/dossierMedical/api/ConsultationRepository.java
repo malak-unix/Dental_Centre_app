@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
-import ma.dentalTech.entities.consultation.Consultation;
+import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.repository.common.CrudRepository;
 

@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
-import ma.dentalTech.entities.ordonnance.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDate;

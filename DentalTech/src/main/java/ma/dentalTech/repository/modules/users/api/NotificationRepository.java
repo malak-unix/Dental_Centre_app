@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.users.api;
 
-import ma.dentalTech.entities.notification.Notification;
+import ma.dentalTech.entities.users.Notification;
 import ma.dentalTech.entities.enums.PrioriteNotification;
 import ma.dentalTech.repository.common.CrudRepository;
 import java.time.LocalDateTime;

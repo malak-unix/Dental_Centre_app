@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.revenues.Revenues;
+import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 

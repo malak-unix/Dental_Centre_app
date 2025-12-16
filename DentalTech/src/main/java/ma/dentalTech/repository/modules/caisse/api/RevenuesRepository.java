@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.caisse.api;
 
-import ma.dentalTech.entities.revenues.Revenues;
+import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDateTime;
