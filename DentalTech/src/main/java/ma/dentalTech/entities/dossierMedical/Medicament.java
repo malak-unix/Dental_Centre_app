@@ -20,4 +20,38 @@ public class Medicament extends BaseEntity {
     private boolean remboursable;
     private Double prixUnitaire;
     private String description;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Medicament)) return false;
+        Medicament that = (Medicament) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return """
+            Medicament {
+                id = %s,
+                nom = '%s',
+                laboratoire = '%s',
+                forme = %s,
+                remboursable = %s,
+                prixUnitaire = %.2f
+            }
+            """.formatted(
+                String.valueOf(id),
+                nom,
+                laboratoire,
+                String.valueOf(forme),
+                remboursable,
+                prixUnitaire != null ? prixUnitaire : 0.0
+        );
+    }
 }

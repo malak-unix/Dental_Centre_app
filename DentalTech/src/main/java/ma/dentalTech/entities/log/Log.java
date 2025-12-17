@@ -1,4 +1,4 @@
-package ma.dentalTech.entities.logs;
+package ma.dentalTech.entities.log;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Logs extends BaseEntity {
+public class Log extends BaseEntity {
 
     private String action;
     private String description;
