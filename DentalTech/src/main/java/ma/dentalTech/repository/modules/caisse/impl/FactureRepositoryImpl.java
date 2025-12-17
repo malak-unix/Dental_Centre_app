@@ -6,6 +6,7 @@ import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,7 +49,6 @@ public class FactureRepositoryImpl implements FactureRepository {
             throw new RuntimeException("Erreur findById() Facture, id=" + id, e);
         }
     }
-
     @Override
     public void create(Facture f) {
         String sql = """
@@ -61,8 +61,8 @@ public class FactureRepositoryImpl implements FactureRepository {
 
             ps.setObject(1, f.getConsultationId(), Types.BIGINT);
             ps.setDate(2, f.getDateFacture() != null ? Date.valueOf(f.getDateFacture()) : null);
-            ps.setDouble(3, f.getTotalFacture() == null ? 0.0 : f.getTotalFacture());
-            ps.setDouble(4, f.getTotalPaye() == null ? 0.0 : f.getTotalPaye());
+            ps.setBigDecimal(3, f.getTotalFacture() == null ? BigDecimal.ZERO : f.getTotalFacture());
+            ps.setBigDecimal(4, f.getTotalPaye() == null ? BigDecimal.ZERO : f.getTotalPaye());
             ps.setString(5, f.getStatut() != null ? f.getStatut().name() : StatutFacture.NON_PAYEE.name());
             ps.setString(6, f.getCreePar());
             ps.setString(7, f.getModifiePar());
@@ -92,8 +92,8 @@ public class FactureRepositoryImpl implements FactureRepository {
 
             ps.setObject(1, f.getConsultationId(), Types.BIGINT);
             ps.setDate(2, f.getDateFacture() != null ? Date.valueOf(f.getDateFacture()) : null);
-            ps.setDouble(3, f.getTotalFacture() == null ? 0.0 : f.getTotalFacture());
-            ps.setDouble(4, f.getTotalPaye() == null ? 0.0 : f.getTotalPaye());
+            ps.setBigDecimal(3, f.getTotalFacture() == null ? BigDecimal.ZERO : f.getTotalFacture());
+            ps.setBigDecimal(4, f.getTotalPaye() == null ? BigDecimal.ZERO : f.getTotalPaye());
             ps.setString(5, f.getStatut() != null ? f.getStatut().name() : null);
             ps.setString(6, f.getModifiePar());
             ps.setLong(7, f.getId());
