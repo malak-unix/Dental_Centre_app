@@ -269,4 +269,53 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
             throw new RuntimeException("Erreur SQL: Prescription.existsById(" + id + ")", e);
         }
     }
+
+    public void createTx(Connection c, Prescription p) throws SQLException {
+        String sql = """
+        INSERT INTO prescription
+        (ordonnance_id, medicament_id, quantite, frequence, duree_en_jours,
+         date_creation, cree_par, modifie_par)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setLong(1, p.getOrdonnanceId());
+
+            if (p.getMedicamentId() != null) ps.setLong(2, p.getMedicamentId());
+            else ps.setNull(2, Types.BIGINT);
+
+            int qte = (p.getQuantite() <= 0) ? 1 : p.getQuantite();
+            ps.setInt(3, qte);
+            p.setQuantite(qte);
+
+            ps.setString(4, p.getFrequence());
+
+            int duree = Math.max(0, p.getDureeEnJours());
+            ps.setInt(5, duree);
+            p.setDureeEnJours(duree);
+
+            LocalDateTime dc = (p.getDateCreation() != null) ? p.getDateCreation() : LocalDateTime.now();
+            ps.setTimestamp(6, Timestamp.valueOf(dc));
+            p.setDateCreation(dc);
+
+            ps.setString(7, p.getCreePar());
+            ps.setString(8, p.getModifiePar());
+
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) p.setId(keys.getLong(1));
+            }
+        }
+    }
+
+    public void deleteByOrdonnanceIdTx(Connection c, Long ordonnanceId) throws SQLException {
+        String sql = "DELETE FROM prescription WHERE ordonnance_id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, ordonnanceId);
+            ps.executeUpdate();
+        }
+    }
+
 }

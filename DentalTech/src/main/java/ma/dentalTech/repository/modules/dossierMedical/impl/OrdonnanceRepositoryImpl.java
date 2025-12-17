@@ -297,13 +297,56 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
 
     @Override
     public Ordonnance findLastByDossierId(Long dossierId) {
-        return null;
+        if (dossierId == null) return null;
+
+        String sql = """
+        SELECT * FROM ordonnance
+         WHERE dossier_id = ?
+         ORDER BY date_ordo DESC, id DESC
+         LIMIT 1
+        """;
+
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setLong(1, dossierId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return RowMappers.mapOrdonnance(rs);
+                return null;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Ordonnance.findLastByDossierId(" + dossierId + ")", e);
+        }
     }
 
     @Override
     public Ordonnance findLastByConsultationId(Long consultationId) {
-        return null;
+        if (consultationId == null) return null;
+
+        String sql = """
+        SELECT * FROM ordonnance
+         WHERE consultation_id = ?
+         ORDER BY date_ordo DESC, id DESC
+         LIMIT 1
+        """;
+
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setLong(1, consultationId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return RowMappers.mapOrdonnance(rs);
+                return null;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Ordonnance.findLastByConsultationId(" + consultationId + ")", e);
+        }
     }
+
 
     public boolean existsById(Long id) {
         String sql = "SELECT 1 FROM ordonnance WHERE id = ?";
