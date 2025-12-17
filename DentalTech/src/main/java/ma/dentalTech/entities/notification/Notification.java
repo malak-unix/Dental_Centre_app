@@ -1,28 +1,48 @@
-
 package ma.dentalTech.entities.notification;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.PrioriteNotification;
-import ma.dentalTech.entities.enums.TypeNotification;
-
-import java.time.LocalDateTime;
+import ma.dentalTech.entities.utilisateur.Utilisateur;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Notification extends BaseEntity {
 
-    private Long utilisateurId;
-    private LocalDateTime dateNotification;
-    private PrioriteNotification priorite;
     private String titre;
     private String message;
-    //private TypeNotification type;   // Enum
-    //private boolean lu;
+    private LocalDateTime dateNotification;
     private LocalDateTime dateEnvoi;
+    private PrioriteNotification priorite;
+
+    // --- RELATIONS ---
+
+    private Long utilisateurId; // Clé étrangère simple (utile pour JDBC)
+
+    // Relation Many-to-One : Objet parent
+    private Utilisateur utilisateur;
+
+    @Override
+    public String toString() {
+        return """
+        Notification {
+          id = %d,
+          titre = '%s',
+          message = '%s',
+          priorite = %s,
+          utilisateurId = %d
+        }
+        """.formatted(
+                id,
+                titre,
+                message,
+                priorite,
+                utilisateur == null ? (utilisateurId == null ? 0 : utilisateurId) : utilisateur.getId()
+        );
+    }
 }

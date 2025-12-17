@@ -1,20 +1,36 @@
 package ma.dentalTech.entities.staff;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.utilisateur.Utilisateur;
-
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Staff extends Utilisateur {
+
     private Double salaire;
     private Double prime;
-    private LocalDate dateRecrutement;
-    private int soldeConge;
+
+    @Override
+    public String toString() {
+        // On reprend les infos de base + infos staff
+        return """
+        Staff {
+          id = %d,
+          nom = '%s',
+          prenom = '%s',
+          role = %s,
+          salaire = %.2f
+        }
+        """.formatted(
+                id,
+                getNom(),
+                getPrenom(),
+                getRole() == null ? "Aucun" : getRole().getLibelle(),
+                salaire != null ? salaire : 0.0
+        );
+    }
 }

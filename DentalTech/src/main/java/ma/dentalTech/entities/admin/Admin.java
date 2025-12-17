@@ -1,15 +1,19 @@
 package ma.dentalTech.entities.admin;
 
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.utilisateur.Utilisateur;
 
 @Data
+@NoArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Admin extends Utilisateur {
 
-    // Constructeur vide explicite
-    public Admin() {
-        super();
-    }
+    // Hérite de tout.
 
-    // PAS d'autres constructeurs, PAS de Lombok @NoArgsConstructor / @AllArgsConstructor / @SuperBuilder ici
+    @Override
+    public String toString() {
+        return "Admin { " + super.toString() + " }";
+    }
 }

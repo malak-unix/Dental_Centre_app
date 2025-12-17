@@ -1,16 +1,19 @@
 package ma.dentalTech.entities.secretaire;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.staff.Staff;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Secretaire extends Staff {
-    private String numCNSS;
-    private Double commission;
+
+    // Pas de champs spécifiques pour l'instant, mais on garde la classe
+
+    @Override
+    public String toString() {
+        return "Secretaire { " + super.toString() + " }";
+    }
 }
