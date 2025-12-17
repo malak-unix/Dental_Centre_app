@@ -14,4 +14,6 @@ public interface PatientService {
     void deleteById(Long id);
     List<Patient> searchByNom(String nom);
     Patient getByTelephone(String telephone);
+
+    long countAll();
 }

@@ -77,7 +77,7 @@ public class PatientServiceImpl implements PatientService {
             throw new IllegalArgumentException("Nom vide");
 
         try {
-            return repo.findByNom(nom); // ✅ repo
+            return repo.findByNom(nom);
         } catch (DaoException e) {
             throw new RuntimeException(e);
         }
@@ -89,7 +89,16 @@ public class PatientServiceImpl implements PatientService {
             throw new IllegalArgumentException("Téléphone vide");
 
         try {
-            return repo.findByTelephone(telephone); // ✅ repo
+            return repo.findByTelephone(telephone);
+        } catch (DaoException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public long countAll() {
+        try {
+            return repo.countAll();
         } catch (DaoException e) {
             throw new RuntimeException(e);
         }
