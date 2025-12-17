@@ -1,242 +1,293 @@
 package ma.dentalTech.repository.modules.patient.impl;
 
+import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.patient.Antecedents;
+import ma.dentalTech.entities.enums.Assurance;
+import ma.dentalTech.entities.enums.Sexe;
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class PatientRepositoryImpl implements PatientRepository {
 
+    // =========================
+    // CRUD
+    // =========================
     @Override
-    public List<Patient> findAll() {
-        String sql = "SELECT * FROM patient";
-        List<Patient> out = new ArrayList<>();
+    public void create(Patient p) throws DaoException {
+        if (p == null) throw new DaoException("Patient null");
+        if (p.getNom() == null || p.getNom().isBlank()) throw new DaoException("nom obligatoire");
+        if (p.getPrenom() == null || p.getPrenom().isBlank()) throw new DaoException("prenom obligatoire");
+
+        // ✅ base_entity: date_derniere_modification (pas date_modification)
+        String insertBase = """
+            INSERT INTO base_entity (date_creation, date_derniere_modification, cree_par, modifie_par)
+            VALUES (NOW(), NOW(), ?, ?)
+            """;
+
+        String insertPatient = """
+            INSERT INTO patient (nom, prenom, date_naissance, sexe, telephone, adresse, assurance, base_entity_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+
+        Connection cn = null;
+        try {
+            cn = SessionFactory.getInstance().getConnection();
+            cn.setAutoCommit(false);
+
+            Long baseId;
+            try (PreparedStatement ps = cn.prepareStatement(insertBase, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, p.getCreePar());
+                ps.setString(2, p.getModifiePar());
+                ps.executeUpdate();
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (!keys.next()) throw new DaoException("Impossible de créer base_entity");
+                    baseId = keys.getLong(1);
+                }
+            }
+
+            try (PreparedStatement ps = cn.prepareStatement(insertPatient, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, p.getNom());
+                ps.setString(2, p.getPrenom());
+                ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
+                ps.setString(4, p.getSexe() != null ? toDbSexe(p.getSexe()) : null);
+                ps.setString(5, p.getTelephone());
+                ps.setString(6, p.getAdresse());
+                ps.setString(7, p.getAssurance() != null ? p.getAssurance().name() : null);
+                ps.setLong(8, baseId);
+
+                ps.executeUpdate();
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) p.setId(keys.getLong(1));
+                }
+            }
+
+            p.setBaseEntityId(baseId);
+            cn.commit();
+
+        } catch (Exception e) {
+            try { if (cn != null) cn.rollback(); } catch (Exception ignored) {}
+            throw new DaoException("Erreur create(Patient)", e);
+        } finally {
+            try { if (cn != null) cn.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    public void update(Patient p) throws DaoException {
+        if (p == null || p.getId() == null) throw new DaoException("Patient id obligatoire");
+
+        Patient current = findById(p.getId());
+        if (current == null) throw new DaoException("Patient introuvable id=" + p.getId());
+        Long baseId = (p.getBaseEntityId() != null) ? p.getBaseEntityId() : current.getBaseEntityId();
+
+        String updPatient = """
+            UPDATE patient
+               SET nom=?, prenom=?, date_naissance=?, sexe=?, telephone=?, adresse=?, assurance=?
+             WHERE id=?
+            """;
+
+        // ✅ base_entity: date_derniere_modification
+        String updBase = """
+            UPDATE base_entity
+               SET date_derniere_modification = NOW(), modifie_par = ?
+             WHERE id = ?
+            """;
+
+        Connection cn = null;
+        try {
+            cn = SessionFactory.getInstance().getConnection();
+            cn.setAutoCommit(false);
+
+            try (PreparedStatement ps = cn.prepareStatement(updPatient)) {
+                ps.setString(1, p.getNom() != null ? p.getNom() : current.getNom());
+                ps.setString(2, p.getPrenom() != null ? p.getPrenom() : current.getPrenom());
+                ps.setDate(3,
+                        (p.getDateNaissance() != null) ? Date.valueOf(p.getDateNaissance())
+                                : (current.getDateNaissance() != null ? Date.valueOf(current.getDateNaissance()) : null));
+                ps.setString(4,
+                        p.getSexe() != null ? toDbSexe(p.getSexe())
+                                : (current.getSexe() != null ? toDbSexe(current.getSexe()) : null));
+                ps.setString(5, p.getTelephone() != null ? p.getTelephone() : current.getTelephone());
+                ps.setString(6, p.getAdresse() != null ? p.getAdresse() : current.getAdresse());
+                ps.setString(7,
+                        p.getAssurance() != null ? p.getAssurance().name()
+                                : (current.getAssurance() != null ? current.getAssurance().name() : null));
+                ps.setLong(8, p.getId());
+                ps.executeUpdate();
+            }
+
+            if (baseId != null) {
+                try (PreparedStatement ps = cn.prepareStatement(updBase)) {
+                    ps.setString(1, p.getModifiePar());
+                    ps.setLong(2, baseId);
+                    ps.executeUpdate();
+                }
+            }
+
+            cn.commit();
+
+        } catch (Exception e) {
+            try { if (cn != null) cn.rollback(); } catch (Exception ignored) {}
+            throw new DaoException("Erreur update(Patient) id=" + p.getId(), e);
+        } finally {
+            try { if (cn != null) cn.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    public void delete(Patient p) throws DaoException {
+        if (p == null || p.getId() == null) return;
+        deleteById(p.getId());
+    }
+
+    @Override
+    public void deleteById(Long id) throws DaoException {
+        if (id == null) return;
+
+        Patient current = findById(id);
+        if (current == null) return;
+
+        String delPatient = "DELETE FROM patient WHERE id = ?";
+        String delBase = "DELETE FROM base_entity WHERE id = ?";
+
+        Connection cn = null;
+        try {
+            cn = SessionFactory.getInstance().getConnection();
+            cn.setAutoCommit(false);
+
+            try (PreparedStatement ps = cn.prepareStatement(delPatient)) {
+                ps.setLong(1, id);
+                ps.executeUpdate();
+            }
+
+            if (current.getBaseEntityId() != null) {
+                try (PreparedStatement ps = cn.prepareStatement(delBase)) {
+                    ps.setLong(1, current.getBaseEntityId());
+                    ps.executeUpdate();
+                }
+            }
+
+            cn.commit();
+
+        } catch (Exception e) {
+            try { if (cn != null) cn.rollback(); } catch (Exception ignored) {}
+            throw new DaoException("Erreur deleteById(Patient) id=" + id, e);
+        } finally {
+            try { if (cn != null) cn.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    // =========================
+    // READ
+    // =========================
+    @Override
+    public Patient findById(Long id) throws DaoException {
+        if (id == null) return null;
+
+        // ✅ alias be_* partout => mapPatient() stable
+        String sql = """
+            SELECT p.*,
+                   b.date_creation              AS be_date_creation,
+                   b.date_derniere_modification AS be_date_derniere_modification,
+                   b.cree_par                   AS be_cree_par,
+                   b.modifie_par                AS be_modifie_par
+              FROM patient p
+              LEFT JOIN base_entity b ON b.id = p.base_entity_id
+             WHERE p.id = ?
+            """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapPatient(rs) : null;
+            }
+
+        } catch (Exception e) {
+            throw new DaoException("Erreur findById(Patient) id=" + id, e);
+        }
+    }
+
+    @Override
+    public List<Patient> findAll() throws DaoException {
+        String sql = """
+            SELECT p.*,
+                   b.date_creation              AS be_date_creation,
+                   b.date_derniere_modification AS be_date_derniere_modification,
+                   b.cree_par                   AS be_cree_par,
+                   b.modifie_par                AS be_modifie_par
+              FROM patient p
+              LEFT JOIN base_entity b ON b.id = p.base_entity_id
+             ORDER BY p.id DESC
+            """;
+
+        List<Patient> list = new ArrayList<>();
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) out.add(RowMappers.mapPatient(rs));
-            return out;
+            while (rs.next()) list.add(mapPatient(rs));
+            return list;
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findAll() Patient", e);
+        } catch (Exception e) {
+            throw new DaoException("Erreur findAll(Patient)", e);
         }
     }
 
+    // =========================
+    // Recherches
+    // =========================
     @Override
-    public Patient findById(Long id) {
-        if (id == null) return null;
-
-        String sql = "SELECT * FROM patient WHERE id = ?";
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? RowMappers.mapPatient(rs) : null;
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findById() Patient, id=" + id, e);
-        }
-    }
-
-    @Override
-    public void create(Patient p) {
-        String sql = """
-            INSERT INTO patient
-            (nom, prenom, date_naissance, sexe, telephone, adresse, num_affiliation, etat_civil, assurance, cree_par, modifie_par)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            if (p == null) throw new IllegalArgumentException("Patient null");
-
-            ps.setString(1, p.getNom());
-            ps.setString(2, p.getPrenom());
-            ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
-
-            // ⚠️ sexe en DB = 'H'/'F' (script), ton RowMappers gère la lecture.
-            // Pour écrire: si ton enum est Sexe.Homme/Femme -> on met H/F
-            if (p.getSexe() == null) {
-                ps.setString(4, null);
-            } else {
-                String dbSexe = switch (p.getSexe().name().toUpperCase()) {
-                    case "HOMME" -> "H";
-                    case "FEMME" -> "F";
-                    default -> "H";
-                };
-                ps.setString(4, dbSexe);
-            }
-
-            ps.setString(5, p.getTelephone());
-            ps.setString(6, p.getAdresse());
-            ps.setString(7, p.getNumAffiliation());
-
-            // enums -> DB stocke les noms (CELIBATAIRE / CNSS / ...)
-            ps.setString(8, p.getEtatCivil() != null ? p.getEtatCivil().name() : null);
-
-            if (p.getAssurance() == null) {
-                ps.setString(9, null);
-            } else {
-                // ton enum : Mutuelle/Autre/Aucune... mais DB = MUTUELLE/AUTRE/AUCUNE
-                String dbAssurance = switch (p.getAssurance().name().toUpperCase()) {
-                    case "MUTUELLE" -> "MUTUELLE";
-                    case "CNSS" -> "CNSS";
-                    case "CNOPS" -> "CNOPS";
-                    case "AUTRE" -> "AUTRE";
-                    case "AUCUNE" -> "AUCUNE";
-                    default -> p.getAssurance().name().toUpperCase();
-                };
-                ps.setString(9, dbAssurance);
-            }
-
-            ps.setString(10, p.getCreePar());
-            ps.setString(11, p.getModifiePar());
-
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) p.setId(keys.getLong(1));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur create() Patient", e);
-        }
-    }
-
-    @Override
-    public void update(Patient p) {
-        if (p == null || p.getId() == null) throw new IllegalArgumentException("Patient id obligatoire");
+    public List<Patient> findByNom(String nom) throws DaoException {
+        if (nom == null) nom = "";
 
         String sql = """
-            UPDATE patient
-               SET nom = ?, prenom = ?, date_naissance = ?, sexe = ?, telephone = ?, adresse = ?,
-                   num_affiliation = ?, etat_civil = ?, assurance = ?, modifie_par = ?
-             WHERE id = ?
+            SELECT p.*,
+                   b.date_creation              AS be_date_creation,
+                   b.date_derniere_modification AS be_date_derniere_modification,
+                   b.cree_par                   AS be_cree_par,
+                   b.modifie_par                AS be_modifie_par
+              FROM patient p
+              LEFT JOIN base_entity b ON b.id = p.base_entity_id
+             WHERE LOWER(p.nom) LIKE ?
+             ORDER BY p.id DESC
             """;
 
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setString(1, p.getNom());
-            ps.setString(2, p.getPrenom());
-            ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
-
-            if (p.getSexe() == null) {
-                ps.setString(4, null);
-            } else {
-                String dbSexe = switch (p.getSexe().name().toUpperCase()) {
-                    case "HOMME" -> "H";
-                    case "FEMME" -> "F";
-                    default -> "H";
-                };
-                ps.setString(4, dbSexe);
-            }
-
-            ps.setString(5, p.getTelephone());
-            ps.setString(6, p.getAdresse());
-            ps.setString(7, p.getNumAffiliation());
-            ps.setString(8, p.getEtatCivil() != null ? p.getEtatCivil().name() : null);
-
-            if (p.getAssurance() == null) {
-                ps.setString(9, null);
-            } else {
-                String dbAssurance = switch (p.getAssurance().name().toUpperCase()) {
-                    case "MUTUELLE" -> "MUTUELLE";
-                    case "CNSS" -> "CNSS";
-                    case "CNOPS" -> "CNOPS";
-                    case "AUTRE" -> "AUTRE";
-                    case "AUCUNE" -> "AUCUNE";
-                    default -> p.getAssurance().name().toUpperCase();
-                };
-                ps.setString(9, dbAssurance);
-            }
-
-            ps.setString(10, p.getModifiePar());
-            ps.setLong(11, p.getId());
-
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur update() Patient, id=" + p.getId(), e);
-        }
-    }
-
-    @Override
-    public void delete(Patient entity) {
-        if (entity == null || entity.getId() == null) return;
-        deleteById(entity.getId());
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        if (id == null) return;
-
-        String sql = "DELETE FROM patient WHERE id = ?";
+        List<Patient> result = new ArrayList<>();
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setLong(1, id);
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur deleteById() Patient, id=" + id, e);
-        }
-    }
-
-    @Override
-    public List<Patient> searchByNom(String nomPart) {
-        String sql = "SELECT * FROM patient WHERE nom LIKE ?";
-        List<Patient> out = new ArrayList<>();
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setString(1, "%" + (nomPart == null ? "" : nomPart) + "%");
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapPatient(rs));
-            }
-            return out;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByNomLike() Patient", e);
-        }
-    }
-
-    @Override
-    public Optional<Patient> findByEmail(String email) {
-        String sql = "SELECT * FROM patient WHERE email = ? LIMIT 1";
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setString(1, email);
+            ps.setString(1, "%" + nom.toLowerCase() + "%");
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(RowMappers.mapPatient(rs));
-                return Optional.empty();
+                while (rs.next()) result.add(mapPatient(rs));
             }
+            return result;
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByEmail()", e);
+        } catch (Exception e) {
+            throw new DaoException("Erreur findByNom()", e);
         }
     }
 
-
     @Override
-    public Optional<Patient> findByTelephone(String telephone) {
-        String sql = "SELECT * FROM patient WHERE telephone = ? LIMIT 1";
+    public Patient findByTelephone(String telephone) throws DaoException {
+        String sql = """
+            SELECT p.*,
+                   b.date_creation              AS be_date_creation,
+                   b.date_derniere_modification AS be_date_derniere_modification,
+                   b.cree_par                   AS be_cree_par,
+                   b.modifie_par                AS be_modifie_par
+              FROM patient p
+              LEFT JOIN base_entity b ON b.id = p.base_entity_id
+             WHERE p.telephone = ?
+            """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -244,134 +295,86 @@ public class PatientRepositoryImpl implements PatientRepository {
             ps.setString(1, telephone);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(RowMappers.mapPatient(rs));
-                return Optional.empty();
+                return rs.next() ? mapPatient(rs) : null;
             }
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findByTelephone()", e);
+        } catch (Exception e) {
+            throw new DaoException("Erreur findByTelephone()", e);
         }
     }
 
-
     @Override
-    public List<Patient> searchByNomPrenom(String keyword) {
-        String sql = "SELECT * FROM patient WHERE nom LIKE ? OR prenom LIKE ? ORDER BY id DESC";
-        String k = "%" + (keyword == null ? "" : keyword) + "%";
-        List<Patient> out = new ArrayList<>();
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setString(1, k);
-            ps.setString(2, k);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapPatient(rs));
-            }
-            return out;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur searchByNomPrenom()", e);
-        }
-    }
-
-
-    @Override
-    public boolean existsById(Long id) {
-        if (id == null) return false;
-        String sql = "SELECT 1 FROM patient WHERE id = ? LIMIT 1";
-
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur existsById()", e);
-        }
-    }
-
-
-    @Override
-    public long count() {
-        String sql = "SELECT COUNT(*) AS total FROM patient";
+    public long countAll() throws DaoException {
+        String sql = "SELECT COUNT(*) FROM patient";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            return rs.next() ? rs.getLong("total") : 0;
+            if (rs.next()) return rs.getLong(1);
+            return 0;
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur count()", e);
+        } catch (Exception e) {
+            throw new DaoException("Erreur countAll(Patient)", e);
         }
     }
 
+    // =========================
+    // Mapper + helpers
+    // =========================
+    private Patient mapPatient(ResultSet rs) throws SQLException {
+        Timestamp dc = rs.getTimestamp("be_date_creation");
+        Timestamp dm = rs.getTimestamp("be_date_derniere_modification");
 
-    @Override
-    public List<Patient> findPage(int limit, int offset) {
-        String sql = "SELECT * FROM patient ORDER BY id DESC LIMIT ? OFFSET ?";
-        List<Patient> out = new ArrayList<>();
+        return Patient.builder()
+                .id(rs.getLong("id"))
+                .nom(rs.getString("nom"))
+                .prenom(rs.getString("prenom"))
+                .dateNaissance(rs.getDate("date_naissance") != null
+                        ? rs.getDate("date_naissance").toLocalDate()
+                        : null)
+                .sexe(toSexeEnum(rs.getString("sexe")))
+                .telephone(rs.getString("telephone"))
+                .adresse(rs.getString("adresse"))
+                .assurance(toAssuranceEnum(rs.getString("assurance")))
 
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+                .baseEntityId(rs.getObject("base_entity_id") != null ? rs.getLong("base_entity_id") : null)
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+                // ⚠️ ces 2 setters doivent exister dans Patient (builder)
+                .dateCreation(dc != null ? dc.toLocalDateTime() : null)
+                .datedeModification(dm != null ? dm.toLocalDateTime() : null)
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapPatient(rs));
-            }
-            return out;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur findPage()", e);
-        }
+                .creePar(rs.getString("be_cree_par"))
+                .modifiePar(rs.getString("be_modifie_par"))
+                .build();
     }
 
-
-    @Override
-    public void addAntecedentToPatient(Long patientId, Long antecedentId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    private String toDbSexe(Sexe s) {
+        if (s == null) return null;
+        if (s == Sexe.Homme) return "H";
+        if (s == Sexe.Femme) return "F";
+        return null;
     }
 
-    @Override
-    public void removeAntecedentFromPatient(Long patientId, Long antecedentId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    private Sexe toSexeEnum(String db) {
+        if (db == null) return null;
+        if ("H".equalsIgnoreCase(db)) return Sexe.Homme;
+        if ("F".equalsIgnoreCase(db)) return Sexe.Femme;
+        return null;
     }
 
-    @Override
-    public void removeAllAntecedentsFromPatient(Long patientId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    private Assurance toAssuranceEnum(String db) {
+        if (db == null) return null;
+
+        // DB: 'CNSS','CNOPS','Mutuelle','Autre','Aucune' (casse variable)
+        String x = db.trim().toUpperCase();
+        return switch (x) {
+            case "CNSS" -> Assurance.CNSS;
+            case "CNOPS" -> Assurance.CNOPS;
+            case "MUTUELLE" -> Assurance.Mutuelle;
+            case "AUTRE" -> Assurance.Autre;
+            case "AUCUNE" -> Assurance.Aucune;
+            default -> null;
+        };
     }
-
-    @Override
-    public List<Antecedents> getAntecedentsOfPatient(Long patientId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<Patient> getPatientsByAntecedent(Long antecedentId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-//an7tajha f dahboard
-    @Override
-    public Integer countAll() {
-        String sql = "SELECT COUNT(*) c FROM patient";
-        try (Connection cn = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            return rs.next() ? rs.getInt("c") : 0;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur countAll Patient", e);
-        }
-    }
-
-
 }

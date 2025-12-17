@@ -7,11 +7,13 @@ import java.util.List;
 public interface PatientService {
     List<Patient> getAll();
     Patient getById(Long id);
+
     void create(Patient p);
     void update(Patient p);
     void delete(Patient p);
     void deleteById(Long id);
-
-    List<Patient> searchByNom(String nomPart);
+    List<Patient> searchByNom(String nom);
     Patient getByTelephone(String telephone);
+
+    long countAll();
 }

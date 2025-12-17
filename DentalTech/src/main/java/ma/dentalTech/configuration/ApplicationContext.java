@@ -62,8 +62,25 @@ public final class ApplicationContext {
             put(PatientRepository.class, patientRepo, "patientRepo");
             put(PatientService.class, patientService, "patientService");
 
+            // ==========================================
+            // ANTECEDENT : repo -> service
+            // ==========================================
+            currentBean = "antecedentRepo";
+            ma.dentalTech.repository.modules.patient.api.AntecedentRepository antecedentRepo =
+                    newInstance(props, "antecedentRepo", ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class);
+            put(ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class, antecedentRepo, "antecedentRepo");
+
+            currentBean = "antecedentService";
+            ma.dentalTech.service.modules.patient.api.AntecedentService antecedentService =
+                    newInstance(props, "antecedentService", ma.dentalTech.service.modules.patient.api.AntecedentService.class,
+                            new Class<?>[]{ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class},
+                            new Object[]{antecedentRepo});
+            put(ma.dentalTech.service.modules.patient.api.AntecedentService.class, antecedentService, "antecedentService");
+
+
             createOptional(props, "patientController", PatientService.class, patientService);
             createOptional(props, "patientControllerSwing", PatientService.class, patientService);
+
 
             // ==========================================
             // CAISSE : repos -> service -> (controller optional)

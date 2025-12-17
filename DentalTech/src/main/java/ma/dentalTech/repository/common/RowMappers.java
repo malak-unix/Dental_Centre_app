@@ -204,19 +204,23 @@ public final class RowMappers {
                 .id(getLong(rs, "id"))
                 .nom(rs.getString("nom"))
                 .prenom(rs.getString("prenom"))
-                .adresse(rs.getString("adresse"))
-                .telephone(rs.getString("telephone"))
                 .dateNaissance(getLd(rs, "date_naissance"))
-                .numAffiliation(rs.getString("num_affiliation"))
-                .etatCivil(toEtatCivil(rs.getString("etat_civil")))
                 .sexe(toSexe(rs.getString("sexe")))
+                .telephone(rs.getString("telephone"))
+                .adresse(rs.getString("adresse"))
                 .assurance(toAssurance(rs.getString("assurance")))
+
+                // FK
+                .baseEntityId(getLong(rs, "base_entity_id"))
+
+                // champs audit (si tu fais JOIN base_entity avec alias)
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .datedeModification(getLdt(rs, "date_derniere_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
 
     // ==================================================
     // FACTURE
