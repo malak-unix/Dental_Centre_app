@@ -1,23 +1,27 @@
 package ma.dentalTech.entities.cabinet;
 
 import lombok.*;
+import ma.dentalTech.entities.enums.StatutFacture;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Charges {
+public class Facture {
 
     private Long id;
 
-    private Long cabinetId;          // FK: cabinet_medical.id
-    private String titre;
-    private String description;
-    private BigDecimal montant;
-    private LocalDateTime dateCharge;
+    private Long consultationId;      // FK: consultation.id (nullable)
+    private LocalDate dateFacture;
+
+    private BigDecimal totalFacture;
+    private BigDecimal totalPaye;
+    private BigDecimal reste;         // colonne calculée en DB
+    private StatutFacture statut;     // ENUM('NON_PAYEE','PARTIEL','PAYEE')
 
     // BaseEntity
     private LocalDateTime dateCreation;
@@ -28,8 +32,8 @@ public class Charges {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Charges)) return false;
-        Charges that = (Charges) o;
+        if (!(o instanceof Facture)) return false;
+        Facture that = (Facture) o;
         return id != null && id.equals(that.id);
     }
 

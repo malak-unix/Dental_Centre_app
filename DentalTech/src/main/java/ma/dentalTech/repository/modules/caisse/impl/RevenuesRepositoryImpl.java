@@ -5,6 +5,7 @@ import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -47,7 +48,6 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
         }
     }
 
-    @Override
     public void create(Revenues r) {
         String sql = """
             INSERT INTO revenu (cabinet_id, titre, description, montant, date_revenu, cree_par, modifie_par)
@@ -60,7 +60,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             ps.setLong(1, r.getCabinetId());
             ps.setString(2, r.getTitre());
             ps.setString(3, r.getDescription());
-            ps.setDouble(4, r.getMontant() == null ? 0.0 : r.getMontant());
+            ps.setBigDecimal(4, r.getMontant() == null ? BigDecimal.ZERO : r.getMontant());
             ps.setTimestamp(5, r.getDateRevenu() != null ? Timestamp.valueOf(r.getDateRevenu()) : null);
             ps.setString(6, r.getCreePar());
             ps.setString(7, r.getModifiePar());
@@ -74,7 +74,6 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             throw new RuntimeException("Erreur create() Revenues", e);
         }
     }
-
     @Override
     public void update(Revenues r) {
         if (r.getId() == null) throw new IllegalArgumentException("id obligatoire");
@@ -91,7 +90,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             ps.setLong(1, r.getCabinetId());
             ps.setString(2, r.getTitre());
             ps.setString(3, r.getDescription());
-            ps.setDouble(4, r.getMontant() == null ? 0.0 : r.getMontant());
+            ps.setBigDecimal(4, r.getMontant() == null ? BigDecimal.ZERO : r.getMontant());
             ps.setTimestamp(5, r.getDateRevenu() != null ? Timestamp.valueOf(r.getDateRevenu()) : null);
             ps.setString(6, r.getModifiePar());
             ps.setLong(7, r.getId());
@@ -102,7 +101,6 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             throw new RuntimeException("Erreur update() Revenues, id=" + r.getId(), e);
         }
     }
-
     @Override
     public void delete(Revenues entity) {
         if (entity == null || entity.getId() == null) return;

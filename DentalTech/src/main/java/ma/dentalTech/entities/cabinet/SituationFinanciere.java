@@ -1,6 +1,7 @@
 package ma.dentalTech.entities.cabinet;
 
 import lombok.*;
+import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -9,15 +10,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Charges {
+public class SituationFinanciere {
 
     private Long id;
 
-    private Long cabinetId;          // FK: cabinet_medical.id
-    private String titre;
-    private String description;
-    private BigDecimal montant;
-    private LocalDateTime dateCharge;
+    private Long dossierId;                      // FK: dossier_medical.id (UNIQUE)
+    private Long medecinId;                      // FK: medecin.id (nullable)
+
+    private BigDecimal totalDesActes;
+    private BigDecimal totalPaye;
+    private BigDecimal credit;
+
+    private StatutSituationFinanciere statut;    // ENUM('NORMAL','EN_CREANCE','EN_PROMO')
 
     // BaseEntity
     private LocalDateTime dateCreation;
@@ -28,8 +32,8 @@ public class Charges {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Charges)) return false;
-        Charges that = (Charges) o;
+        if (!(o instanceof SituationFinanciere)) return false;
+        SituationFinanciere that = (SituationFinanciere) o;
         return id != null && id.equals(that.id);
     }
 

@@ -1,6 +1,6 @@
 package ma.dentalTech.service.modules.caisse.api;
 
-import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
