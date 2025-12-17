@@ -1,30 +1,33 @@
 package ma.dentalTech.entities.cabinet;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import ma.dentalTech.entities.base.BaseEntity;
-import ma.dentalTech.entities.dossierMedical.Consultation;
+import lombok.*;
 import ma.dentalTech.entities.enums.StatutFacture;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
-public class Facture extends BaseEntity {
+@Builder
+public class Facture {
 
-    private Long consultationId;
+    private Long id;
+
+    private Long consultationId;      // FK: consultation.id (nullable)
     private LocalDate dateFacture;
-    private Double totalFacture;
-    private Double totalPaye;
-    private Double reste;
-    private StatutFacture statut;
 
-    // Relation : Consultation 1 -> 1 Facture
-    private Consultation consultation;
+    private BigDecimal totalFacture;
+    private BigDecimal totalPaye;
+    private BigDecimal reste;         // colonne calculée en DB
+    private StatutFacture statut;     // ENUM('NON_PAYEE','PARTIEL','PAYEE')
+
+    // BaseEntity
+    private LocalDateTime dateCreation;
+    private LocalDateTime dateModification;
+    private String creePar;
+    private String modifiePar;
 
     @Override
     public boolean equals(Object o) {
@@ -37,28 +40,5 @@ public class Facture extends BaseEntity {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
-    }
-
-    @Override
-    public String toString() {
-        return """
-            Facture {
-                id = %s,
-                consultationId = %s,
-                dateFacture = %s,
-                totalFacture = %.2f,
-                totalPaye = %.2f,
-                reste = %.2f,
-                statut = %s
-            }
-            """.formatted(
-                String.valueOf(id),
-                String.valueOf(consultationId),
-                String.valueOf(dateFacture),
-                totalFacture != null ? totalFacture : 0.0,
-                totalPaye != null ? totalPaye : 0.0,
-                reste != null ? reste : 0.0,
-                String.valueOf(statut)
-        );
     }
 }

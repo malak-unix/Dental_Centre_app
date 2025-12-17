@@ -1,32 +1,33 @@
 package ma.dentalTech.entities.cabinet;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import ma.dentalTech.entities.base.BaseEntity;
-import ma.dentalTech.entities.dossierMedical.DossierMedical;
+import lombok.*;
 import ma.dentalTech.entities.enums.StatutSituationFinanciere;
-import ma.dentalTech.entities.users.Medecin;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
-public class SituationFinanciere extends BaseEntity {
+@Builder
+public class SituationFinanciere {
 
-    private Long dossierId;
-    private Long medecinId;
+    private Long id;
 
-    private Double totalDesActes;
-    private Double totalPaye;
-    private Double credit;
+    private Long dossierId;                      // FK: dossier_medical.id (UNIQUE)
+    private Long medecinId;                      // FK: medecin.id (nullable)
 
-    private StatutSituationFinanciere statut;
+    private BigDecimal totalDesActes;
+    private BigDecimal totalPaye;
+    private BigDecimal credit;
 
-    // Relations :
-    private DossierMedical dossierMedical;
-    private Medecin medecin;
+    private StatutSituationFinanciere statut;    // ENUM('NORMAL','EN_CREANCE','EN_PROMO')
+
+    // BaseEntity
+    private LocalDateTime dateCreation;
+    private LocalDateTime dateModification;
+    private String creePar;
+    private String modifiePar;
 
     @Override
     public boolean equals(Object o) {
@@ -39,28 +40,5 @@ public class SituationFinanciere extends BaseEntity {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
-    }
-
-    @Override
-    public String toString() {
-        return """
-            SituationFinanciere {
-                id = %s,
-                dossierId = %s,
-                medecinId = %s,
-                totalDesActes = %.2f,
-                totalPaye = %.2f,
-                credit = %.2f,
-                statut = %s
-            }
-            """.formatted(
-                String.valueOf(id),
-                String.valueOf(dossierId),
-                String.valueOf(medecinId),
-                totalDesActes != null ? totalDesActes : 0.0,
-                totalPaye != null ? totalPaye : 0.0,
-                credit != null ? credit : 0.0,
-                String.valueOf(statut)
-        );
     }
 }
