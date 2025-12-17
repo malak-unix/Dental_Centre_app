@@ -3,6 +3,7 @@ package ma.dentalTech.entities.dossierMedical;
 import lombok.Data;
 import ma.dentalTech.entities.base.BaseEntity;
 // ⚠️ Ajuste cet import selon ton projet
+import ma.dentalTech.entities.cabinet.SituationFinanciere;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.entities.users.Medecin;
 
