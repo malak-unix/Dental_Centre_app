@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.prescription.Prescription;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepository;
 
 import java.sql.*;

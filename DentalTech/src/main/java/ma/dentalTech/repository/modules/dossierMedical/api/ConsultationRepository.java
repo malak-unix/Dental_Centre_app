@@ -1,10 +1,11 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
-import ma.dentalTech.entities.consultation.Consultation;
+import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ConsultationRepository extends CrudRepository<Consultation, Long> {
@@ -26,4 +27,10 @@ public interface ConsultationRepository extends CrudRepository<Consultation, Lon
 
     // Pagination simple
     List<Consultation> findPage(int limit, int offset);
+
+    //Methodes ajoute par aya berday kan st3mlhom f dashboard
+    Integer countTermineesPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end);
+    Integer countEnCoursPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end);
+
+
 }

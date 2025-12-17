@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.patient.api;
 
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.antecedents.Antecedents;
+import ma.dentalTech.entities.patient.Antecedents;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.util.List;
@@ -23,5 +23,7 @@ public interface PatientRepository extends CrudRepository<Patient, Long> {
     List<Antecedents> getAntecedentsOfPatient(Long patientId);
     List<Patient> getPatientsByAntecedent(Long antecedentId);
     List<Patient> searchByNom(String nomPart);
+//Utiliser f dahsboard aya berday
+    Integer countAll();
 
 }

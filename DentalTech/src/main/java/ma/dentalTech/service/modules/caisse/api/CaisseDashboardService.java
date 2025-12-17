@@ -1,9 +1,9 @@
 package ma.dentalTech.service.modules.caisse.api;
 
-import ma.dentalTech.entities.facture.Facture;
-import ma.dentalTech.entities.revenues.Revenues;
-import ma.dentalTech.entities.charges.Charges;
-
+import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.cabinet.Revenues;
+import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,4 +20,5 @@ public interface CaisseDashboardService {
     Double totalCharges(LocalDateTime start, LocalDateTime end);
 
     Double solde(LocalDateTime start, LocalDateTime end); // revenus - charges
+    CaisseDashboardDTO getDashboardToday();
 }

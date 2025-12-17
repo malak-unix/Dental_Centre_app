@@ -1,8 +1,8 @@
 package ma.dentalTech.mvc.controllers.modules.caisse.batch_implentation;
 
-import ma.dentalTech.entities.charges.Charges;
-import ma.dentalTech.entities.facture.Facture;
-import ma.dentalTech.entities.revenues.Revenues;
+import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseDashboardController;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 

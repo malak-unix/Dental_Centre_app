@@ -1,6 +1,7 @@
 package ma.dentalTech.repository.modules.patient.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.patient.Antecedents;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
@@ -349,7 +350,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     }
 
     @Override
-    public List<ma.dentalTech.entities.antecedents.Antecedents> getAntecedentsOfPatient(Long patientId) {
+    public List<Antecedents> getAntecedentsOfPatient(Long patientId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -357,5 +358,20 @@ public class PatientRepositoryImpl implements PatientRepository {
     public List<Patient> getPatientsByAntecedent(Long antecedentId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
+//an7tajha f dahboard
+    @Override
+    public Integer countAll() {
+        String sql = "SELECT COUNT(*) c FROM patient";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getInt("c") : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countAll Patient", e);
+        }
+    }
+
 
 }

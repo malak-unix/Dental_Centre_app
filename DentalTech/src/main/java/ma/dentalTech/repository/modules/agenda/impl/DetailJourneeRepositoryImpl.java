@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.detailJournee.DetailJournee;
+import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 
@@ -58,13 +58,19 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+            if (d == null) throw new IllegalArgumentException("DetailJournee null");
             if (d.getAgendaId() == null) throw new IllegalArgumentException("agendaId obligatoire");
 
             ps.setLong(1, d.getAgendaId());
             ps.setDate(2, d.getDateJour() != null ? Date.valueOf(d.getDateJour()) : null);
-            ps.setTime(3, d.getHeureDebutTravaillee() != null ? Time.valueOf(d.getHeureDebutTravaillee()) : null);
-            ps.setTime(4, d.getHeureFinTravaillee() != null ? Time.valueOf(d.getHeureFinTravaillee()) : null);
-            ps.setString(5, d.getEtatJour() != null ? d.getEtatJour().name() : null);
+
+            // ✅ noms corrects (pas *Travaillee*)
+            ps.setTime(3, d.getHeureDebutTravail() != null ? Time.valueOf(d.getHeureDebutTravail()) : null);
+            ps.setTime(4, d.getHeureFinTravail() != null ? Time.valueOf(d.getHeureFinTravail()) : null);
+
+            // ✅ etatJour est String => pas de .name()
+            ps.setString(5, d.getEtatJour());
+
             ps.setString(6, d.getCommentaire());
             ps.setString(7, d.getCreePar());
             ps.setString(8, d.getModifiePar());
@@ -81,7 +87,7 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
     @Override
     public void update(DetailJournee d) {
-        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire");
+        if (d == null || d.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
         String sql = """
             UPDATE detail_journee
@@ -95,9 +101,14 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
             ps.setLong(1, d.getAgendaId());
             ps.setDate(2, d.getDateJour() != null ? Date.valueOf(d.getDateJour()) : null);
-            ps.setTime(3, d.getHeureDebutTravaillee() != null ? Time.valueOf(d.getHeureDebutTravaillee()) : null);
-            ps.setTime(4, d.getHeureFinTravaillee() != null ? Time.valueOf(d.getHeureFinTravaillee()) : null);
-            ps.setString(5, d.getEtatJour() != null ? d.getEtatJour().name() : null);
+
+            // ✅ noms corrects
+            ps.setTime(3, d.getHeureDebutTravail() != null ? Time.valueOf(d.getHeureDebutTravail()) : null);
+            ps.setTime(4, d.getHeureFinTravail() != null ? Time.valueOf(d.getHeureFinTravail()) : null);
+
+            // ✅ String
+            ps.setString(5, d.getEtatJour());
+
             ps.setString(6, d.getCommentaire());
             ps.setString(7, d.getModifiePar());
             ps.setLong(8, d.getId());
