@@ -1,5 +1,9 @@
 package ma.dentalTech.entities.dossierMedical;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import lombok.Data;
 import ma.dentalTech.entities.base.BaseEntity;
 // ⚠️ Ajuste cet import selon ton projet
@@ -10,7 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@SuperBuilder
 public class DossierMedical extends BaseEntity {
+
+    private Long patientId;
+    private Long medecinId;
+    private String notes;
+
 
     // Relation : DossierMedical (1) <-> (1) Patient (d'après diagramme)
     private Patient patient;
@@ -27,8 +38,7 @@ public class DossierMedical extends BaseEntity {
     // Relation : DossierMedical (1) -> (1) SituationFinanciere (selon ton diagramme)
     private SituationFinanciere situationFinanciere;
 
-    private List<Medecin> medecins = new ArrayList<>();
-
+    private Medecin medecin;
     public DossierMedical() {
         super();
     }
