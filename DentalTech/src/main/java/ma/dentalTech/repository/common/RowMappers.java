@@ -1,16 +1,12 @@
 package ma.dentalTech.repository.common;
 
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
-import ma.dentalTech.entities.charges.Charges;
-import ma.dentalTech.entities.detailJournee.DetailJournee;
+import ma.dentalTech.entities.agenda.*;
+import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.entities.cabinet.Revenues;
+import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
 import ma.dentalTech.entities.enums.*;
-import ma.dentalTech.entities.facture.Facture;
-import ma.dentalTech.entities.listeDattente.ListeAttente;
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.plageHoraire.PlageHoraire;
-import ma.dentalTech.entities.rdv.RDV;
-import ma.dentalTech.entities.revenues.Revenues;
-import ma.dentalTech.entities.situationFinanciere.SituationFinanciere;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -61,6 +57,9 @@ public final class RowMappers {
         return t == null ? null : t.toLocalTime();
     }
 
+    // =========================
+    // Enum converters
+    // =========================
     private static StatutFacture toStatutFacture(String v) {
         if (v == null) return null;
         try { return StatutFacture.valueOf(v); }
@@ -81,7 +80,6 @@ public final class RowMappers {
 
     private static Sexe toSexe(String v) {
         if (v == null) return null;
-        // DB: 'H'/'F'  | Enum: Homme/Femme
         if ("H".equalsIgnoreCase(v)) return Sexe.Homme;
         if ("F".equalsIgnoreCase(v)) return Sexe.Femme;
         try { return Sexe.valueOf(v); } catch (Exception e) { return null; }
@@ -89,17 +87,13 @@ public final class RowMappers {
 
     private static Assurance toAssurance(String v) {
         if (v == null) return null;
-        String x = v.trim().toUpperCase();
-        // DB: CNSS/CNOPS/MUTUELLE/AUTRE/AUCUNE
-        return switch (x) {
+        return switch (v.toUpperCase()) {
             case "CNSS" -> Assurance.CNSS;
             case "CNOPS" -> Assurance.CNOPS;
             case "MUTUELLE" -> Assurance.Mutuelle;
             case "AUTRE" -> Assurance.Autre;
             case "AUCUNE" -> Assurance.Aucune;
-            default -> {
-                try { yield Assurance.valueOf(v); } catch (Exception e) { yield null; }
-            }
+            default -> null;
         };
     }
 
@@ -119,15 +113,13 @@ public final class RowMappers {
     // AGENDA_MENSUEL
     // ==================================================
     public static AgendaMensuel mapAgendaMensuel(ResultSet rs) throws SQLException {
-        String moisStr = rs.getString("mois");
-
         return AgendaMensuel.builder()
                 .id(getLong(rs, "id"))
                 .medecinId(getLong(rs, "medecin_id"))
-                .mois(moisStr != null ? Mois.valueOf(moisStr) : null)
-                .annee(getInt(rs, "annee") != null ? getInt(rs, "annee") : 0)
+                .mois(Mois.valueOf(rs.getString("mois")))
+                .annee(getInt(rs, "annee"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .dateModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
@@ -137,18 +129,16 @@ public final class RowMappers {
     // DETAIL_JOURNEE
     // ==================================================
     public static DetailJournee mapDetailJournee(ResultSet rs) throws SQLException {
-        String etat = rs.getString("etat_jour");
-
         return DetailJournee.builder()
                 .id(getLong(rs, "id"))
                 .agendaId(getLong(rs, "agenda_id"))
                 .dateJour(getLd(rs, "date_jour"))
-                .heureDebutTravaillee(getLt(rs, "heure_debut_travail"))
-                .heureFinTravaillee(getLt(rs, "heure_fin_travail"))
-                .etatJour(toStatutJournee(etat))
+                .heureDebutTravail(getLt(rs, "heure_debut_travail"))
+                .heureFinTravail(getLt(rs, "heure_fin_travail"))
+                .etatJour(rs.getString("etat_jour"))
                 .commentaire(rs.getString("commentaire"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .dateModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
@@ -160,9 +150,9 @@ public final class RowMappers {
     public static ListeAttente mapListeAttente(ResultSet rs) throws SQLException {
         return ListeAttente.builder()
                 .id(getLong(rs, "id"))
-                .nomListe(rs.getString("nom")) // colonne DB = nom
+                .nom(rs.getString("nom"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .dateModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
@@ -172,20 +162,18 @@ public final class RowMappers {
     // RDV
     // ==================================================
     public static RDV mapRdv(ResultSet rs) throws SQLException {
-        String statut = rs.getString("statut");
-
         return RDV.builder()
                 .id(getLong(rs, "id"))
                 .patientId(getLong(rs, "patient_id"))
                 .detailJourneeId(getLong(rs, "detail_journee_id"))
                 .listeAttenteId(getLong(rs, "liste_attente_id"))
-                .date(getLd(rs, "date_rdv"))
+                .dateRdv(getLd(rs, "date_rdv"))
                 .heure(getLt(rs, "heure"))
                 .motif(rs.getString("motif"))
-                .status(toEtatRendezVous(statut))
+                .statut(rs.getString("statut"))
                 .noteMedecin(rs.getString("note_medecin"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .dateModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
@@ -195,16 +183,14 @@ public final class RowMappers {
     // PLAGE_HORAIRE
     // ==================================================
     public static PlageHoraire mapPlageHoraire(ResultSet rs) throws SQLException {
-        Boolean dispo = getBoolean(rs, "disponible");
-
         return PlageHoraire.builder()
                 .id(getLong(rs, "id"))
                 .detailJourneeId(getLong(rs, "detail_journee_id"))
                 .heureDebut(getLt(rs, "heure_debut"))
                 .heureFin(getLt(rs, "heure_fin"))
-                .disponible(dispo != null ? dispo : Boolean.TRUE)
+                .disponible(getBoolean(rs, "disponible"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .dateModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
@@ -225,7 +211,6 @@ public final class RowMappers {
                 .etatCivil(toEtatCivil(rs.getString("etat_civil")))
                 .sexe(toSexe(rs.getString("sexe")))
                 .assurance(toAssurance(rs.getString("assurance")))
-                // email n'existe pas dans ton SQL patient, on laisse null
                 .dateCreation(getLdt(rs, "date_creation"))
                 .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
@@ -243,7 +228,7 @@ public final class RowMappers {
                 .dateFacture(getLd(rs, "date_facture"))
                 .totalFacture(getDouble(rs, "total_facture"))
                 .totalPaye(getDouble(rs, "total_paye"))
-                .reste(getDouble(rs, "reste")) // colonne calculée OK
+                .reste(getDouble(rs, "reste"))
                 .statut(toStatutFacture(rs.getString("statut")))
                 .dateCreation(getLdt(rs, "date_creation"))
                 .dateDerniereModification(getLdt(rs, "date_modification"))

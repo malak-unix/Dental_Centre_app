@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.agenda.api;
 
-import ma.dentalTech.entities.detailJournee.DetailJournee;
+import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDate;

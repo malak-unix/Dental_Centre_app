@@ -1,9 +1,8 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.consultation.Consultation;
+import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
-import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
 
 import java.sql.*;
@@ -348,4 +347,17 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
         return list;
     }
+    @Override
+    public Integer countTermineesPourMedecin(Long medecinId, java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+    @Override
+    public Integer countEnCoursPourMedecin(Long medecinId, java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+        return 0;
+    }
+
+
 }

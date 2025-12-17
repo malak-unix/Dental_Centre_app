@@ -2,7 +2,7 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.PrioriteNotification;
-import ma.dentalTech.entities.notification.Notification;
+import ma.dentalTech.entities.users.Notification;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 
 import java.sql.*;
@@ -345,4 +345,25 @@ public class NotificationRepositoryImpl implements NotificationRepository {
 
         return list;
     }
+
+    @Override
+    public Integer countNonLuesPourSecretaire(Long utilisateurId) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+
+        return 0;
+    }
+
+    @Override
+    public Integer countAlertesImportantesPourSecretaire(Long utilisateurId) {
+        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
+
+        return 0;
+    }
+
+    @Override
+    public Integer countNotificationsSystemeNonLues() {
+        return 0;
+    }
+
+
 }

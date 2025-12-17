@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
+import ma.dentalTech.entities.agenda.AgendaMensuel;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 

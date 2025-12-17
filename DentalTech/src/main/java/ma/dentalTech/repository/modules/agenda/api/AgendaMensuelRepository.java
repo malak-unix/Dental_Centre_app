@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.agenda.api;
 
-import ma.dentalTech.entities.agendaMensuel.AgendaMensuel;
+import ma.dentalTech.entities.agenda.AgendaMensuel;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.util.List;

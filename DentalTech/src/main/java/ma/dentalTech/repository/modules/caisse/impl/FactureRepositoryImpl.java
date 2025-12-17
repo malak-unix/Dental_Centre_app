@@ -2,7 +2,7 @@ package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.StatutFacture;
-import ma.dentalTech.entities.facture.Facture;
+import ma.dentalTech.entities.dossierMedical.Facture;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 

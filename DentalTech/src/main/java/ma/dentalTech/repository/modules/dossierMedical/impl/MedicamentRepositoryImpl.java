@@ -2,7 +2,7 @@ package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.FormeMedicament;
-import ma.dentalTech.entities.medicament.Medicament;
+import ma.dentalTech.entities.dossierMedical.Medicament;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
 import java.math.BigDecimal;
 import java.sql.*;

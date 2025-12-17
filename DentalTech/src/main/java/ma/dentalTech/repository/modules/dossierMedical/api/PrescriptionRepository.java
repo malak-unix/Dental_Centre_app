@@ -1,6 +1,6 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
-import ma.dentalTech.entities.prescription.Prescription;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.util.List;
