@@ -104,7 +104,6 @@ public class RowMappers {
                 .telephone(rs.getString("telephone"))
                 .adresse(rs.getString("adresse"))
                 .assurance(toAssurance(rs.getString("assurance")))
-                .baseEntityId(getLong(rs, "base_entity_id"))
                 .dateCreation(getLdt(rs, "date_creation"))
                 .datedeModification(getLdt(rs, "date_derniere_modification"))
                 .creePar(rs.getString("cree_par"))

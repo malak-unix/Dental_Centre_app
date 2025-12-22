@@ -1,6 +1,7 @@
 package ma.dentalTech.configuration;
 
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
+import ma.dentalTech.service.modules.agenda.api.*;
 import ma.dentalTech.service.modules.patient.api.PatientService;
 
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
@@ -10,17 +11,14 @@ import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
 import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
-import ma.dentalTech.service.modules.agenda.api.RdvService;
 
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
-import ma.dentalTech.service.modules.agenda.api.AgendaService;
 
 import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
-import ma.dentalTech.service.modules.agenda.api.ListeAttenteService;
 
 import ma.dentalTech.repository.modules.agenda.api.PlageHoraireRepository;
-import ma.dentalTech.service.modules.agenda.api.PlageHoraireService;
+
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -29,6 +27,8 @@ import java.util.Properties;
 
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+
+import ma.dentalTech.service.modules.patient.api.PatientAppService;
 
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
@@ -61,6 +61,16 @@ public final class ApplicationContext {
 
             put(PatientRepository.class, patientRepo, "patientRepo");
             put(PatientService.class, patientService, "patientService");
+
+            // ==========================================
+            // PATIENT APP SERVICE (DTO) : repo -> appService
+            // ==========================================
+            currentBean = "patientAppService";
+            PatientAppService patientAppService =
+                    newInstance(props, "patientAppService", PatientAppService.class,
+                            new Class<?>[]{PatientRepository.class},
+                            new Object[]{patientRepo});
+            put(PatientAppService.class, patientAppService, "patientAppService");
 
             // ==========================================
             // ANTECEDENT : repo -> service
@@ -134,11 +144,31 @@ public final class ApplicationContext {
             DetailJourneeRepository detailJourneeRepo = newInstance(props, "detailJourneeRepo", DetailJourneeRepository.class);
             put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
 
+            // ==========================================
+            // RDV APP SERVICE (DTO) : repos -> appService
+            // ==========================================
+            currentBean = "rdvAppService";
+            RdvAppService rdvAppService =
+                    newInstance(props, "rdvAppService", RdvAppService.class,
+                            new Class<?>[]{RdvRepository.class, DetailJourneeRepository.class},
+                            new Object[]{rdvRepo, detailJourneeRepo});
+            put(RdvAppService.class, rdvAppService, "rdvAppService");
+
             currentBean = "agendaService";
             AgendaService agendaService = newInstance(props, "agendaService", AgendaService.class,
                     new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
                     new Object[]{agendaMensuelRepo, detailJourneeRepo});
             put(AgendaService.class, agendaService, "agendaService");
+
+            // ==========================================
+            // AGENDA APP SERVICE (DTO) : repos -> appService
+            // ==========================================
+            currentBean = "agendaAppService";
+            AgendaAppService agendaAppService =
+                    newInstance(props, "agendaAppService", AgendaAppService.class,
+                            new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class, RdvRepository.class},
+                            new Object[]{agendaMensuelRepo, detailJourneeRepo, rdvRepo});
+            put(AgendaAppService.class, agendaAppService, "agendaAppService");
 
             // ==========================================
             // AGENDA CONTROLLER : repos -> controller

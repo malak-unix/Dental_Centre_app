@@ -1,6 +1,7 @@
 package ma.dentalTech.mvc.dto.agenda;
 
 import lombok.*;
+import ma.dentalTech.entities.enums.StatutJournee;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,6 +18,6 @@ public class DetailJourneeDto {
     private LocalTime heureDebutTravail;
     private LocalTime heureFinTravail;
 
-    private String etatJour;   // ex: "OUVERT"
+    private StatutJournee etatJour;
     private String commentaire;
 }
