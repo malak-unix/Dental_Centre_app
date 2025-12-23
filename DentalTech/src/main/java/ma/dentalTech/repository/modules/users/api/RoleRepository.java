@@ -11,6 +11,4 @@ public interface RoleRepository extends CrudRepository<Role, Long> {
     // Recherche un rôle par son Enum (ADMIN, MEDECIN, etc.)
     Optional<Role> findByLibelle(LibelleRole libelle);
 
-    // Si besoin de chercher par String (ex: "ADMIN")
-    // Optional<Role> findByLibelle(String libelle);
 }

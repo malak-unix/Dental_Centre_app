@@ -5,7 +5,6 @@ import ma.dentalTech.entities.utilisateur.Utilisateur;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 import ma.dentalTech.repository.modules.users.impl.NotificationRepositoryImpl;
-import ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl;
 import ma.dentalTech.service.modules.users.api.NotificationService; // Import Interface
 
 import java.util.List;

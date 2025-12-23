@@ -2,7 +2,6 @@ package ma.dentalTech.service.modules.users.impl;
 
 import ma.dentalTech.entities.utilisateur.Utilisateur;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-import ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl;
 import ma.dentalTech.service.modules.users.api.UtilisateurService;
 
 import java.util.List;
