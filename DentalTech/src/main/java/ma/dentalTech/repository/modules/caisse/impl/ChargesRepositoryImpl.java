@@ -5,6 +5,7 @@ import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
             ps.setLong(1, c.getCabinetId());
             ps.setString(2, c.getTitre());
             ps.setString(3, c.getDescription());
-            ps.setDouble(4, c.getMontant() == null ? 0.0 : c.getMontant());
+            ps.setBigDecimal(4, c.getMontant() == null ? BigDecimal.ZERO : c.getMontant());
             ps.setTimestamp(5, c.getDateCharge() != null ? Timestamp.valueOf(c.getDateCharge()) : null);
             ps.setString(6, c.getCreePar());
             ps.setString(7, c.getModifiePar());
@@ -91,7 +92,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
             ps.setLong(1, c.getCabinetId());
             ps.setString(2, c.getTitre());
             ps.setString(3, c.getDescription());
-            ps.setDouble(4, c.getMontant() == null ? 0.0 : c.getMontant());
+            ps.setBigDecimal(4, c.getMontant() == null ? BigDecimal.ZERO : c.getMontant());
             ps.setTimestamp(5, c.getDateCharge() != null ? Timestamp.valueOf(c.getDateCharge()) : null);
             ps.setString(6, c.getModifiePar());
             ps.setLong(7, c.getId());

@@ -1,6 +1,10 @@
 package ma.dentalTech.entities.users;
 
 import lombok.Data;
+import ma.dentalTech.entities.log.Log;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class Admin extends Utilisateur {
@@ -9,6 +13,8 @@ public class Admin extends Utilisateur {
     public Admin() {
         super();
     }
+
+    private List<Log> logs = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

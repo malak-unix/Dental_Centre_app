@@ -17,4 +17,7 @@ public interface PrescriptionRepository extends CrudRepository<Prescription, Lon
      * (utile quand on supprime ou réédite l'ordonnance).
      */
     void deleteByOrdonnanceId(Long ordonnanceId);
+    List<Prescription> findByMedicamentId(Long medicamentId);
+    long countByOrdonnanceId(Long ordonnanceId);
+    boolean existsById(Long id);
 }
