@@ -1,11 +1,10 @@
 package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.cabinet.SituationFinanciere;
+import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +59,9 @@ public class SituationFinanciereRepositoryImpl implements SituationFinanciereRep
 
             ps.setLong(1, s.getDossierId());
             ps.setObject(2, s.getMedecinId(), Types.BIGINT);
-            ps.setBigDecimal(3, s.getTotalDesActes() == null ? BigDecimal.ZERO : s.getTotalDesActes());
-            ps.setBigDecimal(4, s.getTotalPaye() == null ? BigDecimal.ZERO : s.getTotalPaye());
-            ps.setBigDecimal(5, s.getCredit() == null ? BigDecimal.ZERO : s.getCredit());
+            ps.setDouble(3, s.getTotalDesActes() == null ? 0.0 : s.getTotalDesActes());
+            ps.setDouble(4, s.getTotalPaye() == null ? 0.0 : s.getTotalPaye());
+            ps.setDouble(5, s.getCredit() == null ? 0.0 : s.getCredit());
             ps.setString(6, s.getStatut() != null ? s.getStatut().name() : null);
             ps.setString(7, s.getCreePar());
             ps.setString(8, s.getModifiePar());
@@ -92,9 +91,9 @@ public class SituationFinanciereRepositoryImpl implements SituationFinanciereRep
 
             ps.setLong(1, s.getDossierId());
             ps.setObject(2, s.getMedecinId(), Types.BIGINT);
-            ps.setBigDecimal(3, s.getTotalDesActes() == null ? BigDecimal.ZERO : s.getTotalDesActes());
-            ps.setBigDecimal(4, s.getTotalPaye() == null ? BigDecimal.ZERO : s.getTotalPaye());
-            ps.setBigDecimal(5, s.getCredit() == null ? BigDecimal.ZERO : s.getCredit());
+            ps.setDouble(3, s.getTotalDesActes() == null ? 0.0 : s.getTotalDesActes());
+            ps.setDouble(4, s.getTotalPaye() == null ? 0.0 : s.getTotalPaye());
+            ps.setDouble(5, s.getCredit() == null ? 0.0 : s.getCredit());
             ps.setString(6, s.getStatut() != null ? s.getStatut().name() : null);
             ps.setString(7, s.getModifiePar());
             ps.setLong(8, s.getId());
@@ -105,6 +104,7 @@ public class SituationFinanciereRepositoryImpl implements SituationFinanciereRep
             throw new RuntimeException("Erreur update() SituationFinanciere, id=" + s.getId(), e);
         }
     }
+
     @Override
     public void delete(SituationFinanciere entity) {
         if (entity == null || entity.getId() == null) return;
