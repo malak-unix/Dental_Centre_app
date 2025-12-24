@@ -28,4 +28,7 @@ public class RdvDto {
     private EtatRendezVous statut; // DTO = enum
 
     private String noteMedecin;
+    private String patientNom; //ajoute par aya
+
+
 }
