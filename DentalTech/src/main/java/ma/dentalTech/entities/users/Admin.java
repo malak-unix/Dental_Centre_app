@@ -1,50 +1,33 @@
 package ma.dentalTech.entities.users;
 
-import lombok.Data;
-import ma.dentalTech.entities.log.Log;
+import java.time.LocalDate;
+import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Entité représentant un administrateur du système.
+ */
 @Data
-public class Admin extends Utilisateur {
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class Admin extends Staff {
 
-    // Constructeur vide explicite
-    public Admin() {
-        super();
-    }
-
-    private List<Log> logs = new ArrayList<>();
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Admin)) return false;
-        Admin that = (Admin) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+    @Builder(builderMethodName = "adminBuilder")
+    public Admin(String nom, String email, String adresse, String cin, String tel,
+                 ma.dentalTech.entities.enums.Sexe sexe, String login, String motDePasse,
+                 LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
+                 LocalDate dateRecrutement, Integer soldeCongé) {
+        super(nom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
+                dateNaissance, salaire, prime, dateRecrutement, soldeCongé);
     }
 
     @Override
     public String toString() {
         return """
             Admin {
-                id = %s,
+                id = %d,
                 nom = '%s',
-                prenom = '%s',
-                login = '%s',
-                actif = %s
+                email = '%s'
             }
-            """.formatted(
-                String.valueOf(id),
-                getNom(),
-                getPrenom(),
-                getLogin(),
-                isActif()
-        );
+            """.formatted(getId(), getNom(), getEmail());
     }
 }

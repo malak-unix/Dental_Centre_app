@@ -37,8 +37,4 @@ public interface OrdonnanceRepository extends CrudRepository<Ordonnance, Long> {
      * Pagination simple.
      */
     List<Ordonnance> findPage(int limit, int offset);
-    Ordonnance findLastByDossierId(Long dossierId);
-    Ordonnance findLastByConsultationId(Long consultationId);
-    boolean existsById(Long id);
-
 }

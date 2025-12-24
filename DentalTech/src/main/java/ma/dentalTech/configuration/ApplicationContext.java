@@ -22,35 +22,16 @@ import ma.dentalTech.service.modules.agenda.api.ListeAttenteService;
 import ma.dentalTech.repository.modules.agenda.api.PlageHoraireRepository;
 import ma.dentalTech.service.modules.agenda.api.PlageHoraireService;
 
-import ma.dentalTech.repository.modules.users.api.NotificationRepository;
-import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-
-import ma.dentalTech.service.modules.dashboard.api.DashboardService;
-
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * ApplicationContext = mini-injecteur de dépendances (IoC container).
- *
- * Idée :
- * - On lit beans.properties
- * - On instancie les classes (repos/services/controllers)
- * - On les stocke dans 2 maps :
- *    1) context        : clé = Class, valeur = instance
- *    2) contextByName  : clé = String (nom bean), valeur = instance
- *
- * Avantage :
- * - Pas besoin de Spring
- * - Injection via constructeurs
- *
- * IMPORTANT :
- * - Certains repos sont "optionnels" (createOptionalRepo)
- *   => si absent / pas encore fini, l'application continue sans planter.
- * - Le DashboardService ne sera créé que si toutes ses dépendances existent.
- */
+import ma.dentalTech.repository.modules.users.api.NotificationRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+
+import ma.dentalTech.service.modules.dashboard.api.DashboardService;
+
 public final class ApplicationContext {
 
     private static final Map<Class<?>, Object> context = new HashMap<>();
@@ -59,7 +40,6 @@ public final class ApplicationContext {
     static {
         String currentBean = "aucun";
         try {
-            // 1) Charger beans.properties depuis /config/beans.properties dans resources
             Properties props = new Properties();
             try (InputStream in = ApplicationContext.class.getResourceAsStream("/config/beans.properties")) {
                 if (in == null) {
@@ -68,29 +48,26 @@ public final class ApplicationContext {
                 props.load(in);
             }
 
-            // ==========================================================
-            // MODULE PATIENT : repo -> service -> controllers(optionnels)
-            // ==========================================================
+            // ==========================================
+            // PATIENT : repo -> service -> (controller optional)
+            // ==========================================
             currentBean = "patientRepo";
             PatientRepository patientRepo = newInstance(props, "patientRepo", PatientRepository.class);
 
             currentBean = "patientService";
-            PatientService patientService = newInstance(
-                    props, "patientService", PatientService.class,
+            PatientService patientService = newInstance(props, "patientService", PatientService.class,
                     new Class<?>[]{PatientRepository.class},
-                    new Object[]{patientRepo}
-            );
+                    new Object[]{patientRepo});
 
             put(PatientRepository.class, patientRepo, "patientRepo");
             put(PatientService.class, patientService, "patientService");
 
-            // controllers optionnels => si pas dans beans.properties => ignore
             createOptional(props, "patientController", PatientService.class, patientService);
             createOptional(props, "patientControllerSwing", PatientService.class, patientService);
 
-            // ==========================================================
-            // MODULE CAISSE : repos -> service -> controller(optionnel)
-            // ==========================================================
+            // ==========================================
+            // CAISSE : repos -> service -> (controller optional)
+            // ==========================================
             currentBean = "factureRepo";
             FactureRepository factureRepo = newInstance(props, "factureRepo", FactureRepository.class);
             put(FactureRepository.class, factureRepo, "factureRepo");
@@ -108,35 +85,30 @@ public final class ApplicationContext {
             put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
 
             currentBean = "caisseDashboardService";
-            CaisseDashboardService caisseService = newInstance(
-                    props, "caisseDashboardService", CaisseDashboardService.class,
+            CaisseDashboardService caisseService = newInstance(props, "caisseDashboardService", CaisseDashboardService.class,
                     new Class<?>[]{FactureRepository.class, RevenuesRepository.class, ChargesRepository.class},
-                    new Object[]{factureRepo, revenusRepo, chargesRepo}
-            );
+                    new Object[]{factureRepo, revenusRepo, chargesRepo});
             put(CaisseDashboardService.class, caisseService, "caisseDashboardService");
-
             createOptional(props, "caisseDashboardController", CaisseDashboardService.class, caisseService);
 
-            // ==========================================================
-            // MODULE RDV : repo -> service -> controller(optionnel)
-            // ==========================================================
+            // ==========================================
+            // RDV : repo -> service -> (controller optional)
+            // ==========================================
             currentBean = "rdv.repository";
             RdvRepository rdvRepo = newInstance(props, "rdv.repository", RdvRepository.class);
             put(RdvRepository.class, rdvRepo, "rdv.repository");
 
             currentBean = "rdv.service";
-            RdvService rdvService = newInstance(
-                    props, "rdv.service", RdvService.class,
+            RdvService rdvService = newInstance(props, "rdv.service", RdvService.class,
                     new Class<?>[]{RdvRepository.class},
-                    new Object[]{rdvRepo}
-            );
+                    new Object[]{rdvRepo});
             put(RdvService.class, rdvService, "rdv.service");
 
             createOptional(props, "rdv.controller", RdvService.class, rdvService);
 
-            // ==========================================================
-            // MODULE AGENDA : repos -> service -> controller(optionnel)
-            // ==========================================================
+            // ==========================================
+            // AGENDA : repos -> service
+            // ==========================================
             currentBean = "agendaMensuelRepo";
             AgendaMensuelRepository agendaMensuelRepo = newInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class);
             put(AgendaMensuelRepository.class, agendaMensuelRepo, "agendaMensuelRepo");
@@ -146,14 +118,14 @@ public final class ApplicationContext {
             put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
 
             currentBean = "agendaService";
-            AgendaService agendaService = newInstance(
-                    props, "agendaService", AgendaService.class,
+            AgendaService agendaService = newInstance(props, "agendaService", AgendaService.class,
                     new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
-                    new Object[]{agendaMensuelRepo, detailJourneeRepo}
-            );
+                    new Object[]{agendaMensuelRepo, detailJourneeRepo});
             put(AgendaService.class, agendaService, "agendaService");
 
-            // agenda.controller a un constructeur (AgendaMensuelRepository, DetailJourneeRepository)
+            // ==========================================
+            // AGENDA CONTROLLER : repos -> controller
+            // ==========================================
             if (props.getProperty("agenda.controller") != null && !props.getProperty("agenda.controller").isBlank()) {
                 Object obj = Class.forName(props.getProperty("agenda.controller"))
                         .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
@@ -161,41 +133,37 @@ public final class ApplicationContext {
                 contextByName.put("agenda.controller", obj);
             }
 
-            // ==========================================================
-            // MODULE LISTE D'ATTENTE : repo -> service -> controller(optionnel)
-            // ==========================================================
+            // ==========================================
+            // LISTE D'ATTENTE : repo -> service
+            // ==========================================
             currentBean = "listeAttente.repository";
             ListeAttenteRepository listeRepo = newInstance(props, "listeAttente.repository", ListeAttenteRepository.class);
             put(ListeAttenteRepository.class, listeRepo, "listeAttente.repository");
 
             currentBean = "listeAttente.service";
-            ListeAttenteService listeService = newInstance(
-                    props, "listeAttente.service", ListeAttenteService.class,
+            ListeAttenteService listeService = newInstance(props, "listeAttente.service", ListeAttenteService.class,
                     new Class<?>[]{ListeAttenteRepository.class},
-                    new Object[]{listeRepo}
-            );
+                    new Object[]{listeRepo});
             put(ListeAttenteService.class, listeService, "listeAttente.service");
 
             createOptional(props, "listeAttente.controller", ListeAttenteService.class, listeService);
 
-            // ==========================================================
-            // MODULE PLAGE HORAIRE : repo -> service
-            // ==========================================================
+            // ==========================================
+            // PLAGE HORAIRE : repo -> service
+            // ==========================================
             currentBean = "plageHoraire.repository";
             PlageHoraireRepository plageRepo = newInstance(props, "plageHoraire.repository", PlageHoraireRepository.class);
             put(PlageHoraireRepository.class, plageRepo, "plageHoraire.repository");
 
             currentBean = "plageHoraire.service";
-            PlageHoraireService plageService = newInstance(
-                    props, "plageHoraire.service", PlageHoraireService.class,
+            PlageHoraireService plageService = newInstance(props, "plageHoraire.service", PlageHoraireService.class,
                     new Class<?>[]{PlageHoraireRepository.class},
-                    new Object[]{plageRepo}
-            );
+                    new Object[]{plageRepo});
             put(PlageHoraireService.class, plageService, "plageHoraire.service");
 
-            // ==========================================================
-            // MODULE USERS / NOTIFICATIONS : repos
-            // ==========================================================
+            // ==========================================
+            // DASHBOARD : repos (optionnels si pas encore alignés)
+            // ==========================================
             currentBean = "notificationRepo";
             NotificationRepository notificationRepo =
                     newInstance(props, "notificationRepo", NotificationRepository.class);
@@ -206,53 +174,20 @@ public final class ApplicationContext {
                     newInstance(props, "utilisateurRepo", UtilisateurRepository.class);
             put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
 
-            // ==========================================================
-            // MODULE DOSSIER MEDICAL : repos OPTIONNELS
-            // (optionnels pour éviter que tout le projet casse
-            //  si un repo n'est pas encore fini)
-            // ==========================================================
-            Object consultationRepoObj = createOptionalRepo(
-                    props, "consultationRepo",
+            // ---- Repos dossierMedical : OPTIONNELS (pour éviter ClassCastException)
+            Object consultationRepoObj = createOptionalRepo(props, "consultationRepo",
                     ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class,
-                    "consultationRepo"
-            );
+                    "consultationRepo");
 
-            Object acteRepoObj = createOptionalRepo(
-                    props, "acteRepo",
+            Object acteRepoObj = createOptionalRepo(props, "acteRepo",
                     ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class,
-                    "acteRepo"
-            );
+                    "acteRepo");
 
-            Object dossierMedicalRepoObj = createOptionalRepo(
-                    props, "dossierMedicalRepo",
+            Object dossierMedicalRepoObj = createOptionalRepo(props, "dossierMedicalRepo",
                     ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class,
-                    "dossierMedicalRepo"
-            );
+                    "dossierMedicalRepo");
 
-            // autres repos dossierMedical (optionnels aussi)
-            createOptionalRepo(props, "certificatRepo",
-                    ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository.class,
-                    "certificatRepo");
-
-            createOptionalRepo(props, "interventionRepo",
-                    ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepository.class,
-                    "interventionRepo");
-
-            createOptionalRepo(props, "medicamentRepo",
-                    ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository.class,
-                    "medicamentRepo");
-
-            createOptionalRepo(props, "ordonnanceRepo",
-                    ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepository.class,
-                    "ordonnanceRepo");
-
-            createOptionalRepo(props, "prescriptionRepo",
-                    ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepository.class,
-                    "prescriptionRepo");
-
-            // ==========================================================
-            // DASHBOARD SERVICE : seulement si TOUTES les dépendances existent
-            // ==========================================================
+            // ---- DashboardService : seulement si tout est présent
             boolean canCreateDashboard =
                     consultationRepoObj != null &&
                             acteRepoObj != null &&
@@ -299,20 +234,20 @@ public final class ApplicationContext {
 
                 put(DashboardService.class, dashboardService, "dashboardService");
                 createOptional(props, "dashboardController", DashboardService.class, dashboardService);
+            } else {
+                // pas bloquant : dashboard sera activé quand les repos seront alignés
+                // System.out.println("INFO: DashboardService non créé (dépendances manquantes ou non alignées).");
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Erreur lors de l'initialisation ApplicationContext (bean courant = " + currentBean + ")",
-                    e
-            );
+            throw new RuntimeException("Erreur lors de l'initialisation ApplicationContext (bean courant = " + currentBean + ")", e);
         }
     }
 
     private ApplicationContext() {}
 
     // ==========================
-    // Public API : récupérer les beans
+    // Public API
     // ==========================
     public static Object getBean(String name) {
         return contextByName.get(name);
@@ -335,9 +270,6 @@ public final class ApplicationContext {
         contextByName.put(name, instance);
     }
 
-    /**
-     * Instanciation simple : classe avec constructeur vide.
-     */
     private static <T> T newInstance(Properties props, String key, Class<T> expectedType) throws Exception {
         String className = props.getProperty(key);
         if (className == null || className.isBlank()) {
@@ -347,9 +279,6 @@ public final class ApplicationContext {
         return expectedType.cast(obj);
     }
 
-    /**
-     * Instanciation avec injection via constructeur (constructor injection).
-     */
     private static <T> T newInstance(Properties props, String key, Class<T> expectedType,
                                      Class<?>[] ctorTypes, Object[] ctorArgs) throws Exception {
         String className = props.getProperty(key);
@@ -360,11 +289,6 @@ public final class ApplicationContext {
         return expectedType.cast(obj);
     }
 
-    /**
-     * Bean optionnel (controller souvent).
-     * - si key absent => rien
-     * - sinon => on essaie de construire (1 dépendance)
-     */
     private static void createOptional(Properties props, String key, Class<?> depType, Object depInstance) {
         String className = props.getProperty(key);
         if (className == null || className.isBlank()) return;
@@ -378,11 +302,7 @@ public final class ApplicationContext {
     }
 
     /**
-     * Repo optionnel :
-     * - si absent => retourne null
-     * - si présent mais cast impossible => retourne null
-     *
-     * Object return : car on veut pouvoir tester "!= null" facilement.
+     * Repo/service optionnel : si la classe est absente OU ne cast pas => on ignore (pas bloquant).
      */
     private static <T> Object createOptionalRepo(Properties props, String key, Class<T> expectedType, String name) {
         String className = props.getProperty(key);
@@ -394,7 +314,7 @@ public final class ApplicationContext {
             put(expectedType, casted, name);
             return casted;
         } catch (Exception e) {
-            // on ignore volontairement : pas bloquant
+            // on ignore pour ne pas bloquer l'app (utile pendant l'intégration)
             return null;
         }
     }

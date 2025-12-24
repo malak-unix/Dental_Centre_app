@@ -1,7 +1,7 @@
 package ma.dentalTech.mvc.controllers.modules.caisse.api;
 
 import ma.dentalTech.entities.cabinet.Charges;
-import ma.dentalTech.entities.cabinet.Facture;
+import ma.dentalTech.entities.dossierMedical.Facture;
 import ma.dentalTech.entities.cabinet.Revenues;
 
 import java.time.LocalDateTime;

@@ -1,31 +1,29 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
 import ma.dentalTech.entities.dossierMedical.Medicament;
-import ma.dentalTech.entities.enums.FormeMedicament;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MedicamentRepository extends CrudRepository<Medicament, Long> {
 
+    /**
+     * Recherche par mot-clé sur le nom du médicament (LIKE %keyword%).
+     */
     List<Medicament> searchByNom(String keyword);
 
-    Optional<Medicament> findByNomExact(String nom);
-
+    /**
+     * Médicaments remboursables ou non.
+     */
     List<Medicament> findByRemboursable(boolean remboursable);
 
-    List<Medicament> findByLaboratoire(String laboratoire);
-
-    List<Medicament> findByType(String typeMedicament);
-
-    List<Medicament> findByForme(FormeMedicament forme);
-
-    List<Medicament> findByPrixBetween(Double min, Double max);
-
-    boolean existsById(Long id);
-
+    /**
+     * Nombre total de médicaments.
+     */
     long count();
 
+    /**
+     * Pagination simple.
+     */
     List<Medicament> findPage(int limit, int offset);
 }

@@ -1,30 +1,30 @@
 package ma.dentalTech.entities.users;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import lombok.*;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.PrioriteNotification;
+import ma.dentalTech.entities.enums.TitreNotification;
+import ma.dentalTech.entities.enums.TypeNotification;
 
-import java.time.LocalDateTime;
-
+/**
+ * Entité représentant une notification dans le système.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
+@Builder
 public class Notification extends BaseEntity {
 
-    private Long utilisateurId;
-    private LocalDateTime dateNotification;
-    private PrioriteNotification priorite;
-    private String titre;
+    private TitreNotification titre;
     private String message;
-    private LocalDateTime dateEnvoi;
+    private LocalDate date;
+    private LocalTime time;
+    private TypeNotification type;
+    private PrioriteNotification priorite;
+    private boolean lue;
 
-    // ==========================
-    // Relation (diagramme) : Utilisateur 1 -> * Notification
-    // ==========================
     private Utilisateur utilisateur;
 
     @Override
@@ -44,20 +44,12 @@ public class Notification extends BaseEntity {
     public String toString() {
         return """
             Notification {
-                id = %s,
-                utilisateurId = %s,
-                priorite = %s,
-                titre = '%s',
-                dateNotification = %s,
-                dateEnvoi = %s
+                id = %d,
+                titre = %s,
+                message = '%s',
+                date = %s,
+                lue = %b
             }
-            """.formatted(
-                String.valueOf(id),
-                String.valueOf(utilisateurId),
-                String.valueOf(priorite),
-                titre,
-                String.valueOf(dateNotification),
-                String.valueOf(dateEnvoi)
-        );
+            """.formatted(id, titre, message, date, lue);
     }
 }
