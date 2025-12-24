@@ -19,7 +19,6 @@ public class AgendaHomePanel extends JPanel {
     private final JPanel agendaMensuelPage = new AgendaMensuelPagePanel();
     private final JPanel listeAttentePage = new ListeAttentePagePanel();
 
-    // nav buttons (pour activer/désactiver le style)
     private final Map<String, NavButton> navButtons = new HashMap<>();
 
     public AgendaHomePanel() {
@@ -30,7 +29,6 @@ public class AgendaHomePanel extends JPanel {
         add(buildHeader(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
 
-        // page par défaut
         showPage("RDV");
     }
 
@@ -55,9 +53,7 @@ public class AgendaHomePanel extends JPanel {
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setBackground(DentalTheme.BG);
 
-        // ===== NAV (gauche)
-        JPanel nav = new JPanel();
-        nav.setLayout(new GridLayout(3, 1, 10, 10));
+        JPanel nav = new JPanel(new GridLayout(3, 1, 10, 10));
         nav.setBackground(DentalTheme.BG);
         nav.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
@@ -80,7 +76,6 @@ public class AgendaHomePanel extends JPanel {
         nav.add(bAgenda);
         nav.add(bListe);
 
-        // ===== CONTENT (droite)
         content.setLayout(card);
         content.setBackground(DentalTheme.BG);
         content.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
@@ -95,17 +90,12 @@ public class AgendaHomePanel extends JPanel {
     }
 
     private void showPage(String key) {
-        // ✅ afficher page (JPanel) via CardLayout
         card.show(content, key);
 
-        // ✅ refresh style buttons (active / inactive)
-        navButtons.forEach((k, btn) -> {
-            boolean active = k.equals(key);
-            // on remplace le bouton par un nouveau bouton stylé, simple et fiable
-            // (si tu préfères garder le même objet, on peut ajouter une méthode setActive)
-        });
+        navButtons.forEach((k, btn) -> btn.setActive(k.equals(key)));
 
         revalidate();
         repaint();
     }
+
 }

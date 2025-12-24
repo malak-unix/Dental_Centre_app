@@ -6,7 +6,8 @@ public final class DentalTheme {
     private DentalTheme(){}
 
     // Couleurs (comme ma charte graphique )
-    public static final Color BG = new Color(0xFA, 0xF8, 0xF5);        // FAF8F5
+    public static final Color BG = new Color(0xFA, 0xF8, 0xF5);// FAF8F5
+    public static final Color CARD = Color.WHITE;
     public static final Color PRIMARY_DARK = new Color(0x0B, 0x13, 0x2B); // 0B132B
     public static final Color PRIMARY = new Color(0x1C, 0x25, 0x41);     // 1C2541
     public static final Color GOLD = new Color(0xCB, 0xA1, 0x35);        // CBA135

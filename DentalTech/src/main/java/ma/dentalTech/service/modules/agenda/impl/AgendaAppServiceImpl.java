@@ -9,16 +9,19 @@ import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.enums.Mois;
 import ma.dentalTech.entities.enums.StatutJournee;
 import ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto;
+import ma.dentalTech.mvc.dto.agenda.DetailJourneeDto;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
 import ma.dentalTech.service.modules.agenda.api.AgendaAppService;
+import ma.dentalTech.service.modules.agenda.mappers.RdvMapper;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class AgendaAppServiceImpl implements AgendaAppService {
@@ -36,7 +39,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     }
 
     // ============================
-    // 1) Agenda semaine
+    // 1) Agenda semaine (maquette)
     // ============================
     @Override
     public AgendaMensuelDto consulterAgendaSemaine(Long medecinId, LocalDate dateDansSemaine)
@@ -52,33 +55,49 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         int annee = dateDansSemaine.getYear();
 
         try {
+            // ✅ ton repo attend String mois
             AgendaMensuel agenda = agendaRepo.findByMedecinAndMonth(medecinId, mois.name(), annee);
 
+            // si agenda non créé → DTO vide mais avec semaine calculée
             if (agenda == null) {
                 return AgendaMensuelDto.builder()
                         .id(null)
                         .medecinId(medecinId)
                         .mois(mois)
                         .annee(annee)
+                        .joursSemaine(new ArrayList<>())
+                        .rdvsSemaine(new ArrayList<>())
                         .build();
             }
 
-            // Ici tu récupères les RDV mais ton DTO ne les expose pas encore.
-            // On garde la logique côté service si tu ajoutes plus tard un champ "rendezVous".
-            List<RDV> rdvsSemaine = new ArrayList<>();
-            List<DetailJournee> jours = detailRepo.findByAgendaId(agenda.getId());
+            List<DetailJournee> tousJours = detailRepo.findByAgendaId(agenda.getId());
 
-            for (DetailJournee dj : jours) {
-                if (dj.getDateJour() != null && !dj.getDateJour().isBefore(start) && !dj.getDateJour().isAfter(end)) {
-                    rdvsSemaine.addAll(rdvRepo.findByDetailJourneeId(dj.getId()));
+            // Filtrer semaine
+            List<DetailJournee> joursSemaine = new ArrayList<>();
+            for (DetailJournee dj : tousJours) {
+                if (dj.getDateJour() == null) continue;
+                if (!dj.getDateJour().isBefore(start) && !dj.getDateJour().isAfter(end)) {
+                    joursSemaine.add(dj);
                 }
             }
+            joursSemaine.sort(Comparator.comparing(DetailJournee::getDateJour));
+
+            // Récupérer rdv semaine
+            List<RdvDto> rdvsSemaine = new ArrayList<>();
+            for (DetailJournee dj : joursSemaine) {
+                List<RDV> rdvs = rdvRepo.findByDetailJourneeId(dj.getId());
+                for (RDV r : rdvs) rdvsSemaine.add(RdvMapper.toDto(r));
+            }
+
+            List<DetailJourneeDto> joursDto = joursSemaine.stream().map(this::toDetailDto).toList();
 
             return AgendaMensuelDto.builder()
                     .id(agenda.getId())
                     .medecinId(agenda.getMedecinId())
                     .mois(agenda.getMois() != null ? agenda.getMois() : mois)
-                    .annee(agenda.getAnnee() != null ? agenda.getAnnee() : annee)
+                    .annee(agenda.getAnnee())
+                    .joursSemaine(joursDto)
+                    .rdvsSemaine(rdvsSemaine)
                     .build();
 
         } catch (Exception e) {
@@ -93,42 +112,45 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     public RdvDto creerRdv(RdvDto dto) throws ValidationException, ServiceException {
         validateRdv(dto);
 
-        DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
-        if (dj == null) throw new ValidationException("DetailJournee introuvable");
+        try {
+            DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
+            if (dj == null) throw new ValidationException("DetailJournee introuvable");
 
-        // ✅ FIX: comparaison enum (plus de equalsIgnoreCase)
-        StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
-        if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
-            throw new ValidationException("Journée non ouverte : impossible de planifier un RDV");
-        }
+            // ✅ StatutJournee enum (plus de equalsIgnoreCase)
+            if (dj.getEtatJour() == StatutJournee.FERME) {
+                throw new ValidationException("Journée fermée : impossible de planifier un RDV");
+            }
 
-        LocalTime h = dto.getHeure();
-        if (dj.getHeureDebutTravail() != null && h.isBefore(dj.getHeureDebutTravail())) {
-            throw new ValidationException("Heure avant début de travail");
-        }
-        if (dj.getHeureFinTravail() != null && h.isAfter(dj.getHeureFinTravail())) {
-            throw new ValidationException("Heure après fin de travail");
-        }
+            LocalTime h = dto.getHeure();
+            if (dj.getHeureDebutTravail() != null && h.isBefore(dj.getHeureDebutTravail())) {
+                throw new ValidationException("Heure avant début de travail");
+            }
+            if (dj.getHeureFinTravail() != null && h.isAfter(dj.getHeureFinTravail())) {
+                throw new ValidationException("Heure après fin de travail");
+            }
 
-        // conflit: même detailJourneeId + même heure (simple)
-        List<RDV> existing = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
-        for (RDV r : existing) {
-            if (r.getHeure() != null && r.getHeure().equals(dto.getHeure())) {
-                String st = r.getStatut();
-                if (st == null || !st.equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
-                    throw new ValidationException("Conflit: un RDV existe déjà à cette heure");
+            // conflit horaire : même detailJournee + même heure (ignorer ANNULE)
+            List<RDV> existing = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
+            for (RDV r : existing) {
+                if (r.getHeure() != null && r.getHeure().equals(dto.getHeure())) {
+                    EtatRendezVous st = parseEtat(r.getStatut());
+                    if (st == null || st != EtatRendezVous.ANNULE) {
+                        throw new ValidationException("Conflit: un RDV existe déjà à cette heure");
+                    }
                 }
             }
-        }
 
-        RDV entity = toEntity(dto);
+            RDV entity = RdvMapper.toEntity(dto);
 
-        EtatRendezVous statut = (dto.getStatut() != null) ? dto.getStatut() : EtatRendezVous.PREVU;
-        entity.setStatut(statut.name());
+            // default statut
+            EtatRendezVous statut = (dto.getStatut() != null) ? dto.getStatut() : EtatRendezVous.PREVU;
+            entity.setStatut(statut.name());
 
-        try {
             rdvRepo.create(entity);
-            return toDto(entity);
+            return RdvMapper.toDto(entity);
+
+        } catch (ValidationException ve) {
+            throw ve;
         } catch (Exception e) {
             throw new ServiceException("Erreur création RDV", e);
         }
@@ -146,18 +168,20 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV old = rdvRepo.findById(rdvId);
             if (old == null) throw new ValidationException("RDV introuvable");
 
-            if (old.getStatut() != null && old.getStatut().equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
+            EtatRendezVous oldSt = parseEtat(old.getStatut());
+            if (oldSt == EtatRendezVous.ANNULE) {
                 throw new ValidationException("Impossible de modifier un RDV annulé");
             }
 
-            RDV updated = toEntity(dto);
+            RDV updated = RdvMapper.toEntity(dto);
             updated.setId(rdvId);
 
+            // garder statut ancien si dto.statut null
             if (dto.getStatut() != null) updated.setStatut(dto.getStatut().name());
             else updated.setStatut(old.getStatut());
 
             rdvRepo.update(updated);
-            return toDto(updated);
+            return RdvMapper.toDto(updated);
 
         } catch (ValidationException ve) {
             throw ve;
@@ -192,9 +216,8 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV r = rdvRepo.findById(rdvId);
             if (r == null) throw new ValidationException("RDV introuvable");
 
-            if (r.getStatut() != null && r.getStatut().equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
-                throw new ValidationException("Impossible de confirmer un RDV annulé");
-            }
+            EtatRendezVous st = parseEtat(r.getStatut());
+            if (st == EtatRendezVous.ANNULE) throw new ValidationException("Impossible de confirmer un RDV annulé");
 
             r.setStatut(EtatRendezVous.CONFIRME.name());
             rdvRepo.update(r);
@@ -211,7 +234,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         try {
             RDV r = rdvRepo.findById(rdvId);
             if (r == null) throw new ValidationException("RDV introuvable");
-            return toDto(r);
+            return RdvMapper.toDto(r);
         } catch (ValidationException ve) {
             throw ve;
         } catch (Exception e) {
@@ -220,7 +243,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     }
 
     // ============================
-    // Validation + mapping
+    // Helpers
     // ============================
     private void validateRdv(RdvDto dto) throws ValidationException {
         if (dto == null) throw new ValidationException("DTO RDV null");
@@ -229,39 +252,25 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         if (dto.getDateRdv() == null) throw new ValidationException("dateRdv obligatoire");
         if (dto.getHeure() == null) throw new ValidationException("heure obligatoire");
         if (dto.getMotif() == null || dto.getMotif().isBlank()) throw new ValidationException("motif obligatoire");
+        if (dto.getTypeRdv() == null) throw new ValidationException("typeRdv obligatoire");
     }
 
-    private RDV toEntity(RdvDto dto) {
-        return RDV.builder()
-                .id(dto.getId())
-                .patientId(dto.getPatientId())
-                .detailJourneeId(dto.getDetailJourneeId())
-                .listeAttenteId(dto.getListeAttenteId())
-                .dateRdv(dto.getDateRdv())
-                .heure(dto.getHeure())
-                .motif(dto.getMotif())
-                .noteMedecin(null)
-                .statut(dto.getStatut() != null ? dto.getStatut().name() : null)
+    private DetailJourneeDto toDetailDto(DetailJournee dj) {
+        return DetailJourneeDto.builder()
+                .id(dj.getId())
+                .agendaId(dj.getAgendaId())
+                .dateJour(dj.getDateJour())
+                .heureDebutTravail(dj.getHeureDebutTravail())
+                .heureFinTravail(dj.getHeureFinTravail())
+                .etatJour(dj.getEtatJour()) // ✅ enum direct
+                .commentaire(dj.getCommentaire())
                 .build();
     }
 
-    private RdvDto toDto(RDV r) {
-        EtatRendezVous st = null;
-        if (r.getStatut() != null) {
-            try { st = EtatRendezVous.valueOf(r.getStatut()); }
-            catch (Exception ignored) {}
-        }
-
-        return RdvDto.builder()
-                .id(r.getId())
-                .patientId(r.getPatientId())
-                .detailJourneeId(r.getDetailJourneeId())
-                .listeAttenteId(r.getListeAttenteId())
-                .dateRdv(r.getDateRdv())
-                .heure(r.getHeure())
-                .motif(r.getMotif())
-                .statut(st)
-                .build();
+    private EtatRendezVous parseEtat(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return EtatRendezVous.valueOf(s.trim()); }
+        catch (Exception e) { return null; }
     }
 
     private LocalDate startOfWeek(LocalDate d) {

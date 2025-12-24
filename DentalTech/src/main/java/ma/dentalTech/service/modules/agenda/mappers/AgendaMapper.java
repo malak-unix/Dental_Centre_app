@@ -37,7 +37,7 @@ public final class AgendaMapper {
                 .dateJour(dj.getDateJour())
                 .heureDebutTravail(dj.getHeureDebutTravail())
                 .heureFinTravail(dj.getHeureFinTravail())
-                .etatJour(String.valueOf(dj.getEtatJour()))
+                .etatJour(StatutJournee.valueOf(String.valueOf(dj.getEtatJour())))
                 .commentaire(dj.getCommentaire())
                 .build();
     }
@@ -50,7 +50,7 @@ public final class AgendaMapper {
                 .dateJour(d.getDateJour())
                 .heureDebutTravail(d.getHeureDebutTravail())
                 .heureFinTravail(d.getHeureFinTravail())
-                .etatJour(StatutJournee.valueOf(d.getEtatJour()))
+                .etatJour(StatutJournee.valueOf(String.valueOf(d.getEtatJour())))
                 .commentaire(d.getCommentaire())
                 .build();
     }

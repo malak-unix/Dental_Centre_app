@@ -18,7 +18,6 @@ public class AgendaControllerImpl implements AgendaController {
     private final AgendaMensuelRepository agendaRepo;
     private final DetailJourneeRepository detailRepo;
 
-    // ✅ Constructeur injecté par ApplicationContext (createOptional)
     public AgendaControllerImpl(AgendaMensuelRepository agendaRepo,
                                 DetailJourneeRepository detailRepo) {
         this.agendaRepo = agendaRepo;
@@ -61,8 +60,7 @@ public class AgendaControllerImpl implements AgendaController {
         return AgendaMensuelDto.builder()
                 .id(a.getId())
                 .medecinId(a.getMedecinId())
-                // ⚠️ chez toi mois est String, donc pas .name()
-                .mois(Mois.valueOf(String.valueOf(a.getMois())))
+                .mois(parseMois(a.getMois()))
                 .annee(a.getAnnee())
                 .build();
     }
@@ -74,9 +72,26 @@ public class AgendaControllerImpl implements AgendaController {
                 .dateJour(d.getDateJour())
                 .heureDebutTravail(d.getHeureDebutTravail())
                 .heureFinTravail(d.getHeureFinTravail())
-                // si etatJour est enum => .name() ok ; si String => direct
-                .etatJour(d.getEtatJour() == null ? null : String.valueOf(StatutJournee.valueOf(d.getEtatJour().toString())))
+                .etatJour(parseStatutJournee(d.getEtatJour()))
                 .commentaire(d.getCommentaire())
                 .build();
+    }
+
+    private Mois parseMois(Object moisValue) {
+        if (moisValue == null) return null;
+        if (moisValue instanceof Mois m) return m;
+        String s = String.valueOf(moisValue).trim();
+        if (s.isEmpty()) return null;
+        try { return Mois.valueOf(s.toUpperCase()); }
+        catch (Exception e) { return null; }
+    }
+
+    private StatutJournee parseStatutJournee(Object v) {
+        if (v == null) return null;
+        if (v instanceof StatutJournee sj) return sj;
+        String s = String.valueOf(v).trim();
+        if (s.isEmpty()) return null;
+        try { return StatutJournee.valueOf(s.toUpperCase()); }
+        catch (Exception e) { return null; }
     }
 }
