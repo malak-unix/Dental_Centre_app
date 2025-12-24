@@ -3,6 +3,7 @@ package ma.dentalTech.repository.modules.dossierMedical.impl;
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.FormeMedicament;
 import ma.dentalTech.entities.dossierMedical.Medicament;
+import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
 import java.math.BigDecimal;
 import java.sql.*;
@@ -194,7 +195,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                list.add(map(rs));
+                list.add(RowMappers.mapMedicament(rs));
             }
 
         } catch (SQLException e) {
@@ -234,6 +235,9 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
 
     @Override
     public List<Medicament> searchByNom(String keyword) {
+        if (keyword == null) keyword = "";
+        keyword = keyword.trim();
+
         String sql = "SELECT * FROM medicament WHERE nom LIKE ? ORDER BY nom, id";
         List<Medicament> list = new ArrayList<>();
 
@@ -243,18 +247,16 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
             ps.setString(1, "%" + keyword + "%");
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(map(rs));
-                }
+                while (rs.next()) list.add(RowMappers.mapMedicament(rs));
             }
 
+            return list;
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
+            throw new RuntimeException("Erreur searchByNom() Medicament", e);
         }
-
-
-        return list;
     }
+
 
     @Override
     public List<Medicament> findByRemboursable(boolean remboursable) {
@@ -268,7 +270,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(map(rs));
+                    list.add(RowMappers.mapMedicament(rs));
                 }
             }
 
@@ -317,7 +319,7 @@ public class MedicamentRepositoryImpl implements MedicamentRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(map(rs));
+                    list.add(RowMappers.mapMedicament(rs));
                 }
             }
 

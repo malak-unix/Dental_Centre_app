@@ -1,10 +1,11 @@
 package ma.dentalTech.entities.dossierMedical;
 
-import java.time.LocalDateTime;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.TypeDocument;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -12,8 +13,8 @@ import ma.dentalTech.entities.enums.TypeDocument;
 @SuperBuilder
 public class DocumentMedical extends BaseEntity {
 
-    private Long dossierId;          // FK dossier_medical
-    private Long consultationId;     // FK consultation (nullable)
+    private Long dossierId;
+    private Long consultationId;
 
     private TypeDocument typeDocument;
 
@@ -23,4 +24,17 @@ public class DocumentMedical extends BaseEntity {
 
     private Long tailleOctets;
     private LocalDateTime dateDocument;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DocumentMedical)) return false;
+        DocumentMedical that = (DocumentMedical) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

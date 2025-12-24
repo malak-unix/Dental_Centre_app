@@ -6,6 +6,7 @@ import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.dossierMedical.api.DocumentMedicalRepository;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
     // ------------------------------------------------------------
     @Override
     public List<DocumentMedical> findAll() {
-        String sql = "SELECT * FROM document_medical ORDER BY id DESC";
+        String sql = "SELECT * FROM document_medical ORDER BY date_document DESC, id DESC";
         List<DocumentMedical> out = new ArrayList<>();
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -24,15 +25,17 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
+            return out;
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findAll()", e);
         }
-        return out;
     }
 
     @Override
     public DocumentMedical findById(Long id) {
+        if (id == null) return null;
+
         String sql = "SELECT * FROM document_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -41,8 +44,7 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
             ps.setLong(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return RowMappers.mapDocumentMedical(rs);
-                return null;
+                return rs.next() ? RowMappers.mapDocumentMedical(rs) : null;
             }
 
         } catch (SQLException e) {
@@ -52,16 +54,17 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public void create(DocumentMedical d) {
+        if (d == null) throw new IllegalArgumentException("DocumentMedical null dans create()");
+        if (d.getDossierId() == null) throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
+        if (d.getCheminFichier() == null || d.getCheminFichier().isBlank())
+            throw new IllegalArgumentException("cheminFichier obligatoire (NOT NULL)");
+
         String sql = """
             INSERT INTO document_medical
             (dossier_id, consultation_id, type_document, titre, nom_fichier, chemin_fichier, taille_octets,
              date_document, cree_par, modifie_par)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
-
-        if (d == null) throw new IllegalArgumentException("DocumentMedical null dans create()");
-        if (d.getDossierId() == null) throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
-        if (d.getCheminFichier() == null) throw new IllegalArgumentException("cheminFichier obligatoire (NOT NULL)");
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -76,11 +79,11 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
             ps.setString(5, d.getNomFichier());
             ps.setString(6, d.getCheminFichier());
 
-            if (d.getTailleOctets() != null) ps.setLong(7, d.getTailleOctets());
-            else ps.setNull(7, Types.BIGINT);
+            long taille = (d.getTailleOctets() == null ? 0L : d.getTailleOctets());
+            ps.setLong(7, taille);
 
-            if (d.getDateDocument() != null) ps.setTimestamp(8, Timestamp.valueOf(d.getDateDocument()));
-            else ps.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+            LocalDateTime dd = (d.getDateDocument() == null ? LocalDateTime.now() : d.getDateDocument());
+            ps.setTimestamp(8, Timestamp.valueOf(dd));
 
             ps.setString(9, d.getCreePar());
             ps.setString(10, d.getModifiePar());
@@ -98,6 +101,12 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public void update(DocumentMedical d) {
+        if (d == null) throw new IllegalArgumentException("DocumentMedical null dans update()");
+        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
+        if (d.getDossierId() == null) throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
+        if (d.getCheminFichier() == null || d.getCheminFichier().isBlank())
+            throw new IllegalArgumentException("cheminFichier obligatoire (NOT NULL)");
+
         String sql = """
             UPDATE document_medical
                SET dossier_id = ?,
@@ -112,11 +121,6 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
              WHERE id = ?
             """;
 
-        if (d == null) throw new IllegalArgumentException("DocumentMedical null dans update()");
-        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
-        if (d.getDossierId() == null) throw new IllegalArgumentException("dossierId obligatoire dans update()");
-        if (d.getCheminFichier() == null) throw new IllegalArgumentException("cheminFichier obligatoire dans update()");
-
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
@@ -130,11 +134,11 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
             ps.setString(5, d.getNomFichier());
             ps.setString(6, d.getCheminFichier());
 
-            if (d.getTailleOctets() != null) ps.setLong(7, d.getTailleOctets());
-            else ps.setNull(7, Types.BIGINT);
+            long taille = (d.getTailleOctets() == null ? 0L : d.getTailleOctets());
+            ps.setLong(7, taille);
 
-            if (d.getDateDocument() != null) ps.setTimestamp(8, Timestamp.valueOf(d.getDateDocument()));
-            else ps.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+            LocalDateTime dd = (d.getDateDocument() == null ? LocalDateTime.now() : d.getDateDocument());
+            ps.setTimestamp(8, Timestamp.valueOf(dd));
 
             ps.setString(9, d.getModifiePar());
             ps.setLong(10, d.getId());
@@ -153,6 +157,8 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public void deleteById(Long id) {
+        if (id == null) return;
+
         String sql = "DELETE FROM document_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -171,6 +177,8 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
     // ------------------------------------------------------------
     @Override
     public List<DocumentMedical> findByDossierId(Long dossierId) {
+        if (dossierId == null) return List.of();
+
         String sql = """
             SELECT * FROM document_medical
              WHERE dossier_id = ?
@@ -187,14 +195,17 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
                 while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findByDossierId(" + dossierId + ")", e);
         }
-        return out;
     }
 
     @Override
     public List<DocumentMedical> findByConsultationId(Long consultationId) {
+        if (consultationId == null) return List.of();
+
         String sql = """
             SELECT * FROM document_medical
              WHERE consultation_id = ?
@@ -211,10 +222,11 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
                 while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findByConsultationId(" + consultationId + ")", e);
         }
-        return out;
     }
 
     @Override
@@ -226,11 +238,11 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
              ORDER BY date_document DESC, id DESC
             """;
         List<DocumentMedical> out = new ArrayList<>();
+        String like = "%" + (keyword == null ? "" : keyword) + "%";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
-            String like = "%" + (keyword == null ? "" : keyword) + "%";
             ps.setString(1, like);
             ps.setString(2, like);
 
@@ -238,14 +250,17 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
                 while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.searchByTitreOrNom(" + keyword + ")", e);
         }
-        return out;
     }
 
     @Override
     public boolean existsById(Long id) {
+        if (id == null) return false;
+
         String sql = "SELECT 1 FROM document_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -264,14 +279,13 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public long count() {
-        String sql = "SELECT COUNT(*) FROM document_medical";
+        String sql = "SELECT COUNT(*) AS total FROM document_medical";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            rs.next();
-            return rs.getLong(1);
+            return rs.next() ? rs.getLong("total") : 0L;
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.count()", e);
@@ -297,9 +311,10 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
                 while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findPage(limit=" + limit + ", offset=" + offset + ")", e);
         }
-        return out;
     }
 }

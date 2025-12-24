@@ -3,7 +3,7 @@ package ma.dentalTech.repository.modules.caisse.impl;
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.enums.StatutFacture;
-import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 
@@ -226,4 +226,146 @@ public class FactureRepositoryImpl implements FactureRepository {
             throw new RuntimeException("Erreur calculateTotalNonRegle()", e);
         }
     }
+
+    @Override
+    public Facture findByConsultationId(Long consultationId) {
+        if (consultationId == null) return null;
+
+        String sql = "SELECT * FROM facture WHERE consultation_id = ? LIMIT 1";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, consultationId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? RowMappers.mapFacture(rs) : null;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByConsultationId() Facture, consultationId=" + consultationId, e);
+        }
+    }
+
+    @Override
+    public boolean existsByConsultationId(Long consultationId) {
+        if (consultationId == null) return false;
+
+        String sql = "SELECT 1 FROM facture WHERE consultation_id = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, consultationId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur existsByConsultationId() Facture, consultationId=" + consultationId, e);
+        }
+    }
+
+    @Override
+    public List<Facture> findByDossierId(Long dossierId) {
+        if (dossierId == null) return List.of();
+
+        String sql = """
+        SELECT f.*
+          FROM facture f
+          JOIN consultation c ON c.id = f.consultation_id
+         WHERE c.dossier_id = ?
+         ORDER BY f.date_facture DESC, f.id DESC
+        """;
+
+        List<Facture> out = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, dossierId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(RowMappers.mapFacture(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByDossierId() Facture, dossierId=" + dossierId, e);
+        }
+
+        return out;
+    }
+
+    @Override
+    public List<Facture> findPage(int limit, int offset) {
+        String sql = """
+        SELECT * FROM facture
+         ORDER BY date_facture DESC, id DESC
+         LIMIT ? OFFSET ?
+        """;
+
+        List<Facture> out = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(RowMappers.mapFacture(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findPage() Facture, limit=" + limit + ", offset=" + offset, e);
+        }
+
+        return out;
+    }
+
+    @Override
+    public long count() {
+        String sql = "SELECT COUNT(*) FROM facture";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            rs.next();
+            return rs.getLong(1);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur count() Facture", e);
+        }
+    }
+
+    @Override
+    public boolean updatePayment(Long factureId, double totalPaye, StatutFacture statut, String modifiePar) {
+        if (factureId == null) return false;
+
+        String sql = """
+        UPDATE facture
+           SET total_paye = ?,
+               statut = ?,
+               modifie_par = ?
+         WHERE id = ?
+        """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDouble(1, totalPaye);
+            ps.setString(2, (statut == null ? StatutFacture.NON_PAYEE.name() : statut.name()));
+            ps.setString(3, modifiePar);
+            ps.setLong(4, factureId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur updatePayment() Facture, id=" + factureId, e);
+        }
+    }
+
+
 }

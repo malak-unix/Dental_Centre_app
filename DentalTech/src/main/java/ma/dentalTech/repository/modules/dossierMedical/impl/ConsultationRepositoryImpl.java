@@ -18,6 +18,10 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
         return ldt == null ? null : Timestamp.valueOf(ldt);
     }
 
+    /**
+     * Ton entity Consultation utilise LocalDate (pas LocalDateTime).
+     * Donc on convertit LocalDate -> LocalDateTime (midi) pour remplir le DATETIME en DB.
+     */
     private static LocalDateTime toDateTime(LocalDate d) {
         return d == null ? null : d.atTime(12, 0);
     }
@@ -44,6 +48,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public Consultation findById(Long id) {
+        if (id == null) return null;
+
         String sql = "SELECT * FROM consultation WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -52,8 +58,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
             ps.setLong(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return RowMappers.mapConsultation(rs);
-                return null;
+                return rs.next() ? RowMappers.mapConsultation(rs) : null;
             }
 
         } catch (SQLException e) {
@@ -124,8 +129,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
             if (dt == null) dt = LocalDateTime.now();
             ps.setTimestamp(2, Timestamp.valueOf(dt));
 
-            if (co.getStatus() != null) ps.setString(3, co.getStatus().name());
-            else ps.setString(3, StatutConsultation.PLANIFIE.name());
+            StatutConsultation st = (co.getStatus() != null) ? co.getStatus() : StatutConsultation.PLANIFIE;
+            ps.setString(3, st.name());
 
             ps.setString(4, co.getObservationMedecin());
             ps.setString(5, co.getModifiePar());
@@ -145,6 +150,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public void deleteById(Long id) {
+        if (id == null) return;
+
         String sql = "DELETE FROM consultation WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -163,6 +170,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
     // ------------------------------------------------------------
     @Override
     public List<Consultation> findByDossierId(Long dossierId) {
+        if (dossierId == null) return List.of();
+
         String sql = """
             SELECT * FROM consultation
              WHERE dossier_id = ?
@@ -187,7 +196,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public List<Consultation> findByDate(LocalDate date) {
-        // version simple (comme ton code)
+        if (date == null) return List.of();
+
         String sql = """
             SELECT * FROM consultation
              WHERE DATE(date_consultation) = ?
@@ -212,6 +222,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public List<Consultation> findByDateBetween(LocalDate start, LocalDate end) {
+        if (start == null || end == null) return List.of();
+
         String sql = """
             SELECT * FROM consultation
              WHERE DATE(date_consultation) BETWEEN ? AND ?
@@ -237,6 +249,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public List<Consultation> findByStatut(StatutConsultation statut) {
+        if (statut == null) return List.of(); // ✅ correction
+
         String sql = """
             SELECT * FROM consultation
              WHERE statut = ?
@@ -285,6 +299,8 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public boolean existsById(Long id) {
+        if (id == null) return false;
+
         String sql = "SELECT 1 FROM consultation WHERE id = ?";
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -317,6 +333,9 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public List<Consultation> findPage(int limit, int offset) {
+        if (limit <= 0) limit = 10;
+        if (offset < 0) offset = 0;
+
         String sql = """
             SELECT * FROM consultation
              ORDER BY date_consultation DESC, id DESC
@@ -341,7 +360,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
     }
 
     // ------------------------------------------------------------
-    // Dashboard (Aya) - vraies requêtes SQL
+    // Dashboard (Aya)
     // ------------------------------------------------------------
     @Override
     public Integer countTermineesPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end) {
@@ -364,8 +383,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
             ps.setTimestamp(3, toTs(end));
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt("total");
-                return 0;
+                return rs.next() ? rs.getInt("total") : 0;
             }
 
         } catch (SQLException e) {
@@ -375,7 +393,6 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
 
     @Override
     public Integer countEnCoursPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end) {
-        // On interprète "EnCours" = PLANIFIE (à venir / en cours de traitement)
         String sql = """
             SELECT COUNT(*) AS total
               FROM consultation c
@@ -395,8 +412,7 @@ public class ConsultationRepositoryImpl implements ConsultationRepository {
             ps.setTimestamp(3, toTs(end));
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt("total");
-                return 0;
+                return rs.next() ? rs.getInt("total") : 0;
             }
 
         } catch (SQLException e) {

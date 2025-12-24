@@ -22,6 +22,10 @@ public interface ConsultationRepository extends CrudRepository<Consultation, Lon
     // Rechercher par statut (PLANIFIE, TERMINE, ANNULE)
     List<Consultation> findByStatut(StatutConsultation statut);
 
+    List<Consultation> searchByObservation(String keyword);
+
+    boolean existsById(Long id);
+
     // Nombre total de consultations
     long count();
 

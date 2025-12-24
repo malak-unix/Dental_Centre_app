@@ -25,16 +25,17 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) out.add(RowMappers.mapDossierMedical(rs));
+            return out;
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DossierMedical.findAll()", e);
         }
-
-        return out;
     }
 
     @Override
     public DossierMedical findById(Long id) {
+        if (id == null) return null;
+
         String sql = "SELECT * FROM dossier_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -43,8 +44,7 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
             ps.setLong(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return RowMappers.mapDossierMedical(rs);
-                return null;
+                return rs.next() ? RowMappers.mapDossierMedical(rs) : null;
             }
 
         } catch (SQLException e) {
@@ -54,13 +54,13 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
 
     @Override
     public void create(DossierMedical d) {
+        if (d == null) throw new IllegalArgumentException("DossierMedical null dans create()");
+        if (d.getPatientId() == null) throw new IllegalArgumentException("patientId obligatoire (NOT NULL) dans dossier_medical");
+
         String sql = """
             INSERT INTO dossier_medical (patient_id, medecin_id, notes, cree_par, modifie_par)
             VALUES (?, ?, ?, ?, ?)
             """;
-
-        if (d == null) throw new IllegalArgumentException("DossierMedical null dans create()");
-        if (d.getPatientId() == null) throw new IllegalArgumentException("patientId obligatoire (NOT NULL) dans dossier_medical");
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -87,6 +87,10 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
 
     @Override
     public void update(DossierMedical d) {
+        if (d == null) throw new IllegalArgumentException("DossierMedical null dans update()");
+        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
+        if (d.getPatientId() == null) throw new IllegalArgumentException("patientId obligatoire dans update()");
+
         String sql = """
             UPDATE dossier_medical
                SET patient_id = ?,
@@ -95,10 +99,6 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
                    modifie_par = ?
              WHERE id = ?
             """;
-
-        if (d == null) throw new IllegalArgumentException("DossierMedical null dans update()");
-        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
-        if (d.getPatientId() == null) throw new IllegalArgumentException("patientId obligatoire dans update()");
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -126,6 +126,8 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
 
     @Override
     public void deleteById(Long id) {
+        if (id == null) return;
+
         String sql = "DELETE FROM dossier_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -140,10 +142,12 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
     }
 
     // ------------------------------------------------------------
-    // Extras
+    // Extras (interface)
     // ------------------------------------------------------------
     @Override
     public Optional<DossierMedical> findByPatientId(Long patientId) {
+        if (patientId == null) return Optional.empty();
+
         String sql = "SELECT * FROM dossier_medical WHERE patient_id = ? ORDER BY id DESC LIMIT 1";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -152,8 +156,9 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
             ps.setLong(1, patientId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(RowMappers.mapDossierMedical(rs));
-                return Optional.empty();
+                return rs.next()
+                        ? Optional.of(RowMappers.mapDossierMedical(rs))
+                        : Optional.empty();
             }
 
         } catch (SQLException e) {
@@ -163,6 +168,8 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
 
     @Override
     public List<DossierMedical> findByMedecinId(Long medecinId) {
+        if (medecinId == null) return List.of();
+
         String sql = "SELECT * FROM dossier_medical WHERE medecin_id = ? ORDER BY id DESC";
         List<DossierMedical> out = new ArrayList<>();
 
@@ -175,11 +182,11 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
                 while (rs.next()) out.add(RowMappers.mapDossierMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DossierMedical.findByMedecinId(" + medecinId + ")", e);
         }
-
-        return out;
     }
 
     @Override
@@ -190,26 +197,28 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
              ORDER BY id DESC
             """;
         List<DossierMedical> out = new ArrayList<>();
+        String like = "%" + (keyword == null ? "" : keyword) + "%";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
-            String like = "%" + (keyword == null ? "" : keyword) + "%";
             ps.setString(1, like);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapDossierMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DossierMedical.searchByNotes(" + keyword + ")", e);
         }
-
-        return out;
     }
 
     @Override
     public boolean existsById(Long id) {
+        if (id == null) return false;
+
         String sql = "SELECT 1 FROM dossier_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -228,14 +237,13 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
 
     @Override
     public long count() {
-        String sql = "SELECT COUNT(*) FROM dossier_medical";
+        String sql = "SELECT COUNT(*) AS total FROM dossier_medical";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            rs.next();
-            return rs.getLong(1);
+            return rs.next() ? rs.getLong("total") : 0L;
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DossierMedical.count()", e);
@@ -261,11 +269,11 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
                 while (rs.next()) out.add(RowMappers.mapDossierMedical(rs));
             }
 
+            return out;
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DossierMedical.findPage(limit=" + limit + ", offset=" + offset + ")", e);
         }
-
-        return out;
     }
 
     // ------------------------------------------------------------
@@ -273,13 +281,7 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
     // ------------------------------------------------------------
     @Override
     public Integer countActifs() {
-        /*
-         * Définition "actif" (proposée, logique dashboard) :
-         * Dossier qui a AU MOINS une consultation PLANIFIE (à venir / en cours).
-         *
-         * Si vous préférez "actif = a au moins une consultation tout court",
-         * je te donne la requête alternative juste après.
-         */
+        // Actif = dossier ayant au moins une consultation PLANIFIE
         String sql = """
             SELECT COUNT(DISTINCT d.id) AS total
               FROM dossier_medical d
@@ -291,12 +293,10 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) return rs.getInt("total");
-            return 0;
+            return rs.next() ? rs.getInt("total") : 0;
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DossierMedical.countActifs()", e);
         }
     }
-
 }

@@ -388,7 +388,7 @@ public final class RowMappers {
 // ==================================================
     private static FormeMedicament toFormeMedicament(String v) {
         if (v == null) return null;
-        try { return ma.dentalTech.entities.enums.FormeMedicament.valueOf(v); }
+        try { return FormeMedicament.valueOf(v); }
         catch (Exception e) { return null; }
     }
 
@@ -409,6 +409,7 @@ public final class RowMappers {
                 .build();
     }
 
+
     // ==================================================
 // PRESCRIPTION
 // ==================================================
@@ -426,10 +427,6 @@ public final class RowMappers {
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
-
-    // ==================================================
-// CERTIFICAT
-// ==================================================
     public static Certificat mapCertificat(ResultSet rs) throws SQLException {
         return Certificat.builder()
                 .id(getLong(rs, "id"))
@@ -471,6 +468,7 @@ public final class RowMappers {
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
 
 
 }
