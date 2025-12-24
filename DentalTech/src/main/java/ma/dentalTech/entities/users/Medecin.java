@@ -1,56 +1,40 @@
 package ma.dentalTech.entities.users;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import java.time.LocalDate;
+import lombok.*;
+import ma.dentalTech.entities.agenda.AgendaMensuel;
 
+/**
+ * Entité représentant un médecin dentiste.
+ */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Medecin extends Staff {
 
     private String specialite;
-    private Double pourcentage;  // % de commission par acte
+    private AgendaMensuel agendaMensuel;
 
-    // ==========================
-    // Relation (diagramme) : Médecin 1 -> 1 AgendaMensuel
-    // (type Object tant que AgendaMensuel n'existe pas)
-    // ==========================
-    private Object agendaMensuel;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Medecin)) return false;
-        Medecin that = (Medecin) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+    @Builder(builderMethodName = "medecinBuilder")
+    public Medecin(String nom, String email, String adresse, String cin, String tel,
+                   ma.dentalTech.entities.enums.Sexe sexe, String login, String motDePasse,
+                   LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
+                   LocalDate dateRecrutement, Integer soldeCongé, String specialite,
+                   AgendaMensuel agendaMensuel) {
+        super(nom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
+                dateNaissance, salaire, prime, dateRecrutement, soldeCongé);
+        this.specialite = specialite;
+        this.agendaMensuel = agendaMensuel;
     }
 
     @Override
     public String toString() {
         return """
             Medecin {
-                id = %s,
+                id = %d,
                 nom = '%s',
-                prenom = '%s',
-                login = '%s',
-                specialite = '%s',
-                pourcentage = %.2f
+                specialite = '%s'
             }
-            """.formatted(
-                String.valueOf(id),
-                getNom(),
-                getPrenom(),
-                getLogin(),
-                specialite,
-                pourcentage != null ? pourcentage : 0.0
-        );
+            """.formatted(getId(), getNom(), specialite);
     }
 }
