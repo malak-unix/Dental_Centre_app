@@ -22,15 +22,15 @@ public interface ConsultationRepository extends CrudRepository<Consultation, Lon
     // Rechercher par statut (PLANIFIE, TERMINE, ANNULE)
     List<Consultation> findByStatut(StatutConsultation statut);
 
-    // Touch perso (très utile UI)
-    List<Consultation> searchByObservation(String keyword);
-
-    // Utilitaires
-    boolean existsById(Long id);
+    // Nombre total de consultations
     long count();
+
+    // Pagination simple
     List<Consultation> findPage(int limit, int offset);
 
-    // Dashboard (Aya)
+    //Methodes ajoute par aya berday kan st3mlhom f dashboard
     Integer countTermineesPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end);
     Integer countEnCoursPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end);
+
+
 }

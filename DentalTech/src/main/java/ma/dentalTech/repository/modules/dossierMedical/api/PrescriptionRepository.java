@@ -10,7 +10,4 @@ public interface PrescriptionRepository extends CrudRepository<Prescription, Lon
     List<Prescription> findByOrdonnanceId(Long ordonnanceId);
 
     void deleteByOrdonnanceId(Long ordonnanceId);
-    List<Prescription> findByMedicamentId(Long medicamentId);
-    long countByOrdonnanceId(Long ordonnanceId);
-    boolean existsById(Long id);
 }
