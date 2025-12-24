@@ -17,11 +17,6 @@ import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 
-import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
-import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.patient.Antecedents;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,15 +49,6 @@ public class TestRepo {
 
     private final ListeAttenteRepository listeAttenteRepo =
             ApplicationContext.getBean(ListeAttenteRepository.class);
-
-    // =========================
-    // Repos (patient)
-    // =========================
-    private final PatientRepository patientRepo =
-            ApplicationContext.getBean(PatientRepository.class);
-
-    private final AntecedentRepository antecedentRepo =
-            ApplicationContext.getBean(AntecedentRepository.class);
 
     // ==========================================================
     // INSERT / UPDATE / DELETE (à compléter plus tard)
@@ -183,33 +169,6 @@ public class TestRepo {
     }
 
     // ==========================================================
-    // PATIENT - SELECT
-    // ==========================================================
-    void patientSelectProcess() {
-        System.out.println("\n=== PATIENT : SELECT PROCESS ===");
-        try {
-            List<Patient> patients = patientRepo.findAll();
-            System.out.println("Patients = " + patients.size());
-
-            if (!patients.isEmpty()) {
-                Patient p = patients.get(0);
-                System.out.println("Patient id=" + p.getId()
-                        + " | " + p.getNom() + " " + p.getPrenom()
-                        + " | tel=" + p.getTelephone()
-                        + " | assurance=" + p.getAssurance());
-
-                List<Antecedents> ants = antecedentRepo.findByPatientId(p.getId());
-                System.out.println("  Antecedents(patientId=" + p.getId() + ") = " + ants.size());
-            }
-
-            System.out.println("Patient SELECT OK");
-        } catch (Exception e) {
-            System.err.println("❌ PATIENT SELECT FAILED: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    // ==========================================================
     // MAIN
     // ==========================================================
     public static void main(String[] args) {
@@ -224,7 +183,6 @@ public class TestRepo {
             t.agendaSelectProcess();         // agenda
             t.rdvSelectProcess();            // rdv
             t.listeAttenteSelectProcess();   // liste attente
-            t.patientSelectProcess();        //patient
 
             System.out.println("\n✅ TEST REPO terminé avec succès.");
         } catch (Exception e) {

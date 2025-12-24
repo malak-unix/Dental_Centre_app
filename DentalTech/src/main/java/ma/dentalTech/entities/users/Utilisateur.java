@@ -1,20 +1,23 @@
 package ma.dentalTech.entities.users;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.Sexe;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Entité représentant un utilisateur du système.
+ * Classe parent pour Admin, Médecin et Secrétaire.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+@Builder
 public class Utilisateur extends BaseEntity {
 
     private String nom;
@@ -25,19 +28,12 @@ public class Utilisateur extends BaseEntity {
     private String tel;
     private Sexe sexe;
     private String login;
-    private String motDePass_hash;
+    private String motDePasse;
     private LocalDate lastLoginDate;
     private LocalDate dateNaissance;
     private boolean actif;
 
-    // ==========================
-    // Relations (diagramme)
-    // Utilisateur * <-> * Role
-    // Utilisateur 1 -> * Notification
-    // ==========================
-
     private List<Role> roles = new ArrayList<>();
-
     private List<Notification> notifications = new ArrayList<>();
 
     @Override
@@ -57,28 +53,12 @@ public class Utilisateur extends BaseEntity {
     public String toString() {
         return """
             Utilisateur {
-                id = %s,
+                id = %d,
                 nom = '%s',
-                prenom = '%s',
                 email = '%s',
-                cin = '%s',
                 login = '%s',
-                sexe = %s,
-                actif = %s,
-                rolesCount = %d,
-                notificationsCount = %d
+                rolesCount = %d
             }
-            """.formatted(
-                String.valueOf(id),
-                nom,
-                prenom,
-                email,
-                cin,
-                login,
-                String.valueOf(sexe),
-                actif,
-                roles == null ? 0 : roles.size(),
-                notifications == null ? 0 : notifications.size()
-        );
+            """.formatted(id, nom, email, login, roles == null ? 0 : roles.size());
     }
 }

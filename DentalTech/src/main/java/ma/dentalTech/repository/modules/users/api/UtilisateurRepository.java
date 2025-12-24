@@ -1,16 +1,23 @@
 package ma.dentalTech.repository.modules.users.api;
 
-import ma.dentalTech.common.exceptions.DaoException;
+import ma.dentalTech.entities.users.Utilisateur;
+import ma.dentalTech.repository.common.CrudRepository;
 
-import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
-public interface UtilisateurRepository {
+public interface UtilisateurRepository extends CrudRepository<Utilisateur, Long> {
 
-    // Pour dashboard unique : rôle de l'utilisateur
-    String findRoleByUtilisateurId(Long utilisateurId) throws DaoException;
+    Optional<Utilisateur> findByEmail(String email);
+    Optional<Utilisateur> findByLogin(String login);
+    boolean existsByEmail(String email);
+    boolean existsByLogin(String login);
 
-    // Ces méthodes sont déjà utilisées dans mon DashboardServiceImpl-AYA BERDAY
-    Integer countAll() throws DaoException;
-    Integer countByRole(String role) throws DaoException;
-    Integer countConnexionsJour(LocalDate date) throws DaoException;
+    List<Utilisateur> searchByNom(String keyword); // LIKE %keyword%
+    List<Utilisateur> findPage(int limit, int offset);
+
+    // Rôles
+    List<String> getRoleLibellesOfUser(Long utilisateurId);
+    void addRoleToUser(Long utilisateurId, Long roleId);
+    void removeRoleFromUser(Long utilisateurId, Long roleId);
 }
