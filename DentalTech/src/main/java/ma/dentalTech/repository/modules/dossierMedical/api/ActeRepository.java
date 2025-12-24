@@ -12,8 +12,6 @@ public interface ActeRepository extends CrudRepository<Acte, Long> {
     boolean existsById(Long id);
     long count();
     List<Acte> findPage(int limit, int offset);
-
     Integer countActesPourMedecinEtDate(Long medecinId, LocalDateTime start, LocalDateTime end);
-
     Double sumMontantActesPourMedecinEtDate(Long medecinId, LocalDateTime start, LocalDateTime end);
 }

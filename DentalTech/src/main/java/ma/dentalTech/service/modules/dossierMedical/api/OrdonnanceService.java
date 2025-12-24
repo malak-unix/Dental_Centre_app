@@ -11,7 +11,7 @@ public interface OrdonnanceService {
     // CRUD
     List<Ordonnance> findAll();
     Ordonnance findById(Long id);
-    void create(Ordonnance o);
+    void create(Ordonnance o); //ord request dto , return ord creation result
     void update(Ordonnance o);
     void delete(Ordonnance o);
     void deleteById(Long id);

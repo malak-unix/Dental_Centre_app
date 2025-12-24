@@ -299,9 +299,4 @@ public class DossierMedicalRepositoryImpl implements DossierMedicalRepository {
         }
     }
 
-    // Alternative si vous voulez "actif = dossier qui a au moins 1 consultation (n'importe quel statut)"
-    // SQL:
-    // SELECT COUNT(DISTINCT d.id) AS total
-    //   FROM dossier_medical d
-    //   JOIN consultation c ON c.dossier_id = d.id;
 }

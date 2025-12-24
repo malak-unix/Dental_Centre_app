@@ -14,14 +14,10 @@ import java.util.List;
 
 public class ConsultationRepositoryImpl implements ConsultationRepository {
 
-    // ------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------
     private static Timestamp toTs(LocalDateTime ldt) {
         return ldt == null ? null : Timestamp.valueOf(ldt);
     }
 
-    /** Ton entity stocke LocalDate, mais la DB a DATETIME → on met midi par défaut */
     private static LocalDateTime toDateTime(LocalDate d) {
         return d == null ? null : d.atTime(12, 0);
     }

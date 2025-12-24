@@ -23,3 +23,6 @@ public interface DossierMedicalRepository extends CrudRepository<DossierMedical,
     // Utilisé dans dashboard - Aya
     Integer countActifs();
 }
+//getMetadata  : creation des dto
+
+//

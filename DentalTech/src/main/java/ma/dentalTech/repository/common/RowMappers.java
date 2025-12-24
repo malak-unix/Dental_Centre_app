@@ -2,7 +2,9 @@ package ma.dentalTech.repository.common;
 
 import ma.dentalTech.entities.agenda.*;
 import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.cabinet.Revenues;
+import ma.dentalTech.entities.cabinet.SituationFinanciere;
 import ma.dentalTech.entities.dossierMedical.*;
 import ma.dentalTech.entities.enums.*;
 import ma.dentalTech.entities.patient.Patient;
@@ -206,8 +208,6 @@ public final class RowMappers {
                 .adresse(rs.getString("adresse"))
                 .telephone(rs.getString("telephone"))
                 .dateNaissance(getLd(rs, "date_naissance"))
-                .numAffiliation(rs.getString("num_affiliation"))
-                .etatCivil(toEtatCivil(rs.getString("etat_civil")))
                 .sexe(toSexe(rs.getString("sexe")))
                 .assurance(toAssurance(rs.getString("assurance")))
                 .dateCreation(getLdt(rs, "date_creation"))
@@ -444,5 +444,33 @@ public final class RowMappers {
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
+    // ==================================================
+// DOCUMENT_MEDICAL
+// ==================================================
+    private static TypeDocument toTypeDocument(String v) {
+        if (v == null) return null;
+        try { return TypeDocument.valueOf(v); }
+        catch (Exception e) { return TypeDocument.AUTRE; }
+    }
+
+    public static DocumentMedical mapDocumentMedical(ResultSet rs) throws SQLException {
+        return DocumentMedical.builder()
+                .id(getLong(rs, "id"))
+                .dossierId(getLong(rs, "dossier_id"))
+                .consultationId(getLong(rs, "consultation_id"))
+                .typeDocument(toTypeDocument(rs.getString("type_document")))
+                .titre(rs.getString("titre"))
+                .nomFichier(rs.getString("nom_fichier"))
+                .cheminFichier(rs.getString("chemin_fichier"))
+                .tailleOctets(getLong(rs, "taille_octets"))
+                .dateDocument(getLdt(rs, "date_document"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
 
 }

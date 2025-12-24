@@ -1,7 +1,7 @@
 package ma.dentalTech.service.modules.caisse.api;
 
 import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.cabinet.Facture;
 
 import java.time.LocalDateTime;
 import java.util.List;
