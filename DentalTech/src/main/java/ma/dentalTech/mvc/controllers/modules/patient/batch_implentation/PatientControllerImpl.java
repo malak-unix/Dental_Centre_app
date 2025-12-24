@@ -1,72 +1,109 @@
-package ma.dentalTech.mvc.controllers.modules.patient.batch_implentation;
+package ma.dentalTech.mvc.controllers.modules.patient.batch_implementation;
 
-import ma.dentalTech.entities.patient.Patient;
+import ma.dentalTech.common.exceptions.ServiceException;
+import ma.dentalTech.common.exceptions.ValidationException;
+import ma.dentalTech.mvc.controllers.common.ControllerException;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
-import ma.dentalTech.service.modules.patient.api.PatientService;
+import ma.dentalTech.mvc.dto.patient.PatientFormDto;
+import ma.dentalTech.mvc.dto.patient.PatientListDto;
+import ma.dentalTech.service.modules.patient.api.PatientAppService;
 
 import java.util.List;
 
 public class PatientControllerImpl implements PatientController {
 
-    private final PatientService service;
+    private final PatientAppService app;
 
-    public PatientControllerImpl(PatientService service) {
-        this.service = service;
+    public PatientControllerImpl(PatientAppService app) {
+        this.app = app;
     }
 
     @Override
-    public List<Patient> findAll() {
-        return service.getAll();
-    }
-
-    @Override
-    public Patient findById(Long id) {
-        return service.getById(id);
-    }
-
-    @Override
-    public void create(Patient p) {
-        service.create(p);
-    }
-
-    @Override
-    public void update(Patient p) {
-        service.update(p);
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        service.deleteById(id);
-    }
-
-    @Override
-    public List<Patient> searchByNom(String nomPart) {
-        return service.searchByNom(nomPart);
-    }
-
-    @Override
-    public Patient findByTelephone(String tel) {
-        return service.getByTelephone(tel);
-    }
-
-    @Override
-    public void showRecentPatients() {
-        System.out.println("=== Patients récents ===");
-
-        List<Patient> patients = service.getAll();
-
-        if (patients.isEmpty()) {
-            System.out.println("Aucun patient trouvé.");
-            return;
+    public List<PatientListDto> lister() {
+        try {
+            return app.listerPatients();
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: listing patients", e);
         }
+    }
 
-        patients.stream()
-                .limit(5)
-                .forEach(p -> System.out.println(
-                        p.getId() + " | " +
-                                p.getNom() + " " + p.getPrenom() +
-                                " | " + p.getTelephone()
-                ));
+    @Override
+    public PatientFormDto consulter(Long id) {
+        try {
+            return app.consulterPatient(id);
+        } catch (ValidationException e) {
+            throw new ControllerException(e.getMessage(), e);
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: consulter patient", e);
+        }
+    }
+
+    @Override
+    public PatientFormDto creer(PatientFormDto dto) {
+        try {
+            return app.creerPatient(dto);
+        } catch (ValidationException e) {
+            throw new ControllerException(e.getMessage(), e);
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: création patient", e);
+        }
+    }
+
+    @Override
+    public PatientFormDto modifier(Long id, PatientFormDto dto) {
+        try {
+            return app.modifierPatient(id, dto);
+        } catch (ValidationException e) {
+            throw new ControllerException(e.getMessage(), e);
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: modification patient", e);
+        }
+    }
+
+    @Override
+    public void supprimer(Long id) {
+        try {
+            app.supprimerPatient(id);
+        } catch (ValidationException e) {
+            throw new ControllerException(e.getMessage(), e);
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: suppression patient", e);
+        }
+    }
+
+    @Override
+    public List<PatientListDto> rechercherParNom(String nom) {
+        try {
+            return app.rechercherParNom(nom);
+        } catch (ValidationException e) {
+            throw new ControllerException(e.getMessage(), e);
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: recherche nom", e);
+        }
+    }
+
+    @Override
+    public PatientFormDto rechercherParTelephone(String tel) {
+        try {
+            return app.rechercherParTelephone(tel);
+        } catch (ValidationException e) {
+            throw new ControllerException(e.getMessage(), e);
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: recherche téléphone", e);
+        }
+    }
+
+    @Override
+    public List<PatientListDto> showRecentPatients() {
+        try {
+            // simple : derniers patients créés
+            return app.listerPatients()
+                    .stream()
+                    .limit(5)
+                    .toList();
+        } catch (ServiceException e) {
+            throw new ControllerException("Erreur UI: patients récents", e);
+        }
     }
 
 }

@@ -7,6 +7,7 @@ import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.enums.Mois;
+import ma.dentalTech.entities.enums.StatutJournee;
 import ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
@@ -54,33 +55,30 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             AgendaMensuel agenda = agendaRepo.findByMedecinAndMonth(medecinId, mois.name(), annee);
 
             if (agenda == null) {
-                // On retourne un DTO vide (pas d’agenda créé)
                 return AgendaMensuelDto.builder()
                         .id(null)
                         .medecinId(medecinId)
-                        .mois(Mois.valueOf(mois.name()))
+                        .mois(mois)
                         .annee(annee)
                         .build();
             }
 
+            // Ici tu récupères les RDV mais ton DTO ne les expose pas encore.
+            // On garde la logique côté service si tu ajoutes plus tard un champ "rendezVous".
             List<RDV> rdvsSemaine = new ArrayList<>();
-
-            // récupérer tous les détails du mois, puis filtrer ceux de la semaine
             List<DetailJournee> jours = detailRepo.findByAgendaId(agenda.getId());
+
             for (DetailJournee dj : jours) {
                 if (dj.getDateJour() != null && !dj.getDateJour().isBefore(start) && !dj.getDateJour().isAfter(end)) {
                     rdvsSemaine.addAll(rdvRepo.findByDetailJourneeId(dj.getId()));
                 }
             }
 
-            // IMPORTANT : ton AgendaMensuelDto actuel n'a pas "rendezVous".
-            // Pour éviter erreurs, je retourne juste header.
-            // Si tu ajoutes "List<RdvDto> rendezVous" dans AgendaMensuelDto, je te donne la version complète.
             return AgendaMensuelDto.builder()
                     .id(agenda.getId())
                     .medecinId(agenda.getMedecinId())
-                    .mois(Mois.valueOf(agenda.getMois() != null ? agenda.getMois().name() : mois.name()))
-                    .annee(agenda.getAnnee())
+                    .mois(agenda.getMois() != null ? agenda.getMois() : mois)
+                    .annee(agenda.getAnnee() != null ? agenda.getAnnee() : annee)
                     .build();
 
         } catch (Exception e) {
@@ -95,13 +93,13 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     public RdvDto creerRdv(RdvDto dto) throws ValidationException, ServiceException {
         validateRdv(dto);
 
-        // vérifier journée ouverte + plage horaire
         DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
         if (dj == null) throw new ValidationException("DetailJournee introuvable");
 
-        // si etatJour est stocké String dans entity
-        if (dj.getEtatJour() != null && dj.getEtatJour().equalsIgnoreCase("FERME")) {
-            throw new ValidationException("Journée fermée : impossible de planifier un RDV");
+        // ✅ FIX: comparaison enum (plus de equalsIgnoreCase)
+        StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
+        if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
+            throw new ValidationException("Journée non ouverte : impossible de planifier un RDV");
         }
 
         LocalTime h = dto.getHeure();
@@ -124,7 +122,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         }
 
         RDV entity = toEntity(dto);
-        // si statut non fourni -> PREVU (selon ton enum)
+
         EtatRendezVous statut = (dto.getStatut() != null) ? dto.getStatut() : EtatRendezVous.PREVU;
         entity.setStatut(statut.name());
 
@@ -148,7 +146,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV old = rdvRepo.findById(rdvId);
             if (old == null) throw new ValidationException("RDV introuvable");
 
-            // Interdire modification si déjà annulé
             if (old.getStatut() != null && old.getStatut().equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
                 throw new ValidationException("Impossible de modifier un RDV annulé");
             }
@@ -156,7 +153,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV updated = toEntity(dto);
             updated.setId(rdvId);
 
-            // garder statut existant si dto.statut vide
             if (dto.getStatut() != null) updated.setStatut(dto.getStatut().name());
             else updated.setStatut(old.getStatut());
 
@@ -196,7 +192,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV r = rdvRepo.findById(rdvId);
             if (r == null) throw new ValidationException("RDV introuvable");
 
-            // On confirme seulement si PREVU (ou CONFIRME déjà)
             if (r.getStatut() != null && r.getStatut().equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
                 throw new ValidationException("Impossible de confirmer un RDV annulé");
             }
@@ -254,7 +249,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         EtatRendezVous st = null;
         if (r.getStatut() != null) {
             try { st = EtatRendezVous.valueOf(r.getStatut()); }
-            catch (Exception ignored) { /* statut inconnu -> st reste null */ }
+            catch (Exception ignored) {}
         }
 
         return RdvDto.builder()
@@ -275,8 +270,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     }
 
     private Mois toMois(LocalDate d) {
-        // Mois enum est FR: JANVIER..DECEMBRE
-        // monthValue 1..12 -> index 0..11
         return Mois.values()[d.getMonthValue() - 1];
     }
 }

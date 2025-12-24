@@ -15,5 +15,9 @@ public interface PatientService {
     List<Patient> searchByNom(String nom);
     Patient getByTelephone(String telephone);
 
+    List<Patient> findByNom(String nom);
+
+    Patient findByTelephone(String telephone);
+
     long countAll();
 }

@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public class RowMappers {
 
@@ -201,10 +202,20 @@ public class RowMappers {
                 .build();
     }
 
+
+    private static StatutJournee toStatutJournee(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return StatutJournee.valueOf(s.trim());
+        } catch (Exception e) {
+            return null; // ou StatutJournee.OUVERT par défaut si tu veux
+        }
+    }
+
     public static DetailJournee mapDetailJournee(ResultSet rs) throws SQLException {
         LocalDate dateJour = rs.getObject("date_jour", LocalDate.class);
-        java.time.LocalTime hDebut = rs.getObject("heure_debut_travail", java.time.LocalTime.class);
-        java.time.LocalTime hFin   = rs.getObject("heure_fin_travail", java.time.LocalTime.class);
+        LocalTime hDebut = rs.getObject("heure_debut_travail", LocalTime.class);
+        LocalTime hFin   = rs.getObject("heure_fin_travail", LocalTime.class);
 
         return DetailJournee.builder()
                 .id(getLong(rs, "id"))
@@ -212,7 +223,7 @@ public class RowMappers {
                 .dateJour(dateJour)
                 .heureDebutTravail(hDebut)
                 .heureFinTravail(hFin)
-                .etatJour(rs.getString("etat_jour"))
+                .etatJour(toStatutJournee(rs.getString("etat_jour"))) // ✅ ENUM
                 .commentaire(rs.getString("commentaire"))
                 .dateCreation(getLdt(rs, "date_creation"))
                 .dateModification(getLdt(rs, "date_modification"))

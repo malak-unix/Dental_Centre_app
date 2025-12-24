@@ -3,6 +3,7 @@ package ma.dentalTech.service.modules.agenda.impl;
 import ma.dentalTech.entities.agenda.DetailJournee;
 import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.entities.enums.EtatRendezVous;
+import ma.dentalTech.entities.enums.StatutJournee;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
@@ -163,12 +164,13 @@ public class RdvAppServiceImpl implements RdvAppService {
     }
 
     private void checkJourneeOuverte(DetailJournee dj) {
-        // si tu as un enum StatutJournee plus tard, adapte ici
-        if (dj.getEtatJour() != null && dj.getEtatJour().toUpperCase().contains("FERM")) {
-            throw new IllegalArgumentException("Journée fermée: impossible de planifier");
+        // si null => considérer comme OUVERT (ou refuse si tu préfères)
+        StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
+
+        if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
+            throw new IllegalArgumentException("Journée non ouverte: impossible de planifier");
         }
     }
-
     private void checkHeureDansPlage(DetailJournee dj, LocalTime heure) {
         LocalTime debut = dj.getHeureDebutTravail();
         LocalTime fin = dj.getHeureFinTravail();

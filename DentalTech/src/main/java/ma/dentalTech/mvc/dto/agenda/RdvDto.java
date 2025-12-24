@@ -13,6 +13,7 @@ import java.time.LocalTime;
 @Builder
 public class RdvDto {
     private Long id;
+
     private Long patientId;
     private Long detailJourneeId;
     private Long listeAttenteId;
@@ -21,9 +22,10 @@ public class RdvDto {
 
     private LocalDate dateRdv;
     private LocalTime heure;
+
     private String motif;
 
-    private EtatRendezVous statut;
+    private EtatRendezVous statut; // DTO = enum
 
     private String noteMedecin;
 }

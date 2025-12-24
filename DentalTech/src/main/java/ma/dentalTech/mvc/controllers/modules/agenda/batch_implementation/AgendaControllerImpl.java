@@ -75,7 +75,7 @@ public class AgendaControllerImpl implements AgendaController {
                 .heureDebutTravail(d.getHeureDebutTravail())
                 .heureFinTravail(d.getHeureFinTravail())
                 // si etatJour est enum => .name() ok ; si String => direct
-                .etatJour(d.getEtatJour() == null ? null : StatutJournee.valueOf(d.getEtatJour().toString()))
+                .etatJour(d.getEtatJour() == null ? null : String.valueOf(StatutJournee.valueOf(d.getEtatJour().toString())))
                 .commentaire(d.getCommentaire())
                 .build();
     }

@@ -1,8 +1,8 @@
 package ma.dentalTech.configuration;
 
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.service.modules.agenda.api.*;
 import ma.dentalTech.service.modules.patient.api.PatientService;
+import ma.dentalTech.service.modules.patient.api.PatientAppService;
 
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
@@ -10,27 +10,21 @@ import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
-import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
+import ma.dentalTech.repository.modules.agenda.api.*;
+import ma.dentalTech.service.modules.agenda.api.*;
 
-import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
-import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
+import ma.dentalTech.repository.modules.users.api.NotificationRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 
-import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
+import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
-import ma.dentalTech.repository.modules.agenda.api.PlageHoraireRepository;
-
+// ✅ Controllers interfaces (IMPORTANT)
+import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
-import ma.dentalTech.repository.modules.users.api.NotificationRepository;
-import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-
-import ma.dentalTech.service.modules.patient.api.PatientAppService;
-
-import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 public final class ApplicationContext {
 
@@ -49,32 +43,25 @@ public final class ApplicationContext {
             }
 
             // ==========================================
-            // PATIENT : repo -> service -> (controller optional)
+            // PATIENT : repo -> service -> appService -> controller (optionnel)
             // ==========================================
             currentBean = "patientRepo";
             PatientRepository patientRepo = newInstance(props, "patientRepo", PatientRepository.class);
+            put(PatientRepository.class, patientRepo, "patientRepo");
 
             currentBean = "patientService";
             PatientService patientService = newInstance(props, "patientService", PatientService.class,
                     new Class<?>[]{PatientRepository.class},
                     new Object[]{patientRepo});
-
-            put(PatientRepository.class, patientRepo, "patientRepo");
             put(PatientService.class, patientService, "patientService");
 
-            // ==========================================
-            // PATIENT APP SERVICE (DTO) : repo -> appService
-            // ==========================================
             currentBean = "patientAppService";
-            PatientAppService patientAppService =
-                    newInstance(props, "patientAppService", PatientAppService.class,
-                            new Class<?>[]{PatientRepository.class},
-                            new Object[]{patientRepo});
+            PatientAppService patientAppService = newInstance(props, "patientAppService", PatientAppService.class,
+                    new Class<?>[]{PatientRepository.class},
+                    new Object[]{patientRepo});
             put(PatientAppService.class, patientAppService, "patientAppService");
 
-            // ==========================================
             // ANTECEDENT : repo -> service
-            // ==========================================
             currentBean = "antecedentRepo";
             ma.dentalTech.repository.modules.patient.api.AntecedentRepository antecedentRepo =
                     newInstance(props, "antecedentRepo", ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class);
@@ -87,13 +74,17 @@ public final class ApplicationContext {
                             new Object[]{antecedentRepo});
             put(ma.dentalTech.service.modules.patient.api.AntecedentService.class, antecedentService, "antecedentService");
 
+            // ✅ IMPORTANT: patientController doit être enregistré par TYPE aussi (sinon getBean(PatientController.class) => null)
+            createOptionalTyped(props,
+                    "patientController",
+                    PatientAppService.class, patientAppService,
+                    PatientController.class);
 
-            createOptional(props, "patientController", PatientService.class, patientService);
+            // si tu as un swing controller qui prend PatientService
             createOptional(props, "patientControllerSwing", PatientService.class, patientService);
 
-
             // ==========================================
-            // CAISSE : repos -> service -> (controller optional)
+            // CAISSE : repos -> service -> controller (optionnel)
             // ==========================================
             currentBean = "factureRepo";
             FactureRepository factureRepo = newInstance(props, "factureRepo", FactureRepository.class);
@@ -116,10 +107,11 @@ public final class ApplicationContext {
                     new Class<?>[]{FactureRepository.class, RevenuesRepository.class, ChargesRepository.class},
                     new Object[]{factureRepo, revenusRepo, chargesRepo});
             put(CaisseDashboardService.class, caisseService, "caisseDashboardService");
+
             createOptional(props, "caisseDashboardController", CaisseDashboardService.class, caisseService);
 
             // ==========================================
-            // RDV : repo -> service -> (controller optional)
+            // RDV : repo -> service -> controller (optionnel)
             // ==========================================
             currentBean = "rdv.repository";
             RdvRepository rdvRepo = newInstance(props, "rdv.repository", RdvRepository.class);
@@ -131,6 +123,7 @@ public final class ApplicationContext {
                     new Object[]{rdvRepo});
             put(RdvService.class, rdvService, "rdv.service");
 
+            // optionnel (ignore si classe introuvable)
             createOptional(props, "rdv.controller", RdvService.class, rdvService);
 
             // ==========================================
@@ -144,16 +137,6 @@ public final class ApplicationContext {
             DetailJourneeRepository detailJourneeRepo = newInstance(props, "detailJourneeRepo", DetailJourneeRepository.class);
             put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
 
-            // ==========================================
-            // RDV APP SERVICE (DTO) : repos -> appService
-            // ==========================================
-            currentBean = "rdvAppService";
-            RdvAppService rdvAppService =
-                    newInstance(props, "rdvAppService", RdvAppService.class,
-                            new Class<?>[]{RdvRepository.class, DetailJourneeRepository.class},
-                            new Object[]{rdvRepo, detailJourneeRepo});
-            put(RdvAppService.class, rdvAppService, "rdvAppService");
-
             currentBean = "agendaService";
             AgendaService agendaService = newInstance(props, "agendaService", AgendaService.class,
                     new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
@@ -161,7 +144,7 @@ public final class ApplicationContext {
             put(AgendaService.class, agendaService, "agendaService");
 
             // ==========================================
-            // AGENDA APP SERVICE (DTO) : repos -> appService
+            // AGENDA APP SERVICE (DTO)
             // ==========================================
             currentBean = "agendaAppService";
             AgendaAppService agendaAppService =
@@ -171,13 +154,17 @@ public final class ApplicationContext {
             put(AgendaAppService.class, agendaAppService, "agendaAppService");
 
             // ==========================================
-            // AGENDA CONTROLLER : repos -> controller
+            // ✅ RDV APP SERVICE (DTO) : OPTIONNEL (ne casse pas si absent)
             // ==========================================
-            if (props.getProperty("agenda.controller") != null && !props.getProperty("agenda.controller").isBlank()) {
-                Object obj = Class.forName(props.getProperty("agenda.controller"))
-                        .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
-                        .newInstance(agendaMensuelRepo, detailJourneeRepo);
-                contextByName.put("agenda.controller", obj);
+            String rdvAppClass = props.getProperty("rdvAppService");
+            if (rdvAppClass != null && !rdvAppClass.isBlank()) {
+                currentBean = "rdvAppService";
+                Object obj = Class.forName(rdvAppClass)
+                        .getDeclaredConstructor(RdvRepository.class, DetailJourneeRepository.class)
+                        .newInstance(rdvRepo, detailJourneeRepo);
+
+                // si tu as l'interface ma.dentalTech.service.modules.agenda.api.RdvAppService :
+                put(ma.dentalTech.service.modules.agenda.api.RdvAppService.class, obj, "rdvAppService");
             }
 
             // ==========================================
@@ -212,16 +199,13 @@ public final class ApplicationContext {
             // DASHBOARD : repos (optionnels si pas encore alignés)
             // ==========================================
             currentBean = "notificationRepo";
-            NotificationRepository notificationRepo =
-                    newInstance(props, "notificationRepo", NotificationRepository.class);
+            NotificationRepository notificationRepo = newInstance(props, "notificationRepo", NotificationRepository.class);
             put(NotificationRepository.class, notificationRepo, "notificationRepo");
 
             currentBean = "utilisateurRepo";
-            UtilisateurRepository utilisateurRepo =
-                    newInstance(props, "utilisateurRepo", UtilisateurRepository.class);
+            UtilisateurRepository utilisateurRepo = newInstance(props, "utilisateurRepo", UtilisateurRepository.class);
             put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
 
-            // ---- Repos dossierMedical : OPTIONNELS (pour éviter ClassCastException)
             Object consultationRepoObj = createOptionalRepo(props, "consultationRepo",
                     ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class,
                     "consultationRepo");
@@ -234,7 +218,6 @@ public final class ApplicationContext {
                     ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class,
                     "dossierMedicalRepo");
 
-            // ---- DashboardService : seulement si tout est présent
             boolean canCreateDashboard =
                     consultationRepoObj != null &&
                             acteRepoObj != null &&
@@ -281,9 +264,6 @@ public final class ApplicationContext {
 
                 put(DashboardService.class, dashboardService, "dashboardService");
                 createOptional(props, "dashboardController", DashboardService.class, dashboardService);
-            } else {
-                // pas bloquant : dashboard sera activé quand les repos seront alignés
-                // System.out.println("INFO: DashboardService non créé (dépendances manquantes ou non alignées).");
             }
 
         } catch (Exception e) {
@@ -343,25 +323,42 @@ public final class ApplicationContext {
         try {
             Object obj = Class.forName(className).getDeclaredConstructor(depType).newInstance(depInstance);
             contextByName.put(key, obj);
+        } catch (ClassNotFoundException e) {
+            // bean optionnel absent => ignore
         } catch (Exception e) {
             throw new RuntimeException("Erreur création bean optionnel '" + key + "'", e);
         }
     }
 
-    /**
-     * Repo/service optionnel : si la classe est absente OU ne cast pas => on ignore (pas bloquant).
-     */
+    // ✅ NOUVEAU: optionnel + enregistré par TYPE (ex: PatientController.class)
+    private static void createOptionalTyped(Properties props,
+                                            String key,
+                                            Class<?> depType, Object depInstance,
+                                            Class<?> exposedType) {
+        String className = props.getProperty(key);
+        if (className == null || className.isBlank()) return;
+
+        try {
+            Object obj = Class.forName(className).getDeclaredConstructor(depType).newInstance(depInstance);
+            contextByName.put(key, obj);
+            context.put(exposedType, obj);
+        } catch (ClassNotFoundException e) {
+            // bean optionnel absent => ignore
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur création bean optionnel '" + key + "'", e);
+        }
+    }
+
     private static <T> Object createOptionalRepo(Properties props, String key, Class<T> expectedType, String name) {
         String className = props.getProperty(key);
         if (className == null || className.isBlank()) return null;
 
         try {
             Object obj = Class.forName(className).getDeclaredConstructor().newInstance();
-            T casted = expectedType.cast(obj); // peut lancer ClassCastException
+            T casted = expectedType.cast(obj);
             put(expectedType, casted, name);
             return casted;
         } catch (Exception e) {
-            // on ignore pour ne pas bloquer l'app (utile pendant l'intégration)
             return null;
         }
     }

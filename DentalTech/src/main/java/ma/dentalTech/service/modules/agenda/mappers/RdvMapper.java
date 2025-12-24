@@ -8,46 +8,43 @@ public final class RdvMapper {
 
     private RdvMapper() {}
 
-    public static RDV toEntity(RdvDto dto) {
-        if (dto == null) return null;
+    public static RdvDto toDto(RDV e) {
+        if (e == null) return null;
 
-        return RDV.builder()
-                .id(dto.getId())
-                .patientId(dto.getPatientId())
-                .detailJourneeId(dto.getDetailJourneeId())
-                .listeAttenteId(dto.getListeAttenteId())
-                .typeRdv(dto.getTypeRdv())
-                .dateRdv(dto.getDateRdv())
-                .heure(dto.getHeure())
-                .motif(dto.getMotif())
-                .statut(dto.getStatut() == null ? null : dto.getStatut().name()) // enum -> String
-                .noteMedecin(dto.getNoteMedecin())
+        return RdvDto.builder()
+                .id(e.getId())
+                .patientId(e.getPatientId())
+                .detailJourneeId(e.getDetailJourneeId())
+                .listeAttenteId(e.getListeAttenteId())
+                .typeRdv(e.getTypeRdv())
+                .dateRdv(e.getDateRdv())
+                .heure(e.getHeure())
+                .motif(e.getMotif())
+                .statut(parseEtat(e.getStatut()))
+                .noteMedecin(e.getNoteMedecin())
                 .build();
     }
 
-    public static RdvDto toDto(RDV entity) {
-        if (entity == null) return null;
+    public static RDV toEntity(RdvDto d) {
+        if (d == null) return null;
 
-        return RdvDto.builder()
-                .id(entity.getId())
-                .patientId(entity.getPatientId())
-                .detailJourneeId(entity.getDetailJourneeId())
-                .listeAttenteId(entity.getListeAttenteId())
-                .typeRdv(entity.getTypeRdv())
-                .dateRdv(entity.getDateRdv())
-                .heure(entity.getHeure())
-                .motif(entity.getMotif())
-                .statut(parseEtat(entity.getStatut())) // String -> enum
-                .noteMedecin(entity.getNoteMedecin())
+        return RDV.builder()
+                .id(d.getId())
+                .patientId(d.getPatientId())
+                .detailJourneeId(d.getDetailJourneeId())
+                .listeAttenteId(d.getListeAttenteId())
+                .typeRdv(d.getTypeRdv())
+                .dateRdv(d.getDateRdv())
+                .heure(d.getHeure())
+                .motif(d.getMotif())
+                .statut(d.getStatut() != null ? d.getStatut().name() : null)
+                .noteMedecin(d.getNoteMedecin())
                 .build();
     }
 
     private static EtatRendezVous parseEtat(String s) {
         if (s == null || s.isBlank()) return null;
-        try {
-            return EtatRendezVous.valueOf(s.trim());
-        } catch (IllegalArgumentException ex) {
-            return null; // si la BD contient une valeur inconnue
-        }
+        try { return EtatRendezVous.valueOf(s.trim()); }
+        catch (Exception e) { return null; }
     }
 }

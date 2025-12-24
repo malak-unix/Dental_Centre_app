@@ -69,7 +69,7 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
             ps.setTime(4, d.getHeureFinTravail() != null ? Time.valueOf(d.getHeureFinTravail()) : null);
 
             // ✅ etatJour est String => pas de .name()
-            ps.setString(5, d.getEtatJour());
+            ps.setString(5, String.valueOf(d.getEtatJour()));
 
             ps.setString(6, d.getCommentaire());
             ps.setString(7, d.getCreePar());
@@ -107,7 +107,7 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
             ps.setTime(4, d.getHeureFinTravail() != null ? Time.valueOf(d.getHeureFinTravail()) : null);
 
             // ✅ String
-            ps.setString(5, d.getEtatJour());
+            ps.setString(5, String.valueOf(d.getEtatJour()));
 
             ps.setString(6, d.getCommentaire());
             ps.setString(7, d.getModifiePar());

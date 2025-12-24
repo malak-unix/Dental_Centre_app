@@ -17,7 +17,6 @@ public class PatientFormDto {
     private String prenom;
     private LocalDate dateNaissance;
     private Sexe sexe;
-
     private String telephone;
     private String adresse;
     private Assurance assurance;
