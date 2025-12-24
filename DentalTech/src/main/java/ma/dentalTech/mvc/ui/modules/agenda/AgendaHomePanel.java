@@ -2,6 +2,7 @@ package ma.dentalTech.mvc.ui.modules.agenda;
 
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.NavButton;
+import ma.dentalTech.mvc.ui.modules.agenda.AgendaSemainePagePanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -15,6 +16,7 @@ public class AgendaHomePanel extends JPanel {
     private final CardLayout card = new CardLayout();
 
     // pages
+    private final JPanel semainePage = new AgendaSemainePagePanel();
     private final JPanel rdvPage = new RdvPagePanel();
     private final JPanel agendaMensuelPage = new AgendaMensuelPagePanel();
     private final JPanel listeAttentePage = new ListeAttentePagePanel();
@@ -29,7 +31,7 @@ public class AgendaHomePanel extends JPanel {
         add(buildHeader(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
 
-        showPage("RDV");
+        showPage("SEMAINE");
     }
 
     private JComponent buildHeader() {
@@ -40,7 +42,7 @@ public class AgendaHomePanel extends JPanel {
         title.setFont(DentalTheme.titleFont(18));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
-        JLabel sub = new JLabel("RDV · Agenda Mensuel · Liste d'attente");
+        JLabel sub = new JLabel("Semaine · RDV · Agenda Mensuel · Liste d'attente");
         sub.setFont(DentalTheme.textFont(12));
         sub.setForeground(DentalTheme.MUTED);
 
@@ -53,25 +55,29 @@ public class AgendaHomePanel extends JPanel {
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setBackground(DentalTheme.BG);
 
-        JPanel nav = new JPanel(new GridLayout(3, 1, 10, 10));
+        JPanel nav = new JPanel(new GridLayout(4, 1, 10, 10));
         nav.setBackground(DentalTheme.BG);
         nav.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
                 "Navigation"
         ));
 
-        NavButton bRdv = new NavButton("📄 RDV", true);
+        NavButton bSemaine = new NavButton("📅 Semaine", true);
+        NavButton bRdv = new NavButton("📄 RDV", false);
         NavButton bAgenda = new NavButton("🗓️ Agenda mensuel", false);
         NavButton bListe = new NavButton("⏳ Liste d'attente", false);
 
+        navButtons.put("SEMAINE", bSemaine);
         navButtons.put("RDV", bRdv);
         navButtons.put("AGENDA", bAgenda);
         navButtons.put("LISTE", bListe);
 
+        bSemaine.addActionListener(e -> showPage("SEMAINE"));
         bRdv.addActionListener(e -> showPage("RDV"));
         bAgenda.addActionListener(e -> showPage("AGENDA"));
         bListe.addActionListener(e -> showPage("LISTE"));
 
+        nav.add(bSemaine);
         nav.add(bRdv);
         nav.add(bAgenda);
         nav.add(bListe);
@@ -80,6 +86,7 @@ public class AgendaHomePanel extends JPanel {
         content.setBackground(DentalTheme.BG);
         content.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
 
+        content.add(semainePage, "SEMAINE");
         content.add(rdvPage, "RDV");
         content.add(agendaMensuelPage, "AGENDA");
         content.add(listeAttentePage, "LISTE");
@@ -92,10 +99,10 @@ public class AgendaHomePanel extends JPanel {
     private void showPage(String key) {
         card.show(content, key);
 
+        // nécessite NavButton.setActive(boolean)
         navButtons.forEach((k, btn) -> btn.setActive(k.equals(key)));
 
         revalidate();
         repaint();
     }
-
 }

@@ -17,6 +17,8 @@ public class DetailJourneeDto {
     private LocalDate dateJour;
     private LocalTime heureDebutTravail;
     private LocalTime heureFinTravail;
+
     private StatutJournee etatJour;
+
     private String commentaire;
 }
