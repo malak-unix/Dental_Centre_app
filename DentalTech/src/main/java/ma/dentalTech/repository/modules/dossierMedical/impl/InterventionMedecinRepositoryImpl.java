@@ -7,11 +7,11 @@ import ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRe
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.time.LocalDateTime;
+        import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-class InterventionMedecinRepositoryImpl implements InterventionMedecinRepository {
+public class InterventionMedecinRepositoryImpl implements InterventionMedecinRepository {
 
     // =========================================================================
     // CRUD
