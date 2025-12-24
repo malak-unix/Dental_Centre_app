@@ -1,6 +1,7 @@
 package ma.dentalTech.mvc.dto.agenda;
 
 import lombok.*;
+import ma.dentalTech.entities.enums.Mois;
 
 @Data
 @NoArgsConstructor
@@ -9,6 +10,6 @@ import lombok.*;
 public class AgendaMensuelDto {
     private Long id;
     private Long medecinId;
-    private String mois;   // ex: "JANVIER"
+    private Mois mois;
     private Integer annee;
 }

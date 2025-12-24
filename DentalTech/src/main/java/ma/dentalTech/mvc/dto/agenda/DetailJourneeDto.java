@@ -17,6 +17,8 @@ public class DetailJourneeDto {
     private LocalTime heureDebutTravail;
     private LocalTime heureFinTravail;
 
-    private String etatJour;   // ex: "OUVERT"
+    /** DB = enum SQL, côté entity tu as String => DTO pareil */
+    private String etatJour;
+
     private String commentaire;
 }

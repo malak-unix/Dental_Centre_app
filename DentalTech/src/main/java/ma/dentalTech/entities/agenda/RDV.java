@@ -3,6 +3,7 @@ package ma.dentalTech.entities.agenda;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import lombok.*;
+import ma.dentalTech.entities.enums.TypeRendezVous;
 
 @Data
 @NoArgsConstructor
@@ -16,6 +17,8 @@ public class RDV {
     private Long patientId;
     private Long detailJourneeId;   // ✅ existe dans schema: rdv.detail_journee_id
     private Long listeAttenteId;    // ✅ existe dans schema: rdv.liste_attente_id
+
+    private TypeRendezVous typeRdv;
 
     // champs métier
     private LocalDate dateRdv;      // ✅ schema: date_rdv
