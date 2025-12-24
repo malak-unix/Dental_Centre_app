@@ -28,9 +28,9 @@ public class TestCaisseDashboardService {
     public static void main(String[] args) {
         try {
             new TestCaisseDashboardService().process();
-            System.out.println("\n✅ Test service caisse terminé.");
+            System.out.println("\n Test service caisse terminé.");
         } catch (Exception e) {
-            System.err.println("\n❌ Test service caisse échoué : " + e.getMessage());
+            System.err.println("\n Test service caisse échoué : " + e.getMessage());
             e.printStackTrace();
         }
     }

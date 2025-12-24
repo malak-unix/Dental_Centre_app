@@ -103,7 +103,7 @@ public class DashboardServiceImpl implements DashboardService {
                 out.nombreSecretaires(utilisateurRepository.countByRole("SECRETAIRE"));
                 out.nombreAdmins(utilisateurRepository.countByRole("ADMIN"));
 
-                out.nombrePatientsTotal(Math.toIntExact(patientRepository.countAll()));
+                out.nombrePatientsTotal(patientRepository.countAll());
                 out.nombreDossiersActifs(dossierMedicalRepository.countActifs());
 
                 out.chiffreAffairesJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
