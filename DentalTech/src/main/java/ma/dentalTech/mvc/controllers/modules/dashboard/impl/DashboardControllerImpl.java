@@ -4,7 +4,6 @@ import ma.dentalTech.common.exceptions.ControllerException;
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.ui.modules.dashboard.DashboardConsoleUI;
-import ma.dentalTech.mvc.dto.DashboardDTO;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 public class DashboardControllerImpl implements DashboardController {

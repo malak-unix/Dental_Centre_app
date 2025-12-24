@@ -4,9 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardFeaturesDTO;
 
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
@@ -38,7 +35,6 @@ public class DashboardServiceImpl implements DashboardService {
     private ListeAttenteRepository listeAttenteRepository;
     private NotificationRepository notificationRepository;
 
-    // ✅ CORRIGÉ : dossierMedical.api
     private ConsultationRepository consultationRepository;
     private ActeRepository acteRepository;
     private DossierMedicalRepository dossierMedicalRepository;
@@ -66,7 +62,6 @@ public class DashboardServiceImpl implements DashboardService {
                     .role(role)
                     .features(features);
 
-            // Secrétaire
             if (features.isVoirCaisse()) {
                 CaisseDashboardDTO caisse = caisseDashboardService.getDashboardToday();
                 out.caisseDuJour(caisse);

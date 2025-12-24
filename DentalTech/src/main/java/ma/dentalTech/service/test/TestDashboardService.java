@@ -1,7 +1,6 @@
 package ma.dentalTech.service.test;
 
 import ma.dentalTech.configuration.ApplicationContext;
-import ma.dentalTech.mvc.dto.DashboardDTO;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 public class TestDashboardService {

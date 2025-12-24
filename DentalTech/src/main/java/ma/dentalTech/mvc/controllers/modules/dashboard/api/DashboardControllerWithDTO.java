@@ -1,7 +1,6 @@
-package ma.dentalTech.mvc.ui.modules.dashboard;
+package ma.dentalTech.mvc.controllers.modules.dashboard.api;
 
 import ma.dentalTech.common.exceptions.ControllerException;
-import ma.dentalTech.mvc.dto.DashboardDTO;
 
 public interface DashboardControllerWithDTO {
     DashboardDTO getDashboardDTO(Long utilisateurId) throws ControllerException;

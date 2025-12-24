@@ -1,8 +1,5 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardFeaturesDTO;
 import ma.dentalTech.mvc.ui.common.*;
 
 import javax.swing.*;

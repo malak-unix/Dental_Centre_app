@@ -1,7 +1,6 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
 import ma.dentalTech.configuration.ApplicationContext;
-import ma.dentalTech.mvc.dto.DashboardDTO;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 import javax.swing.*;

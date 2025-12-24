@@ -1,78 +1,121 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
-import ma.dentalTech.entities.cabinet.Charges;
+import lombok.RequiredArgsConstructor;
 import ma.dentalTech.entities.cabinet.Facture;
-import ma.dentalTech.entities.cabinet.Revenues;
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
+import ma.dentalTech.entities.enums.LibelleRole;
+import ma.dentalTech.mvc.dto.caisse.*;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
-import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
+import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 public class CaisseDashboardServiceImpl implements CaisseDashboardService {
 
     private final FactureRepository factureRepository;
-    private final RevenuesRepository revenuesRepository;
     private final ChargesRepository chargesRepository;
 
-    public CaisseDashboardServiceImpl(FactureRepository factureRepository,
-                                      RevenuesRepository revenuesRepository,
-                                      ChargesRepository chargesRepository) {
-        this.factureRepository = factureRepository;
-        this.revenuesRepository = revenuesRepository;
-        this.chargesRepository = chargesRepository;
-    }
-
     @Override
-    public List<Facture> getFacturesBetween(LocalDateTime start, LocalDateTime end) {
-        return factureRepository.findByDateBetween(start, end);
-    }
+    public CaisseDashboardResponseDTO getDashboard(
+            CaisseDashboardRequestDTO request,
+            Role role,
+            Long currentUserId
+    ) {
 
-    @Override
-    public List<Revenues> getRevenusBetween(LocalDateTime start, LocalDateTime end) {
-        return revenuesRepository.findByDateBetween(start, end);
-    }
+        // =========================
+        // 1️⃣ Sécurité & rôle
+        // =========================
+        Long medecinId = request.getMedecinId();
 
-    @Override
-    public List<Charges> getChargesBetween(LocalDateTime start, LocalDateTime end) {
-        return chargesRepository.findByDateBetween(start, end);
-    }
+        if (role == Role.MEDECIN) {
+            // un médecin ne voit QUE ses données
+            medecinId = currentUserId;
+        }
 
-    @Override
-    public Double totalFactures(LocalDateTime start, LocalDateTime end) {
-        return factureRepository.calculateTotalFactures(start, end);
-    }
+        // =========================
+        // 2️⃣ Récupération données
+        // =========================
+        List<Facture> factures = factureRepository.search(
+                request.getDateDebut(),
+                request.getDateFin(),
+                medecinId,
+                request.getStatut(),
+                request.getSearch()
+        );
 
-    @Override
-    public Double totalRegle(LocalDateTime start, LocalDateTime end) {
-        return factureRepository.calculateTotalRegle(start, end);
-    }
+        Double totalRevenus = factureRepository.sumMontantPaye(
+                request.getDateDebut(), request.getDateFin(), medecinId
+        );
 
-    @Override
-    public Double totalNonRegle(LocalDateTime start, LocalDateTime end) {
-        return factureRepository.calculateTotalNonRegle(start, end);
-    }
+        Double totalCharges = chargesRepository.sumCharges(
+                request.getDateDebut(), request.getDateFin()
+        );
 
-    @Override
-    public Double totalRevenus(LocalDateTime start, LocalDateTime end) {
-        return revenuesRepository.calculateTotalOtherRevenue(start, end);
-    }
+        Double benefice = totalRevenus - totalCharges;
 
-    @Override
-    public Double totalCharges(LocalDateTime start, LocalDateTime end) {
-        return chargesRepository.calculateTotalCharges(start, end);
-    }
+        // =========================
+        // 3️⃣ Mapping Factures → DTO (table maquette)
+        // =========================
+        List<CaisseFactureDTO> factureDTOs = factures.stream()
+                .map(f -> CaisseFactureDTO.builder()
+                        .factureId(f.getId())
+                        .nom(f.getPatient().getNom())
+                        .prenom(f.getPatient().getPrenom())
+                        .montant(f.getTotalTtc())
+                        .dateEmission(f.getDateEmission())
+                        .statut(f.getStatut().name())
+                        .reste(f.getResteAPayer())
 
-    @Override
-    public Double solde(LocalDateTime start, LocalDateTime end) {
-        return totalRevenus(start, end) - totalCharges(start, end);
-    }
+                        // actions selon rôle + statut
+                        .canView(true)
+                        .canPrint(true)
+                        .canPay(role != Role.MEDECIN && f.isImpayee())
+                        .canCancel(role == Role.ADMIN && !f.isPayee())
+                        .build()
+                ).collect(Collectors.toList());
 
-    @Override
-    public CaisseDashboardDTO getDashboardToday() {
-        return null;
+        // =========================
+        // 4️⃣ Graphe (préparé pour JFreeChart)
+        // =========================
+        CaisseChartDTO chart = CaisseChartDTO.builder()
+                .title("Revenus vs Charges")
+                .labels(factureRepository.getChartLabels(
+                        request.getDateDebut(), request.getDateFin()))
+                .revenus(factureRepository.getChartRevenus(
+                        request.getDateDebut(), request.getDateFin(), medecinId))
+                .charges(chargesRepository.getChartCharges(
+                        request.getDateDebut(), request.getDateFin()))
+                .build();
+
+        // =========================
+        // 5️⃣ Construction réponse finale (MAQUETTE)
+        // =========================
+        return CaisseDashboardResponseDTO.builder()
+                .appliedFilters(request)
+
+                // cards
+                .ca(totalRevenus)
+                .charges(totalCharges)
+                .benefice(benefice)
+                .nbImpayes(factureRepository.countImpayees(
+                        request.getDateDebut(), request.getDateFin(), medecinId))
+
+                // graph
+                .chart(chart)
+
+                // table
+                .factures(factureDTOs)
+
+                // totaux bas de page
+                .totalFactures(factures.size())
+                .totalPaye(totalRevenus)
+                .totalImpaye(factureRepository.sumImpayees(
+                        request.getDateDebut(), request.getDateFin(), medecinId))
+                .totalMontant(factureRepository.sumTotal(
+                        request.getDateDebut(), request.getDateFin(), medecinId))
+
+                .build();
     }
 }
