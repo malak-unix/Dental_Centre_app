@@ -1,64 +1,45 @@
 package ma.dentalTech.entities.users;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
 import java.time.LocalDate;
+import lombok.*;
 
+/**
+ * Entité représentant un membre du personnel (staff).
+ * Classe parent pour Admin, Médecin et Secrétaire.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Staff extends Utilisateur {
 
     private Double salaire;
     private Double prime;
     private LocalDate dateRecrutement;
-    private int soldeConge;
+    private Integer soldeCongé;
 
-    // ==========================
-    // Relation (diagramme) : CabinetMedicale 1 -> * Staff
-    // (type Object pour ne pas casser la compilation tant que CabinetMedicale n'existe pas)
-    // ==========================
-    private Object cabinetMedicale;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Staff)) return false;
-        Staff that = (Staff) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+    @Builder(builderMethodName = "staffBuilder")
+    public Staff(String nom, String email, String adresse, String cin, String tel,
+                 ma.dentalTech.entities.enums.Sexe sexe, String login, String motDePasse,
+                 LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
+                 LocalDate dateRecrutement, Integer soldeCongé) {
+        super(nom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
+                dateNaissance, null, null);
+        this.salaire = salaire;
+        this.prime = prime;
+        this.dateRecrutement = dateRecrutement;
+        this.soldeCongé = soldeCongé;
     }
 
     @Override
     public String toString() {
         return """
             Staff {
-                id = %s,
+                id = %d,
                 nom = '%s',
-                prenom = '%s',
-                login = '%s',
                 salaire = %.2f,
-                prime = %.2f,
-                dateRecrutement = %s,
-                soldeConge = %d
+                dateRecrutement = %s
             }
-            """.formatted(
-                String.valueOf(id),
-                getNom(),
-                getPrenom(),
-                getLogin(),
-                salaire != null ? salaire : 0.0,
-                prime != null ? prime : 0.0,
-                String.valueOf(dateRecrutement),
-                soldeConge
-        );
+            """.formatted(getId(), getNom(), salaire, dateRecrutement);
     }
 }
