@@ -1,18 +1,23 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardFeaturesDTO;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
+import ma.dentalTech.mvc.dto.dashboard.DashboardFeaturesDTO;
+import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.dashboard.admin.ReferentielStatsDTO;
+import ma.dentalTech.mvc.dto.dashboard.medecin.MedecinDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.dashboard.medecin.PatientCurrentDTO;
+import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.mvc.ui.common.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
 public class DashboardView extends JPanel {
 
-    private static final DecimalFormat DF = new DecimalFormat("#0.00");
+    private static final DecimalFormat DF = new DecimalFormat("#,##0.00");
 
     public DashboardView(DashboardDTO dto) {
         setLayout(new BorderLayout(16, 16));
@@ -26,7 +31,7 @@ public class DashboardView extends JPanel {
     private JComponent buildSidebar() {
         JPanel side = new JPanel();
         side.setPreferredSize(new Dimension(220, 0));
-        side.setBackground(DentalTheme.BEIGE); // beige maquette
+        side.setBackground(DentalTheme.BEIGE);
         side.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
                 new EmptyBorder(12, 12, 12, 12)
@@ -65,18 +70,43 @@ public class DashboardView extends JPanel {
         JPanel grid = new JPanel(new GridLayout(0, 3, 16, 16));
         grid.setOpaque(false);
 
+        if (dto == null || dto.getRole() == null) {
+            CardPanel card = new CardPanel("Dashboard");
+            card.add(new JLabel("DTO null / rôle null"), BorderLayout.CENTER);
+            grid.add(card);
+            main.add(grid, BorderLayout.CENTER);
+            return main;
+        }
+
         DashboardFeaturesDTO f = dto.getFeatures();
 
-        if (f != null && f.isVoirRdvEtFileAttente()) grid.add(cardRdv(dto));
-        if (f != null && f.isVoirRdvEtFileAttente()) grid.add(cardFile(dto));
-        if (f != null && f.isVoirCaisse()) grid.add(cardCaisse(dto.getCaisseDuJour()));
-
-        if (f != null && f.isVoirNotifications()) grid.add(cardNotif(dto));
-        if (f != null && f.isVoirConsultationsEtActes()) grid.add(cardMedecin(dto));
-        if (f != null && f.isVoirStatsAdmin()) grid.add(cardAdmin(dto));
+        switch (dto.getRole()) {
+            case "SECRETAIRE" -> {
+                SecretaireDashboardResponseDTO sec = dto.getSecretaire();
+                if (f == null || f.isVoirRdvEtFileAttente()) {
+                    grid.add(cardRdvSecretaire(sec));
+                    grid.add(cardFileAttenteSecretaire(sec));
+                }
+                if (f == null || f.isVoirCaisse()) {
+                    grid.add(cardRecetteDuJour(sec));
+                }
+            }
+            case "MEDECIN" -> {
+                MedecinDashboardResponseDTO med = dto.getMedecin();
+                grid.add(cardKpiMedecin(med));
+                grid.add(cardPatientEnCours(med));
+                grid.add(cardRdvMedecin(med));
+            }
+            case "ADMIN" -> {
+                AdminDashboardResponseDTO admin = dto.getAdmin();
+                grid.add(cardStatsAdmin(admin));
+                grid.add(cardReferentiels(admin));
+                grid.add(cardUsersAdmin(admin));
+            }
+            default -> grid.add(new JLabel("Rôle non supporté: " + dto.getRole()));
+        }
 
         main.add(grid, BorderLayout.CENTER);
-
         return main;
     }
 
@@ -84,11 +114,12 @@ public class DashboardView extends JPanel {
         JPanel top = new JPanel(new BorderLayout(12, 12));
         top.setOpaque(false);
 
-        JLabel title = new JLabel("Dashboard " + dto.getRole());
+        String role = dto == null ? "" : safe(dto.getRole());
+        JLabel title = new JLabel("Dashboard " + role);
         title.setFont(DentalTheme.titleFont(20));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
-        JTextField search = new JTextField("Rechercher un client ...");
+        JTextField search = new JTextField("Rechercher ...");
         search.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
                 new EmptyBorder(8, 12, 8, 12)
@@ -102,104 +133,149 @@ public class DashboardView extends JPanel {
         return top;
     }
 
-    private JComponent cardRdv(DashboardDTO d) {
+    // =========================
+    // SECRETAIRE
+    // =========================
+
+    private JComponent cardRdvSecretaire(SecretaireDashboardResponseDTO dto) {
         CardPanel c = new CardPanel("LISTE DE RENDEZ-VOUS");
-        JPanel body = new JPanel(new GridLayout(1, 3, 10, 10));
-        body.setOpaque(false);
-
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardFile(DashboardDTO d) {
-        CardPanel c = new CardPanel("FILE D’ATTENTE");
-        JPanel body = new JPanel(new GridLayout(1, 3, 10, 10));
-        body.setOpaque(false);
-
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardCaisse(CaisseDashboardDTO caisse) {
-        CardPanel c = new CardPanel("CAISSE (AUJOURD'HUI)");
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
 
-        double revenus = caisse == null ? 0 : n(caisse.getTotalRevenus());
-        double charges = caisse == null ? 0 : n(caisse.getTotalCharges());
-        double solde = revenus - charges; // ✅ pas besoin de getSolde()
-
-        body.add(line("Total factures", caisse == null ? "0" : DF.format(n(caisse.getTotalFactures()))));
-        body.add(line("Total réglé", caisse == null ? "0" : DF.format(n(caisse.getTotalRegle()))));
-        body.add(line("Total non réglé", caisse == null ? "0" : DF.format(n(caisse.getTotalNonRegle()))));
+        body.add(line("RDV du jour", String.valueOf(i(dto == null ? null : dto.getNbRdvDuJour()))));
         body.add(Box.createVerticalStrut(8));
-        body.add(line("Revenus", DF.format(revenus)));
-        body.add(line("Charges", DF.format(charges)));
-        body.add(line("Solde", DF.format(solde)));
-
+        body.add(new JLabel("Liste (à brancher sur RdvDto)"));
         c.add(body, BorderLayout.CENTER);
         return c;
     }
 
-    private JComponent cardNotif(DashboardDTO d) {
-        CardPanel c = new CardPanel("ALERTES / NOTIFICATIONS");
+    private JComponent cardFileAttenteSecretaire(SecretaireDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("FILE D’ATTENTE");
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
 
-        body.add(line("Non lues", String.valueOf(i(d.getNombreNotificationsNonLues()))));
-        body.add(line("Alertes importantes", String.valueOf(i(d.getNombreAlertesImportantes()))));
-        body.add(line("Système", String.valueOf(i(d.getNombreNotificationsSysteme()))));
-
+        body.add(line("En attente", String.valueOf(i(dto == null ? null : dto.getNbEnAttente()))));
+        body.add(Box.createVerticalStrut(8));
+        body.add(new JLabel("Liste (à brancher sur ListeAttenteDto)"));
         c.add(body, BorderLayout.CENTER);
         return c;
     }
 
-    private JComponent cardMedecin(DashboardDTO d) {
-        CardPanel c = new CardPanel("MEDECIN");
+    private JComponent cardRecetteDuJour(SecretaireDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("RECETTE DU JOUR");
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
 
-        body.add(line("Consultations terminées", String.valueOf(i(d.getNombreConsultationsTerminees()))));
-        body.add(line("Consultations en cours", String.valueOf(i(d.getNombreConsultationsEnCours()))));
-        body.add(line("Actes du jour", String.valueOf(i(d.getNombreActesRealisesDuJour()))));
-        body.add(line("Montant actes", DF.format(n(d.getMontantTotalActesDuJour()))));
+        BigDecimal recette = dto == null ? BigDecimal.ZERO : nz(dto.getRecetteDuJour());
+        body.add(line("Recette", money(recette) + " DH"));
+        c.add(body, BorderLayout.CENTER);
+        return c;
+    }
+
+    // =========================
+    // MEDECIN
+    // =========================
+
+    private JComponent cardKpiMedecin(MedecinDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("INDICATEURS (MEDECIN)");
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        body.add(line("Patients du jour", String.valueOf(i(dto == null ? null : dto.getNbPatientsDuJour()))));
+        body.add(line("RDV du jour", String.valueOf(i(dto == null ? null : dto.getNbRdvDuJour()))));
+        body.add(line("Actes réalisés", String.valueOf(i(dto == null ? null : dto.getNbActesRealises()))));
+        body.add(line("Recette", money(dto == null ? BigDecimal.ZERO : nz(dto.getRecetteDuJour())) + " DH"));
 
         c.add(body, BorderLayout.CENTER);
         return c;
     }
 
-    private JComponent cardAdmin(DashboardDTO d) {
+    private JComponent cardPatientEnCours(MedecinDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("CLIENT EN COURS");
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        PatientCurrentDTO p = dto == null ? null : dto.getPatientEnCours();
+        body.add(line("Nom", p == null ? "—" : safe(p.getNomComplet())));
+        body.add(line("Téléphone", p == null ? "—" : safe(p.getTel())));
+        body.add(line("Statut", p == null ? "—" : safe(p.getStatutTraitement())));
+
+        c.add(body, BorderLayout.CENTER);
+        return c;
+    }
+
+    private JComponent cardRdvMedecin(MedecinDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("RENDEZ-VOUS DU JOUR");
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        int size = (dto == null || dto.getRdvDuJour() == null) ? 0 : dto.getRdvDuJour().size();
+        body.add(line("RDV (liste)", String.valueOf(size)));
+        body.add(Box.createVerticalStrut(8));
+        body.add(new JLabel("Table (à brancher sur RdvDto)"));
+        c.add(body, BorderLayout.CENTER);
+        return c;
+    }
+
+    // =========================
+    // ADMIN
+    // =========================
+
+    private JComponent cardStatsAdmin(AdminDashboardResponseDTO dto) {
         CardPanel c = new CardPanel("ADMIN - STATISTIQUES");
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
 
-        body.add(line("Utilisateurs", String.valueOf(i(d.getNombreUtilisateursTotal()))));
-        body.add(line("Patients", String.valueOf(i(d.getNombrePatientsTotal()))));
-        body.add(line("Dossiers actifs", String.valueOf(i(d.getNombreDossiersActifs()))));
+        body.add(line("Utilisateurs", String.valueOf(i(dto == null ? null : dto.getNbUtilisateurs()))));
+        body.add(line("Admins", String.valueOf(i(dto == null ? null : dto.getNbAdmins()))));
+        body.add(line("Actes réalisés", String.valueOf(i(dto == null ? null : dto.getNbActesRealises()))));
+        body.add(line("Recette du jour", money(dto == null ? BigDecimal.ZERO : nz(dto.getRecetteDuJour())) + " DH"));
 
         c.add(body, BorderLayout.CENTER);
         return c;
     }
 
-    private JPanel emptyMiniCard() {
-        JPanel p = new JPanel();
-        p.setBackground(DentalTheme.BG);
-        p.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
-        p.setPreferredSize(new Dimension(120, 70));
-        return p;
+    private JComponent cardReferentiels(AdminDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("RÉFÉRENTIELS");
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        ReferentielStatsDTO r = dto == null ? null : dto.getReferentiels();
+        body.add(line("Actes", String.valueOf(i(r == null ? null : r.getNbActes()))));
+        body.add(line("Médicaments", String.valueOf(i(r == null ? null : r.getNbMedicaments()))));
+        body.add(line("Antécédents", String.valueOf(i(r == null ? null : r.getNbAntecedents()))));
+        body.add(line("Assurances", String.valueOf(i(r == null ? null : r.getNbAssurances()))));
+
+        c.add(body, BorderLayout.CENTER);
+        return c;
     }
+
+    private JComponent cardUsersAdmin(AdminDashboardResponseDTO dto) {
+        CardPanel c = new CardPanel("UTILISATEURS");
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        int size = (dto == null || dto.getUtilisateurs() == null) ? 0 : dto.getUtilisateurs().size();
+        body.add(line("Nombre", String.valueOf(size)));
+        body.add(Box.createVerticalStrut(8));
+        body.add(new JLabel("Table (à brancher sur UserSummaryDTO)"));
+
+        c.add(body, BorderLayout.CENTER);
+        return c;
+    }
+
+    // =========================
+    // Helpers UI
+    // =========================
 
     private JPanel line(String label, String value) {
         JPanel row = new JPanel(new BorderLayout());
@@ -218,6 +294,8 @@ public class DashboardView extends JPanel {
         return row;
     }
 
-    private int i(Integer v){ return v == null ? 0 : v; }
-    private double n(Double v){ return v == null ? 0.0 : v; }
+    private int i(Integer v) { return v == null ? 0 : v; }
+    private BigDecimal nz(BigDecimal v) { return v == null ? BigDecimal.ZERO : v; }
+    private String money(BigDecimal v) { return DF.format(nz(v)); }
+    private String safe(String s) { return s == null ? "" : s; }
 }

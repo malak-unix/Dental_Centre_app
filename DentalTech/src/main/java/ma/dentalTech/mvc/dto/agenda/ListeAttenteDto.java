@@ -15,6 +15,9 @@ public class ListeAttenteDto {
     //ajouté par aya :
     private Long patientid;
     private String patientNom;
-    private int priorite;
+    private String priorite;          // NORMAL / URGENT (ou juste texte)
+    private String statut;            // EN_ATTENTE / APPELE / ANNULE ...
+    private Boolean arrive;           // true si le patient est arrivé
+
 
 }

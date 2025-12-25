@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.caisse.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
+import ma.dentalTech.entities.cabinet.SituationFinanciere;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 

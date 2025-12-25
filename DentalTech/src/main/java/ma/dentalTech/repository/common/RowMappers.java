@@ -3,8 +3,8 @@ package ma.dentalTech.repository.common;
 import ma.dentalTech.entities.agenda.*;
 import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.entities.cabinet.Revenues;
-import ma.dentalTech.entities.dossierMedical.Facture;
-import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
+import ma.dentalTech.entities.cabinet.Facture;
+import ma.dentalTech.entities.cabinet.SituationFinanciere;
 import ma.dentalTech.entities.enums.*;
 import ma.dentalTech.entities.patient.Patient;
 
