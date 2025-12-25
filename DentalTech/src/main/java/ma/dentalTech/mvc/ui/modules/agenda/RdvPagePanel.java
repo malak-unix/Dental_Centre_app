@@ -60,7 +60,6 @@ public class RdvPagePanel extends JPanel {
         for (RdvDto r : list) {
             model.addRow(new Object[]{
                     r.getId(),
-                    r.getPatientId(),
                     r.getDateRdv(),
                     r.getHeure(),
                     r.getMotif(),

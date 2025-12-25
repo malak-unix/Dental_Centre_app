@@ -1,6 +1,6 @@
 package ma.dentalTech.common.exceptions;
 
-public class DaoException extends Exception {
+public class DaoException extends RuntimeException {
     public DaoException(String m) {
         super(m);
     }

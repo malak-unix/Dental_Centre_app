@@ -12,6 +12,9 @@ import ma.dentalTech.entities.enums.NiveauDeRisque;
 @AllArgsConstructor
 @SuperBuilder
 public class Antecedents extends BaseEntity {
+
+    private Long patientId; // ✅ obligatoire car antecedent.patient_id NOT NULL en BD
+
     private String nom;
     private String categorie;
     private NiveauDeRisque niveauDeRisque;

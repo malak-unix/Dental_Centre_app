@@ -224,7 +224,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     // ============================
     private void validateRdv(RdvDto dto) throws ValidationException {
         if (dto == null) throw new ValidationException("DTO RDV null");
-        if (dto.getPatientId() == null) throw new ValidationException("patientId obligatoire");
         if (dto.getDetailJourneeId() == null) throw new ValidationException("detailJourneeId obligatoire");
         if (dto.getDateRdv() == null) throw new ValidationException("dateRdv obligatoire");
         if (dto.getHeure() == null) throw new ValidationException("heure obligatoire");
@@ -234,7 +233,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     private RDV toEntity(RdvDto dto) {
         return RDV.builder()
                 .id(dto.getId())
-                .patientId(dto.getPatientId())
                 .detailJourneeId(dto.getDetailJourneeId())
                 .listeAttenteId(dto.getListeAttenteId())
                 .dateRdv(dto.getDateRdv())
@@ -254,7 +252,6 @@ public class AgendaAppServiceImpl implements AgendaAppService {
 
         return RdvDto.builder()
                 .id(r.getId())
-                .patientId(r.getPatientId())
                 .detailJourneeId(r.getDetailJourneeId())
                 .listeAttenteId(r.getListeAttenteId())
                 .dateRdv(r.getDateRdv())

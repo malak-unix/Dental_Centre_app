@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.mvc.dto.caisse.*;
+
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseValidationService;
 import ma.dentalTech.service.modules.caisse.api.RevenusServiceV2;

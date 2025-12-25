@@ -124,7 +124,6 @@ public class AgendaSemainePagePanel extends JPanel {
                 for (RdvDto r : rdvs) {
                     rdvModel.addRow(new Object[]{
                             r.getId(),
-                            r.getPatientId(),
                             r.getDateRdv(),
                             r.getHeure(),
                             r.getMotif(),
