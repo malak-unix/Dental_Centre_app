@@ -1,7 +1,6 @@
 package ma.dentalTech.service.modules.patient.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
-import ma.dentalTech.common.exceptions.ValidationException;
 import ma.dentalTech.entities.patient.Antecedents;
 import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
 import ma.dentalTech.service.common.ServiceException;
