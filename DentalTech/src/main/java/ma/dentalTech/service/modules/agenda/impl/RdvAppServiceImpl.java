@@ -151,7 +151,6 @@ public class RdvAppServiceImpl implements RdvAppService {
     }
 
     private void validateCommon(RdvDto dto) {
-        requireId(dto.getPatientId(), "patientId");
         requireId(dto.getDetailJourneeId(), "detailJourneeId");
         if (dto.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
         if (dto.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");

@@ -1,9 +1,9 @@
 package ma.dentalTech.service.modules.patient.impl;
 
 import ma.dentalTech.common.exceptions.DaoException;
+import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.service.common.ServiceException;
 import ma.dentalTech.service.modules.patient.api.PatientService;
 
 import java.util.List;
@@ -19,8 +19,8 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public List<Patient> getAll() {
         try {
-            return patientRepo.findAll();
-        } catch (DaoException e) {
+            return patientRepo.findAll(); // CrudRepository
+        } catch (Exception e) {
             throw new ServiceException("Erreur getAll patients", e);
         }
     }
@@ -29,12 +29,12 @@ public class PatientServiceImpl implements PatientService {
     public Patient getById(Long id) {
         requireId(id, "patientId");
         try {
-            Patient p = patientRepo.findById(id);
+            Patient p = patientRepo.findById(id); // CrudRepository (chez vous retourne Patient)
             if (p == null) throw ServiceException.notFound("Patient introuvable id=" + id);
             return p;
         } catch (ServiceException se) {
             throw se;
-        } catch (DaoException e) {
+        } catch (Exception e) {
             throw new ServiceException("Erreur getById patient", e);
         }
     }
@@ -43,16 +43,15 @@ public class PatientServiceImpl implements PatientService {
     public void create(Patient p) {
         validateCreate(p);
         try {
-            // si telephone obligatoire chez vous => déjà validé
-            // si vous voulez l'unicité:
+            // ✅ repo merge retourne Optional
             if (p.getTelephone() != null && !p.getTelephone().isBlank()) {
-                Patient exist = patientRepo.findByTelephone(p.getTelephone());
+                Patient exist = patientRepo.findByTelephone(p.getTelephone()).orElse(null);
                 if (exist != null) throw ServiceException.validation("Téléphone déjà utilisé");
             }
             patientRepo.create(p);
         } catch (ServiceException se) {
             throw se;
-        } catch (DaoException e) {
+        } catch (Exception e) {
             throw new ServiceException("Erreur create patient", e);
         }
     }
@@ -66,22 +65,18 @@ public class PatientServiceImpl implements PatientService {
 
             // unicité téléphone si changé
             if (p.getTelephone() != null && !p.getTelephone().isBlank()) {
-                Patient existTel = patientRepo.findByTelephone(p.getTelephone());
+                Patient existTel = patientRepo.findByTelephone(p.getTelephone()).orElse(null);
                 if (existTel != null && !existTel.getId().equals(p.getId())) {
                     throw ServiceException.validation("Téléphone déjà utilisé");
                 }
             }
 
-            // si baseEntityId manquant, garder l'ancien
-            if (p.getBaseEntityId() == null) {
-                p.setBaseEntityId(old.getBaseEntityId());
-            }
-
+            // ❌ plus de baseEntityId (n'existe pas dans Patient)
             patientRepo.update(p);
 
         } catch (ServiceException se) {
             throw se;
-        } catch (DaoException e) {
+        } catch (Exception e) {
             throw new ServiceException("Erreur update patient", e);
         }
     }
@@ -97,70 +92,56 @@ public class PatientServiceImpl implements PatientService {
         requireId(id, "patientId");
         try {
             patientRepo.deleteById(id);
-        } catch (DaoException e) {
+        } catch (Exception e) {
             throw new ServiceException("Erreur deleteById patient", e);
         }
     }
 
     @Override
     public List<Patient> searchByNom(String nom) {
-        if (nom == null || nom.isBlank()) {
-            throw ServiceException.validation("nom obligatoire");
-        }
+        if (nom == null || nom.isBlank()) throw ServiceException.validation("nom obligatoire");
         try {
-            return patientRepo.findByNom(nom);
-        } catch (DaoException e) {
+            // ✅ repo merge: searchByNom
+            return patientRepo.searchByNom(nom);
+        } catch (Exception e) {
             throw new ServiceException("Erreur recherche patient par nom", e);
         }
     }
 
     @Override
     public Patient getByTelephone(String telephone) {
-        if (telephone == null || telephone.isBlank()) {
-            throw ServiceException.validation("telephone obligatoire");
-        }
+        if (telephone == null || telephone.isBlank()) throw ServiceException.validation("telephone obligatoire");
         try {
-            Patient p = patientRepo.findByTelephone(telephone);
-            if (p == null) {
-                throw ServiceException.notFound("Aucun patient trouvé pour ce téléphone");
-            }
+            Patient p = patientRepo.findByTelephone(telephone).orElse(null);
+            if (p == null) throw ServiceException.notFound("Aucun patient trouvé pour ce téléphone");
             return p;
         } catch (ServiceException se) {
             throw se;
-        } catch (DaoException e) {
+        } catch (Exception e) {
             throw new ServiceException("Erreur recherche patient par téléphone", e);
         }
     }
 
-
     @Override
     public List<Patient> findByNom(String nom) {
-        if (nom == null || nom.isBlank()) throw ServiceException.validation("nom obligatoire");
-        try {
-            return patientRepo.findByNom(nom);
-        } catch (DaoException e) {
-            throw new ServiceException("Erreur findByNom patient", e);
-        }
+        return searchByNom(nom);
     }
 
     @Override
     public Patient findByTelephone(String telephone) {
-        if (telephone == null || telephone.isBlank()) throw ServiceException.validation("telephone obligatoire");
-        try {
-            return patientRepo.findByTelephone(telephone);
-        } catch (DaoException e) {
-            throw new ServiceException("Erreur findByTelephone patient", e);
-        }
+        return getByTelephone(telephone);
     }
 
     @Override
     public long countAll() {
         try {
-            return patientRepo.countAll();
-        } catch (DaoException e) {
+            Integer n = patientRepo.countAll();
+            return n == null ? 0L : n;
+        } catch (Exception e) {
             throw new ServiceException("Erreur countAll patient", e);
         }
     }
+
 
     // =======================
     // Validations

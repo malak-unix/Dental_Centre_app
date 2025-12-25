@@ -32,7 +32,6 @@ public class RdvServiceImpl implements RdvService {
         if (r == null) throw new IllegalArgumentException("RDV null");
         if (r.getId() != null) throw new IllegalArgumentException("Création RDV: id doit être null");
 
-        if (r.getPatientId() == null) throw new IllegalArgumentException("patientId obligatoire");
         if (r.getDetailJourneeId() == null) throw new IllegalArgumentException("detailJourneeId obligatoire");
         if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
         if (r.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
@@ -55,7 +54,6 @@ public class RdvServiceImpl implements RdvService {
         if (old == null) throw new IllegalArgumentException("RDV introuvable (id=" + r.getId() + ")");
 
         // validations minimales
-        if (r.getPatientId() == null) throw new IllegalArgumentException("patientId obligatoire");
         if (r.getDetailJourneeId() == null) throw new IllegalArgumentException("detailJourneeId obligatoire");
         if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
         if (r.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
