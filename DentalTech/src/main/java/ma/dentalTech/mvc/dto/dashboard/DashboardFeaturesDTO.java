@@ -16,4 +16,6 @@ public class DashboardFeaturesDTO {
     private boolean voirStatsAdmin;
     private boolean voirCaisse;
     private boolean voirNotifications;
+    private boolean voirAlertes;
+
 }
