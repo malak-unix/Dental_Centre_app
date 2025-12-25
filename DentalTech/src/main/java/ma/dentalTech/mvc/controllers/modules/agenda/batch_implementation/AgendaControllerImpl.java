@@ -2,6 +2,8 @@ package ma.dentalTech.mvc.controllers.modules.agenda.batch_implementation;
 
 import ma.dentalTech.entities.agenda.AgendaMensuel;
 import ma.dentalTech.entities.agenda.DetailJournee;
+import ma.dentalTech.entities.enums.Mois;
+import ma.dentalTech.entities.enums.StatutJournee;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController;
 import ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto;
 import ma.dentalTech.mvc.dto.agenda.DetailJourneeDto;
@@ -60,7 +62,7 @@ public class AgendaControllerImpl implements AgendaController {
                 .id(a.getId())
                 .medecinId(a.getMedecinId())
                 // ⚠️ chez toi mois est String, donc pas .name()
-                .mois(String.valueOf(a.getMois()))
+                .mois(Mois.valueOf(String.valueOf(a.getMois())))
                 .annee(a.getAnnee())
                 .build();
     }
@@ -73,7 +75,7 @@ public class AgendaControllerImpl implements AgendaController {
                 .heureDebutTravail(d.getHeureDebutTravail())
                 .heureFinTravail(d.getHeureFinTravail())
                 // si etatJour est enum => .name() ok ; si String => direct
-                .etatJour(d.getEtatJour() == null ? null : d.getEtatJour().toString())
+                .etatJour(d.getEtatJour() == null ? null : String.valueOf(StatutJournee.valueOf(d.getEtatJour().toString())))
                 .commentaire(d.getCommentaire())
                 .build();
     }
