@@ -1,10 +1,12 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
 import lombok.RequiredArgsConstructor;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.enums.StatutFacture;
 import ma.dentalTech.mvc.dto.caisse.*;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
+import ma.dentalTech.service.modules.caisse.api.CaisseValidationService;
 import ma.dentalTech.service.modules.caisse.api.FacturePdfService;
 import ma.dentalTech.service.modules.caisse.api.FactureServiceV2;
 
@@ -19,15 +21,18 @@ public class FactureServiceV2Impl implements FactureServiceV2 {
     private final FactureRepository factureRepository;
     private final FacturePdfService facturePdfService;
 
+    private final CaisseValidationService validation =
+            ApplicationContext.getBean(CaisseValidationService.class);
+
     @Override
     public CaisseFactureRowDTO create(FactureCreateDTO dto) {
-        validateCreate(dto);
+        validation.validateFactureCreate(dto);
 
         Facture f = Facture.builder()
                 .consultationId(dto.getConsultationId())
                 .dateFacture(dto.getDateFacture())
-                .totalFacture(nz(dto.getTotalFacture()))
-                .totalPaye(BigDecimal.ZERO)
+                .totalFacture(toDouble(dto.getTotalFacture())) // ✅ entity Double
+                .totalPaye(0.0)
                 .statut(StatutFacture.NON_PAYEE)
                 .build();
 
@@ -57,24 +62,31 @@ public class FactureServiceV2Impl implements FactureServiceV2 {
     @Override
     public CaisseFactureRowDTO payer(Long factureId, FacturePaiementDTO dto) {
         if (factureId == null) throw new IllegalArgumentException("factureId obligatoire");
-        if (dto == null || dto.getMontant() == null) throw new IllegalArgumentException("montant obligatoire");
-        if (dto.getMontant().compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("montant invalide");
+        validation.validatePaiement(dto);
 
         Facture f = factureRepository.findById(factureId);
-        if (f == null) throw new IllegalArgumentException("Facture introuvable");
+        if (f == null) throw new IllegalArgumentException("Facture introuvable id=" + factureId);
 
-        BigDecimal total = nz(f.getTotalFacture());
-        BigDecimal payeActuel = nz(f.getTotalPaye());
-        BigDecimal nouveauPaye = payeActuel.add(dto.getMontant());
+        double total = nvl(f.getTotalFacture());
+        double paye = nvl(f.getTotalPaye());
+        double montant = dto.getMontant().doubleValue();
 
-        if (nouveauPaye.compareTo(total) > 0) nouveauPaye = total;
+        if (montant <= 0) throw new IllegalArgumentException("Montant doit être > 0");
 
-        f.setTotalPaye(nouveauPaye);
+        double newPaye = paye + montant;
+        if (newPaye > total + 0.0001) {
+            throw new IllegalArgumentException("Paiement dépasse le total facture");
+        }
 
-        // statut
-        if (nouveauPaye.compareTo(BigDecimal.ZERO) == 0) f.setStatut(StatutFacture.NON_PAYEE);
-        else if (nouveauPaye.compareTo(total) >= 0) f.setStatut(StatutFacture.PAYEE);
-        else f.setStatut(StatutFacture.PARTIEL);
+        f.setTotalPaye(newPaye);
+
+        if (Math.abs(newPaye - total) < 0.0001) {
+            f.setStatut(StatutFacture.PAYEE);
+        } else if (newPaye > 0) {
+            f.setStatut(StatutFacture.PARTIEL);
+        } else {
+            f.setStatut(StatutFacture.NON_PAYEE);
+        }
 
         factureRepository.update(f);
         return toRow(f);
@@ -86,13 +98,17 @@ public class FactureServiceV2Impl implements FactureServiceV2 {
         Facture f = factureRepository.findById(factureId);
         if (f == null) throw new IllegalArgumentException("Facture introuvable");
 
+        double total = nvl(f.getTotalFacture());
+        double paye = nvl(f.getTotalPaye());
+        double reste = Math.max(0.0, total - paye);
+
         return FacturePrintDTO.builder()
                 .numeroFacture(String.valueOf(f.getId()))
                 .dateFacture(f.getDateFacture())
                 .consultationId(f.getConsultationId())
-                .totalFacture(f.getTotalFacture())
-                .totalPaye(f.getTotalPaye())
-                .reste(calcReste(f))
+                .totalFacture(BigDecimal.valueOf(total))
+                .totalPaye(BigDecimal.valueOf(paye))
+                .reste(BigDecimal.valueOf(reste))
                 .statut(f.getStatut() == null ? null : f.getStatut().name())
                 .build();
     }
@@ -103,39 +119,28 @@ public class FactureServiceV2Impl implements FactureServiceV2 {
         return facturePdfService.generateFacturePdf(dto);
     }
 
-    // =========================
-    // Helpers / Validations
-    // =========================
-    private void validateCreate(FactureCreateDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("DTO obligatoire");
-        if (dto.getConsultationId() == null) throw new IllegalArgumentException("consultationId obligatoire");
-        if (dto.getDateFacture() == null) throw new IllegalArgumentException("dateFacture obligatoire");
-        if (dto.getTotalFacture() == null || dto.getTotalFacture().compareTo(BigDecimal.ZERO) < 0)
-            throw new IllegalArgumentException("totalFacture invalide");
-    }
+    // ========================= Helpers =========================
 
     private CaisseFactureRowDTO toRow(Facture f) {
+        double total = nvl(f.getTotalFacture());
+        double paye = nvl(f.getTotalPaye());
+        double reste = Math.max(0.0, total - paye);
+
         return CaisseFactureRowDTO.builder()
                 .factureId(f.getId())
                 .consultationId(f.getConsultationId())
                 .dateFacture(f.getDateFacture())
-                .totalFacture(f.getTotalFacture())
-                .totalPaye(f.getTotalPaye())
-                .reste(calcReste(f)) // ne dépend pas de la colonne calculée DB
+                .totalFacture(BigDecimal.valueOf(total))
+                .totalPaye(BigDecimal.valueOf(paye))
+                .reste(BigDecimal.valueOf(reste))
                 .statut(f.getStatut() == null ? null : f.getStatut().name())
-                // Actions: la caisse dashboard décide selon rôle
                 .canView(true)
                 .canPrint(true)
-                .canPay(false)
+                .canPay(f.getStatut() != StatutFacture.PAYEE)
                 .canCancel(false)
                 .build();
     }
 
-    private BigDecimal calcReste(Facture f) {
-        return nz(f.getTotalFacture()).subtract(nz(f.getTotalPaye()));
-    }
-
-    private BigDecimal nz(BigDecimal v) {
-        return v == null ? BigDecimal.ZERO : v;
-    }
+    private double nvl(Double v) { return v == null ? 0.0 : v; }
+    private Double toDouble(BigDecimal bd) { return bd == null ? null : bd.doubleValue(); }
 }

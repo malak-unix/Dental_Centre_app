@@ -1,10 +1,11 @@
-package ma.dentalTech.entities.dossierMedical;
+package ma.dentalTech.entities.cabinet;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
+import ma.dentalTech.entities.dossierMedical.DossierMedical;
 import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 import ma.dentalTech.entities.users.Medecin;
 

@@ -1,11 +1,14 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
 import lombok.RequiredArgsConstructor;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.mvc.dto.caisse.*;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
+import ma.dentalTech.service.modules.caisse.api.CaisseValidationService;
 import ma.dentalTech.service.modules.caisse.api.ChargesServiceV2;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,15 +20,19 @@ public class ChargesServiceV2Impl implements ChargesServiceV2 {
 
     private final ChargesRepository repository;
 
+    private final CaisseValidationService validation =
+            ApplicationContext.getBean(CaisseValidationService.class);
+
     @Override
     public ChargeItemDTO create(ChargeCreateDTO dto) {
-        validateCreate(dto);
+        validation.validateChargeCreate(dto);
 
         Charges c = Charges.builder()
                 .cabinetId(dto.getCabinetId())
                 .titre(dto.getTitre())
                 .description(dto.getDescription())
-                .montant(dto.getMontant())
+                // ✅ entity = Double
+                .montant(toDouble(dto.getMontant()))
                 .dateCharge(dto.getDateCharge())
                 .build();
 
@@ -36,31 +43,28 @@ public class ChargesServiceV2Impl implements ChargesServiceV2 {
     @Override
     public ChargeItemDTO update(Long id, ChargeUpdateDTO dto) {
         if (id == null) throw new IllegalArgumentException("id obligatoire");
-        validateUpdate(dto);
+        validation.validateChargeUpdate(dto);
 
         Charges existing = repository.findById(id);
         if (existing == null) throw new IllegalArgumentException("Charge introuvable: " + id);
 
         existing.setTitre(dto.getTitre());
         existing.setDescription(dto.getDescription());
-        existing.setMontant(dto.getMontant());
+        existing.setMontant(toDouble(dto.getMontant())); // ✅ Double
         existing.setDateCharge(dto.getDateCharge());
 
         repository.update(existing);
         return toItemDTO(existing);
     }
+
     @Override
     public void delete(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("id obligatoire");
-        }
+        if (id == null) throw new IllegalArgumentException("id obligatoire");
 
         Charges charge = repository.findById(id);
-        if (charge == null) {
-            throw new IllegalArgumentException("Charge introuvable : " + id);
-        }
+        if (charge == null) throw new IllegalArgumentException("Charge introuvable : " + id);
 
-        repository.delete(charge); // ✅ CORRECT
+        repository.delete(charge); // ✅ ton repo delete(entity)
     }
 
     @Override
@@ -92,23 +96,6 @@ public class ChargesServiceV2Impl implements ChargesServiceV2 {
 
     // ========================= Helpers =========================
 
-    private void validateCreate(ChargeCreateDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("DTO null");
-        if (dto.getCabinetId() == null) throw new IllegalArgumentException("cabinetId obligatoire");
-        if (dto.getTitre() == null || dto.getTitre().isBlank()) throw new IllegalArgumentException("titre obligatoire");
-        if (dto.getMontant() == null) throw new IllegalArgumentException("montant obligatoire");
-        if (dto.getMontant().doubleValue() < 0) throw new IllegalArgumentException("montant doit être >= 0");
-        if (dto.getDateCharge() == null) throw new IllegalArgumentException("dateCharge obligatoire");
-    }
-
-    private void validateUpdate(ChargeUpdateDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("DTO null");
-        if (dto.getTitre() == null || dto.getTitre().isBlank()) throw new IllegalArgumentException("titre obligatoire");
-        if (dto.getMontant() == null) throw new IllegalArgumentException("montant obligatoire");
-        if (dto.getMontant().doubleValue() < 0) throw new IllegalArgumentException("montant doit être >= 0");
-        if (dto.getDateCharge() == null) throw new IllegalArgumentException("dateCharge obligatoire");
-    }
-
     private LocalDateTime toStart(ChargeFilterDTO filter) {
         LocalDate d = (filter == null) ? null : filter.getDateDebut();
         return d == null ? LocalDate.now().minusMonths(1).atStartOfDay() : d.atStartOfDay();
@@ -125,8 +112,16 @@ public class ChargesServiceV2Impl implements ChargesServiceV2 {
                 .cabinetId(c.getCabinetId())
                 .titre(c.getTitre())
                 .description(c.getDescription())
-                .montant(c.getMontant())
+                .montant(toBigDecimal(c.getMontant())) // ✅ DTO = BigDecimal
                 .dateCharge(c.getDateCharge())
                 .build();
+    }
+
+    private Double toDouble(BigDecimal bd) {
+        return bd == null ? null : bd.doubleValue();
+    }
+
+    private BigDecimal toBigDecimal(Double d) {
+        return d == null ? null : BigDecimal.valueOf(d);
     }
 }

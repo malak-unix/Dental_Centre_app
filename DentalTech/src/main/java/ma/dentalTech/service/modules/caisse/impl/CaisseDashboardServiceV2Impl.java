@@ -1,6 +1,7 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
 import lombok.RequiredArgsConstructor;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.enums.StatutFacture;
@@ -9,6 +10,7 @@ import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardServiceV2;
+import ma.dentalTech.service.modules.caisse.api.CaisseValidationService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,41 +27,33 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
     private final RevenuesRepository revenuesRepository;
     private final ChargesRepository chargesRepository;
 
+    private final CaisseValidationService validation =
+            ApplicationContext.getBean(CaisseValidationService.class);
+
     @Override
     public CaisseDashboardResponseDTO getDashboard(CaisseDashboardRequestDTO req, LibelleRole role, Long currentUserId) {
 
-        if (req == null) throw new IllegalArgumentException("request obligatoire");
+        validation.validateDashboardRequest(req, role, currentUserId);
+
         LocalDateTime start = toStart(req.getDateDebut());
         LocalDateTime end = toEnd(req.getDateFin());
 
-        if (start == null || end == null) throw new IllegalArgumentException("dateDebut/dateFin obligatoires");
-        if (end.isBefore(start)) throw new IllegalArgumentException("dateFin doit être après dateDebut");
-
-        // 1) Récupérer les factures sur période
         List<Facture> factures = factureRepository.findByDateBetween(start, end);
-
-        // 2) Filtrer par statut (UI: TOUTES | PAYEE | IMPAYEE | ANNULEE)
         factures = applyStatutFilter(factures, req.getStatut());
-
-        // 3) Filtrer par search (sans patient dans ton schéma facture => on filtre sur id / consultationId)
         factures = applySearchFilter(factures, req.getSearch());
 
-        // 4) Construire les lignes (DTO) + actions selon rôle
         List<CaisseFactureRowDTO> rows = factures.stream()
                 .map(f -> toRowDTO(f, role))
                 .collect(Collectors.toList());
 
-        // 5) Totaux (calculés sur factures filtrées -> correspond à Figma)
-        double totalFactures = sumFacturesTotal(factures);
-        double totalRegle = sumFacturesPaye(factures);
+        double totalFactures = sumDouble(factures, Facture::getTotalFacture);
+        double totalRegle = sumDouble(factures, Facture::getTotalPaye);
         double totalNonRegle = Math.max(0.0, totalFactures - totalRegle);
 
-        // Revenus/Charges: repos (période). Si tu veux aussi filtrer par “medecin”, il faudra ajouter critère en DB.
         double totalRevenus = nvl(revenuesRepository.calculateTotalRevenus(start, end));
         double totalCharges = nvl(chargesRepository.calculateTotalCharges(start, end));
         double soldeNet = totalRevenus - totalCharges;
 
-        // Chart DTO (pour l’instant juste métadonnées : l’UI convertira en JFreeChart)
         CaisseChartDTO chart = CaisseChartDTO.builder()
                 .title("Revenus vs Charges")
                 .build();
@@ -77,22 +71,23 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .build();
     }
 
-    // =========================
-    // Mapping Facture -> RowDTO
-    // =========================
     private CaisseFactureRowDTO toRowDTO(Facture f, LibelleRole role) {
         boolean isPayee = (f.getStatut() == StatutFacture.PAYEE);
 
         boolean canPay = (role == LibelleRole.ADMIN || role == LibelleRole.SECRETAIRE) && !isPayee;
         boolean canCancel = (role == LibelleRole.ADMIN) && !isPayee;
 
+        Double total = nvlObj(f.getTotalFacture());
+        Double paye = nvlObj(f.getTotalPaye());
+        Double reste = Math.max(0.0, total - paye);
+
         return CaisseFactureRowDTO.builder()
                 .factureId(f.getId())
                 .consultationId(f.getConsultationId())
                 .dateFacture(f.getDateFacture())
-                .totalFacture(f.getTotalFacture())
-                .totalPaye(f.getTotalPaye())
-                .reste(calcReste(f))
+                .totalFacture(BigDecimal.valueOf(total))
+                .totalPaye(BigDecimal.valueOf(paye))
+                .reste(BigDecimal.valueOf(reste))
                 .statut(f.getStatut() == null ? null : f.getStatut().name())
                 .canView(true)
                 .canPrint(true)
@@ -101,24 +96,12 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .build();
     }
 
-    private BigDecimal calcReste(Facture f) {
-        return nz(f.getTotalFacture()).subtract(nz(f.getTotalPaye()));
-    }
-
-    private BigDecimal nz(BigDecimal v) {
-        return v == null ? BigDecimal.ZERO : v;
-    }
-
-    // =========================
-    // Filters
-    // =========================
     private List<Facture> applyStatutFilter(List<Facture> list, String statutUi) {
         if (statutUi == null || statutUi.isBlank()) return list;
 
         String s = statutUi.trim().toUpperCase(Locale.ROOT);
         if ("TOUTES".equals(s) || "TOUT".equals(s)) return list;
 
-        // UI "IMPAYEE" => NON_PAYEE + PARTIEL
         if ("IMPAYEE".equals(s)) {
             return list.stream()
                     .filter(f -> f.getStatut() == StatutFacture.NON_PAYEE || f.getStatut() == StatutFacture.PARTIEL)
@@ -131,9 +114,8 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                     .collect(Collectors.toList());
         }
 
-        // "ANNULEE" : ton enum Facture n’a pas ANNULEE -> on retourne vide (cohérent)
         if ("ANNULEE".equals(s)) {
-            return List.of();
+            return List.of(); // ton enum n’a pas ANNULEE
         }
 
         return list;
@@ -150,32 +132,17 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
         }).collect(Collectors.toList());
     }
 
-    // =========================
-    // Totals
-    // =========================
-    private double sumFacturesTotal(List<Facture> list) {
+    private double sumDouble(List<Facture> list, java.util.function.Function<Facture, Double> getter) {
         return list.stream()
-                .map(Facture::getTotalFacture)
-                .map(this::nz)
-                .mapToDouble(BigDecimal::doubleValue)
-                .sum();
-    }
-
-    private double sumFacturesPaye(List<Facture> list) {
-        return list.stream()
-                .map(Facture::getTotalPaye)
-                .map(this::nz)
-                .mapToDouble(BigDecimal::doubleValue)
+                .map(getter)
+                .map(this::nvlObj)
+                .mapToDouble(Double::doubleValue)
                 .sum();
     }
 
     private double nvl(Double v) { return v == null ? 0.0 : v; }
+    private Double nvlObj(Double v) { return v == null ? 0.0 : v; }
 
-    private LocalDateTime toStart(LocalDate d) {
-        return d == null ? null : d.atStartOfDay();
-    }
-
-    private LocalDateTime toEnd(LocalDate d) {
-        return d == null ? null : d.atTime(LocalTime.of(23, 59, 59));
-    }
+    private LocalDateTime toStart(LocalDate d) { return d == null ? null : d.atStartOfDay(); }
+    private LocalDateTime toEnd(LocalDate d) { return d == null ? null : d.atTime(LocalTime.of(23, 59, 59)); }
 }

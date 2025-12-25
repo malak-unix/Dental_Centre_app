@@ -1,11 +1,14 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
 import lombok.RequiredArgsConstructor;
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.mvc.dto.caisse.*;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
+import ma.dentalTech.service.modules.caisse.api.CaisseValidationService;
 import ma.dentalTech.service.modules.caisse.api.RevenusServiceV2;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,36 +20,36 @@ public class RevenusServiceV2Impl implements RevenusServiceV2 {
 
     private final RevenuesRepository repository;
 
+    private final CaisseValidationService validation =
+            ApplicationContext.getBean(CaisseValidationService.class);
+
     @Override
     public RevenuItemDTO create(RevenuCreateDTO dto) {
-        validateCreate(dto);
+        validation.validateRevenuCreate(dto);
 
         Revenues r = Revenues.builder()
                 .cabinetId(dto.getCabinetId())
                 .titre(dto.getTitre())
                 .description(dto.getDescription())
-                .montant(dto.getMontant())
+                .montant(toDouble(dto.getMontant())) // ✅ entity Double
                 .dateRevenu(dto.getDateRevenu())
                 .build();
 
-        repository.create(r);   // CrudRepository.create(entity)
+        repository.create(r);
         return toItemDTO(r);
     }
 
     @Override
     public RevenuItemDTO update(Long id, RevenuUpdateDTO dto) {
-        if (id == null)
-            throw new IllegalArgumentException("id obligatoire");
-
-        validateUpdate(dto);
+        if (id == null) throw new IllegalArgumentException("id obligatoire");
+        validation.validateRevenuUpdate(dto);
 
         Revenues existing = repository.findById(id);
-        if (existing == null)
-            throw new IllegalArgumentException("Revenu introuvable : " + id);
+        if (existing == null) throw new IllegalArgumentException("Revenu introuvable : " + id);
 
         existing.setTitre(dto.getTitre());
         existing.setDescription(dto.getDescription());
-        existing.setMontant(dto.getMontant());
+        existing.setMontant(toDouble(dto.getMontant())); // ✅ Double
         existing.setDateRevenu(dto.getDateRevenu());
 
         repository.update(existing);
@@ -55,24 +58,20 @@ public class RevenusServiceV2Impl implements RevenusServiceV2 {
 
     @Override
     public void delete(Long id) {
-        if (id == null)
-            throw new IllegalArgumentException("id obligatoire");
+        if (id == null) throw new IllegalArgumentException("id obligatoire");
 
         Revenues existing = repository.findById(id);
-        if (existing == null)
-            throw new IllegalArgumentException("Revenu introuvable : " + id);
+        if (existing == null) throw new IllegalArgumentException("Revenu introuvable : " + id);
 
-        repository.delete(existing);   // ✅ delete(entity)
+        repository.delete(existing); // ✅ delete(entity)
     }
 
     @Override
     public RevenuItemDTO findById(Long id) {
-        if (id == null)
-            throw new IllegalArgumentException("id obligatoire");
+        if (id == null) throw new IllegalArgumentException("id obligatoire");
 
         Revenues r = repository.findById(id);
-        if (r == null)
-            throw new IllegalArgumentException("Revenu introuvable : " + id);
+        if (r == null) throw new IllegalArgumentException("Revenu introuvable : " + id);
 
         return toItemDTO(r);
     }
@@ -93,6 +92,7 @@ public class RevenusServiceV2Impl implements RevenusServiceV2 {
         LocalDateTime start = toStart(filter);
         LocalDateTime end = toEnd(filter);
 
+        // ✅ noms repo chez toi
         Double v = repository.calculateTotalRevenus(start, end);
         return v == null ? 0.0 : v;
     }
@@ -102,42 +102,21 @@ public class RevenusServiceV2Impl implements RevenusServiceV2 {
         LocalDateTime start = toStart(filter);
         LocalDateTime end = toEnd(filter);
 
+        // ✅ noms repo chez toi
         Double v = repository.calculateTotalOtherRevenue(start, end);
         return v == null ? 0.0 : v;
     }
 
-    // =========================
-    // Helpers
-    // =========================
-    private void validateCreate(RevenuCreateDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("DTO null");
-        if (dto.getCabinetId() == null) throw new IllegalArgumentException("cabinetId obligatoire");
-        if (dto.getTitre() == null || dto.getTitre().isBlank()) throw new IllegalArgumentException("titre obligatoire");
-        if (dto.getMontant() == null) throw new IllegalArgumentException("montant obligatoire");
-        if (dto.getMontant().doubleValue() < 0) throw new IllegalArgumentException("montant doit être >= 0");
-        if (dto.getDateRevenu() == null) throw new IllegalArgumentException("dateRevenu obligatoire");
-    }
-
-    private void validateUpdate(RevenuUpdateDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("DTO null");
-        if (dto.getTitre() == null || dto.getTitre().isBlank()) throw new IllegalArgumentException("titre obligatoire");
-        if (dto.getMontant() == null) throw new IllegalArgumentException("montant obligatoire");
-        if (dto.getMontant().doubleValue() < 0) throw new IllegalArgumentException("montant doit être >= 0");
-        if (dto.getDateRevenu() == null) throw new IllegalArgumentException("dateRevenu obligatoire");
-    }
+    // ========================= Helpers =========================
 
     private LocalDateTime toStart(RevenuFilterDTO filter) {
         LocalDate d = (filter == null) ? null : filter.getDateDebut();
-        return d == null
-                ? LocalDate.now().minusMonths(1).atStartOfDay()
-                : d.atStartOfDay();
+        return d == null ? LocalDate.now().minusMonths(1).atStartOfDay() : d.atStartOfDay();
     }
 
     private LocalDateTime toEnd(RevenuFilterDTO filter) {
         LocalDate d = (filter == null) ? null : filter.getDateFin();
-        return d == null
-                ? LocalDate.now().atTime(LocalTime.MAX)
-                : d.atTime(LocalTime.MAX);
+        return d == null ? LocalDate.now().atTime(LocalTime.MAX) : d.atTime(LocalTime.MAX);
     }
 
     private RevenuItemDTO toItemDTO(Revenues r) {
@@ -146,8 +125,16 @@ public class RevenusServiceV2Impl implements RevenusServiceV2 {
                 .cabinetId(r.getCabinetId())
                 .titre(r.getTitre())
                 .description(r.getDescription())
-                .montant(r.getMontant())
+                .montant(toBigDecimal(r.getMontant())) // ✅ DTO BigDecimal
                 .dateRevenu(r.getDateRevenu())
                 .build();
+    }
+
+    private Double toDouble(BigDecimal bd) {
+        return bd == null ? null : bd.doubleValue();
+    }
+
+    private BigDecimal toBigDecimal(Double d) {
+        return d == null ? null : BigDecimal.valueOf(d);
     }
 }
