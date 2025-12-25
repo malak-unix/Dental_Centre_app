@@ -7,7 +7,7 @@ import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
-import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
+import ma.dentalTech.service.modules.caisse.api.CaisseDashboardServiceV2;
 
 import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
 import ma.dentalTech.service.modules.agenda.api.RdvService;
