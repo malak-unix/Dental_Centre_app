@@ -1,6 +1,8 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
+import ma.dentalTech.mvc.dto.dashboard.DashboardFeaturesDTO;
 import ma.dentalTech.mvc.ui.common.*;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -69,7 +71,6 @@ public class DashboardView extends JPanel {
         if (f != null && f.isVoirCaisse()) grid.add(cardCaisse(dto.getCaisseDuJour()));
 
         if (f != null && f.isVoirNotifications()) grid.add(cardNotif(dto));
-        if (f != null && f.isVoirConsultationsEtActes()) grid.add(cardMedecin(dto));
         if (f != null && f.isVoirStatsAdmin()) grid.add(cardAdmin(dto));
 
         main.add(grid, BorderLayout.CENTER);

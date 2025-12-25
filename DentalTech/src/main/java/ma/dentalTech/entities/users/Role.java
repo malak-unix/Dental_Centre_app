@@ -13,7 +13,6 @@ import ma.dentalTech.entities.enums.LibelleRole;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class Role extends BaseEntity {

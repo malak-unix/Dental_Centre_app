@@ -1,7 +1,6 @@
 package ma.dentalTech.service.test;
 
 import ma.dentalTech.configuration.ApplicationContext;
-import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

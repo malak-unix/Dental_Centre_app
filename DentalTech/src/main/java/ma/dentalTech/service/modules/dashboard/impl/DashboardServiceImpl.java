@@ -1,146 +1,167 @@
 package ma.dentalTech.service.modules.dashboard.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ma.dentalTech.common.exceptions.ServiceException;
+import ma.dentalTech.entities.enums.LibelleRole;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
+import ma.dentalTech.mvc.dto.dashboard.DashboardFeaturesDTO;
+import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.dashboard.admin.ReferentielStatsDTO;
+import ma.dentalTech.mvc.dto.dashboard.medecin.MedecinDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.dashboard.medecin.PatientCurrentDTO;
+import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
 
-import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
-import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
-
-import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
-
-import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
-import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
-import ma.dentalTech.repository.modules.users.api.NotificationRepository;
-import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-
-import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    private CaisseDashboardService caisseDashboardService;
 
-    private RdvRepository rdvRepository;
-    private ListeAttenteRepository listeAttenteRepository;
-    private NotificationRepository notificationRepository;
+    private final Object agendaService;
+    private final Object usersService;
+    private final Object caisseService;
+    private final Object authService;
 
-    private ConsultationRepository consultationRepository;
-    private ActeRepository acteRepository;
-    private DossierMedicalRepository dossierMedicalRepository;
-
-    private UtilisateurRepository utilisateurRepository;
-    private PatientRepository patientRepository;
-
-    private FactureRepository factureRepository;
-    private ChargesRepository chargesRepository;
+    public DashboardServiceImpl(Object agendaService, Object usersService, Object caisseService, Object authService) {
+        this.agendaService = agendaService;
+        this.usersService = usersService;
+        this.caisseService = caisseService;
+        this.authService = authService;
+    }
 
     @Override
     public DashboardDTO getDashboard(Long utilisateurId) throws ServiceException {
         try {
-            LocalDate today = LocalDate.now();
-            LocalDateTime start = today.atStartOfDay();
-            LocalDateTime end = today.plusDays(1).atStartOfDay().minusNanos(1);
+            // TODO: récupérer rôle réel depuis Auth/User (UserPrincipalDTO)
+            // Exemple: String role = authService.getPrincipal(utilisateurId).getRole();
+            String role = "SECRETAIRE";
 
-            String role = utilisateurRepository.findRoleByUtilisateurId(utilisateurId);
-            if (role == null) throw new ServiceException("Role introuvable pour utilisateurId=" + utilisateurId);
+            DashboardFeaturesDTO features = featuresFor(role);
 
-            DashboardFeaturesDTO features = featuresForRole(role);
+            return switch (role) {
+                case "SECRETAIRE" -> DashboardDTO.builder()
+                        .role(role)
+                        .features(features)
+                        .secretaire(buildSecretaireDashboard(utilisateurId))
+                        .build();
 
-            DashboardDTO.DashboardDTOBuilder out = DashboardDTO.builder()
-                    .dateJour(today)
-                    .role(role)
-                    .features(features);
+                case "MEDECIN" -> DashboardDTO.builder()
+                        .role(role)
+                        .features(features)
+                        .medecin(buildMedecinDashboard(utilisateurId))
+                        .build();
 
-            if (features.isVoirCaisse()) {
-                CaisseDashboardDTO caisse = caisseDashboardService.getDashboardToday();
-                out.caisseDuJour(caisse);
-            }
-            if (features.isVoirRdvEtFileAttente()) {
-                out.nombreRdvDuJour(rdvRepository.countByDate(start, end));
-                out.nombrePatientsEnFileAttente(listeAttenteRepository.countActifs());
-                out.nombreRdvEnRetard(rdvRepository.countRdvEnRetard(today));
-            }
-            if (features.isVoirNotifications()) {
-                out.nombreNotificationsNonLues(notificationRepository.countNonLuesPourSecretaire(utilisateurId));
-                out.nombreAlertesImportantes(notificationRepository.countAlertesImportantesPourSecretaire(utilisateurId));
-            }
+                case "ADMIN" -> DashboardDTO.builder()
+                        .role(role)
+                        .features(features)
+                        .admin(buildAdminDashboard(utilisateurId))
+                        .build();
 
-            // Médecin
-            if (features.isVoirConsultationsEtActes()) {
-                Long medecinId = utilisateurId;
-
-                out.nombreConsultationsTerminees(consultationRepository.countTermineesPourMedecin(medecinId, start, end));
-                out.nombreConsultationsEnCours(consultationRepository.countEnCoursPourMedecin(medecinId, start, end));
-
-                out.nombreActesRealisesDuJour(acteRepository.countActesPourMedecinEtDate(medecinId, start, end));
-                out.montantTotalActesDuJour(safeDouble(acteRepository.sumMontantActesPourMedecinEtDate(medecinId, start, end)));
-
-                out.totalFacturesDuJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
-                out.totalRegleDuJour(safeDouble(factureRepository.calculateTotalRegle(start, end)));
-                out.totalNonRegleDuJour(safeDouble(factureRepository.calculateTotalNonRegle(start, end)));
-            }
-
-            // Admin
-            if (features.isVoirStatsAdmin()) {
-                out.nombreUtilisateursTotal(utilisateurRepository.countAll());
-                out.nombreMedecins(utilisateurRepository.countByRole("MEDECIN"));
-                out.nombreSecretaires(utilisateurRepository.countByRole("SECRETAIRE"));
-                out.nombreAdmins(utilisateurRepository.countByRole("ADMIN"));
-
-                out.nombrePatientsTotal(patientRepository.countAll());
-                out.nombreDossiersActifs(dossierMedicalRepository.countActifs());
-
-                out.chiffreAffairesJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
-
-                LocalDate firstDay = today.withDayOfMonth(1);
-                LocalDateTime startMonth = firstDay.atStartOfDay();
-                LocalDateTime endMonth = firstDay.plusMonths(1).atStartOfDay().minusNanos(1);
-
-                out.chiffreAffairesMois(safeDouble(factureRepository.calculateTotalFactures(startMonth, endMonth)));
-                out.totalChargesMois(safeDouble(chargesRepository.calculateTotalCharges(startMonth, endMonth)));
-
-                out.nombreConnexionsJour(utilisateurRepository.countConnexionsJour(today));
-                out.nombreNotificationsSysteme(notificationRepository.countNotificationsSystemeNonLues());
-            }
-
-            return out.build();
+                default -> DashboardDTO.builder()
+                        .role(role)
+                        .features(features)
+                        .build();
+            };
 
         } catch (Exception e) {
-            throw new ServiceException("Erreur getDashboard (DTO unique).", e);
+            throw new ServiceException("Erreur DashboardService.getDashboard", e);
         }
     }
 
-    private DashboardFeaturesDTO featuresForRole(String role) {
-        role = role == null ? "" : role.trim().toUpperCase();
+    // =========================
+    // Builders par rôle
+    // =========================
+
+    private SecretaireDashboardResponseDTO buildSecretaireDashboard(Long utilisateurId) {
+        // TODO: Remplacer par les vrais appels agenda/caisse
+        // - rdvDuJour = agendaService.getRdvDuJour(...)
+        // - fileAttente = agendaService.getFileAttente(...)
+        // - recetteDuJour = caisseService.getRecetteDuJour(...)
+        return SecretaireDashboardResponseDTO.builder()
+                .nbPatients(null) // optionnel
+                .nbRdvDuJour(12)
+                .nbEnAttente(6)
+                .recetteDuJour(new BigDecimal("1200"))
+                .rdvDuJour(List.of())        // TODO
+                .fileAttente(List.of())      // TODO
+                .build();
+    }
+
+    private MedecinDashboardResponseDTO buildMedecinDashboard(Long utilisateurId) {
+        // TODO: rdvDuJour = agendaService.getRdvDuJourMedecin(medecinId, date)
+        // TODO: patientEnCours = agendaService.getPatientEnCours(...)
+        return MedecinDashboardResponseDTO.builder()
+                .nbPatientsDuJour(10)
+                .nbRdvDuJour(15)
+                .nbActesRealises(7)
+                .recetteDuJour(new BigDecimal("1200"))
+                .rdvDuJour(List.of()) // TODO
+                .patientEnCours(PatientCurrentDTO.builder()
+                        .patientId(1L)
+                        .nomComplet("Driss Gafar")
+                        .tel("06 12 34 56 78")
+                        .statutTraitement("EN_TRAITEMENT")
+                        .build())
+                .build();
+    }
+
+    private AdminDashboardResponseDTO buildAdminDashboard(Long utilisateurId) {
+        // TODO: utilisateurs = usersService.listUsers(...)
+        List<UserSummaryDTO> fakeUsers = List.of(
+                UserSummaryDTO.builder()
+                        .id(1L).nom("Idrissi").prenom("Adam").login("admin@dental.ma")
+                        .role(LibelleRole.valueOf("ADMIN")).statut("ACTIF")
+                        .derniereActivite(LocalDateTime.now().minusHours(2))
+                        .build()
+        );
+
+        return AdminDashboardResponseDTO.builder()
+                .nbUtilisateurs(24)
+                .nbAdmins(4)
+                .nbActesRealises(15)
+                .recetteDuJour(new BigDecimal("1200"))
+                .utilisateurs(fakeUsers)
+                .referentiels(ReferentielStatsDTO.builder()
+                        .nbActes(120)
+                        .nbMedicaments(80)
+                        .nbAntecedents(45)
+                        .nbAssurances(12)
+                        .build())
+                .sauvegarde(null) // optionnel
+                .build();
+    }
+
+    // =========================
+    // Features
+    // =========================
+
+    private DashboardFeaturesDTO featuresFor(String role) {
         return switch (role) {
             case "SECRETAIRE" -> DashboardFeaturesDTO.builder()
-                    .voirCaisse(true).voirRdvEtFileAttente(true).voirNotifications(true)
-                    .voirConsultationsEtActes(false).voirStatsAdmin(false)
+                    .voirRdvEtFileAttente(true)
+                    .voirClientEnCours(false)
+                    .voirStatsAdmin(false)
+                    .voirCaisse(true)
+                    .voirNotifications(true)
                     .build();
             case "MEDECIN" -> DashboardFeaturesDTO.builder()
-                    .voirCaisse(false).voirRdvEtFileAttente(true).voirNotifications(false)
-                    .voirConsultationsEtActes(true).voirStatsAdmin(false)
+                    .voirRdvEtFileAttente(true)
+                    .voirClientEnCours(true)
+                    .voirStatsAdmin(false)
+                    .voirCaisse(true)
+                    .voirNotifications(true)
                     .build();
             case "ADMIN" -> DashboardFeaturesDTO.builder()
-                    .voirCaisse(true).voirRdvEtFileAttente(false).voirNotifications(true)
-                    .voirConsultationsEtActes(false).voirStatsAdmin(true)
+                    .voirRdvEtFileAttente(false)
+                    .voirClientEnCours(false)
+                    .voirStatsAdmin(true)
+                    .voirCaisse(true)
+                    .voirNotifications(true)
                     .build();
             default -> DashboardFeaturesDTO.builder().build();
         };
-    }
-
-    private Double safeDouble(Double v) {
-        return v != null ? v : 0.0;
     }
 }
