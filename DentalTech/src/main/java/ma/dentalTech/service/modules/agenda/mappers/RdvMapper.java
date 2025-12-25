@@ -13,7 +13,6 @@ public final class RdvMapper {
 
         return RdvDto.builder()
                 .id(e.getId())
-                .patientId(e.getPatientId())
                 .detailJourneeId(e.getDetailJourneeId())
                 .listeAttenteId(e.getListeAttenteId())
                 .typeRdv(e.getTypeRdv())
@@ -30,7 +29,6 @@ public final class RdvMapper {
 
         return RDV.builder()
                 .id(d.getId())
-                .patientId(d.getPatientId())
                 .detailJourneeId(d.getDetailJourneeId())
                 .listeAttenteId(d.getListeAttenteId())
                 .typeRdv(d.getTypeRdv())

@@ -42,7 +42,6 @@ public class RdvControllerImpl implements RdvController {
 
         return RdvDto.builder()
                 .id(r.getId())
-                .patientId(r.getPatientId())
                 .detailJourneeId(r.getDetailJourneeId())
                 .listeAttenteId(r.getListeAttenteId())
                 .dateRdv(r.getDateRdv())

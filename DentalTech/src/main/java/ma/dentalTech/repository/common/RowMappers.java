@@ -135,7 +135,7 @@ public final class RowMappers {
                 .dateJour(getLd(rs, "date_jour"))
                 .heureDebutTravail(getLt(rs, "heure_debut_travail"))
                 .heureFinTravail(getLt(rs, "heure_fin_travail"))
-                .etatJour(rs.getString("etat_jour"))
+                .etatJour(StatutJournee.valueOf(rs.getString("etat_jour")))
                 .commentaire(rs.getString("commentaire"))
                 .dateCreation(getLdt(rs, "date_creation"))
                 .dateModification(getLdt(rs, "date_modification"))

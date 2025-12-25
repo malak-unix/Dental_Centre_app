@@ -59,7 +59,6 @@ public class RdvRepositoryImpl implements RdvRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
@@ -97,7 +96,6 @@ public class RdvRepositoryImpl implements RdvRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
             ps.setDate(4, Date.valueOf(r.getDateRdv()));

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import ma.dentalTech.entities.enums.Sexe;
 
 import java.time.LocalDate;
 
@@ -23,6 +24,9 @@ public class Staff extends Utilisateur {
     // (type Object pour ne pas casser la compilation tant que CabinetMedicale n'existe pas)
     // ==========================
     private Object cabinetMedicale;
+
+    public Staff(String nom, String email, String adresse, String cin, String tel, Sexe sexe, String login, String motDePasse, LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime, LocalDate dateRecrutement, Integer soldeCongé) {
+    }
 
     @Override
     public boolean equals(Object o) {
