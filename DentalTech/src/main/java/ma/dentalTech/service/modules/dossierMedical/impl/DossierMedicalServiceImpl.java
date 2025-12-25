@@ -30,8 +30,6 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
     private final DocumentMedicalRepository docRepo;
     private final OrdonnanceRepository ordonnanceRepo;
     private final CertificatRepository certificatRepo;
-
-    // lecture depuis caisse (tu n’implémentes pas)
     private final FactureRepository factureRepo;
     private final SituationFinanciereRepository sfRepo;
 
