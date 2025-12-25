@@ -9,6 +9,8 @@ public interface DocumentMedicalRepository extends CrudRepository<DocumentMedica
 
     List<DocumentMedical> findByDossierId(Long dossierId);
 
+    List<DocumentMedical> findByPatientId(Long patientId);
+
     List<DocumentMedical> findByConsultationId(Long consultationId);
 
     List<DocumentMedical> searchByTitreOrNom(String keyword);

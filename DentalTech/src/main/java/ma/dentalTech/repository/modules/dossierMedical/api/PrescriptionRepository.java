@@ -8,7 +8,6 @@ import java.util.List;
 public interface PrescriptionRepository extends CrudRepository<Prescription, Long> {
 
     List<Prescription> findByOrdonnanceId(Long ordonnanceId);
-
     void deleteByOrdonnanceId(Long ordonnanceId);
     boolean existsById(Long id);
     long countByOrdonnanceId(Long ordonnanceId);

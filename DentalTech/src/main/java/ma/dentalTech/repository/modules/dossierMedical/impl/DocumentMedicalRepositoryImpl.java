@@ -203,6 +203,11 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
     }
 
     @Override
+    public List<DocumentMedical> findByPatientId(Long patientId) {
+        return List.of();
+    }
+
+    @Override
     public List<DocumentMedical> findByConsultationId(Long consultationId) {
         if (consultationId == null) return List.of();
 
