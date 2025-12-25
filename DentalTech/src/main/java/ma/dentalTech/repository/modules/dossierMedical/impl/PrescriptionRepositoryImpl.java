@@ -50,92 +50,90 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
 
     @Override
     public void create(Prescription p) {
+        if (p == null) throw new IllegalArgumentException("Prescription null dans create()");
+        if (p.getOrdonnanceId() == null) throw new IllegalArgumentException("ordonnanceId obligatoire (NOT NULL)");
+
         String sql = """
-                INSERT INTO prescription
-                (ordonnance_id, medicament_id, quantite, frequence, duree_en_jours,
-                 date_creation, cree_par, modifie_par)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """;
+        INSERT INTO prescription
+        (ordonnance_id, medicament_id, quantite, frequence, duree_en_jours, cree_par, modifie_par)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """;
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // ordonnance_id (NOT NULL en base)
             ps.setLong(1, p.getOrdonnanceId());
 
-            // medicament_id (nullable)
-            if (p.getMedicamentId() != null) {
-                ps.setLong(2, p.getMedicamentId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
+            if (p.getMedicamentId() != null) ps.setLong(2, p.getMedicamentId());
+            else ps.setNull(2, Types.BIGINT);
 
-            ps.setInt(3, p.getQuantite());
+            int q = p.getQuantite() <= 0 ? 1 : p.getQuantite();
+            ps.setInt(3, q);
+
             ps.setString(4, p.getFrequence());
-            ps.setInt(5, p.getDureeEnJours());
 
-            LocalDateTime dc = (p.getDateCreation() != null) ? p.getDateCreation() : LocalDateTime.now();
-            ps.setTimestamp(6, Timestamp.valueOf(dc));
+            int d = p.getDureeEnJours() < 0 ? 0 : p.getDureeEnJours();
+            ps.setInt(5, d);
 
-            ps.setString(7, p.getCreePar());
-            ps.setString(8, p.getModifiePar());
+            ps.setString(6, p.getCreePar());
+            ps.setString(7, p.getModifiePar());
 
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    p.setId(rs.getLong(1));
-                }
+                if (rs.next()) p.setId(rs.getLong(1));
             }
 
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur create() Prescription", e);
         }
     }
 
+
     @Override
     public void update(Prescription p) {
+        if (p == null) throw new IllegalArgumentException("Prescription null dans update()");
+        if (p.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
+        if (p.getOrdonnanceId() == null) throw new IllegalArgumentException("ordonnanceId obligatoire dans update()");
+
         String sql = """
-                UPDATE prescription
-                   SET ordonnance_id = ?,
-                       medicament_id = ?,
-                       quantite = ?,
-                       frequence = ?,
-                       duree_en_jours = ?,
-                       date_modification = ?,
-                       modifie_par = ?
-                 WHERE id = ?
-                """;
+        UPDATE prescription
+           SET ordonnance_id = ?,
+               medicament_id = ?,
+               quantite = ?,
+               frequence = ?,
+               duree_en_jours = ?,
+               modifie_par = ?,
+               date_modification = CURRENT_TIMESTAMP
+         WHERE id = ?
+        """;
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, p.getOrdonnanceId());
 
-            if (p.getMedicamentId() != null) {
-                ps.setLong(2, p.getMedicamentId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
+            if (p.getMedicamentId() != null) ps.setLong(2, p.getMedicamentId());
+            else ps.setNull(2, Types.BIGINT);
 
-            ps.setInt(3, p.getQuantite());
+            int q = p.getQuantite() <= 0 ? 1 : p.getQuantite();
+            ps.setInt(3, q);
+
             ps.setString(4, p.getFrequence());
-            ps.setInt(5, p.getDureeEnJours());
 
-            LocalDateTime dm = (p.getDateDerniereModification() != null)
-                    ? p.getDateDerniereModification()
-                    : LocalDateTime.now();
-            ps.setTimestamp(6, Timestamp.valueOf(dm));
+            int d = p.getDureeEnJours() < 0 ? 0 : p.getDureeEnJours();
+            ps.setInt(5, d);
 
-            ps.setString(7, p.getModifiePar());
-            ps.setLong(8, p.getId());
+            ps.setString(6, p.getModifiePar());
+            ps.setLong(7, p.getId());
 
             ps.executeUpdate();
 
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur update() Prescription, id=" + p.getId(), e);
         }
     }
+
 
     @Override
     public Prescription findById(Long id) {
@@ -242,4 +240,44 @@ public class PrescriptionRepositoryImpl implements PrescriptionRepository {
             throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
+    @Override
+    public boolean existsById(Long id) {
+        if (id == null) return false;
+
+        String sql = "SELECT 1 FROM prescription WHERE id = ?";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur existsById() Prescription, id=" + id, e);
+        }
+    }
+
+    @Override
+    public long countByOrdonnanceId(Long ordonnanceId) {
+        if (ordonnanceId == null) return 0;
+
+        String sql = "SELECT COUNT(*) AS total FROM prescription WHERE ordonnance_id = ?";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, ordonnanceId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong("total") : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countByOrdonnanceId() Prescription, ordonnanceId=" + ordonnanceId, e);
+        }
+    }
+
 }

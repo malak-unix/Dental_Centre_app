@@ -1,29 +1,21 @@
 package ma.dentalTech.repository.modules.patient.api;
 
+import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.entities.patient.Patient;
-import ma.dentalTech.entities.patient.Antecedents;
-import ma.dentalTech.repository.common.CrudRepository;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface PatientRepository extends CrudRepository<Patient, Long> {
+public interface PatientRepository {
+    void create(Patient p) throws DaoException;
+    void update(Patient p) throws DaoException;
+    void delete(Patient p) throws DaoException;
+    void deleteById(Long id) throws DaoException;
 
-    Optional<Patient> findByEmail(String email);
-    Optional<Patient> findByTelephone(String telephone);
-    List<Patient> searchByNomPrenom(String keyword);
-    boolean existsById(Long id);
-    long count();
-    List<Patient> findPage(int limit, int offset);
+    Patient findById(Long id) throws DaoException;
+    List<Patient> findAll() throws DaoException;
+    List<Patient> findByNom(String nom) throws DaoException;
+    Patient findByTelephone(String telephone) throws DaoException;
 
-    // ---- Liaison Many-to-Many ----
-    void addAntecedentToPatient(Long patientId, Long antecedentId);
-    void removeAntecedentFromPatient(Long patientId, Long antecedentId);
-    void removeAllAntecedentsFromPatient(Long patientId);
-    List<Antecedents> getAntecedentsOfPatient(Long patientId);
-    List<Patient> getPatientsByAntecedent(Long antecedentId);
-    List<Patient> searchByNom(String nomPart);
-//Utiliser f dahsboard aya berday
-    Integer countAll();
+    long countAll() throws DaoException;
 
 }

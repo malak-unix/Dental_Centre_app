@@ -1,28 +1,25 @@
 package ma.dentalTech.entities.users;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.LibelleRole;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Entité représentant un rôle avec ses privilèges.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Role extends BaseEntity {
 
-    private LibelleRole libelle;
-    private List<String> privilege;
-
-    // ==========================
-    // Relation (diagramme) : Utilisateur * <-> * Role
-    // ==========================
-    private List<Utilisateur> utilisateurs = new ArrayList<>();
+    private String libelle;
+    private LibelleRole type;
+    private List<String> privileges = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {
@@ -39,18 +36,6 @@ public class Role extends BaseEntity {
 
     @Override
     public String toString() {
-        return """
-            Role {
-                id = %s,
-                libelle = %s,
-                privilegesCount = %d,
-                utilisateursCount = %d
-            }
-            """.formatted(
-                String.valueOf(id),
-                String.valueOf(libelle),
-                privilege == null ? 0 : privilege.size(),
-                utilisateurs == null ? 0 : utilisateurs.size()
-        );
+        return "Role{id=" + id + ", libelle='" + libelle + "', type=" + type + "}";
     }
 }

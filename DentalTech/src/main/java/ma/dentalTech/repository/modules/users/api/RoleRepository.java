@@ -1,14 +1,24 @@
 package ma.dentalTech.repository.modules.users.api;
 
-import ma.dentalTech.entities.role.Role;           // Import correct selon votre code entity
-import ma.dentalTech.entities.enums.LibelleRole;   // Import de votre Enum
+import ma.dentalTech.entities.users.Role;
+import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.repository.common.CrudRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RoleRepository extends CrudRepository<Role, Long> {
 
-    // Recherche un rôle par son Enum (ADMIN, MEDECIN, etc.)
-    Optional<Role> findByLibelle(LibelleRole libelle);
+    Optional<Role> findByLibelle(String libelle);
+    //List<Role> findByType(RoleType type);
+    Optional<Role> findByType(LibelleRole type);
+    List<String> getPrivileges(Long roleId);
+    void addPrivilege(Long roleId, String privilege);
+    void removePrivilege(Long roleId, String privilege);
+    boolean existsByLibelle(String libelle);
 
+    List<Role> findRolesByUtilisateurId(Long utilisateurId);
+    // à ajouter dans RoleRepository (repository layer)
+    void assignRoleToUser(Long utilisateurId, Long roleId);
+    void removeRoleFromUser(Long utilisateurId, Long roleId);
 }

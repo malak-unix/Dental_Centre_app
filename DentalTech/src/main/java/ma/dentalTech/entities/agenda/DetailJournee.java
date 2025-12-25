@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.*;
+import ma.dentalTech.entities.enums.StatutJournee;
 
 @Data
 @NoArgsConstructor
@@ -18,7 +19,10 @@ public class DetailJournee {
     private LocalDate dateJour;          // ✅ schema: date_jour
     private LocalTime heureDebutTravail; // ✅ schema: heure_debut_travail
     private LocalTime heureFinTravail;   // ✅ schema: heure_fin_travail
-    private String etatJour;             // ✅ schema: etat_jour (enum SQL) -> String ou enum Java
+
+    // ✅ IMPORTANT: Enum (plus de String)
+    private StatutJournee etatJour;      // ✅ schema: etat_jour
+
     private String commentaire;
 
     // BaseEntity
@@ -27,7 +31,7 @@ public class DetailJournee {
     private String creePar;
     private String modifiePar;
 
-    // Relations optionnelles
+    // Relation optionnelle
     private AgendaMensuel agendaMensuel;
 
     @Override

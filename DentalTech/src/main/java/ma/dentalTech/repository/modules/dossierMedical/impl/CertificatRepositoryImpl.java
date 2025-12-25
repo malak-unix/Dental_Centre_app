@@ -1,7 +1,7 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
-import ma.dentalTech.entities.dossierMedical.Certificat;
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Certificat;
 import ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository;
 
 import java.sql.*;
@@ -53,11 +53,13 @@ public class CertificatRepositoryImpl implements CertificatRepository {
     }
 
     // =====================================================================================
-    // CRUD de base
+    // CRUD
     // =====================================================================================
 
     @Override
     public void create(Certificat c) {
+        if (c == null) throw new IllegalArgumentException("Certificat null dans create()");
+
         String sql = """
                 INSERT INTO certificat
                 (dossier_id, date_debut, date_fin, duree, note_medecin,
@@ -68,32 +70,21 @@ public class CertificatRepositoryImpl implements CertificatRepository {
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // dossier_id
-            if (c.getDossierId() != null) {
-                ps.setLong(1, c.getDossierId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+            if (c.getDossierId() != null) ps.setLong(1, c.getDossierId());
+            else ps.setNull(1, Types.BIGINT);
 
-            // date_debut
             if (c.getDateDebut() != null) ps.setDate(2, Date.valueOf(c.getDateDebut()));
             else ps.setNull(2, Types.DATE);
 
-            // date_fin
             if (c.getDateFin() != null) ps.setDate(3, Date.valueOf(c.getDateFin()));
             else ps.setNull(3, Types.DATE);
 
-            // duree
             ps.setInt(4, c.getDuree());
-
-            // note_medecin
             ps.setString(5, c.getNoteMedecin());
 
-            // date_creation
             LocalDateTime dc = (c.getDateCreation() != null) ? c.getDateCreation() : LocalDateTime.now();
             ps.setTimestamp(6, Timestamp.valueOf(dc));
 
-            // cree_par / modifie_par
             ps.setString(7, c.getCreePar());
             ps.setString(8, c.getModifiePar());
 
@@ -102,14 +93,17 @@ public class CertificatRepositoryImpl implements CertificatRepository {
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) c.setId(rs.getLong(1));
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
-        }
 
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.create()", e);
+        }
     }
 
     @Override
     public void update(Certificat c) {
+        if (c == null) throw new IllegalArgumentException("Certificat null dans update()");
+        if (c.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
+
         String sql = """
                 UPDATE certificat
                    SET dossier_id = ?,
@@ -125,48 +119,37 @@ public class CertificatRepositoryImpl implements CertificatRepository {
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // dossier_id
-            if (c.getDossierId() != null) {
-                ps.setLong(1, c.getDossierId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+            if (c.getDossierId() != null) ps.setLong(1, c.getDossierId());
+            else ps.setNull(1, Types.BIGINT);
 
-            // date_debut
             if (c.getDateDebut() != null) ps.setDate(2, Date.valueOf(c.getDateDebut()));
             else ps.setNull(2, Types.DATE);
 
-            // date_fin
             if (c.getDateFin() != null) ps.setDate(3, Date.valueOf(c.getDateFin()));
             else ps.setNull(3, Types.DATE);
 
-            // duree
             ps.setInt(4, c.getDuree());
-
-            // note_medecin
             ps.setString(5, c.getNoteMedecin());
 
-            // date_modification
             LocalDateTime dm = (c.getDateDerniereModification() != null)
                     ? c.getDateDerniereModification()
                     : LocalDateTime.now();
             ps.setTimestamp(6, Timestamp.valueOf(dm));
 
-            // modifie_par
             ps.setString(7, c.getModifiePar());
-
-            // id
             ps.setLong(8, c.getId());
 
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
-        }
 
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.update(id=" + c.getId() + ")", e);
+        }
     }
 
     @Override
     public Certificat findById(Long id) {
+        if (id == null) return null;
+
         String sql = "SELECT * FROM certificat WHERE id = ?";
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -175,18 +158,17 @@ public class CertificatRepositoryImpl implements CertificatRepository {
             ps.setLong(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return map(rs);
+                return rs.next() ? map(rs) : null;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
-        }
 
-        return null;
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.findById(" + id + ")", e);
+        }
     }
 
     @Override
     public List<Certificat> findAll() {
-        String sql = "SELECT * FROM certificat ORDER BY id";
+        String sql = "SELECT * FROM certificat ORDER BY date_debut DESC, id DESC";
         List<Certificat> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -194,22 +176,22 @@ public class CertificatRepositoryImpl implements CertificatRepository {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) list.add(map(rs));
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
-        }
+            return list;
 
-        return list;
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.findAll()", e);
+        }
     }
 
     @Override
     public void delete(Certificat c) {
-        if (c != null && c.getId() != null) {
-            deleteById(c.getId());
-        }
+        if (c != null && c.getId() != null) deleteById(c.getId());
     }
 
     @Override
     public void deleteById(Long id) {
+        if (id == null) return;
+
         String sql = "DELETE FROM certificat WHERE id = ?";
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -217,10 +199,10 @@ public class CertificatRepositoryImpl implements CertificatRepository {
 
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
-        }
 
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.deleteById(" + id + ")", e);
+        }
     }
 
     // =====================================================================================
@@ -229,7 +211,9 @@ public class CertificatRepositoryImpl implements CertificatRepository {
 
     @Override
     public List<Certificat> findByDossierId(Long dossierId) {
-        String sql = "SELECT * FROM certificat WHERE dossier_id = ? ORDER BY date_debut, id";
+        if (dossierId == null) return List.of();
+
+        String sql = "SELECT * FROM certificat WHERE dossier_id = ? ORDER BY date_debut DESC, id DESC";
         List<Certificat> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -240,17 +224,18 @@ public class CertificatRepositoryImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
+            return list;
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
+            throw new RuntimeException("Erreur SQL: Certificat.findByDossierId(" + dossierId + ")", e);
         }
-
-
-        return list;
     }
 
     @Override
     public List<Certificat> findByDateDebut(LocalDate dateDebut) {
-        String sql = "SELECT * FROM certificat WHERE date_debut = ? ORDER BY id";
+        if (dateDebut == null) return List.of();
+
+        String sql = "SELECT * FROM certificat WHERE date_debut = ? ORDER BY id DESC";
         List<Certificat> list = new ArrayList<>();
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
@@ -261,20 +246,21 @@ public class CertificatRepositoryImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
+            return list;
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
+            throw new RuntimeException("Erreur SQL: Certificat.findByDateDebut(" + dateDebut + ")", e);
         }
-
-
-        return list;
     }
 
     @Override
     public List<Certificat> findByDateBetween(LocalDate start, LocalDate end) {
+        if (start == null || end == null) return List.of();
+
         String sql = """
                 SELECT * FROM certificat
                  WHERE date_debut BETWEEN ? AND ?
-                 ORDER BY date_debut, id
+                 ORDER BY date_debut DESC, id DESC
                 """;
         List<Certificat> list = new ArrayList<>();
 
@@ -287,12 +273,31 @@ public class CertificatRepositoryImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
+            return list;
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
+            throw new RuntimeException("Erreur SQL: Certificat.findByDateBetween(" + start + "," + end + ")", e);
         }
+    }
 
+    @Override
+    public boolean existsById(Long id) {
+        if (id == null) return false;
 
-        return list;
+        String sql = "SELECT 1 FROM certificat WHERE id = ?";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.existsById(" + id + ")", e);
+        }
     }
 
     @Override
@@ -303,13 +308,11 @@ public class CertificatRepositoryImpl implements CertificatRepository {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) return rs.getLong("total");
+            return rs.next() ? rs.getLong("total") : 0L;
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
+            throw new RuntimeException("Erreur SQL: Certificat.count()", e);
         }
-
-
-        return 0;
     }
 
     @Override
@@ -330,11 +333,36 @@ public class CertificatRepositoryImpl implements CertificatRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
+            return list;
+
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la création du certificat", e);
+            throw new RuntimeException("Erreur SQL: Certificat.findPage(limit=" + limit + ", offset=" + offset + ")", e);
         }
+    }
 
+    @Override
+    public List<Certificat> searchByNote(String keyword) {
+        String sql = """
+                SELECT * FROM certificat
+                 WHERE note_medecin LIKE ?
+                 ORDER BY date_debut DESC, id DESC
+                """;
 
-        return list;
+        List<Certificat> list = new ArrayList<>();
+        String like = "%" + (keyword == null ? "" : keyword) + "%";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, like);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(map(rs));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Certificat.searchByNote(" + keyword + ")", e);
+        }
     }
 }

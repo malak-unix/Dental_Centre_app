@@ -1,50 +1,39 @@
 package ma.dentalTech.entities.users;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import java.time.LocalDate;
+import lombok.*;
 
+/**
+ * Entité représentant une secrétaire du cabinet.
+ */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class Secretaire extends Staff {
 
     private String numCNSS;
     private Double commission;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Secretaire)) return false;
-        Secretaire that = (Secretaire) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+    @Builder(builderMethodName = "secretaireBuilder")
+    public Secretaire(String nom, String email, String adresse, String cin, String tel,
+                      ma.dentalTech.entities.enums.Sexe sexe, String login, String motDePasse,
+                      LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
+                      LocalDate dateRecrutement, Integer soldeCongé, String numCNSS, Double commission) {
+        super( nom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
+                dateNaissance, salaire, prime, dateRecrutement, soldeCongé);
+        this.numCNSS = numCNSS;
+        this.commission = commission;
     }
 
     @Override
     public String toString() {
         return """
             Secretaire {
-                id = %s,
+                id = %d,
                 nom = '%s',
-                prenom = '%s',
-                login = '%s',
                 numCNSS = '%s',
                 commission = %.2f
             }
-            """.formatted(
-                String.valueOf(id),
-                getNom(),
-                getPrenom(),
-                getLogin(),
-                numCNSS,
-                commission != null ? commission : 0.0
-        );
+            """.formatted(getId(), getNom(), numCNSS, commission != null ? commission : 0.0);
     }
 }

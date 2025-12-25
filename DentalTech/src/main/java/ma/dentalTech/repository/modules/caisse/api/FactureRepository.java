@@ -1,6 +1,7 @@
 package ma.dentalTech.repository.modules.caisse.api;
 
-import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.entities.cabinet.Facture;
+import ma.dentalTech.entities.enums.StatutFacture;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDateTime;
@@ -15,4 +16,17 @@ public interface FactureRepository extends CrudRepository<Facture, Long> {
     Double calculateTotalRegle(LocalDateTime start, LocalDateTime end);
 
     Double calculateTotalNonRegle(LocalDateTime start, LocalDateTime end);
+
+    // === AJOUTS dossier médical / consultation ===
+    Facture findByConsultationId(Long consultationId);
+
+    boolean existsByConsultationId(Long consultationId);
+
+    List<Facture> findByDossierId(Long dossierId);
+
+    List<Facture> findPage(int limit, int offset);
+    long count();
+
+    boolean updatePayment(Long factureId, double totalPaye, StatutFacture statut, String modifiePar);
+
 }

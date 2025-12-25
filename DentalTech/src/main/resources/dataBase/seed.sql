@@ -256,3 +256,10 @@ VALUES
   (1, '11:00:00', '11:30:00', 1, 'aya');
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+INSERT INTO document_medical
+(dossier_id, consultation_id, type_document, titre, nom_fichier, chemin_fichier, taille_octets, date_document, cree_par, modifie_par)
+VALUES
+(1, 1, 'ANALYSE', 'Analyse sanguine', 'analyse_2025_01.pdf',
+ 'C:/dentaltech/uploads/analyse_2025_01.pdf', 204800, NOW(), 'SEED', 'SEED');
+
