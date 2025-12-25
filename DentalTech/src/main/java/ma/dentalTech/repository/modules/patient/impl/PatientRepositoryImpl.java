@@ -10,11 +10,12 @@ import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class PatientRepositoryImpl implements PatientRepository {
 
     // =========================
-    // CRUD
+    // CREATE
     // =========================
     @Override
     public void create(Patient p) throws DaoException {
@@ -22,7 +23,6 @@ public class PatientRepositoryImpl implements PatientRepository {
         if (p.getNom() == null || p.getNom().isBlank()) throw new DaoException("nom obligatoire");
         if (p.getPrenom() == null || p.getPrenom().isBlank()) throw new DaoException("prenom obligatoire");
 
-        // ✅ BD actuelle: audit directement dans patient (pas base_entity)
         String sql = """
             INSERT INTO patient
               (nom, prenom, date_naissance, sexe, telephone, adresse, assurance,
@@ -35,11 +35,17 @@ public class PatientRepositoryImpl implements PatientRepository {
 
             ps.setString(1, p.getNom());
             ps.setString(2, p.getPrenom());
-            ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
+
+            if (p.getDateNaissance() != null)
+                ps.setDate(3, Date.valueOf(p.getDateNaissance()));
+            else
+                ps.setNull(3, Types.DATE);
+
             ps.setString(4, p.getSexe() != null ? toDbSexe(p.getSexe()) : null);
             ps.setString(5, p.getTelephone());
             ps.setString(6, p.getAdresse());
             ps.setString(7, p.getAssurance() != null ? toDbAssurance(p.getAssurance()) : null);
+
             ps.setString(8, p.getCreePar());
             ps.setString(9, p.getModifiePar());
 
@@ -49,53 +55,57 @@ public class PatientRepositoryImpl implements PatientRepository {
                 if (keys.next()) p.setId(keys.getLong(1));
             }
 
-            // ✅ champ présent dans ton entity, mais pas en BD
-            p.setBaseEntityId(null);
-
         } catch (Exception e) {
             throw new DaoException("Erreur create(Patient)", e);
         }
     }
 
+    // =========================
+    // UPDATE
+    // =========================
     @Override
     public void update(Patient p) throws DaoException {
-        if (p == null || p.getId() == null) throw new DaoException("Patient id obligatoire");
+        if (p == null || p.getId() == null)
+            throw new DaoException("Patient id obligatoire");
 
         Patient current = findById(p.getId());
-        if (current == null) throw new DaoException("Patient introuvable id=" + p.getId());
+        if (current == null)
+            throw new DaoException("Patient introuvable id=" + p.getId());
 
         String sql = """
             UPDATE patient
-               SET nom = ?,
-                   prenom = ?,
-                   date_naissance = ?,
-                   sexe = ?,
-                   telephone = ?,
-                   adresse = ?,
-                   assurance = ?,
-                   date_modification = NOW(),
-                   modifie_par = ?
-             WHERE id = ?
+               SET nom=?,
+                   prenom=?,
+                   date_naissance=?,
+                   sexe=?,
+                   telephone=?,
+                   adresse=?,
+                   assurance=?,
+                   date_modification=NOW(),
+                   modifie_par=?
+             WHERE id=?
             """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, p.getNom() != null ? p.getNom() : current.getNom());
-            ps.setString(2, p.getPrenom() != null ? p.getPrenom() : current.getPrenom());
+            ps.setString(1, or(p.getNom(), current.getNom()));
+            ps.setString(2, or(p.getPrenom(), current.getPrenom()));
 
-            ps.setDate(3,
-                    p.getDateNaissance() != null
-                            ? Date.valueOf(p.getDateNaissance())
-                            : (current.getDateNaissance() != null ? Date.valueOf(current.getDateNaissance()) : null));
+            if (p.getDateNaissance() != null)
+                ps.setDate(3, Date.valueOf(p.getDateNaissance()));
+            else if (current.getDateNaissance() != null)
+                ps.setDate(3, Date.valueOf(current.getDateNaissance()));
+            else
+                ps.setNull(3, Types.DATE);
 
-            Sexe sexe = (p.getSexe() != null) ? p.getSexe() : current.getSexe();
+            Sexe sexe = p.getSexe() != null ? p.getSexe() : current.getSexe();
             ps.setString(4, sexe != null ? toDbSexe(sexe) : null);
 
-            ps.setString(5, p.getTelephone() != null ? p.getTelephone() : current.getTelephone());
+            ps.setString(5, or(p.getTelephone(), current.getTelephone()));
             ps.setString(6, p.getAdresse() != null ? p.getAdresse() : current.getAdresse());
 
-            Assurance ass = (p.getAssurance() != null) ? p.getAssurance() : current.getAssurance();
+            Assurance ass = p.getAssurance() != null ? p.getAssurance() : current.getAssurance();
             ps.setString(7, ass != null ? toDbAssurance(ass) : null);
 
             ps.setString(8, p.getModifiePar());
@@ -108,6 +118,9 @@ public class PatientRepositoryImpl implements PatientRepository {
         }
     }
 
+    // =========================
+    // DELETE
+    // =========================
     @Override
     public void delete(Patient p) throws DaoException {
         if (p == null || p.getId() == null) return;
@@ -118,7 +131,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     public void deleteById(Long id) throws DaoException {
         if (id == null) return;
 
-        String sql = "DELETE FROM patient WHERE id = ?";
+        String sql = "DELETE FROM patient WHERE id=?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -138,17 +151,12 @@ public class PatientRepositoryImpl implements PatientRepository {
     public Patient findById(Long id) throws DaoException {
         if (id == null) return null;
 
-        String sql = """
-            SELECT *
-              FROM patient
-             WHERE id = ?
-            """;
+        String sql = "SELECT * FROM patient WHERE id=?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, id);
-
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapPatient(rs) : null;
             }
@@ -160,12 +168,7 @@ public class PatientRepositoryImpl implements PatientRepository {
 
     @Override
     public List<Patient> findAll() throws DaoException {
-        String sql = """
-            SELECT *
-              FROM patient
-             ORDER BY id DESC
-            """;
-
+        String sql = "SELECT * FROM patient ORDER BY id DESC";
         List<Patient> list = new ArrayList<>();
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -180,9 +183,12 @@ public class PatientRepositoryImpl implements PatientRepository {
         }
     }
 
-    // =========================
-    // Recherches
-    // =========================
+    @Override
+    public Optional<Patient> findByEmail(String email) throws DaoException {
+        // ⚠️ email NON géré dans l’entity → méthode volontairement vide
+        return Optional.empty();
+    }
+
     @Override
     public List<Patient> findByNom(String nom) throws DaoException {
         if (nom == null) nom = "";
@@ -200,7 +206,6 @@ public class PatientRepositoryImpl implements PatientRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setString(1, "%" + nom.toLowerCase() + "%");
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) result.add(mapPatient(rs));
             }
@@ -213,17 +218,14 @@ public class PatientRepositoryImpl implements PatientRepository {
 
     @Override
     public Patient findByTelephone(String telephone) throws DaoException {
-        String sql = """
-            SELECT *
-              FROM patient
-             WHERE telephone = ?
-            """;
+        if (telephone == null || telephone.isBlank()) return null;
+
+        String sql = "SELECT * FROM patient WHERE telephone=?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setString(1, telephone);
-
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapPatient(rs) : null;
             }
@@ -241,8 +243,7 @@ public class PatientRepositoryImpl implements PatientRepository {
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) return rs.getLong(1);
-            return 0;
+            return rs.next() ? rs.getLong(1) : 0;
 
         } catch (Exception e) {
             throw new DaoException("Erreur countAll(Patient)", e);
@@ -253,7 +254,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     // Mapper + helpers
     // =========================
     private Patient mapPatient(ResultSet rs) throws SQLException {
-
+        Date dn = rs.getDate("date_naissance");
         Timestamp dc = rs.getTimestamp("date_creation");
         Timestamp dm = rs.getTimestamp("date_modification");
 
@@ -261,17 +262,11 @@ public class PatientRepositoryImpl implements PatientRepository {
                 .id(rs.getLong("id"))
                 .nom(rs.getString("nom"))
                 .prenom(rs.getString("prenom"))
-                .dateNaissance(rs.getDate("date_naissance") != null
-                        ? rs.getDate("date_naissance").toLocalDate()
-                        : null)
-                .sexe(fromDbSexe(rs.getString("sexe")))
-                .telephone(rs.getString("telephone"))
                 .adresse(rs.getString("adresse"))
+                .telephone(rs.getString("telephone"))
+                .dateNaissance(dn != null ? dn.toLocalDate() : null)
+                .sexe(fromDbSexe(rs.getString("sexe")))
                 .assurance(fromDbAssurance(rs.getString("assurance")))
-
-                // ✅ pas en BD => null
-                .baseEntityId(null)
-
                 .dateCreation(dc != null ? dc.toLocalDateTime() : null)
                 .datedeModification(dm != null ? dm.toLocalDateTime() : null)
                 .creePar(rs.getString("cree_par"))
@@ -279,75 +274,37 @@ public class PatientRepositoryImpl implements PatientRepository {
                 .build();
     }
 
-    // BD patient.sexe = 'H'/'F'
+    private String or(String a, String b) {
+        return (a != null && !a.isBlank()) ? a : b;
+    }
+
     private String toDbSexe(Sexe s) {
         if (s == null) return null;
-        String name = s.name().toUpperCase();
-
-        // robust: accepte Homme/Femme ou HOMME/FEMME
-        if (name.contains("HOM")) return "H";
-        if (name.contains("FEM")) return "F";
-
-        // si ton enum est déjà H / F :
-        if ("H".equals(name)) return "H";
-        if ("F".equals(name)) return "F";
-
-        return null;
+        String x = s.name().toUpperCase();
+        if (x.contains("HOM")) return "H";
+        if (x.contains("FEM")) return "F";
+        return x;
     }
 
     private Sexe fromDbSexe(String db) {
         if (db == null) return null;
-        String x = db.trim().toUpperCase();
-        try {
-            // si enum contient H/F
-            if ("H".equals(x)) return Sexe.valueOf("H");
-            if ("F".equals(x)) return Sexe.valueOf("F");
-        } catch (Exception ignored) {}
-
-        // sinon enum classique (HOMME/FEMME/AUTRE)
+        String x = db.toUpperCase();
+        try { return Sexe.valueOf(x); } catch (Exception ignored) {}
         try {
             if ("H".equals(x)) return Sexe.valueOf("HOMME");
             if ("F".equals(x)) return Sexe.valueOf("FEMME");
         } catch (Exception ignored) {}
-
         return null;
     }
 
-    // BD patient.assurance enum('CNSS','CNOPS','MUTUELLE','AUTRE','AUCUNE')
     private String toDbAssurance(Assurance a) {
         if (a == null) return null;
-        // Ton enum peut être CNSS/CNOPS/Mutuelle/Autre/Aucune
-        String x = a.name().toUpperCase();
-        return switch (x) {
-            case "CNSS" -> "CNSS";
-            case "CNOPS" -> "CNOPS";
-            case "MUTUELLE", "MUTUEL" -> "MUTUELLE";
-            case "AUTRE" -> "AUTRE";
-            case "AUCUNE" -> "AUCUNE";
-            default -> x; // au cas où
-        };
+        return a.name().toUpperCase();
     }
 
     private Assurance fromDbAssurance(String db) {
         if (db == null) return null;
-        String x = db.trim().toUpperCase();
-
-        // Essaie mapping direct
-        try {
-            return Assurance.valueOf(x);
-        } catch (Exception ignored) {}
-
-        // Sinon mapping vers ton enum (Mutuelle/Autre/Aucune)
-        try {
-            return switch (x) {
-                case "CNSS" -> Assurance.valueOf("CNSS");
-                case "CNOPS" -> Assurance.valueOf("CNOPS");
-                case "MUTUELLE" -> Assurance.valueOf("Mutuelle");
-                case "AUTRE" -> Assurance.valueOf("Autre");
-                case "AUCUNE" -> Assurance.valueOf("Aucune");
-                default -> null;
-            };
-        } catch (Exception ignored) {
+        try { return Assurance.valueOf(db.toUpperCase()); } catch (Exception e) {
             return null;
         }
     }

@@ -1,16 +1,15 @@
 package ma.dentalTech.service.modules.patient.impl;
 
-import ma.dentalTech.common.exceptions.ServiceException;
+import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.common.exceptions.ValidationException;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.mvc.dto.patient.PatientFormDto;
 import ma.dentalTech.mvc.dto.patient.PatientListDto;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
+import ma.dentalTech.service.common.ServiceException;
 import ma.dentalTech.service.modules.patient.api.PatientAppService;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 
 public class PatientAppServiceImpl implements PatientAppService {
 
@@ -24,7 +23,7 @@ public class PatientAppServiceImpl implements PatientAppService {
     public List<PatientListDto> listerPatients() throws ServiceException {
         try {
             return patientRepo.findAll().stream().map(this::toListDto).toList();
-        } catch (Exception e) {
+        } catch (DaoException e) {
             throw new ServiceException("Erreur listing patients", e);
         }
     }
@@ -33,12 +32,12 @@ public class PatientAppServiceImpl implements PatientAppService {
     public PatientFormDto consulterPatient(Long id) throws ValidationException, ServiceException {
         if (id == null) throw new ValidationException("id patient obligatoire");
         try {
-            Optional<Patient> opt = patientRepo.findById(id);
-            Patient p = opt.orElseThrow(() -> new ValidationException("Patient introuvable"));
+            Patient p = patientRepo.findById(id);
+            if (p == null) throw new ValidationException("Patient introuvable");
             return toFormDto(p);
         } catch (ValidationException ve) {
             throw ve;
-        } catch (Exception e) {
+        } catch (DaoException e) {
             throw new ServiceException("Erreur consultation patient", e);
         }
     }
@@ -48,22 +47,16 @@ public class PatientAppServiceImpl implements PatientAppService {
         validatePatient(dto);
 
         try {
-            if (dto.getTelephone() != null && !dto.getTelephone().isBlank()) {
-                Optional<Patient> exist = patientRepo.findByTelephone(dto.getTelephone());
-                if (exist.isPresent()) throw new ValidationException("Téléphone déjà utilisé");
-            }
-        } catch (ValidationException ve) {
-            throw ve;
-        } catch (Exception e) {
-            throw new ServiceException("Erreur vérification téléphone", e);
-        }
+            Patient exist = patientRepo.findByTelephone(dto.getTelephone());
+            if (exist != null) throw new ValidationException("Téléphone déjà utilisé");
 
-        Patient p = toEntity(dto);
-
-        try {
+            Patient p = toEntity(dto);
             patientRepo.create(p);
             return toFormDto(p);
-        } catch (Exception e) {
+
+        } catch (ValidationException ve) {
+            throw ve;
+        } catch (DaoException e) {
             throw new ServiceException("Erreur création patient", e);
         }
     }
@@ -74,28 +67,23 @@ public class PatientAppServiceImpl implements PatientAppService {
         validatePatient(dto);
 
         try {
-            Optional<Patient> existingOpt = patientRepo.findById(id);
-            if (existingOpt.isEmpty()) throw new ValidationException("Patient introuvable");
+            Patient existing = patientRepo.findById(id);
+            if (existing == null) throw new ValidationException("Patient introuvable");
 
-            // Vérif téléphone unique (si changé)
-            if (dto.getTelephone() != null && !dto.getTelephone().isBlank()) {
-                Optional<Patient> existTel = patientRepo.findByTelephone(dto.getTelephone());
-                if (existTel.isPresent() && !existTel.get().getId().equals(id)) {
-                    throw new ValidationException("Téléphone déjà utilisé");
-                }
+            Patient existTel = patientRepo.findByTelephone(dto.getTelephone());
+            if (existTel != null && !existTel.getId().equals(id)) {
+                throw new ValidationException("Téléphone déjà utilisé");
             }
 
             Patient updated = toEntity(dto);
             updated.setId(id);
-
-            // pas de baseEntityId (n'existe pas dans ton Patient)
 
             patientRepo.update(updated);
             return toFormDto(updated);
 
         } catch (ValidationException ve) {
             throw ve;
-        } catch (Exception e) {
+        } catch (DaoException e) {
             throw new ServiceException("Erreur modification patient", e);
         }
     }
@@ -105,7 +93,7 @@ public class PatientAppServiceImpl implements PatientAppService {
         if (id == null) throw new ValidationException("id patient obligatoire");
         try {
             patientRepo.deleteById(id);
-        } catch (Exception e) {
+        } catch (DaoException e) {
             throw new ServiceException("Erreur suppression patient", e);
         }
     }
@@ -114,12 +102,8 @@ public class PatientAppServiceImpl implements PatientAppService {
     public List<PatientListDto> rechercherParNom(String nom) throws ValidationException, ServiceException {
         if (nom == null || nom.isBlank()) throw new ValidationException("nom obligatoire");
         try {
-            String needle = normalize(nom);
-            return patientRepo.findAll().stream()
-                    .filter(p -> normalize(p.getNom()).contains(needle))
-                    .map(this::toListDto)
-                    .toList();
-        } catch (Exception e) {
+            return patientRepo.findByNom(nom).stream().map(this::toListDto).toList();
+        } catch (DaoException e) {
             throw new ServiceException("Erreur recherche patient par nom", e);
         }
     }
@@ -128,12 +112,12 @@ public class PatientAppServiceImpl implements PatientAppService {
     public PatientFormDto rechercherParTelephone(String telephone) throws ValidationException, ServiceException {
         if (telephone == null || telephone.isBlank()) throw new ValidationException("telephone obligatoire");
         try {
-            Optional<Patient> opt = patientRepo.findByTelephone(telephone);
-            Patient p = opt.orElseThrow(() -> new ValidationException("Aucun patient trouvé pour ce téléphone"));
+            Patient p = patientRepo.findByTelephone(telephone);
+            if (p == null) throw new ValidationException("Aucun patient trouvé pour ce téléphone");
             return toFormDto(p);
         } catch (ValidationException ve) {
             throw ve;
-        } catch (Exception e) {
+        } catch (DaoException e) {
             throw new ServiceException("Erreur recherche patient par téléphone", e);
         }
     }
@@ -174,16 +158,11 @@ public class PatientAppServiceImpl implements PatientAppService {
     }
 
     private PatientListDto toListDto(Patient p) {
-        String nomComplet = (p.getNom() != null ? p.getNom() : "") + " " + (p.getPrenom() != null ? p.getPrenom() : "");
+        String nomComplet = (p.getNom() == null ? "" : p.getNom()) + " " + (p.getPrenom() == null ? "" : p.getPrenom());
         return PatientListDto.builder()
                 .id(p.getId())
                 .nomComplet(nomComplet.trim())
                 .telephone(p.getTelephone())
                 .build();
-    }
-
-    private String normalize(String s) {
-        if (s == null) return "";
-        return s.trim().toLowerCase(Locale.ROOT);
     }
 }

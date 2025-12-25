@@ -15,21 +15,20 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
     @Override
     public void create(Antecedents a) throws DaoException {
         if (a == null) throw new DaoException("Antecedent null");
-        if (a.getPatientId() == null) throw new DaoException("patientId obligatoire");
+        if (a.getNom() == null || a.getNom().isBlank()) throw new DaoException("nom obligatoire");
 
         String sql = """
-            INSERT INTO antecedent (patient_id, nom, categorie, niveau_de_risque, description)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO antecedent (nom, categorie, niveau_de_risque, description)
+            VALUES (?, ?, ?, ?)
             """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setLong(1, a.getPatientId());
-            ps.setString(2, a.getNom());
-            ps.setString(3, a.getCategorie());
-            ps.setString(4, a.getNiveauDeRisque() != null ? a.getNiveauDeRisque().name() : null);
-            ps.setString(5, a.getDescription());
+            ps.setString(1, a.getNom());
+            ps.setString(2, a.getCategorie());
+            ps.setString(3, a.getNiveauDeRisque() != null ? a.getNiveauDeRisque().name() : null);
+            ps.setString(4, a.getDescription());
 
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -44,22 +43,25 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
     @Override
     public void update(Antecedents a) throws DaoException {
         if (a == null || a.getId() == null) throw new DaoException("Antecedent id obligatoire");
+        if (a.getNom() == null || a.getNom().isBlank()) throw new DaoException("nom obligatoire");
 
         String sql = """
             UPDATE antecedent
-               SET patient_id=?, nom=?, categorie=?, niveau_de_risque=?, description=?
+               SET nom=?,
+                   categorie=?,
+                   niveau_de_risque=?,
+                   description=?
              WHERE id=?
             """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setLong(1, a.getPatientId());
-            ps.setString(2, a.getNom());
-            ps.setString(3, a.getCategorie());
-            ps.setString(4, a.getNiveauDeRisque() != null ? a.getNiveauDeRisque().name() : null);
-            ps.setString(5, a.getDescription());
-            ps.setLong(6, a.getId());
+            ps.setString(1, a.getNom());
+            ps.setString(2, a.getCategorie());
+            ps.setString(3, a.getNiveauDeRisque() != null ? a.getNiveauDeRisque().name() : null);
+            ps.setString(4, a.getDescription());
+            ps.setLong(5, a.getId());
 
             ps.executeUpdate();
 
@@ -129,7 +131,15 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
 
     @Override
     public List<Antecedents> findByPatientId(Long patientId) throws DaoException {
-        String sql = "SELECT * FROM antecedent WHERE patient_id = ? ORDER BY id DESC";
+        // ✅ Ici on passe par la table de liaison patient_antecedent
+        String sql = """
+            SELECT a.*
+              FROM antecedent a
+              JOIN patient_antecedent pa ON pa.antecedent_id = a.id
+             WHERE pa.patient_id = ?
+             ORDER BY a.id DESC
+            """;
+
         List<Antecedents> list = new ArrayList<>();
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -155,7 +165,6 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
 
         return Antecedents.builder()
                 .id(rs.getLong("id"))
-                .patientId(rs.getLong("patient_id"))
                 .nom(rs.getString("nom"))
                 .categorie(rs.getString("categorie"))
                 .niveauDeRisque(n)
