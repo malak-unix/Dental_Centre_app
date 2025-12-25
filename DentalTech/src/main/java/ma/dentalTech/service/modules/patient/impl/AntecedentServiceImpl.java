@@ -3,9 +3,9 @@ package ma.dentalTech.service.modules.patient.impl;
 import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.common.exceptions.ValidationException;
 import ma.dentalTech.entities.patient.Antecedents;
-import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
+import ma.dentalTech.repository.modules.patient.api.AntecedentsRepository;
 import ma.dentalTech.service.common.ServiceException;
-import ma.dentalTech.service.modules.patient.api.AntecedentService;
+import ma.dentalTech.service.modules.patient.api.AntecedentServiceImpl;
 
 import java.util.List;
 

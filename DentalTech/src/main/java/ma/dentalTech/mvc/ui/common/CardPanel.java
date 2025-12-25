@@ -19,4 +19,6 @@ public class CardPanel extends JPanel {
         t.setForeground(DentalTheme.PRIMARY_DARK);
         add(t, BorderLayout.NORTH);
     }
+
+
 }

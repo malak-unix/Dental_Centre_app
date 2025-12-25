@@ -1,7 +1,7 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
 import lombok.RequiredArgsConstructor;
-import ma.dentalTech.entities.cabinet.SituationFinanciere;
+import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
 import ma.dentalTech.mvc.dto.caisse.SituationFinanciereDTO;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 import ma.dentalTech.service.modules.caisse.api.SituationFinanciereServiceV2;
