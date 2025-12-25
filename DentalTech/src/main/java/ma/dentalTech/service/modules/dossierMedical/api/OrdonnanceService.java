@@ -1,36 +1,20 @@
 package ma.dentalTech.service.modules.dossierMedical.api;
 
-import ma.dentalTech.entities.dossierMedical.Ordonnance;
-import ma.dentalTech.entities.dossierMedical.Prescription;
+import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
+import ma.dentalTech.service.modules.dossierMedical.dto.ordonnance.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public interface OrdonnanceService {
+    OrdonnanceDTO getById(IdRequestDTO in);
 
-    // CRUD
-    List<Ordonnance> findAll();
-    Ordonnance findById(Long id);
-    void create(Ordonnance o); //ord request dto , return ord creation result
-    void update(Ordonnance o);
-    void delete(Ordonnance o);
-    void deleteById(Long id);
+    ListResponseDTO<OrdonnanceDTO> findByDossierId(DossierIdRequestDTO in);
+    ListResponseDTO<OrdonnanceDTO> findByConsultationId(ConsultationIdRequestDTO in);
+    ListResponseDTO<OrdonnanceDTO> findByDateBetween(OrdonnanceBetweenDatesRequestDTO in);
 
-    // Recherche
-    List<Ordonnance> findByDossierId(Long dossierId);
-    List<Ordonnance> findByConsultationId(Long consultationId);
-    List<Ordonnance> findByDate(LocalDate date);
-    List<Ordonnance> findByDateBetween(LocalDate start, LocalDate end);
+    LongResponseDTO create(SaveOrdonnanceRequestDTO in);
+    BooleanResponseDTO update(SaveOrdonnanceRequestDTO in);
+    BooleanResponseDTO delete(IdRequestDTO in);
 
-    // Utilitaires
-    long count();
-    List<Ordonnance> findPage(int limit, int offset);
-    Ordonnance findLastByDossierId(Long dossierId);
-    Ordonnance findLastByConsultationId(Long consultationId);
-    boolean existsById(Long id);
-
-    // Métier: ordonnance + prescriptions
-    void createWithPrescriptions(Ordonnance ordonnance, List<Prescription> prescriptions);
-    void replacePrescriptions(Long ordonnanceId, List<Prescription> prescriptions);
-    List<Prescription> findPrescriptions(Long ordonnanceId);
+    CountResponseDTO count(EmptyRequestDTO in);
 }
