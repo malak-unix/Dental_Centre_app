@@ -1,7 +1,6 @@
 package ma.dentalTech.mvc.ui.modules.agenda;
 
 import ma.dentalTech.configuration.ApplicationContext;
-import ma.dentalTech.common.exceptions.ControllerException;
 import ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto;
 import ma.dentalTech.mvc.dto.agenda.DetailJourneeDto;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
