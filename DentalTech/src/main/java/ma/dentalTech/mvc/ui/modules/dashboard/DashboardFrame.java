@@ -1,21 +1,25 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
-import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
-
 import javax.swing.*;
+import java.awt.*;
 
 public class DashboardFrame extends JFrame {
 
     public DashboardFrame() {
-        this(null);
-    }
-    public DashboardFrame(DashboardDTO dto) {
-        super("DentalTech - Dashboard");
-
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 800);
+        super("Dental Center");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1450, 900);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        setContentPane(new DashboardView());
+    }
 
-        setContentPane(new DashboardPanel(dto));
+    // ✅ COMPATIBILITÉ MainApp
+    public DashboardFrame(Object ignoredContext) {
+        this();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new DashboardFrame().setVisible(true));
     }
 }
