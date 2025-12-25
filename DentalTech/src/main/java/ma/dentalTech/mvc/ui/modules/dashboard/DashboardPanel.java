@@ -1,28 +1,46 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
-import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
-import ma.dentalTech.mvc.ui.modules.dashboard.admin.AdminDashboardPanel;
-import ma.dentalTech.mvc.ui.modules.dashboard.medecin.MedecinDashboardPanel;
-import ma.dentalTech.mvc.ui.modules.dashboard.secretaire.SecretaireDashboardPanel;
+import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DashboardPanel extends JPanel {
 
-    public DashboardPanel(DashboardDTO dto) {
+    private final JPanel sidebar;
+    private final JPanel header;
+    private final JPanel content;
+
+    public DashboardPanel() {
         setLayout(new BorderLayout());
+        setBackground(DentalTheme.BG);
 
-        if (dto == null || dto.getRole() == null) {
-            add(new JLabel("Dashboard indisponible"), BorderLayout.CENTER);
-            return;
-        }
+        sidebar = new JPanel();
+        sidebar.setPreferredSize(new Dimension(240, 0));
+        sidebar.setBackground(DentalTheme.BG);
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(18, 14, 18, 14));
+        add(sidebar, BorderLayout.WEST);
 
-        switch (dto.getRole()) {
-            case "SECRETAIRE" -> add(new SecretaireDashboardPanel(dto.getSecretaire()), BorderLayout.CENTER);
-            case "MEDECIN" -> add(new MedecinDashboardPanel(dto.getMedecin()), BorderLayout.CENTER);
-            case "ADMIN" -> add(new AdminDashboardPanel(dto.getAdmin()), BorderLayout.CENTER);
-            default -> add(new JLabel("Rôle non supporté : " + dto.getRole()), BorderLayout.CENTER);
-        }
+        header = new JPanel(new BorderLayout(12, 0));
+        header.setPreferredSize(new Dimension(0, 78));
+        header.setBackground(new Color(0xEAD3BF));
+        header.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+        add(header, BorderLayout.NORTH);
+
+        content = new JPanel(new BorderLayout());
+        content.setOpaque(false);
+        content.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        add(content, BorderLayout.CENTER);
+    }
+
+    public JPanel sidebar() { return sidebar; }
+    public JPanel header() { return header; }
+
+    public void setContent(JPanel panel) {
+        content.removeAll();
+        content.add(panel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
     }
 }
