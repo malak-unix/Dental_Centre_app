@@ -50,6 +50,9 @@ public class RdvRepositoryImpl implements RdvRepository {
 
     @Override
     public void create(RDV r) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
+        if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire (colonne date_rdv NOT NULL)");
+
         String sql = """
             INSERT INTO rdv
             (patient_id, detail_journee_id, liste_attente_id, date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par)
@@ -59,6 +62,8 @@ public class RdvRepositoryImpl implements RdvRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+            // ✅ IMPORTANT: paramètre 1 manquant dans ton code
+            ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
@@ -66,9 +71,11 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatut() != null ? r.getStatut() : EtatRendezVous.PREVU.name());
-            ps.setString(8, r.getNoteMedecin());
+            ps.setString(7, (r.getStatut() != null && !r.getStatut().isBlank())
+                    ? r.getStatut()
+                    : EtatRendezVous.PREVU.name());
 
+            ps.setString(8, r.getNoteMedecin());
             ps.setString(9, r.getCreePar());
             ps.setString(10, r.getModifiePar());
 
@@ -84,7 +91,9 @@ public class RdvRepositoryImpl implements RdvRepository {
 
     @Override
     public void update(RDV r) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
         if (r.getId() == null) throw new IllegalArgumentException("id obligatoire");
+        if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire (colonne date_rdv NOT NULL)");
 
         String sql = """
             UPDATE rdv
@@ -96,8 +105,11 @@ public class RdvRepositoryImpl implements RdvRepository {
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
+            // ✅ IMPORTANT: paramètre 1 manquant dans ton code
+            ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
+
             ps.setDate(4, Date.valueOf(r.getDateRdv()));
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
@@ -226,6 +238,7 @@ public class RdvRepositoryImpl implements RdvRepository {
             throw new RuntimeException("Erreur selectList()", e);
         }
     }
+
     @Override
     public Integer countByDate(java.time.LocalDateTime start, java.time.LocalDateTime end) {
         // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
@@ -243,5 +256,4 @@ public class RdvRepositoryImpl implements RdvRepository {
         // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
         return 0;
     }
-
 }
