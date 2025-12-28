@@ -191,8 +191,9 @@ public class RdvAppServiceImpl implements RdvAppService {
     }
 
     private EtatRendezVous parse(String s) {
-        if (s == null || s.isBlank()) return null;
+        if (s == null || s.isBlank()) return EtatRendezVous.PREVU;
         try { return EtatRendezVous.valueOf(s.trim()); }
-        catch (Exception e) { return null; }
+        catch (Exception e) { return EtatRendezVous.PREVU; }
     }
+
 }

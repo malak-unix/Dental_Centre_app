@@ -36,6 +36,13 @@
         <configuration>
           <release>${maven.compiler.release}</release>
           <encoding>${project.build.sourceEncoding}</encoding>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.38</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>
@@ -104,14 +111,14 @@
   </dependencies>
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
-    <plugin.surefire.version>3.2.5</plugin.surefire.version>
-    <maven.compiler.source>17</maven.compiler.source>
-    <plugin.shade.version>3.5.3</plugin.shade.version>
     <maven.compiler.target>17</maven.compiler.target>
+    <plugin.surefire.version>3.2.5</plugin.surefire.version>
     <plugin.enforcer.version>3.4.1</plugin.enforcer.version>
+    <maven.compiler.source>17</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.compiler.version>3.11.0</plugin.compiler.version>
     <plugin.javadoc.version>3.6.3</plugin.javadoc.version>
     <mysql.version>8.0.33</mysql.version>
+    <plugin.shade.version>3.5.3</plugin.shade.version>
   </properties>
 </project>
