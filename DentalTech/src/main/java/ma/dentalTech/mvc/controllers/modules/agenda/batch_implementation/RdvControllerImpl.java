@@ -48,10 +48,11 @@ public class RdvControllerImpl implements RdvController {
                 .dateRdv(r.getDateRdv())
                 .heure(r.getHeure())
                 .motif(r.getMotif())
-                .statut(r.getStatut())
+                .statut(r.getStatut()) // ✅ direct
                 .noteMedecin(r.getNoteMedecin())
                 .build();
     }
+
 
 
 }

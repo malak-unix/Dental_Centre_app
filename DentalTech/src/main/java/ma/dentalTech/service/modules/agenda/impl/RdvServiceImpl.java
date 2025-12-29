@@ -37,9 +37,8 @@ public class RdvServiceImpl implements RdvService {
         if (r.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
         if (r.getMotif() == null || r.getMotif().isBlank()) throw new IllegalArgumentException("motif obligatoire");
 
-        // ✅ statut = Enum
         if (r.getStatut() == null) {
-            r.setStatut(String.valueOf(EtatRendezVous.EN_COURS));
+            r.setStatut(EtatRendezVous.PREVU);
         }
 
         rdvRepository.create(r);
@@ -53,13 +52,11 @@ public class RdvServiceImpl implements RdvService {
         RDV old = rdvRepository.findById(r.getId());
         if (old == null) throw new IllegalArgumentException("RDV introuvable (id=" + r.getId() + ")");
 
-        // validations minimales
         if (r.getDetailJourneeId() == null) throw new IllegalArgumentException("detailJourneeId obligatoire");
         if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
         if (r.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
         if (r.getMotif() == null || r.getMotif().isBlank()) throw new IllegalArgumentException("motif obligatoire");
 
-        // si statut non fourni => garder l’ancien
         if (r.getStatut() == null) r.setStatut(old.getStatut());
 
         rdvRepository.update(r);

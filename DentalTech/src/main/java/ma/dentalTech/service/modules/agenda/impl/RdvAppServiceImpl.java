@@ -67,7 +67,6 @@ public class RdvAppServiceImpl implements RdvAppService {
         checkJourneeOuverte(dj);
         checkHeureDansPlage(dj, dto.getHeure());
 
-        // conflit horaire : autoriser si c'est le même rdv
         List<RDV> sameDay = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
         for (RDV r : sameDay) {
             if (r.getId() != null && r.getId().equals(dto.getId())) continue;
@@ -76,7 +75,6 @@ public class RdvAppServiceImpl implements RdvAppService {
             }
         }
 
-        // si statut null => garder l'ancien (enum)
         if (dto.getStatut() == null) dto.setStatut(old.getStatut());
 
         RDV updated = RdvMapper.toEntity(dto);
@@ -104,7 +102,6 @@ public class RdvAppServiceImpl implements RdvAppService {
 
         r.setStatut(EtatRendezVous.CONFIRME);
         rdvRepo.update(r);
-
         return RdvMapper.toDto(r);
     }
 
@@ -117,7 +114,6 @@ public class RdvAppServiceImpl implements RdvAppService {
 
         r.setStatut(EtatRendezVous.ANNULE);
         rdvRepo.update(r);
-
         return RdvMapper.toDto(r);
     }
 
@@ -140,8 +136,6 @@ public class RdvAppServiceImpl implements RdvAppService {
     }
 
     // =========================
-    // Validations + règles
-    // =========================
 
     private void validateCreate(RdvDto dto) {
         if (dto == null) throw new IllegalArgumentException("dto null");
@@ -159,11 +153,8 @@ public class RdvAppServiceImpl implements RdvAppService {
         requireId(dto.getDetailJourneeId(), "detailJourneeId");
         if (dto.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
         if (dto.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
-
-        String motif = dto.getMotif();
-        if (motif == null || motif.trim().isEmpty()) {
-            throw new IllegalArgumentException("motif obligatoire");
-        }
+        if (dto.getMotif() == null || dto.getMotif().isBlank()) throw new IllegalArgumentException("motif obligatoire");
+        if (dto.getTypeRdv() == null) throw new IllegalArgumentException("typeRdv obligatoire");
     }
 
     private void requireId(Long id, String name) {
@@ -181,7 +172,6 @@ public class RdvAppServiceImpl implements RdvAppService {
     private void checkHeureDansPlage(DetailJournee dj, LocalTime heure) {
         LocalTime debut = dj.getHeureDebutTravail();
         LocalTime fin = dj.getHeureFinTravail();
-
         if (debut != null && heure.isBefore(debut)) {
             throw new IllegalArgumentException("Heure en dehors de la plage (avant début travail)");
         }

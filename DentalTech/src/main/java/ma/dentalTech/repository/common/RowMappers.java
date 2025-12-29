@@ -151,6 +151,10 @@ public final class RowMappers {
     }
 
     public static RDV mapRdv(ResultSet rs) throws SQLException {
+        String st = rs.getString("statut");
+        EtatRendezVous statut = null;
+        try { statut = (st != null) ? EtatRendezVous.valueOf(st) : null; } catch (Exception ignored) {}
+
         return RDV.builder()
                 .id(getLong(rs, "id"))
                 .patientId(getLong(rs, "patient_id"))
@@ -159,14 +163,15 @@ public final class RowMappers {
                 .dateRdv(getLd(rs, "date_rdv"))
                 .heure(getLt(rs, "heure"))
                 .motif(rs.getString("motif"))
-                .statut(EtatRendezVous.valueOf(rs.getString("statut")))
+                .statut(statut)
                 .noteMedecin(rs.getString("note_medecin"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateDerniereModification(getLdt(rs, "date_modification")) // ✅ BaseEntity
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
 
 
     public static PlageHoraire mapPlageHoraire(ResultSet rs) throws SQLException {
