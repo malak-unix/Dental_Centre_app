@@ -39,9 +39,9 @@ public class RdvAppServiceImpl implements RdvAppService {
     public RdvDto create(RdvDto dto) {
         validateCreate(dto);
 
-        // règles planning
         DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
         if (dj == null) throw new IllegalArgumentException("DetailJournee introuvable");
+
         checkJourneeOuverte(dj);
         checkHeureDansPlage(dj, dto.getHeure());
         checkConflitHoraire(dto.getDetailJourneeId(), dto.getHeure());
@@ -51,7 +51,6 @@ public class RdvAppServiceImpl implements RdvAppService {
         RDV entity = RdvMapper.toEntity(dto);
         rdvRepo.create(entity);
 
-        // si ton repo remplit l'id après create -> ok
         return RdvMapper.toDto(entity);
     }
 
@@ -62,13 +61,13 @@ public class RdvAppServiceImpl implements RdvAppService {
         RDV old = rdvRepo.findById(dto.getId());
         if (old == null) throw new IllegalArgumentException("RDV introuvable (id=" + dto.getId() + ")");
 
-        // règles planning (si on change detailJournee / heure)
         DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
         if (dj == null) throw new IllegalArgumentException("DetailJournee introuvable");
+
         checkJourneeOuverte(dj);
         checkHeureDansPlage(dj, dto.getHeure());
 
-        // conflit horaire : autoriser si c'est le même rdv (on ignore lui-même)
+        // conflit horaire : autoriser si c'est le même rdv
         List<RDV> sameDay = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
         for (RDV r : sameDay) {
             if (r.getId() != null && r.getId().equals(dto.getId())) continue;
@@ -77,8 +76,8 @@ public class RdvAppServiceImpl implements RdvAppService {
             }
         }
 
-        // si statut null => garder ancien
-        if (dto.getStatut() == null) dto.setStatut(parse(old.getStatut()));
+        // si statut null => garder l'ancien (enum)
+        if (dto.getStatut() == null) dto.setStatut(old.getStatut());
 
         RDV updated = RdvMapper.toEntity(dto);
         rdvRepo.update(updated);
@@ -95,24 +94,30 @@ public class RdvAppServiceImpl implements RdvAppService {
     @Override
     public RdvDto confirmer(Long rdvId) {
         requireId(rdvId, "rdvId");
+
         RDV r = rdvRepo.findById(rdvId);
         if (r == null) throw new IllegalArgumentException("RDV introuvable");
-        EtatRendezVous etat = parse(r.getStatut());
-        if (etat != EtatRendezVous.PREVU) {
+
+        if (r.getStatut() != EtatRendezVous.PREVU) {
             throw new IllegalArgumentException("Seuls les RDV PREVU peuvent être confirmés");
         }
-        r.setStatut(EtatRendezVous.CONFIRME.name());
+
+        r.setStatut(EtatRendezVous.CONFIRME);
         rdvRepo.update(r);
+
         return RdvMapper.toDto(r);
     }
 
     @Override
     public RdvDto annuler(Long rdvId) {
         requireId(rdvId, "rdvId");
+
         RDV r = rdvRepo.findById(rdvId);
         if (r == null) throw new IllegalArgumentException("RDV introuvable");
-        r.setStatut(EtatRendezVous.ANNULE.name());
+
+        r.setStatut(EtatRendezVous.ANNULE);
         rdvRepo.update(r);
+
         return RdvMapper.toDto(r);
     }
 
@@ -154,8 +159,11 @@ public class RdvAppServiceImpl implements RdvAppService {
         requireId(dto.getDetailJourneeId(), "detailJourneeId");
         if (dto.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
         if (dto.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
-        if (dto.getMotif() == null || dto.getMotif().isBlank()) throw new IllegalArgumentException("motif obligatoire");
-        if (dto.getTypeRdv() == null) throw new IllegalArgumentException("typeRdv obligatoire");
+
+        String motif = dto.getMotif();
+        if (motif == null || motif.trim().isEmpty()) {
+            throw new IllegalArgumentException("motif obligatoire");
+        }
     }
 
     private void requireId(Long id, String name) {
@@ -163,16 +171,17 @@ public class RdvAppServiceImpl implements RdvAppService {
     }
 
     private void checkJourneeOuverte(DetailJournee dj) {
-        // si null => considérer comme OUVERT (ou refuse si tu préfères)
         StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
 
         if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
             throw new IllegalArgumentException("Journée non ouverte: impossible de planifier");
         }
     }
+
     private void checkHeureDansPlage(DetailJournee dj, LocalTime heure) {
         LocalTime debut = dj.getHeureDebutTravail();
         LocalTime fin = dj.getHeureFinTravail();
+
         if (debut != null && heure.isBefore(debut)) {
             throw new IllegalArgumentException("Heure en dehors de la plage (avant début travail)");
         }
@@ -189,11 +198,4 @@ public class RdvAppServiceImpl implements RdvAppService {
             }
         }
     }
-
-    private EtatRendezVous parse(String s) {
-        if (s == null || s.isBlank()) return EtatRendezVous.PREVU;
-        try { return EtatRendezVous.valueOf(s.trim()); }
-        catch (Exception e) { return EtatRendezVous.PREVU; }
-    }
-
 }

@@ -110,9 +110,6 @@ public final class RowMappers {
         catch (Exception e) { return null; }
     }
 
-    // ==================================================
-    // AGENDA_MENSUEL
-    // ==================================================
     public static AgendaMensuel mapAgendaMensuel(ResultSet rs) throws SQLException {
         return AgendaMensuel.builder()
                 .id(getLong(rs, "id"))
@@ -120,15 +117,12 @@ public final class RowMappers {
                 .mois(Mois.valueOf(rs.getString("mois")))
                 .annee(getInt(rs, "annee"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // DETAIL_JOURNEE
-    // ==================================================
     public static DetailJournee mapDetailJournee(ResultSet rs) throws SQLException {
         return DetailJournee.builder()
                 .id(getLong(rs, "id"))
@@ -136,32 +130,26 @@ public final class RowMappers {
                 .dateJour(getLd(rs, "date_jour"))
                 .heureDebutTravail(getLt(rs, "heure_debut_travail"))
                 .heureFinTravail(getLt(rs, "heure_fin_travail"))
-                .etatJour(StatutJournee.valueOf(rs.getString("etat_jour")))
+                .etatJour(toStatutJournee(rs.getString("etat_jour")))
                 .commentaire(rs.getString("commentaire"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // LISTE_ATTENTE
-    // ==================================================
     public static ListeAttente mapListeAttente(ResultSet rs) throws SQLException {
         return ListeAttente.builder()
                 .id(getLong(rs, "id"))
                 .nom(rs.getString("nom"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // RDV
-    // ==================================================
     public static RDV mapRdv(ResultSet rs) throws SQLException {
         return RDV.builder()
                 .id(getLong(rs, "id"))
@@ -171,18 +159,16 @@ public final class RowMappers {
                 .dateRdv(getLd(rs, "date_rdv"))
                 .heure(getLt(rs, "heure"))
                 .motif(rs.getString("motif"))
-                .statut(rs.getString("statut"))
+                .statut(EtatRendezVous.valueOf(rs.getString("statut")))
                 .noteMedecin(rs.getString("note_medecin"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification")) // ✅ BaseEntity
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // PLAGE_HORAIRE
-    // ==================================================
+
     public static PlageHoraire mapPlageHoraire(ResultSet rs) throws SQLException {
         return PlageHoraire.builder()
                 .id(getLong(rs, "id"))
@@ -191,11 +177,12 @@ public final class RowMappers {
                 .heureFin(getLt(rs, "heure_fin"))
                 .disponible(getBoolean(rs, "disponible"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
 
     // ==================================================
     // PATIENT

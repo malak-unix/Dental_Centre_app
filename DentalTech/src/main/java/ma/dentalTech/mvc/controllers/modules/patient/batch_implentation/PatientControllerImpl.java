@@ -2,7 +2,7 @@ package ma.dentalTech.mvc.controllers.modules.patient.batch_implementation;
 
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.common.exceptions.ValidationException;
-import ma.dentalTech.mvc.controllers.common.ControllerException;
+import ma.dentalTech.common.exceptions.ControllerException;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.dto.patient.PatientFormDto;
 import ma.dentalTech.mvc.dto.patient.PatientListDto;
