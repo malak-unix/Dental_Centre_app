@@ -37,21 +37,30 @@ public final class AgendaMapper {
                 .dateJour(dj.getDateJour())
                 .heureDebutTravail(dj.getHeureDebutTravail())
                 .heureFinTravail(dj.getHeureFinTravail())
-                .etatJour(String.valueOf(dj.getEtatJour()))
+                .etatJour(dj.getEtatJour() != null ? dj.getEtatJour().name() : null)
                 .commentaire(dj.getCommentaire())
                 .build();
     }
 
     public static DetailJournee toEntity(DetailJourneeDto d) {
         if (d == null) return null;
+
+        StatutJournee etat = parseEtatJournee(d.getEtatJour());
+
         return DetailJournee.builder()
                 .id(d.getId())
                 .agendaId(d.getAgendaId())
                 .dateJour(d.getDateJour())
                 .heureDebutTravail(d.getHeureDebutTravail())
                 .heureFinTravail(d.getHeureFinTravail())
-                .etatJour(StatutJournee.valueOf(d.getEtatJour()))
+                .etatJour(etat)
                 .commentaire(d.getCommentaire())
                 .build();
+    }
+
+    private static StatutJournee parseEtatJournee(String s) {
+        if (s == null || s.isBlank()) return StatutJournee.OUVERT;
+        try { return StatutJournee.valueOf(s.trim().toUpperCase()); }
+        catch (Exception e) { return StatutJournee.OUVERT; }
     }
 }

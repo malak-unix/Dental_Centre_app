@@ -403,26 +403,19 @@ public class PatientRepositoryImpl implements PatientRepository {
 
     private String toDbSexe(Sexe s) {
         if (s == null) return null;
-        String x = s.name().toUpperCase();
-        if (x.contains("HOM")) return "H";
-        if (x.contains("FEM")) return "F";
-        if ("H".equals(x) || "F".equals(x)) return x;
-        return "H";
+        if (s == Sexe.Homme) return "H";
+        if (s == Sexe.Femme) return "F";
+        return "H"; // défaut
     }
 
     private Sexe fromDbSexe(String db) {
         if (db == null) return null;
         String x = db.trim().toUpperCase();
-        try {
-            if ("H".equals(x)) return Sexe.valueOf("H");
-            if ("F".equals(x)) return Sexe.valueOf("F");
-        } catch (Exception ignored) {}
-        try {
-            if ("H".equals(x)) return Sexe.valueOf("HOMME");
-            if ("F".equals(x)) return Sexe.valueOf("FEMME");
-        } catch (Exception ignored) {}
+        if ("H".equals(x) || "HOMME".equals(x)) return Sexe.Homme;
+        if ("F".equals(x) || "FEMME".equals(x)) return Sexe.Femme;
         return null;
     }
+
 
     private Assurance fromDbAssurance(String db) {
         if (db == null) return null;

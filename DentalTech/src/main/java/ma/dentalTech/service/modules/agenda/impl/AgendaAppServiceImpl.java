@@ -63,13 +63,14 @@ public class AgendaAppServiceImpl implements AgendaAppService {
                         .build();
             }
 
-            // Ici tu récupères les RDV mais ton DTO ne les expose pas encore.
-            // On garde la logique côté service si tu ajoutes plus tard un champ "rendezVous".
+            // (optionnel) logique de récupération rdv semaine - pas exposée par le DTO
             List<RDV> rdvsSemaine = new ArrayList<>();
             List<DetailJournee> jours = detailRepo.findByAgendaId(agenda.getId());
 
             for (DetailJournee dj : jours) {
-                if (dj.getDateJour() != null && !dj.getDateJour().isBefore(start) && !dj.getDateJour().isAfter(end)) {
+                if (dj.getDateJour() != null
+                        && !dj.getDateJour().isBefore(start)
+                        && !dj.getDateJour().isAfter(end)) {
                     rdvsSemaine.addAll(rdvRepo.findByDetailJourneeId(dj.getId()));
                 }
             }
@@ -96,35 +97,24 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
         if (dj == null) throw new ValidationException("DetailJournee introuvable");
 
-        // ✅ FIX: comparaison enum (plus de equalsIgnoreCase)
-        StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
-        if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
-            throw new ValidationException("Journée non ouverte : impossible de planifier un RDV");
-        }
+        checkJourneeOuverte(dj);
+        checkHeureDansPlage(dj, dto.getHeure());
 
-        LocalTime h = dto.getHeure();
-        if (dj.getHeureDebutTravail() != null && h.isBefore(dj.getHeureDebutTravail())) {
-            throw new ValidationException("Heure avant début de travail");
-        }
-        if (dj.getHeureFinTravail() != null && h.isAfter(dj.getHeureFinTravail())) {
-            throw new ValidationException("Heure après fin de travail");
-        }
-
-        // conflit: même detailJourneeId + même heure (simple)
+        // conflit: même detailJourneeId + même heure, sauf si rdv existant est ANNULE
         List<RDV> existing = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
         for (RDV r : existing) {
             if (r.getHeure() != null && r.getHeure().equals(dto.getHeure())) {
-                String st = r.getStatut();
-                if (st == null || !st.equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
+                EtatRendezVous st = r.getStatut() != null ? r.getStatut() : EtatRendezVous.PREVU;
+                if (st != EtatRendezVous.ANNULE) {
                     throw new ValidationException("Conflit: un RDV existe déjà à cette heure");
                 }
             }
         }
 
-        RDV entity = toEntity(dto);
+        // default statut
+        if (dto.getStatut() == null) dto.setStatut(EtatRendezVous.PREVU);
 
-        EtatRendezVous statut = (dto.getStatut() != null) ? dto.getStatut() : EtatRendezVous.PREVU;
-        entity.setStatut(statut.name());
+        RDV entity = toEntity(dto);
 
         try {
             rdvRepo.create(entity);
@@ -146,15 +136,33 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV old = rdvRepo.findById(rdvId);
             if (old == null) throw new ValidationException("RDV introuvable");
 
-            if (old.getStatut() != null && old.getStatut().equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
+            if (old.getStatut() == EtatRendezVous.ANNULE) {
                 throw new ValidationException("Impossible de modifier un RDV annulé");
+            }
+
+            // règles planning
+            DetailJournee dj = detailRepo.findById(dto.getDetailJourneeId());
+            if (dj == null) throw new ValidationException("DetailJournee introuvable");
+            checkJourneeOuverte(dj);
+            checkHeureDansPlage(dj, dto.getHeure());
+
+            // conflit horaire : ignorer le même RDV (id)
+            List<RDV> sameDay = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
+            for (RDV r : sameDay) {
+                if (r.getId() != null && r.getId().equals(rdvId)) continue;
+                if (dto.getHeure() != null && dto.getHeure().equals(r.getHeure())) {
+                    EtatRendezVous st = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PREVU;
+                    if (st != EtatRendezVous.ANNULE) {
+                        throw new ValidationException("Conflit: un RDV existe déjà à " + dto.getHeure());
+                    }
+                }
             }
 
             RDV updated = toEntity(dto);
             updated.setId(rdvId);
 
-            if (dto.getStatut() != null) updated.setStatut(dto.getStatut().name());
-            else updated.setStatut(old.getStatut());
+            // si statut null => garder ancien
+            if (dto.getStatut() == null) updated.setStatut(old.getStatut());
 
             rdvRepo.update(updated);
             return toDto(updated);
@@ -176,8 +184,9 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV r = rdvRepo.findById(rdvId);
             if (r == null) throw new ValidationException("RDV introuvable");
 
-            r.setStatut(EtatRendezVous.ANNULE.name());
+            r.setStatut(EtatRendezVous.ANNULE);
             rdvRepo.update(r);
+
         } catch (ValidationException ve) {
             throw ve;
         } catch (Exception e) {
@@ -192,12 +201,13 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             RDV r = rdvRepo.findById(rdvId);
             if (r == null) throw new ValidationException("RDV introuvable");
 
-            if (r.getStatut() != null && r.getStatut().equalsIgnoreCase(EtatRendezVous.ANNULE.name())) {
+            if (r.getStatut() == EtatRendezVous.ANNULE) {
                 throw new ValidationException("Impossible de confirmer un RDV annulé");
             }
 
-            r.setStatut(EtatRendezVous.CONFIRME.name());
+            r.setStatut(EtatRendezVous.CONFIRME);
             rdvRepo.update(r);
+
         } catch (ValidationException ve) {
             throw ve;
         } catch (Exception e) {
@@ -233,32 +243,45 @@ public class AgendaAppServiceImpl implements AgendaAppService {
     private RDV toEntity(RdvDto dto) {
         return RDV.builder()
                 .id(dto.getId())
+                .patientId(dto.getPatientId())
                 .detailJourneeId(dto.getDetailJourneeId())
                 .listeAttenteId(dto.getListeAttenteId())
                 .dateRdv(dto.getDateRdv())
                 .heure(dto.getHeure())
                 .motif(dto.getMotif())
-                .noteMedecin(null)
-                .statut(dto.getStatut() != null ? dto.getStatut().name() : null)
+                .noteMedecin(dto.getNoteMedecin())
+                .statut(dto.getStatut()) // ✅ enum
                 .build();
     }
 
     private RdvDto toDto(RDV r) {
-        EtatRendezVous st = null;
-        if (r.getStatut() != null) {
-            try { st = EtatRendezVous.valueOf(r.getStatut()); }
-            catch (Exception ignored) {}
-        }
-
         return RdvDto.builder()
                 .id(r.getId())
+                .patientId(r.getPatientId())
                 .detailJourneeId(r.getDetailJourneeId())
                 .listeAttenteId(r.getListeAttenteId())
                 .dateRdv(r.getDateRdv())
                 .heure(r.getHeure())
                 .motif(r.getMotif())
-                .statut(st)
+                .noteMedecin(r.getNoteMedecin())
+                .statut(r.getStatut()) // ✅ enum
                 .build();
+    }
+
+    private void checkJourneeOuverte(DetailJournee dj) throws ValidationException {
+        StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
+        if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
+            throw new ValidationException("Journée non ouverte : impossible de planifier un RDV");
+        }
+    }
+
+    private void checkHeureDansPlage(DetailJournee dj, LocalTime h) throws ValidationException {
+        if (dj.getHeureDebutTravail() != null && h.isBefore(dj.getHeureDebutTravail())) {
+            throw new ValidationException("Heure avant début de travail");
+        }
+        if (dj.getHeureFinTravail() != null && h.isAfter(dj.getHeureFinTravail())) {
+            throw new ValidationException("Heure après fin de travail");
+        }
     }
 
     private LocalDate startOfWeek(LocalDate d) {

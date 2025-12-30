@@ -9,6 +9,7 @@ import ma.dentalTech.entities.agenda.ListeAttente;
 import ma.dentalTech.entities.agenda.PlageHoraire;
 import ma.dentalTech.entities.agenda.RDV;
 
+import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.enums.Mois;
 
 import ma.dentalTech.service.modules.agenda.api.AgendaService;
@@ -28,20 +29,15 @@ public class TestServiceagenda {
     private final ListeAttenteService listeAttenteService = ApplicationContext.getBean(ListeAttenteService.class);
     private final PlageHoraireService plageHoraireService = ApplicationContext.getBean(PlageHoraireService.class);
 
-    // ids pour cleanup
     private Long agendaId;
     private Long detailId;
     private Long plageId;
     private Long listeId;
     private Long rdvId;
 
-    // ids FK robustes
     private Long medecinId;
     private Long patientId;
 
-    // =====================================================
-    // 0) PREPARE FK DATA (MEDECIN + PATIENT)
-    // =====================================================
     private void prepareFkData() {
         System.out.println("\n=== PREPARE FK DATA (MEDECIN + PATIENT) ===");
         this.medecinId = ensureMedecinExists();
@@ -54,13 +50,11 @@ public class TestServiceagenda {
     private Long ensureMedecinExists() {
         try (Connection cn = SessionFactory.getInstance().getConnection()) {
 
-            // 1) si déjà un medecin
             Long existing = selectOneLong(cn, "SELECT id FROM medecin LIMIT 1");
             if (existing != null) return existing;
 
             System.out.println("⚠️ Aucun medecin trouvé. Création chaîne utilisateur -> staff -> medecin ...");
 
-            // 2) role MEDECIN (si absent)
             Long roleId = selectOneLong(cn, "SELECT id FROM role WHERE libelle='MEDECIN' LIMIT 1");
             if (roleId == null) {
                 roleId = insertAndGetId(cn,
@@ -70,16 +64,15 @@ public class TestServiceagenda {
                 System.out.println("  - role MEDECIN existe id=" + roleId);
             }
 
-            final Long roleIdFinal = roleId; // ✅ IMPORTANT pour la lambda
+            final Long roleIdFinal = roleId;
 
-// 3) utilisateur
             String uniq = String.valueOf(System.currentTimeMillis());
             String login = "med_test_" + uniq;
             String email = "med_test_" + uniq + "@test.ma";
 
             Long utilisateurId = insertAndGetId(cn,
                     "INSERT INTO utilisateur(nom, prenom, email, adresse, tel, sexe, login, mot_de_passe, actif, cree_par, modifie_par, role_id) " +
-                            "VALUES(?,?,?,?,?,'HOMME',?,?,TRUE,'TEST_AICHA','TEST_AICHA',?)",
+                            "VALUES(?,?,?,?,?,'HOMME',?,?,TRUE,'TEST_AICHA','TEST_AICHA',?) ",
                     ps -> {
                         ps.setString(1, "MEDECIN");
                         ps.setString(2, "TEST");
@@ -88,12 +81,11 @@ public class TestServiceagenda {
                         ps.setString(5, "0600000000");
                         ps.setString(6, login);
                         ps.setString(7, "pass");
-                        ps.setLong(8, roleIdFinal); // ✅ utilise la variable final
+                        ps.setLong(8, roleIdFinal);
                     }
             );
             System.out.println("  - utilisateur créé id=" + utilisateurId + " login=" + login);
 
-            // 4) staff (id = utilisateur.id)
             exec(cn,
                     "INSERT INTO staff(id, salaire, prime, date_recrutement, solde_conge, cabinet_id, cree_par, modifie_par) " +
                             "VALUES(?,0,0,CURDATE(),0,NULL,'TEST_AICHA','TEST_AICHA')",
@@ -101,7 +93,6 @@ public class TestServiceagenda {
             );
             System.out.println("  - staff créé id=" + utilisateurId);
 
-            // 5) medecin (id = staff.id)
             exec(cn,
                     "INSERT INTO medecin(id, specialite, cree_par, modifie_par) VALUES(?, 'Dentiste', 'TEST_AICHA', 'TEST_AICHA')",
                     ps -> ps.setLong(1, utilisateurId)
@@ -142,13 +133,9 @@ public class TestServiceagenda {
         }
     }
 
-    // =====================================================
-    // AGENDA CRUD (AgendaMensuel + DetailJournee)
-    // =====================================================
     private void testAgendaCRUD() {
         System.out.println("\n=== [CRUD] AGENDA MENSUEL + DETAIL JOURNEE ===");
 
-        // CREATE AgendaMensuel
         AgendaMensuel agenda = AgendaMensuel.builder()
                 .medecinId(medecinId)
                 .mois(Mois.DECEMBRE)
@@ -160,14 +147,12 @@ public class TestServiceagenda {
         agendaService.createAgenda(agenda);
 
         agendaId = agenda.getId();
-        if (agendaId == null) throw new IllegalStateException("CREATE AgendaMensuel: id null (repo n'a pas rempli l'id)");
+        if (agendaId == null) throw new IllegalStateException("CREATE AgendaMensuel: id null");
         System.out.println("✅ AgendaMensuel créé id=" + agendaId);
 
-        // READ AgendaMensuel
         AgendaMensuel loadedAgenda = agendaService.getAgendaById(agendaId);
-        if (loadedAgenda == null) throw new IllegalStateException("READ AgendaMensuel: getAgendaById retourne null");
+        if (loadedAgenda == null) throw new IllegalStateException("READ AgendaMensuel: null");
 
-        // CREATE DetailJournee
         DetailJournee dj = DetailJournee.builder()
                 .agendaId(agendaId)
                 .dateJour(LocalDate.now().plusDays(2))
@@ -184,7 +169,6 @@ public class TestServiceagenda {
         if (detailId == null) throw new IllegalStateException("CREATE DetailJournee: id null");
         System.out.println("✅ DetailJournee créé id=" + detailId + " date=" + dj.getDateJour());
 
-        // UPDATE DetailJournee
         DetailJournee loadedDj = agendaService.getDetailById(detailId);
         loadedDj.setCommentaire("MODIF - commentaire (TestServiceagenda)");
         agendaService.updateDetail(loadedDj);
@@ -195,14 +179,10 @@ public class TestServiceagenda {
         }
         System.out.println("✅ DetailJournee modifié");
 
-        // LIST by agenda
         List<DetailJournee> details = agendaService.getDetailsByAgenda(agendaId);
         System.out.println("Détails par agendaId=" + agendaId + " => " + details.size());
     }
 
-    // =====================================================
-    // PLAGE HORAIRE CRUD
-    // =====================================================
     private void testPlageHoraireCRUD() {
         System.out.println("\n=== [CRUD] PLAGE HORAIRE ===");
         if (detailId == null) throw new IllegalStateException("PlageHoraire nécessite detailId.");
@@ -222,7 +202,6 @@ public class TestServiceagenda {
         if (plageId == null) throw new IllegalStateException("CREATE PlageHoraire: id null");
         System.out.println("✅ PlageHoraire créée id=" + plageId);
 
-        // UPDATE
         PlageHoraire loaded = plageHoraireService.getById(plageId);
         loaded.setDisponible(false);
         plageHoraireService.update(loaded);
@@ -237,9 +216,6 @@ public class TestServiceagenda {
         System.out.println("Plages disponibles par detailJourneeId=" + detailId + " => " + plageHoraireService.getDisponiblesByDetailJournee(detailId).size());
     }
 
-    // =====================================================
-    // LISTE ATTENTE CRUD
-    // =====================================================
     private void testListeAttenteCRUD() {
         System.out.println("\n=== [CRUD] LISTE ATTENTE ===");
 
@@ -268,9 +244,6 @@ public class TestServiceagenda {
         System.out.println("Recherche 'LISTE_TEST_AICHA' => " + listeAttenteService.searchByNomListe("LISTE_TEST_AICHA").size());
     }
 
-    // =====================================================
-    // RDV CRUD
-    // =====================================================
     private void testRdvCRUD() {
         System.out.println("\n=== [CRUD] RDV ===");
         if (detailId == null) throw new IllegalStateException("RDV nécessite detailId.");
@@ -278,11 +251,11 @@ public class TestServiceagenda {
         RDV r = RDV.builder()
                 .patientId(patientId)
                 .detailJourneeId(detailId)
-                .listeAttenteId(listeId) // peut être null, mais ok
+                .listeAttenteId(listeId)
                 .dateRdv(LocalDate.now().plusDays(2))
                 .heure(LocalTime.of(11, 0))
                 .motif("RDV TestServiceagenda")
-                .statut("PLANIFIE") // schema.sql
+                .statut(EtatRendezVous.PREVU) // ✅ enum
                 .noteMedecin("Note test")
                 .creePar("TEST_AICHA")
                 .modifiePar("TEST_AICHA")
@@ -296,14 +269,14 @@ public class TestServiceagenda {
 
         RDV loaded = rdvService.getById(rdvId);
         loaded.setMotif("MODIF - motif (TestServiceagenda)");
-        loaded.setStatut("TERMINE");
+        loaded.setStatut(EtatRendezVous.TERMINE); // ✅ enum
         rdvService.update(loaded);
 
         RDV updated = rdvService.getById(rdvId);
         if (updated == null || updated.getMotif() == null || !updated.getMotif().contains("MODIF")) {
             throw new IllegalStateException("UPDATE RDV: motif non modifié");
         }
-        if (!"TERMINE".equals(updated.getStatut())) {
+        if (updated.getStatut() != EtatRendezVous.TERMINE) {
             throw new IllegalStateException("UPDATE RDV: statut non modifié");
         }
         System.out.println("✅ RDV modifié");
@@ -313,9 +286,6 @@ public class TestServiceagenda {
         System.out.println("RDV à venir => " + rdvService.getUpcomingFromToday().size());
     }
 
-    // =====================================================
-    // CLEANUP (ordre sûr)
-    // =====================================================
     private void cleanup() {
         System.out.println("\n=== CLEANUP AGENDA TEST ===");
 
@@ -335,9 +305,6 @@ public class TestServiceagenda {
         }
     }
 
-    // =====================================================
-    // MAIN
-    // =====================================================
     public static void main(String[] args) {
         TestServiceagenda t = new TestServiceagenda();
         try {
@@ -360,9 +327,7 @@ public class TestServiceagenda {
         }
     }
 
-    // =====================================================
-    // JDBC small helpers
-    // =====================================================
+    // JDBC helpers
     private Long selectOneLong(Connection cn, String sql) throws SQLException {
         try (PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
