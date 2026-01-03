@@ -3,6 +3,7 @@ package ma.dentalTech.mvc.ui;
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.ui.modules.patient.PatientView;
+import ma.dentalTech.mvc.ui.modules.agenda.AgendaHomePanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,7 @@ public class MainFrame extends JFrame {
         // Pages (tu peux ajouter les autres après)
         content.add(buildPlaceholder("Dashboard (à brancher)"), "dashboard");
         content.add(buildPatientPage(), "patients");
-        content.add(buildPlaceholder("Agenda (à brancher)"), "agenda");
+        content.add(buildAgendaPage(), "agenda");
         content.add(buildPlaceholder("Liste d'attente (à brancher)"), "waitlist");
         content.add(buildPlaceholder("RDV (à brancher)"), "rdv");
         content.add(buildPlaceholder("Caisse (à brancher)"), "caisse");
@@ -114,4 +115,11 @@ public class MainFrame extends JFrame {
         }
         return new PatientView(pc);
     }
+
+    private JComponent buildAgendaPage() {
+        // L’UI Agenda gère ses sous-pages (semaine / RDV / mensuel / liste d’attente)
+        // et chaque sous-page récupère ses beans via ApplicationContext.
+        return new AgendaHomePanel();
+    }
+
 }

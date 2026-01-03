@@ -104,7 +104,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         List<RDV> existing = rdvRepo.findByDetailJourneeId(dto.getDetailJourneeId());
         for (RDV r : existing) {
             if (r.getHeure() != null && r.getHeure().equals(dto.getHeure())) {
-                EtatRendezVous st = r.getStatut() != null ? r.getStatut() : EtatRendezVous.PREVU;
+                EtatRendezVous st = r.getStatut() != null ? r.getStatut() : EtatRendezVous.PLANIFIE;
                 if (st != EtatRendezVous.ANNULE) {
                     throw new ValidationException("Conflit: un RDV existe déjà à cette heure");
                 }
@@ -112,7 +112,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
         }
 
         // default statut
-        if (dto.getStatut() == null) dto.setStatut(EtatRendezVous.PREVU);
+        if (dto.getStatut() == null) dto.setStatut(EtatRendezVous.PLANIFIE);
 
         RDV entity = toEntity(dto);
 
@@ -151,7 +151,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
             for (RDV r : sameDay) {
                 if (r.getId() != null && r.getId().equals(rdvId)) continue;
                 if (dto.getHeure() != null && dto.getHeure().equals(r.getHeure())) {
-                    EtatRendezVous st = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PREVU;
+                    EtatRendezVous st = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PLANIFIE;
                     if (st != EtatRendezVous.ANNULE) {
                         throw new ValidationException("Conflit: un RDV existe déjà à " + dto.getHeure());
                     }
@@ -205,7 +205,7 @@ public class AgendaAppServiceImpl implements AgendaAppService {
                 throw new ValidationException("Impossible de confirmer un RDV annulé");
             }
 
-            r.setStatut(EtatRendezVous.CONFIRME);
+            r.setStatut(EtatRendezVous.TERMINE);
             rdvRepo.update(r);
 
         } catch (ValidationException ve) {

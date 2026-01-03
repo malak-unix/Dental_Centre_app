@@ -56,6 +56,12 @@ public final class ApplicationContext {
                     new Object[]{patientRepo});
             put(PatientService.class, patientService, "patientService");
 
+            // PatientAppService (pour UI/controller)
+            currentBean = "patientAppService";
+            ma.dentalTech.service.modules.patient.api.PatientAppService patientAppService =
+                    new ma.dentalTech.service.modules.patient.impl.PatientAppServiceImpl(patientRepo);
+            put(ma.dentalTech.service.modules.patient.api.PatientAppService.class, patientAppService, "patientAppService");
+
             // Antecedent (optionnel selon ton projet)
             if (props.getProperty("antecedentRepo") != null && !props.getProperty("antecedentRepo").isBlank()) {
                 currentBean = "antecedentRepo";
@@ -71,8 +77,11 @@ public final class ApplicationContext {
                 put(ma.dentalTech.service.modules.patient.api.AntecedentService.class, antecedentService, "antecedentService");
             }
 
-            createOptional(props, "patientController", PatientService.class, patientService);
-            createOptional(props, "patientControllerSwing", PatientService.class, patientService);
+            createOptional(props, "patientController",
+                    ma.dentalTech.service.modules.patient.api.PatientAppService.class, patientAppService);
+
+            createOptional(props, "patientControllerSwing",
+                    ma.dentalTech.service.modules.patient.api.PatientAppService.class, patientAppService);
 
             // ==========================================
             // CAISSE : repos -> services V2 -> (controller optional)
@@ -181,6 +190,32 @@ public final class ApplicationContext {
                         new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
                         new Object[]{agendaMensuelRepo, detailJourneeRepo});
                 put(AgendaService.class, agendaService, "agendaService");
+
+                // ==========================================
+                // AGENDA Controller (optionnel) - 2 dépendances
+                // ==========================================
+                String agendaCtrlClass = props.getProperty("agenda.controller");
+                if (agendaCtrlClass != null && !agendaCtrlClass.isBlank()) {
+                    try {
+                        Object obj = Class.forName(agendaCtrlClass)
+                                .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
+                                .newInstance(agendaMensuelRepo, detailJourneeRepo);
+                        contextByName.put("agenda.controller", obj);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Erreur création bean optionnel 'agenda.controller'", e);
+                    }
+                }
+
+                // ==========================================
+                // AGENDA App Service (UI) - 3 dépendances
+                // ==========================================
+                if (props.getProperty("agendaAppService") != null && !props.getProperty("agendaAppService").isBlank()) {
+                    currentBean = "agendaAppService";
+                    AgendaAppService agendaAppService = newInstance(props, "agendaAppService", AgendaAppService.class,
+                            new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class, RdvRepository.class},
+                            new Object[]{agendaMensuelRepo, detailJourneeRepo, rdvRepo});
+                    put(AgendaAppService.class, agendaAppService, "agendaAppService");
+                }
             }
 
             // ==========================================

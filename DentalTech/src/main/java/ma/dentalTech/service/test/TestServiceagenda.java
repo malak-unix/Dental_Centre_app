@@ -255,7 +255,7 @@ public class TestServiceagenda {
                 .dateRdv(LocalDate.now().plusDays(2))
                 .heure(LocalTime.of(11, 0))
                 .motif("RDV TestServiceagenda")
-                .statut(EtatRendezVous.PREVU) // ✅ enum
+                .statut(EtatRendezVous.PLANIFIE) // ✅ enum
                 .noteMedecin("Note test")
                 .creePar("TEST_AICHA")
                 .modifiePar("TEST_AICHA")

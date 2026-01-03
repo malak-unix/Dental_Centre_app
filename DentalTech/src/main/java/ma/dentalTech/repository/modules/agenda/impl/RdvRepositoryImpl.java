@@ -72,7 +72,7 @@ public class RdvRepositoryImpl implements RdvRepository {
 
             ps.setString(6, r.getMotif());
 
-            EtatRendezVous statut = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PREVU;
+            EtatRendezVous statut = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PLANIFIE;
             ps.setString(7, statut.name());
 
             ps.setString(8, r.getNoteMedecin());
@@ -114,7 +114,7 @@ public class RdvRepositoryImpl implements RdvRepository {
 
             ps.setString(6, r.getMotif());
 
-            EtatRendezVous statut = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PREVU;
+            EtatRendezVous statut = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PLANIFIE;
             ps.setString(7, statut.name());
 
             ps.setString(8, r.getNoteMedecin());
