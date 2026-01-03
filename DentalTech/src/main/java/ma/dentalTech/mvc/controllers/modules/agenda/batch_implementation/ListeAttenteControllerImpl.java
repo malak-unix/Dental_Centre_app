@@ -27,8 +27,7 @@ public class ListeAttenteControllerImpl implements ListeAttenteController {
     }
 
     private ListeAttenteDto toDto(ListeAttente l) {
-        if (l == null) return null;
-        return ListeAttenteDto.builder()
+        return (l == null) ? null : ListeAttenteDto.builder()
                 .id(l.getId())
                 .nom(l.getNom())
                 .build();

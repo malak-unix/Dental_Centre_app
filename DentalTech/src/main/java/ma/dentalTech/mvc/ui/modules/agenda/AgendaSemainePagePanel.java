@@ -122,8 +122,13 @@ public class AgendaSemainePagePanel extends JPanel {
             List<RdvDto> rdvs = dto.getRdvsSemaine();
             if (rdvs != null) {
                 for (RdvDto r : rdvs) {
+                    String patientAff = (r.getPatientNom() != null && !r.getPatientNom().isBlank())
+                            ? r.getPatientNom()
+                            : ("#" + r.getPatientId());
+
                     rdvModel.addRow(new Object[]{
                             r.getId(),
+                            patientAff,
                             r.getDateRdv(),
                             r.getHeure(),
                             r.getMotif(),
@@ -132,6 +137,7 @@ public class AgendaSemainePagePanel extends JPanel {
                     });
                 }
             }
+
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur Agenda Semaine", JOptionPane.ERROR_MESSAGE);

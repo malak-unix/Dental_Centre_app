@@ -2,30 +2,22 @@ package ma.dentalTech.mvc.ui.test;
 
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.service.modules.agenda.api.AgendaAppService;
 
 public class AppSmokeTest {
-
     public static void main(String[] args) {
 
-        // 1) Essai par TYPE
-        PatientController c = ApplicationContext.getBean(PatientController.class);
+        System.out.println("=== SMOKE TEST ApplicationContext ===");
 
-        // 2) Fallback par NOM (les 3 clés les plus probables)
-        if (c == null) c = (PatientController) ApplicationContext.getBean("patientController");
-        if (c == null) c = (PatientController) ApplicationContext.getBean("patient.controller");
-        if (c == null) c = (PatientController) ApplicationContext.getBean("patientControllerSwing"); // si tu testes swing
+        Object patientCtrl = ApplicationContext.getBean("patientController");
+        System.out.println("patientController = " + patientCtrl);
 
-        if (c == null) {
-            throw new IllegalStateException(
-                    "PatientController introuvable dans ApplicationContext.\n" +
-                            "Vérifie /config/beans.properties (resource) contient:\n" +
-                            "patientController = ...PatientControllerImpl\n" +
-                            "ou patient.controller = ...PatientControllerImpl\n"
-            );
-        }
+        PatientController pc = (PatientController) ApplicationContext.getBean("patientController");
+        System.out.println("patientController cast OK => " + (pc != null));
 
-        System.out.println("✅ PatientController trouvé: " + c.getClass().getName());
-        System.out.println("Patients count = " + c.lister().size());
-        System.out.println("✅ AppSmokeTest OK");
+        AgendaAppService agendaApp = ApplicationContext.getBean(AgendaAppService.class);
+        System.out.println("agendaAppService = " + agendaApp);
+
+        System.out.println("✅ SMOKE TEST OK");
     }
 }

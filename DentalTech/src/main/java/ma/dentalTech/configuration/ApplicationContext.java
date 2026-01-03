@@ -1,17 +1,13 @@
 package ma.dentalTech.configuration;
+
 import ma.dentalTech.repository.common.RowMappers;
 
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
+import ma.dentalTech.repository.modules.patient.api.*;
+import ma.dentalTech.service.modules.patient.api.*;
 
-import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.service.modules.patient.api.PatientService;
-
-import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
-import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
-import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
-import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
+import ma.dentalTech.repository.modules.caisse.api.*;
+import ma.dentalTech.service.modules.caisse.api.*;
+import ma.dentalTech.service.modules.caisse.impl.*;
 
 import ma.dentalTech.repository.modules.agenda.api.*;
 import ma.dentalTech.service.modules.agenda.api.*;
@@ -19,12 +15,13 @@ import ma.dentalTech.service.modules.agenda.api.*;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 
-import ma.dentalTech.service.modules.caisse.api.*;
-import ma.dentalTech.service.modules.caisse.impl.*;
-
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public final class ApplicationContext {
@@ -35,259 +32,313 @@ public final class ApplicationContext {
     static {
         String currentBean = "aucun";
         try {
+            // =========================================================
+            // Load beans.properties
+            // =========================================================
             Properties props = new Properties();
             try (InputStream in = ApplicationContext.class.getResourceAsStream("/config/beans.properties")) {
-                if (in == null) {
-                    throw new IllegalStateException("Impossible de trouver /config/beans.properties dans le classpath");
-                }
+                if (in == null) throw new IllegalStateException("Impossible de trouver /config/beans.properties");
                 props.load(in);
             }
 
-            // ==========================================
-            // PATIENT : repo -> service -> (controller optional)
-            // ==========================================
+            // =========================================================
+            // Known objects (pour instantiation flexible)
+            // IMPORTANT: ne garde pas une Connection ouverte ici.
+            // =========================================================
+            Map<Class<?>, Object> known = new HashMap<>();
+            known.put(SessionFactory.class, SessionFactory.getInstance());
+
+            // RowMappers (si utilisé en ctor quelque part)
+            try {
+                known.put(RowMappers.class, RowMappers.class.getDeclaredConstructor().newInstance());
+            } catch (Exception ignored) {}
+
+            // =========================================================
+            // PATIENT : repo -> service -> appService -> controller
+            // =========================================================
             currentBean = "patientRepo";
-            PatientRepository patientRepo = newInstance(props, "patientRepo", PatientRepository.class);
+            PatientRepository patientRepo = newRepoInstance(props, "patientRepo", PatientRepository.class, known);
             put(PatientRepository.class, patientRepo, "patientRepo");
 
             currentBean = "patientService";
-            PatientService patientService = newInstance(props, "patientService", PatientService.class,
+            PatientService patientService = newServiceInstance(
+                    props, "patientService", PatientService.class,
                     new Class<?>[]{PatientRepository.class},
-                    new Object[]{patientRepo});
+                    new Object[]{patientRepo}
+            );
             put(PatientService.class, patientService, "patientService");
 
-            // PatientAppService (pour UI/controller)
             currentBean = "patientAppService";
-            ma.dentalTech.service.modules.patient.api.PatientAppService patientAppService =
+            PatientAppService patientAppService =
                     new ma.dentalTech.service.modules.patient.impl.PatientAppServiceImpl(patientRepo);
-            put(ma.dentalTech.service.modules.patient.api.PatientAppService.class, patientAppService, "patientAppService");
+            put(PatientAppService.class, patientAppService, "patientAppService");
 
-            // Antecedent (optionnel selon ton projet)
-            if (props.getProperty("antecedentRepo") != null && !props.getProperty("antecedentRepo").isBlank()) {
+            // Antecedent optional
+            AntecedentRepository antecedentRepo = null;
+            if (hasKey(props, "antecedentRepo")) {
                 currentBean = "antecedentRepo";
-                ma.dentalTech.repository.modules.patient.api.AntecedentRepository antecedentRepo =
-                        newInstance(props, "antecedentRepo", ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class);
-                put(ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class, antecedentRepo, "antecedentRepo");
+                antecedentRepo = newRepoInstance(props, "antecedentRepo", AntecedentRepository.class, known);
+                put(AntecedentRepository.class, antecedentRepo, "antecedentRepo");
 
-                currentBean = "antecedentService";
-                ma.dentalTech.service.modules.patient.api.AntecedentService antecedentService =
-                        newInstance(props, "antecedentService", ma.dentalTech.service.modules.patient.api.AntecedentService.class,
-                                new Class<?>[]{ma.dentalTech.repository.modules.patient.api.AntecedentRepository.class},
-                                new Object[]{antecedentRepo});
-                put(ma.dentalTech.service.modules.patient.api.AntecedentService.class, antecedentService, "antecedentService");
-            }
-
-            createOptional(props, "patientController",
-                    ma.dentalTech.service.modules.patient.api.PatientAppService.class, patientAppService);
-
-            createOptional(props, "patientControllerSwing",
-                    ma.dentalTech.service.modules.patient.api.PatientAppService.class, patientAppService);
-
-            // ==========================================
-            // CAISSE : repos -> services V2 -> (controller optional)
-            // ==========================================
-            currentBean = "factureRepo";
-            FactureRepository factureRepo = newInstance(props, "factureRepo", FactureRepository.class);
-            put(FactureRepository.class, factureRepo, "factureRepo");
-
-            currentBean = "chargesRepo";
-            ChargesRepository chargesRepo = newInstance(props, "chargesRepo", ChargesRepository.class);
-            put(ChargesRepository.class, chargesRepo, "chargesRepo");
-
-            currentBean = "revenusRepo";
-            RevenuesRepository revenusRepo = newInstance(props, "revenusRepo", RevenuesRepository.class);
-            put(RevenuesRepository.class, revenusRepo, "revenusRepo");
-
-            currentBean = "sitFinRepo";
-            SituationFinanciereRepository sitFinRepo = newInstance(props, "sitFinRepo", SituationFinanciereRepository.class);
-            put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
-
-            // PDF service
-            if (props.getProperty("facturePdfService") != null && !props.getProperty("facturePdfService").isBlank()) {
-                currentBean = "facturePdfService";
-                FacturePdfService facturePdfService = newInstance(props, "facturePdfService", FacturePdfService.class);
-                put(FacturePdfService.class, facturePdfService, "facturePdfService");
-
-                // Facture service V2 (constructeur connu)
-                if (props.getProperty("factureServiceV2") != null && !props.getProperty("factureServiceV2").isBlank()) {
-                    currentBean = "factureServiceV2";
-                    FactureServiceV2 factureServiceV2 = new FactureServiceV2Impl(factureRepo, facturePdfService);
-                    put(FactureServiceV2.class, factureServiceV2, "factureServiceV2");
+                if (hasKey(props, "antecedentService")) {
+                    currentBean = "antecedentService";
+                    AntecedentService antecedentService = newServiceInstance(
+                            props, "antecedentService", AntecedentService.class,
+                            new Class<?>[]{AntecedentRepository.class},
+                            new Object[]{antecedentRepo}
+                    );
+                    put(AntecedentService.class, antecedentService, "antecedentService");
                 }
             }
 
-            // Charges / Revenus / SituationFin V2
-            if (props.getProperty("chargesServiceV2") != null && !props.getProperty("chargesServiceV2").isBlank()) {
+            // patientController optional (1 dep : PatientAppService)
+            if (hasKey(props, "patientController")) {
+                currentBean = "patientController";
+                Object patientController = newFlexibleInstance(
+                        props.getProperty("patientController"), known,
+                        patientAppService
+                );
+                contextByName.put("patientController", patientController);
+            }
+
+            // =========================================================
+            // CAISSE : repos -> services V2 -> controller V2 optional
+            // =========================================================
+            currentBean = "factureRepo";
+            FactureRepository factureRepo = newRepoInstance(props, "factureRepo", FactureRepository.class, known);
+            put(FactureRepository.class, factureRepo, "factureRepo");
+
+            currentBean = "chargesRepo";
+            ChargesRepository chargesRepo = newRepoInstance(props, "chargesRepo", ChargesRepository.class, known);
+            put(ChargesRepository.class, chargesRepo, "chargesRepo");
+
+            currentBean = "revenusRepo";
+            RevenuesRepository revenusRepo = newRepoInstance(props, "revenusRepo", RevenuesRepository.class, known);
+            put(RevenuesRepository.class, revenusRepo, "revenusRepo");
+
+            currentBean = "sitFinRepo";
+            SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo", SituationFinanciereRepository.class, known);
+            put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
+
+            FacturePdfService facturePdfService = null;
+            if (hasKey(props, "facturePdfService")) {
+                currentBean = "facturePdfService";
+                facturePdfService = newServiceInstance(props, "facturePdfService", FacturePdfService.class);
+                put(FacturePdfService.class, facturePdfService, "facturePdfService");
+            }
+
+            if (hasKey(props, "factureServiceV2") && facturePdfService != null) {
+                currentBean = "factureServiceV2";
+                FactureServiceV2 factureServiceV2 = new FactureServiceV2Impl(factureRepo, facturePdfService);
+                put(FactureServiceV2.class, factureServiceV2, "factureServiceV2");
+            }
+
+            if (hasKey(props, "chargesServiceV2")) {
                 currentBean = "chargesServiceV2";
-                ChargesServiceV2 chargesServiceV2 = newInstance(props, "chargesServiceV2", ChargesServiceV2.class,
+                ChargesServiceV2 chargesServiceV2 = newServiceInstance(
+                        props, "chargesServiceV2", ChargesServiceV2.class,
                         new Class<?>[]{ChargesRepository.class},
-                        new Object[]{chargesRepo});
+                        new Object[]{chargesRepo}
+                );
                 put(ChargesServiceV2.class, chargesServiceV2, "chargesServiceV2");
             }
 
-            if (props.getProperty("revenusServiceV2") != null && !props.getProperty("revenusServiceV2").isBlank()) {
+            if (hasKey(props, "revenusServiceV2")) {
                 currentBean = "revenusServiceV2";
-                RevenusServiceV2 revenusServiceV2 = newInstance(props, "revenusServiceV2", RevenusServiceV2.class,
+                RevenusServiceV2 revenusServiceV2 = newServiceInstance(
+                        props, "revenusServiceV2", RevenusServiceV2.class,
                         new Class<?>[]{RevenuesRepository.class},
-                        new Object[]{revenusRepo});
+                        new Object[]{revenusRepo}
+                );
                 put(RevenusServiceV2.class, revenusServiceV2, "revenusServiceV2");
             }
 
-            if (props.getProperty("sitFinServiceV2") != null && !props.getProperty("sitFinServiceV2").isBlank()) {
+            if (hasKey(props, "sitFinServiceV2")) {
                 currentBean = "sitFinServiceV2";
-                SituationFinanciereServiceV2 sitFinServiceV2 = newInstance(props, "sitFinServiceV2", SituationFinanciereServiceV2.class,
+                SituationFinanciereServiceV2 sitFinServiceV2 = newServiceInstance(
+                        props, "sitFinServiceV2", SituationFinanciereServiceV2.class,
                         new Class<?>[]{SituationFinanciereRepository.class},
-                        new Object[]{sitFinRepo});
+                        new Object[]{sitFinRepo}
+                );
                 put(SituationFinanciereServiceV2.class, sitFinServiceV2, "sitFinServiceV2");
             }
 
-            // Dashboard caisse V2 (ctor 3 repos)
             CaisseDashboardServiceV2 caisseDashboardServiceV2 = null;
-            if (props.getProperty("caisseDashboardServiceV2") != null && !props.getProperty("caisseDashboardServiceV2").isBlank()) {
+            if (hasKey(props, "caisseDashboardServiceV2")) {
                 currentBean = "caisseDashboardServiceV2";
-                caisseDashboardServiceV2 = newInstance(
-                        props,
-                        "caisseDashboardServiceV2",
-                        CaisseDashboardServiceV2.class,
+                caisseDashboardServiceV2 = newServiceInstance(
+                        props, "caisseDashboardServiceV2", CaisseDashboardServiceV2.class,
                         new Class<?>[]{FactureRepository.class, RevenuesRepository.class, ChargesRepository.class},
                         new Object[]{factureRepo, revenusRepo, chargesRepo}
                 );
                 put(CaisseDashboardServiceV2.class, caisseDashboardServiceV2, "caisseDashboardServiceV2");
-
-                createOptional(props, "caisseDashboardControllerV2", CaisseDashboardServiceV2.class, caisseDashboardServiceV2);
             }
 
-            // ==========================================
-            // RDV : repo -> service -> (controller optional)
-            // ==========================================
+            if (hasKey(props, "caisseDashboardControllerV2") && caisseDashboardServiceV2 != null) {
+                currentBean = "caisseDashboardControllerV2";
+                Object ctrl = newFlexibleInstance(
+                        props.getProperty("caisseDashboardControllerV2"), known,
+                        caisseDashboardServiceV2
+                );
+                contextByName.put("caisseDashboardControllerV2", ctrl);
+            }
+
+            // =========================================================
+            // RDV : repo -> service -> controller  ✅ FIX PRINCIPAL
+            // =========================================================
             currentBean = "rdv.repository";
-            RdvRepository rdvRepo = newInstance(props, "rdv.repository", RdvRepository.class);
+            RdvRepository rdvRepo = newRepoInstance(props, "rdv.repository", RdvRepository.class, known);
             put(RdvRepository.class, rdvRepo, "rdv.repository");
 
-            if (props.getProperty("rdv.service") != null && !props.getProperty("rdv.service").isBlank()) {
+            RdvService rdvService = null;
+            if (hasKey(props, "rdv.service")) {
                 currentBean = "rdv.service";
-                RdvService rdvService = newInstance(props, "rdv.service", RdvService.class,
+                rdvService = newServiceInstance(
+                        props, "rdv.service", RdvService.class,
                         new Class<?>[]{RdvRepository.class},
-                        new Object[]{rdvRepo});
+                        new Object[]{rdvRepo}
+                );
                 put(RdvService.class, rdvService, "rdv.service");
-                createOptional(props, "rdv.controller", RdvService.class, rdvService);
             }
 
-            // ==========================================
-            // AGENDA : repos -> service
-            // ==========================================
+            if (hasKey(props, "rdv.controller") && rdvService != null) {
+                currentBean = "rdv.controller";
+                // ✅ On injecte RdvService -> RdvControllerImpl(RdvService)
+                Object rdvCtrl = newFlexibleInstance(
+                        props.getProperty("rdv.controller"), known,
+                        rdvService
+                );
+                contextByName.put("rdv.controller", rdvCtrl);
+            }
+
+            // =========================================================
+            // AGENDA : repos -> service -> controller -> appService
+            // =========================================================
             currentBean = "agendaMensuelRepo";
-            AgendaMensuelRepository agendaMensuelRepo = newInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class);
+            AgendaMensuelRepository agendaMensuelRepo = newRepoInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class, known);
             put(AgendaMensuelRepository.class, agendaMensuelRepo, "agendaMensuelRepo");
 
             currentBean = "detailJourneeRepo";
-            DetailJourneeRepository detailJourneeRepo = newInstance(props, "detailJourneeRepo", DetailJourneeRepository.class);
+            DetailJourneeRepository detailJourneeRepo = newRepoInstance(props, "detailJourneeRepo", DetailJourneeRepository.class, known);
             put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
 
-            if (props.getProperty("agendaService") != null && !props.getProperty("agendaService").isBlank()) {
+            if (hasKey(props, "agendaService")) {
                 currentBean = "agendaService";
-                AgendaService agendaService = newInstance(props, "agendaService", AgendaService.class,
+                AgendaService agendaService = newServiceInstance(
+                        props, "agendaService", AgendaService.class,
                         new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
-                        new Object[]{agendaMensuelRepo, detailJourneeRepo});
+                        new Object[]{agendaMensuelRepo, detailJourneeRepo}
+                );
                 put(AgendaService.class, agendaService, "agendaService");
-
-                // ==========================================
-                // AGENDA Controller (optionnel) - 2 dépendances
-                // ==========================================
-                String agendaCtrlClass = props.getProperty("agenda.controller");
-                if (agendaCtrlClass != null && !agendaCtrlClass.isBlank()) {
-                    try {
-                        Object obj = Class.forName(agendaCtrlClass)
-                                .getDeclaredConstructor(AgendaMensuelRepository.class, DetailJourneeRepository.class)
-                                .newInstance(agendaMensuelRepo, detailJourneeRepo);
-                        contextByName.put("agenda.controller", obj);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Erreur création bean optionnel 'agenda.controller'", e);
-                    }
-                }
-
-                // ==========================================
-                // AGENDA App Service (UI) - 3 dépendances
-                // ==========================================
-                if (props.getProperty("agendaAppService") != null && !props.getProperty("agendaAppService").isBlank()) {
-                    currentBean = "agendaAppService";
-                    AgendaAppService agendaAppService = newInstance(props, "agendaAppService", AgendaAppService.class,
-                            new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class, RdvRepository.class},
-                            new Object[]{agendaMensuelRepo, detailJourneeRepo, rdvRepo});
-                    put(AgendaAppService.class, agendaAppService, "agendaAppService");
-                }
             }
 
-            // ==========================================
-            // LISTE D'ATTENTE : repo -> service
-            // ==========================================
+            if (hasKey(props, "agenda.controller")) {
+                currentBean = "agenda.controller";
+                // ctor(AgendaMensuelRepository, DetailJourneeRepository)
+                Object agendaCtrl = newFlexibleInstance(
+                        props.getProperty("agenda.controller"), known,
+                        agendaMensuelRepo, detailJourneeRepo
+                );
+                contextByName.put("agenda.controller", agendaCtrl);
+            }
+
+            if (hasKey(props, "agendaAppService")) {
+                currentBean = "agendaAppService";
+                // ctor(AgendaMensuelRepository, DetailJourneeRepository, RdvRepository)
+                AgendaAppService agendaAppService = newServiceInstance(
+                        props, "agendaAppService", AgendaAppService.class,
+                        new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class, RdvRepository.class},
+                        new Object[]{agendaMensuelRepo, detailJourneeRepo, rdvRepo}
+                );
+                put(AgendaAppService.class, agendaAppService, "agendaAppService");
+            }
+
+            // =========================================================
+            // LISTE D'ATTENTE : repo -> service -> controller
+            // =========================================================
             currentBean = "listeAttente.repository";
-            ListeAttenteRepository listeRepo = newInstance(props, "listeAttente.repository", ListeAttenteRepository.class);
+            ListeAttenteRepository listeRepo = newRepoInstance(props, "listeAttente.repository", ListeAttenteRepository.class, known);
             put(ListeAttenteRepository.class, listeRepo, "listeAttente.repository");
 
-            if (props.getProperty("listeAttente.service") != null && !props.getProperty("listeAttente.service").isBlank()) {
+            ListeAttenteService listeService = null;
+            if (hasKey(props, "listeAttente.service")) {
                 currentBean = "listeAttente.service";
-                ListeAttenteService listeService = newInstance(props, "listeAttente.service", ListeAttenteService.class,
+                listeService = newServiceInstance(
+                        props, "listeAttente.service", ListeAttenteService.class,
                         new Class<?>[]{ListeAttenteRepository.class},
-                        new Object[]{listeRepo});
+                        new Object[]{listeRepo}
+                );
                 put(ListeAttenteService.class, listeService, "listeAttente.service");
-                createOptional(props, "listeAttente.controller", ListeAttenteService.class, listeService);
             }
 
-            // ==========================================
+            if (hasKey(props, "listeAttente.controller") && listeService != null) {
+                currentBean = "listeAttente.controller";
+                Object listeCtrl = newFlexibleInstance(
+                        props.getProperty("listeAttente.controller"), known,
+                        listeService
+                );
+                contextByName.put("listeAttente.controller", listeCtrl);
+            }
+
+            // =========================================================
             // PLAGE HORAIRE : repo -> service
-            // ==========================================
+            // =========================================================
             currentBean = "plageHoraire.repository";
-            PlageHoraireRepository plageRepo = newInstance(props, "plageHoraire.repository", PlageHoraireRepository.class);
+            PlageHoraireRepository plageRepo = newRepoInstance(props, "plageHoraire.repository", PlageHoraireRepository.class, known);
             put(PlageHoraireRepository.class, plageRepo, "plageHoraire.repository");
 
-            if (props.getProperty("plageHoraire.service") != null && !props.getProperty("plageHoraire.service").isBlank()) {
+            if (hasKey(props, "plageHoraire.service")) {
                 currentBean = "plageHoraire.service";
-                PlageHoraireService plageService = newInstance(props, "plageHoraire.service", PlageHoraireService.class,
+                PlageHoraireService plageService = newServiceInstance(
+                        props, "plageHoraire.service", PlageHoraireService.class,
                         new Class<?>[]{PlageHoraireRepository.class},
-                        new Object[]{plageRepo});
+                        new Object[]{plageRepo}
+                );
                 put(PlageHoraireService.class, plageService, "plageHoraire.service");
             }
 
-            // ==========================================
-            // USERS repos
-            // ==========================================
-            currentBean = "notificationRepo";
-            NotificationRepository notificationRepo = newRepoInstance(props, "notificationRepo", NotificationRepository.class);
-            put(NotificationRepository.class, notificationRepo, "notificationRepo");
+            // =========================================================
+            // USERS : repos
+            // =========================================================
+            NotificationRepository notificationRepo = null;
+            UtilisateurRepository utilisateurRepo = null;
 
-            currentBean = "utilisateurRepo";
-            UtilisateurRepository utilisateurRepo = newRepoInstance(props, "utilisateurRepo", UtilisateurRepository.class);
-            put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
+            if (hasKey(props, "notificationRepo")) {
+                currentBean = "notificationRepo";
+                notificationRepo = newRepoInstance(props, "notificationRepo", NotificationRepository.class, known);
+                put(NotificationRepository.class, notificationRepo, "notificationRepo");
+            }
 
-            // ==========================================
-            // DASHBOARD global (création FLEXIBLE)
-            // ==========================================
-            if (props.getProperty("dashboardService") != null && !props.getProperty("dashboardService").isBlank()) {
+            if (hasKey(props, "utilisateurRepo")) {
+                currentBean = "utilisateurRepo";
+                utilisateurRepo = newRepoInstance(props, "utilisateurRepo", UtilisateurRepository.class, known);
+                put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
+            }
+
+            // =========================================================
+            // DASHBOARD : service -> controller (optionnel)
+            // =========================================================
+            if (hasKey(props, "dashboardService") && notificationRepo != null) {
                 currentBean = "dashboardService";
-
                 DashboardService dashboardService = createDashboardServiceFlexible(
-                        props,
-                        notificationRepo,
-                        utilisateurRepo,
-                        rdvRepo,
-                        listeRepo,
-                        patientRepo,
-                        caisseDashboardServiceV2,
-                        factureRepo,
-                        chargesRepo
+                        props, notificationRepo, utilisateurRepo, rdvRepo, listeRepo, patientRepo, caisseDashboardServiceV2
                 );
-
                 put(DashboardService.class, dashboardService, "dashboardService");
-                createOptional(props, "dashboardController", DashboardService.class, dashboardService);
+
+                if (hasKey(props, "dashboardController")) {
+                    currentBean = "dashboardController";
+                    Object dashCtrl = newFlexibleInstance(
+                            props.getProperty("dashboardController"), known,
+                            dashboardService
+                    );
+                    contextByName.put("dashboardController", dashCtrl);
+                }
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de l'initialisation ApplicationContext (bean courant = " + currentBean + ")", e);
+            throw new RuntimeException("Erreur init ApplicationContext (bean courant = " + currentBean + ")", e);
         }
     }
-
-
 
     private ApplicationContext() {}
 
@@ -308,128 +359,130 @@ public final class ApplicationContext {
     }
 
     // ==========================
-    // Internal helpers
+    // Helpers
     // ==========================
+    private static boolean hasKey(Properties props, String key) {
+        String v = props.getProperty(key);
+        return v != null && !v.isBlank();
+    }
+
     private static void put(Class<?> type, Object instance, String name) {
         context.put(type, instance);
         contextByName.put(name, instance);
     }
 
-    private static <T> T newInstance(Properties props, String key, Class<T> expectedType) throws Exception {
+    private static <T> T newServiceInstance(Properties props, String key, Class<T> expectedType) throws Exception {
         String className = props.getProperty(key);
-        if (className == null || className.isBlank()) {
-            throw new IllegalStateException("Bean '" + key + "' introuvable dans beans.properties");
-        }
+        if (className == null || className.isBlank()) throw new IllegalStateException("Bean '" + key + "' introuvable");
         Object obj = Class.forName(className).getDeclaredConstructor().newInstance();
         return expectedType.cast(obj);
     }
 
-    private static <T> T newInstance(Properties props, String key, Class<T> expectedType,
-                                     Class<?>[] ctorTypes, Object[] ctorArgs) throws Exception {
+    private static <T> T newServiceInstance(Properties props, String key, Class<T> expectedType,
+                                            Class<?>[] ctorTypes, Object[] ctorArgs) throws Exception {
         String className = props.getProperty(key);
-        if (className == null || className.isBlank()) {
-            throw new IllegalStateException("Bean '" + key + "' introuvable dans beans.properties");
-        }
+        if (className == null || className.isBlank()) throw new IllegalStateException("Bean '" + key + "' introuvable");
         Object obj = Class.forName(className).getDeclaredConstructor(ctorTypes).newInstance(ctorArgs);
         return expectedType.cast(obj);
     }
 
-    private static void createOptional(Properties props, String key, Class<?> depType, Object depInstance) {
+    /**
+     * Repo JDBC : essaye ctor(Connection), sinon ctor vide, sinon resolution flexible.
+     * NOTE: On fournit une Connection à la demande (pas stockée).
+     */
+    private static <T> T newRepoInstance(Properties props, String key, Class<T> expectedType, Map<Class<?>, Object> known) throws Exception {
         String className = props.getProperty(key);
-        if (className == null || className.isBlank()) return;
-
-        try {
-            Object obj = Class.forName(className).getDeclaredConstructor(depType).newInstance(depInstance);
-            contextByName.put(key, obj);
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur création bean optionnel '" + key + "'", e);
-        }
-    }
-
-    private static <T> T newRepoInstance(Properties props, String key, Class<T> expectedType) throws Exception {
-        String className = props.getProperty(key);
-        if (className == null || className.isBlank()) {
-            throw new IllegalStateException("Bean '" + key + "' introuvable dans beans.properties");
-        }
+        if (className == null || className.isBlank()) throw new IllegalStateException("Bean '" + key + "' introuvable");
 
         Class<?> clazz = Class.forName(className);
 
-        // ✅ 1) Essai direct constructeur (Connection) : cas JDBC standard
+        // 1) ctor(Connection)
         try {
-            Constructor<?> c = clazz.getDeclaredConstructor(java.sql.Connection.class);
+            Constructor<?> c = clazz.getDeclaredConstructor(Connection.class);
             c.setAccessible(true);
-            Object obj = c.newInstance(SessionFactory.getInstance().getConnection());
-            return expectedType.cast(obj);
-        } catch (NoSuchMethodException ignored) {
-            // pas de ctor(Connection) => continue
-        }
+            try (Connection cn = SessionFactory.getInstance().getConnection()) {
+                Object obj = c.newInstance(cn);
+                return expectedType.cast(obj);
+            }
+        } catch (NoSuchMethodException ignored) {}
 
-        // 2) essai constructeur vide
+        // 2) ctor vide
         try {
             Object obj = clazz.getDeclaredConstructor().newInstance();
             return expectedType.cast(obj);
-        } catch (NoSuchMethodException ignored) {
+        } catch (NoSuchMethodException ignored) {}
+
+        // 3) flex (avec known + Connection temporaire si besoin)
+        Map<Class<?>, Object> merged = new HashMap<>(known);
+        try (Connection cn = SessionFactory.getInstance().getConnection()) {
+            merged.put(Connection.class, cn);
+            Object obj = instantiateWithKnown(clazz, merged);
+            return expectedType.cast(obj);
+        }
+    }
+
+    /**
+     * Controllers/services “optionnels” : on essaye de matcher les args fournis.
+     */
+    private static Object newFlexibleInstance(String className, Map<Class<?>, Object> known, Object... args) throws Exception {
+        Class<?> clazz = Class.forName(className);
+
+        // ajoute args dans known pour aider (résolution par assignabilité)
+        Map<Class<?>, Object> merged = new HashMap<>(known);
+        for (Object a : args) {
+            if (a != null) merged.put(a.getClass(), a);
         }
 
-        // 3) Contexte d'objets connus qu'on sait fournir
-        Map<Class<?>, Object> known = new HashMap<>();
-        known.put(SessionFactory.class, SessionFactory.getInstance());
+        // essayer constructeurs avec le bon nombre d'args (assignable)
+        for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
+            Class<?>[] types = ctor.getParameterTypes();
+            if (types.length != args.length) continue;
 
-        // ✅ rendre Connection disponible aussi pour la résolution flexible
-        known.put(java.sql.Connection.class, SessionFactory.getInstance().getConnection());
-
-        // RowMappers : selon ton code, soit statique, soit instanciable
-        try {
-            known.put(RowMappers.class, RowMappers.class.getDeclaredConstructor().newInstance());
-        } catch (Exception ignored) {
+            boolean ok = true;
+            for (int i = 0; i < types.length; i++) {
+                if (args[i] == null || !types[i].isAssignableFrom(args[i].getClass())) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                ctor.setAccessible(true);
+                return ctor.newInstance(args);
+            }
         }
 
-        // ajoute aussi tous les beans déjà construits
-        known.putAll(context);
+        // sinon instanciation flexible via known
+        return instantiateWithKnown(clazz, merged);
+    }
 
-        // 4) Essaye tous les constructeurs (flex)
+    private static Object instantiateWithKnown(Class<?> clazz, Map<Class<?>, Object> known) throws Exception {
         for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
             Class<?>[] paramTypes = ctor.getParameterTypes();
-            Object[] args = new Object[paramTypes.length];
+            Object[] ctorArgs = new Object[paramTypes.length];
 
             boolean ok = true;
             for (int i = 0; i < paramTypes.length; i++) {
                 Object arg = resolveArg(known, paramTypes[i]);
-                if (arg == null) {
-                    ok = false;
-                    break;
-                }
-                args[i] = arg;
+                if (arg == null) { ok = false; break; }
+                ctorArgs[i] = arg;
             }
 
             if (ok) {
                 ctor.setAccessible(true);
-                Object obj = ctor.newInstance(args);
-                return expectedType.cast(obj);
+                return ctor.newInstance(ctorArgs);
             }
         }
-
-        throw new IllegalStateException(
-                "Aucun constructeur compatible trouvé pour " + className + " (bean=" + key + "). " +
-                        "Constructeurs testés mais dépendances non résolues. " +
-                        "Solution: ajouter un constructeur vide OU rendre les dépendances disponibles dans ApplicationContext."
-        );
+        throw new IllegalStateException("Aucun constructeur compatible trouvé pour " + clazz.getName());
     }
 
-
     private static Object resolveArg(Map<Class<?>, Object> known, Class<?> paramType) {
-        // 1) match direct
         Object direct = known.get(paramType);
         if (direct != null) return direct;
 
-        // 2) match par assignabilité (ex: param est interface, known contient impl)
         for (Map.Entry<Class<?>, Object> e : known.entrySet()) {
-            if (paramType.isAssignableFrom(e.getKey())) {
-                return e.getValue();
-            }
+            if (paramType.isAssignableFrom(e.getKey())) return e.getValue();
         }
 
-        // 3) si param a un constructeur vide, on peut l'instancier automatiquement
         try {
             return paramType.getDeclaredConstructor().newInstance();
         } catch (Exception ignored) {}
@@ -438,9 +491,7 @@ public final class ApplicationContext {
     }
 
     /**
-     * Création flexible du DashboardService :
-     * - supporte DashboardServiceImpl(NotificationRepository)
-     * - et d'autres signatures si tu changes plus tard
+     * Dashboard flexible
      */
     private static DashboardService createDashboardServiceFlexible(
             Properties props,
@@ -449,9 +500,7 @@ public final class ApplicationContext {
             RdvRepository rdvRepo,
             ListeAttenteRepository listeRepo,
             PatientRepository patientRepo,
-            CaisseDashboardServiceV2 caisseDashboardServiceV2,
-            FactureRepository factureRepo,
-            ChargesRepository chargesRepo
+            CaisseDashboardServiceV2 caisseDashboardServiceV2
     ) throws Exception {
 
         String className = props.getProperty("dashboardService");
@@ -459,37 +508,29 @@ public final class ApplicationContext {
 
         // 1) ctor(NotificationRepository)
         try {
-            Constructor<?> c = clazz.getDeclaredConstructor(NotificationRepository.class);
-            return (DashboardService) c.newInstance(notificationRepo);
+            return (DashboardService) clazz.getDeclaredConstructor(NotificationRepository.class)
+                    .newInstance(notificationRepo);
         } catch (NoSuchMethodException ignored) {}
 
         // 2) ctor(NotificationRepository, UtilisateurRepository)
-        try {
-            Constructor<?> c = clazz.getDeclaredConstructor(NotificationRepository.class, UtilisateurRepository.class);
-            return (DashboardService) c.newInstance(notificationRepo, utilisateurRepo);
-        } catch (NoSuchMethodException ignored) {}
+        if (utilisateurRepo != null) {
+            try {
+                return (DashboardService) clazz.getDeclaredConstructor(NotificationRepository.class, UtilisateurRepository.class)
+                        .newInstance(notificationRepo, utilisateurRepo);
+            } catch (NoSuchMethodException ignored) {}
+        }
 
-        // 3) ctor(NotificationRepository, RdvRepository, ListeAttenteRepository)
+        // 3) ctor(NotificationRepository, PatientRepository, RdvRepository, ListeAttenteRepository, CaisseDashboardServiceV2)
         try {
-            Constructor<?> c = clazz.getDeclaredConstructor(NotificationRepository.class, RdvRepository.class, ListeAttenteRepository.class);
-            return (DashboardService) c.newInstance(notificationRepo, rdvRepo, listeRepo);
-        } catch (NoSuchMethodException ignored) {}
-
-        // 4) ctor(NotificationRepository, UtilisateurRepository, PatientRepository, RdvRepository, ListeAttenteRepository, CaisseDashboardServiceV2)
-        try {
-            Constructor<?> c = clazz.getDeclaredConstructor(
+            return (DashboardService) clazz.getDeclaredConstructor(
                     NotificationRepository.class,
-                    UtilisateurRepository.class,
                     PatientRepository.class,
                     RdvRepository.class,
                     ListeAttenteRepository.class,
                     CaisseDashboardServiceV2.class
-            );
-            return (DashboardService) c.newInstance(notificationRepo, utilisateurRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
+            ).newInstance(notificationRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
         } catch (NoSuchMethodException ignored) {}
 
-        // 5) Si rien ne match, erreur claire
-        throw new IllegalStateException("Aucun constructeur compatible trouvé pour " + className
-                + ". Ajoute un constructeur simple (NotificationRepository) dans DashboardServiceImpl.");
+        throw new IllegalStateException("Aucun constructeur compatible pour dashboardService=" + className);
     }
 }
