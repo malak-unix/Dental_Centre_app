@@ -42,17 +42,17 @@ public class RdvControllerImpl implements RdvController {
 
         return RdvDto.builder()
                 .id(r.getId())
+                .patientId(r.getPatientId())
                 .detailJourneeId(r.getDetailJourneeId())
                 .listeAttenteId(r.getListeAttenteId())
                 .dateRdv(r.getDateRdv())
                 .heure(r.getHeure())
                 .motif(r.getMotif())
-                .statut(
-                        r.getStatut() != null
-                                ? EtatRendezVous.valueOf(r.getStatut())
-                                : null
-                )
+                .statut(r.getStatut()) // ✅ direct
+                .noteMedecin(r.getNoteMedecin())
                 .build();
     }
+
+
 
 }

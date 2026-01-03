@@ -13,36 +13,33 @@ public final class RdvMapper {
 
         return RdvDto.builder()
                 .id(e.getId())
+                .patientId(e.getPatientId())
                 .detailJourneeId(e.getDetailJourneeId())
                 .listeAttenteId(e.getListeAttenteId())
-                .typeRdv(e.getTypeRdv())
                 .dateRdv(e.getDateRdv())
                 .heure(e.getHeure())
                 .motif(e.getMotif())
-                .statut(parseEtat(e.getStatut()))
+                .statut(e.getStatut())       // enum -> enum
                 .noteMedecin(e.getNoteMedecin())
+                // typeRdv: ton entity ne l’a pas => on laisse dto.typeRdv tel quel uniquement côté UI
                 .build();
     }
 
     public static RDV toEntity(RdvDto d) {
         if (d == null) return null;
 
+        EtatRendezVous st = (d.getStatut() != null) ? d.getStatut() : EtatRendezVous.PREVU;
+
         return RDV.builder()
                 .id(d.getId())
+                .patientId(d.getPatientId())
                 .detailJourneeId(d.getDetailJourneeId())
                 .listeAttenteId(d.getListeAttenteId())
-                .typeRdv(d.getTypeRdv())
                 .dateRdv(d.getDateRdv())
                 .heure(d.getHeure())
                 .motif(d.getMotif())
-                .statut(d.getStatut() != null ? d.getStatut().name() : null)
+                .statut(st)                 // ✅ enum
                 .noteMedecin(d.getNoteMedecin())
                 .build();
-    }
-
-    private static EtatRendezVous parseEtat(String s) {
-        if (s == null || s.isBlank()) return null;
-        try { return EtatRendezVous.valueOf(s.trim()); }
-        catch (Exception e) { return null; }
     }
 }

@@ -25,9 +25,6 @@ import ma.dentalTech.service.modules.caisse.impl.*;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 public final class ApplicationContext {
@@ -225,7 +222,7 @@ public final class ApplicationContext {
             put(NotificationRepository.class, notificationRepo, "notificationRepo");
 
             currentBean = "utilisateurRepo";
-            UtilisateurRepository utilisateurRepo = newInstance(props, "utilisateurRepo", UtilisateurRepository.class);
+            UtilisateurRepository utilisateurRepo = newRepoInstance(props, "utilisateurRepo", UtilisateurRepository.class);
             put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
 
             // ==========================================
@@ -322,29 +319,40 @@ public final class ApplicationContext {
 
         Class<?> clazz = Class.forName(className);
 
-        // 0) essai constructeur vide
+        // ✅ 1) Essai direct constructeur (Connection) : cas JDBC standard
+        try {
+            Constructor<?> c = clazz.getDeclaredConstructor(java.sql.Connection.class);
+            c.setAccessible(true);
+            Object obj = c.newInstance(SessionFactory.getInstance().getConnection());
+            return expectedType.cast(obj);
+        } catch (NoSuchMethodException ignored) {
+            // pas de ctor(Connection) => continue
+        }
+
+        // 2) essai constructeur vide
         try {
             Object obj = clazz.getDeclaredConstructor().newInstance();
             return expectedType.cast(obj);
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException ignored) {
+        }
 
-        // 1) Contexte d'objets connus qu'on sait fournir
+        // 3) Contexte d'objets connus qu'on sait fournir
         Map<Class<?>, Object> known = new HashMap<>();
         known.put(SessionFactory.class, SessionFactory.getInstance());
 
+        // ✅ rendre Connection disponible aussi pour la résolution flexible
+        known.put(java.sql.Connection.class, SessionFactory.getInstance().getConnection());
+
         // RowMappers : selon ton code, soit statique, soit instanciable
-        // On essaye de l'instancier si possible, sinon on ne le met pas.
         try {
             known.put(RowMappers.class, RowMappers.class.getDeclaredConstructor().newInstance());
         } catch (Exception ignored) {
-            // si RowMappers n'a pas de constructeur, on ne met rien
         }
 
-        // 2) Ajoute aussi tous les beans déjà construits (repos/services) => injection possible
-        // context est ta Map<Class<?>, Object> existante dans ApplicationContext
+        // ajoute aussi tous les beans déjà construits
         known.putAll(context);
 
-        // 3) Essaye tous les constructeurs : si tous les paramètres sont trouvables => on instancie
+        // 4) Essaye tous les constructeurs (flex)
         for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
             Class<?>[] paramTypes = ctor.getParameterTypes();
             Object[] args = new Object[paramTypes.length];
@@ -372,6 +380,7 @@ public final class ApplicationContext {
                         "Solution: ajouter un constructeur vide OU rendre les dépendances disponibles dans ApplicationContext."
         );
     }
+
 
     private static Object resolveArg(Map<Class<?>, Object> known, Class<?> paramType) {
         // 1) match direct

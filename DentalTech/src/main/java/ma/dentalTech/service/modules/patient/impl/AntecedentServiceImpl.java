@@ -20,19 +20,21 @@ public class AntecedentServiceImpl implements AntecedentService {
         try {
             return repo.findAll();
         } catch (Exception e) {
-            throw new ServiceException("Erreur récupération liste antecedents", e);
+            throw new ServiceException("Erreur getAll antecedents", e);
         }
     }
 
     @Override
     public Antecedents getById(Long id) {
-        if (id == null || id <= 0) throw ServiceException.validation("id antecedent obligatoire");
+        requireId(id, "antecedentId");
         try {
             Antecedents a = repo.findById(id);
-            if (a == null) throw ServiceException.notFound("Antecedent introuvable (id=" + id + ")");
+            if (a == null) throw ServiceException.notFound("Antecedent introuvable id=" + id);
             return a;
+        } catch (ServiceException se) {
+            throw se;
         } catch (Exception e) {
-            throw new ServiceException("Erreur récupération antecedent (id=" + id + ")", e);
+            throw new ServiceException("Erreur getById antecedent", e);
         }
     }
 
@@ -42,7 +44,7 @@ public class AntecedentServiceImpl implements AntecedentService {
         try {
             repo.create(a);
         } catch (Exception e) {
-            throw new ServiceException("Erreur création antecedent", e);
+            throw new ServiceException("Erreur create antecedent", e);
         }
     }
 
@@ -50,41 +52,40 @@ public class AntecedentServiceImpl implements AntecedentService {
     public void update(Antecedents a) {
         validateUpdate(a);
         try {
-            Antecedents existing = repo.findById(a.getId());
-            if (existing == null) throw ServiceException.notFound("Antecedent introuvable (id=" + a.getId() + ")");
+            Antecedents old = repo.findById(a.getId());
+            if (old == null) throw ServiceException.notFound("Antecedent introuvable id=" + a.getId());
             repo.update(a);
+        } catch (ServiceException se) {
+            throw se;
         } catch (Exception e) {
-            throw new ServiceException("Erreur modification antecedent (id=" + a.getId() + ")", e);
+            throw new ServiceException("Erreur update antecedent", e);
         }
     }
 
     @Override
-    public void delete(Antecedents a) {
-        if (a == null || a.getId() == null) return;
-        deleteById(a.getId());
-    }
-
-    @Override
     public void deleteById(Long id) {
-        if (id == null || id <= 0) throw ServiceException.validation("id antecedent obligatoire");
+        requireId(id, "antecedentId");
         try {
             repo.deleteById(id);
         } catch (Exception e) {
-            throw new ServiceException("Erreur suppression antecedent (id=" + id + ")", e);
+            throw new ServiceException("Erreur deleteById antecedent", e);
         }
     }
 
     @Override
     public List<Antecedents> getByPatientId(Long patientId) {
-        if (patientId == null || patientId <= 0) throw ServiceException.validation("patientId obligatoire");
+        requireId(patientId, "patientId");
         try {
             return repo.findByPatientId(patientId);
         } catch (Exception e) {
-            throw new ServiceException("Erreur récupération antecedents par patientId=" + patientId, e);
+            throw new ServiceException("Erreur getByPatientId antecedent", e);
         }
     }
 
-    // ========================= Validations =========================
+    private void requireId(Long id, String name) {
+        if (id == null || id <= 0) throw ServiceException.validation(name + " obligatoire");
+    }
+
     private void validateCreate(Antecedents a) {
         if (a == null) throw ServiceException.validation("Antecedent null");
         if (a.getId() != null) throw ServiceException.validation("Création: id doit être null");
@@ -93,16 +94,12 @@ public class AntecedentServiceImpl implements AntecedentService {
 
     private void validateUpdate(Antecedents a) {
         if (a == null) throw ServiceException.validation("Antecedent null");
-        if (a.getId() == null || a.getId() <= 0) throw ServiceException.validation("id antecedent obligatoire");
+        requireId(a.getId(), "id");
         validateCommon(a);
     }
 
     private void validateCommon(Antecedents a) {
-        if (a.getPatientId() == null || a.getPatientId() <= 0) {
-            throw ServiceException.validation("patientId obligatoire");
-        }
-        if (a.getNom() == null || a.getNom().isBlank()) {
-            throw ServiceException.validation("nom antecedent obligatoire");
-        }
+        requireId(a.getPatientId(), "patientId");
+        if (a.getNom() == null || a.getNom().isBlank()) throw ServiceException.validation("nom obligatoire");
     }
 }

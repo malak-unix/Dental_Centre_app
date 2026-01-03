@@ -3,6 +3,7 @@ package ma.dentalTech.mvc.dto.agenda;
 import lombok.*;
 import ma.dentalTech.entities.enums.Mois;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -15,11 +16,10 @@ public class AgendaMensuelDto {
     private Mois mois;
     private Integer annee;
 
-    public List<DetailJourneeDto> getJoursSemaine() {
-        return List.of();
-    }
+    // ✅ Ajout : listes réelles au lieu de List.of()
+    @Builder.Default
+    private List<DetailJourneeDto> joursSemaine = new ArrayList<>();
 
-    public List<RdvDto> getRdvsSemaine() {
-        return List.of();
-    }
+    @Builder.Default
+    private List<RdvDto> rdvsSemaine = new ArrayList<>();
 }

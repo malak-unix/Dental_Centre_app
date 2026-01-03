@@ -1,6 +1,5 @@
 package ma.dentalTech.service.modules.patient.impl;
 
-import ma.dentalTech.common.exceptions.DaoException;
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
@@ -19,7 +18,7 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public List<Patient> getAll() {
         try {
-            return patientRepo.findAll(); // CrudRepository
+            return patientRepo.findAll();
         } catch (Exception e) {
             throw new ServiceException("Erreur getAll patients", e);
         }
@@ -29,7 +28,7 @@ public class PatientServiceImpl implements PatientService {
     public Patient getById(Long id) {
         requireId(id, "patientId");
         try {
-            Patient p = patientRepo.findById(id); // CrudRepository (chez vous retourne Patient)
+            Patient p = patientRepo.findById(id);
             if (p == null) throw ServiceException.notFound("Patient introuvable id=" + id);
             return p;
         } catch (ServiceException se) {
@@ -43,7 +42,6 @@ public class PatientServiceImpl implements PatientService {
     public void create(Patient p) {
         validateCreate(p);
         try {
-            // ✅ repo merge retourne Optional
             if (p.getTelephone() != null && !p.getTelephone().isBlank()) {
                 Patient exist = patientRepo.findByTelephone(p.getTelephone()).orElse(null);
                 if (exist != null) throw ServiceException.validation("Téléphone déjà utilisé");
@@ -63,7 +61,6 @@ public class PatientServiceImpl implements PatientService {
             Patient old = patientRepo.findById(p.getId());
             if (old == null) throw ServiceException.notFound("Patient introuvable id=" + p.getId());
 
-            // unicité téléphone si changé
             if (p.getTelephone() != null && !p.getTelephone().isBlank()) {
                 Patient existTel = patientRepo.findByTelephone(p.getTelephone()).orElse(null);
                 if (existTel != null && !existTel.getId().equals(p.getId())) {
@@ -71,7 +68,6 @@ public class PatientServiceImpl implements PatientService {
                 }
             }
 
-            // ❌ plus de baseEntityId (n'existe pas dans Patient)
             patientRepo.update(p);
 
         } catch (ServiceException se) {
@@ -79,12 +75,6 @@ public class PatientServiceImpl implements PatientService {
         } catch (Exception e) {
             throw new ServiceException("Erreur update patient", e);
         }
-    }
-
-    @Override
-    public void delete(Patient p) {
-        if (p == null || p.getId() == null) return;
-        deleteById(p.getId());
     }
 
     @Override
@@ -101,7 +91,6 @@ public class PatientServiceImpl implements PatientService {
     public List<Patient> searchByNom(String nom) {
         if (nom == null || nom.isBlank()) throw ServiceException.validation("nom obligatoire");
         try {
-            // ✅ repo merge: searchByNom
             return patientRepo.searchByNom(nom);
         } catch (Exception e) {
             throw new ServiceException("Erreur recherche patient par nom", e);
@@ -123,25 +112,14 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public List<Patient> findByNom(String nom) {
-        return searchByNom(nom);
-    }
-
-    @Override
-    public Patient findByTelephone(String telephone) {
-        return getByTelephone(telephone);
-    }
-
-    @Override
     public long countAll() {
         try {
             Integer n = patientRepo.countAll();
-            return n == null ? 0L : n;
+            return n == null ? 0L : n.longValue();
         } catch (Exception e) {
             throw new ServiceException("Erreur countAll patient", e);
         }
     }
-
 
     // =======================
     // Validations
