@@ -46,7 +46,7 @@ public class RdvAppServiceImpl implements RdvAppService {
         checkHeureDansPlage(dj, dto.getHeure());
         checkConflitHoraire(dto.getDetailJourneeId(), dto.getHeure());
 
-        if (dto.getStatut() == null) dto.setStatut(EtatRendezVous.PREVU);
+        if (dto.getStatut() == null) dto.setStatut(EtatRendezVous.PLANIFIE);
 
         RDV entity = RdvMapper.toEntity(dto);
         rdvRepo.create(entity);
@@ -96,11 +96,11 @@ public class RdvAppServiceImpl implements RdvAppService {
         RDV r = rdvRepo.findById(rdvId);
         if (r == null) throw new IllegalArgumentException("RDV introuvable");
 
-        if (r.getStatut() != EtatRendezVous.PREVU) {
+        if (r.getStatut() != EtatRendezVous.PLANIFIE) {
             throw new IllegalArgumentException("Seuls les RDV PREVU peuvent être confirmés");
         }
 
-        r.setStatut(EtatRendezVous.CONFIRME);
+        r.setStatut(EtatRendezVous.TERMINE);
         rdvRepo.update(r);
         return RdvMapper.toDto(r);
     }

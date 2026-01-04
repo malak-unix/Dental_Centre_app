@@ -4,6 +4,7 @@ import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.RdvController;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
+import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.service.modules.agenda.api.RdvService;
 
 import java.time.LocalDate;
@@ -12,9 +13,12 @@ import java.util.List;
 public class RdvControllerImpl implements RdvController {
 
     private final RdvService service;
+    private final PatientRepository patientRepo;
 
-    public RdvControllerImpl(RdvService service) {
+    // ✅ Mets ce constructeur et adapte ApplicationContext (ou beans wiring)
+    public RdvControllerImpl(RdvService service, PatientRepository patientRepo) {
         this.service = service;
+        this.patientRepo = patientRepo;
     }
 
     @Override
@@ -40,19 +44,25 @@ public class RdvControllerImpl implements RdvController {
     private RdvDto toDto(RDV r) {
         if (r == null) return null;
 
+        String patientNom = null;
+        if (r.getPatientId() != null && patientRepo != null) {
+            var p = patientRepo.findById(r.getPatientId());
+            if (p != null) patientNom = p.getNom() + " " + p.getPrenom();
+        }
+
         return RdvDto.builder()
                 .id(r.getId())
                 .patientId(r.getPatientId())
                 .detailJourneeId(r.getDetailJourneeId())
                 .listeAttenteId(r.getListeAttenteId())
+                // typeRdv: si ton entity RDV ne l’a pas -> null
+                .typeRdv(null)
                 .dateRdv(r.getDateRdv())
                 .heure(r.getHeure())
                 .motif(r.getMotif())
-                .statut(r.getStatut()) // ✅ direct
+                .statut(r.getStatut())
                 .noteMedecin(r.getNoteMedecin())
+                .patientNom(patientNom)
                 .build();
     }
-
-
-
 }

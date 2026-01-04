@@ -38,7 +38,7 @@ public class RdvServiceImpl implements RdvService {
         if (r.getMotif() == null || r.getMotif().isBlank()) throw new IllegalArgumentException("motif obligatoire");
 
         if (r.getStatut() == null) {
-            r.setStatut(EtatRendezVous.PREVU);
+            r.setStatut(EtatRendezVous.PLANIFIE);
         }
 
         rdvRepository.create(r);

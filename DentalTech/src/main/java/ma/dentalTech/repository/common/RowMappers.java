@@ -91,9 +91,9 @@ public final class RowMappers {
         return switch (v.toUpperCase()) {
             case "CNSS" -> Assurance.CNSS;
             case "CNOPS" -> Assurance.CNOPS;
-            case "MUTUELLE" -> Assurance.Mutuelle;
-            case "AUTRE" -> Assurance.Autre;
-            case "AUCUNE" -> Assurance.Aucune;
+            case "MUTUELLE" -> Assurance.MUTUELLE;
+            case "AUTRE" -> Assurance.AUTRE;
+            case "AUCUNE" -> Assurance.AUCUNE;
             default -> null;
         };
     }

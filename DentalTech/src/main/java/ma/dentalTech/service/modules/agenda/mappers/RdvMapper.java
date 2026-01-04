@@ -28,7 +28,7 @@ public final class RdvMapper {
     public static RDV toEntity(RdvDto d) {
         if (d == null) return null;
 
-        EtatRendezVous st = (d.getStatut() != null) ? d.getStatut() : EtatRendezVous.PREVU;
+        EtatRendezVous st = (d.getStatut() != null) ? d.getStatut() : EtatRendezVous.PLANIFIE;
 
         return RDV.builder()
                 .id(d.getId())
