@@ -40,7 +40,6 @@ public class MainFrame extends JFrame {
 
         content.setBackground(DentalTheme.BG2);
 
-        // Pages
         addPage("dashboard", buildPlaceholder("Dashboard (à brancher)"));
         addPage("patients", buildPatientPage());
         addPage("agenda", buildAgendaPage());
@@ -57,7 +56,6 @@ public class MainFrame extends JFrame {
 
         setContentPane(root);
 
-        // page par défaut
         showPage("agenda:SEMAINE");
     }
 
@@ -73,13 +71,22 @@ public class MainFrame extends JFrame {
         p.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
         p.setOpaque(false);
 
-        // ✅ LOGO (resources/assets/logo.png)
-        JLabel logo = new JLabel(loadIcon("/assets/logo.png", 190, 95));
-        logo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        p.add(logo);
-        p.add(Box.createVerticalStrut(8));
+        // ✅ LOGO
+        ImageIcon logo = loadIcon("/assets/logo.png", 170);
+        if (logo != null) {
+            JLabel logoLabel = new JLabel(logo);
+            logoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            p.add(logoLabel);
+            p.add(Box.createVerticalStrut(10));
+        } else {
+            // si non trouvé, au moins tu vois le problème
+            JLabel warn = new JLabel("⚠ logo introuvable");
+            warn.setForeground(Color.RED);
+            warn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            p.add(warn);
+            p.add(Box.createVerticalStrut(10));
+        }
 
-        // titre / rôle
         JLabel title = new JLabel("DENTAL CENTER");
         title.setFont(DentalTheme.titleFont(18));
         title.setForeground(DentalTheme.TEXT2);
@@ -95,7 +102,6 @@ public class MainFrame extends JFrame {
         p.add(role);
         p.add(Box.createVerticalStrut(16));
 
-        // bloc nav (style card)
         CardPanel navCard = new CardPanel((String) null);
         navCard.setLayout(new BoxLayout(navCard, BoxLayout.Y_AXIS));
         navCard.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -118,17 +124,34 @@ public class MainFrame extends JFrame {
         return p;
     }
 
-    private NavButton makeNav(String text, String route) {
+    private ImageIcon loadIcon(String path, int targetWidth) {
+        try {
+            URL url = getClass().getResource(path);
+            if (url == null) return null;
+
+            ImageIcon icon = new ImageIcon(url);
+            int w = icon.getIconWidth();
+            int h = icon.getIconHeight();
+            if (w <= 0 || h <= 0) return icon;
+
+            int targetHeight = (int) Math.round((targetWidth * (double) h) / w);
+            Image scaled = icon.getImage().getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaled);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private NavButton makeNav(String text, String pageKey) {
         NavButton b = new NavButton(text, false);
         b.setAlignmentX(Component.LEFT_ALIGNMENT);
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        b.addActionListener(e -> showPage(route));
-        navButtons.put(route, b); // ✅ clé = route complète
+        b.addActionListener(e -> showPage(pageKey));
+        navButtons.put(pageKey, b);
         return b;
     }
 
     private void showPage(String route) {
-
         String base = route;
         String sub = null;
 
@@ -140,30 +163,16 @@ public class MainFrame extends JFrame {
 
         cardLayout.show(content, base);
 
-        // ✅ active le bouton exact selon la route (agenda:RDV etc)
         for (Map.Entry<String, NavButton> e : navButtons.entrySet()) {
             e.getValue().setActive(e.getKey().equals(route));
         }
 
-        // refresh patient si nécessaire
         if ("patients".equals(base) && patientView != null) {
             patientView.refresh();
         }
 
-        // ouvrir la sous-page agenda si besoin
         if ("agenda".equals(base) && sub != null && agendaHome != null) {
             agendaHome.open(sub);
-        }
-    }
-
-    private ImageIcon loadIcon(String path, int w, int h) {
-        try {
-            URL url = getClass().getResource(path);
-            if (url == null) return null;
-            Image img = new ImageIcon(url).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-            return new ImageIcon(img);
-        } catch (Exception e) {
-            return null;
         }
     }
 

@@ -1,15 +1,14 @@
 package ma.dentalTech.mvc.ui.modules.patient;
 
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.mvc.dto.patient.PatientFormDto;
 import ma.dentalTech.mvc.dto.patient.PatientListDto;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.List;
 
@@ -24,24 +23,28 @@ public class PatientView extends JPanel {
     };
 
     private final JTable table = new JTable(model);
-    private final JTextField searchNom = new JTextField();
 
-    // ✅ boutons maquette
+    private final JTextField searchNom = new JTextField();
     private final DentalButton btnSearch = new DentalButton("Rechercher");
     private final DentalButton btnRefresh = new DentalButton("Actualiser");
+
+    private final DentalButton btnAdd = new DentalButton("Ajouter");
+    private final DentalButton btnEdit = new DentalButton("Modifier");
+    private final DentalButton btnDelete = new DentalButton("Supprimer");
 
     public PatientView(PatientController controller) {
         this.controller = controller;
 
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
-        setBorder(new EmptyBorder(8, 8, 8, 8));
 
-        CardPanel card = new CardPanel(null, new BorderLayout(12, 12));
+        CardPanel card = new CardPanel((String) null);
+        card.setLayout(new BorderLayout(14, 14));
         add(card, BorderLayout.CENTER);
 
         card.add(buildHeader(), BorderLayout.NORTH);
-        card.add(buildTable(), BorderLayout.CENTER);
+        card.add(buildTableCard(), BorderLayout.CENTER);
+        card.add(buildActions(), BorderLayout.SOUTH);
 
         wireActions();
         refresh();
@@ -53,31 +56,28 @@ public class PatientView extends JPanel {
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
 
         JLabel title = new JLabel("Les patients");
-        title.setFont(DentalTheme.H1);
+        title.setFont(new Font("Serif", Font.BOLD, 30));
         title.setForeground(DentalTheme.TEXT2);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel bar = new JPanel(new BorderLayout(10, 0));
+        JPanel bar = new JPanel(new BorderLayout(12, 8));
         bar.setOpaque(false);
         bar.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // gauche: label + champ
-        JPanel left = new JPanel(new BorderLayout(8, 0));
+        JPanel left = new JPanel(new BorderLayout(10, 0));
         left.setOpaque(false);
+        JLabel lNom = new JLabel("Nom:");
+        lNom.setFont(DentalTheme.textBold(12));
+        lNom.setForeground(DentalTheme.TEXT2);
 
-        JLabel lblNom = new JLabel("Nom:");
-        lblNom.setFont(DentalTheme.textBold(12));
-        lblNom.setForeground(DentalTheme.TEXT2);
+        searchNom.setPreferredSize(new Dimension(400, 34));
+        searchNom.setFont(DentalTheme.textFont(12));
 
-        styleTextField(searchNom);
-
-        left.add(lblNom, BorderLayout.WEST);
+        left.add(lNom, BorderLayout.WEST);
         left.add(searchNom, BorderLayout.CENTER);
 
-        // droite: boutons
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setOpaque(false);
-
         right.add(btnSearch);
         right.add(btnRefresh);
 
@@ -91,66 +91,103 @@ public class PatientView extends JPanel {
         return top;
     }
 
-    private JComponent buildTable() {
-        table.setRowHeight(30);
-        table.setFont(DentalTheme.textFont(12));
+    private JComponent buildTableCard() {
+        CardPanel results = new CardPanel("Résultats");
+        results.setLayout(new BorderLayout());
 
-        JTableHeader th = table.getTableHeader();
-        th.setFont(DentalTheme.textBold(12));
-        th.setReorderingAllowed(false);
+        table.setRowHeight(28);
+        table.setFont(DentalTheme.textFont(12));
+        table.getTableHeader().setFont(DentalTheme.textBold(12));
 
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        sp.getViewport().setBackground(new Color(0xF3, 0xF3, 0xF3));
+        sp.setBorder(BorderFactory.createEmptyBorder());
 
-        // petit "header" Résultats (au lieu du TitledBorder Windows)
-        JPanel wrap = new JPanel(new BorderLayout(8, 8));
-        wrap.setOpaque(false);
-
-        JLabel results = new JLabel("Résultats");
-        results.setFont(DentalTheme.textBold(12));
-        results.setForeground(DentalTheme.TEXT2);
-
-        JPanel resultsBar = new JPanel(new BorderLayout());
-        resultsBar.setOpaque(false);
-        resultsBar.setBorder(new EmptyBorder(6, 2, 6, 2));
-        resultsBar.add(results, BorderLayout.WEST);
-
-        CardPanel tableCard = new CardPanel(null, new BorderLayout());
-        tableCard.add(resultsBar, BorderLayout.NORTH);
-        tableCard.add(sp, BorderLayout.CENTER);
-
-        wrap.add(tableCard, BorderLayout.CENTER);
-        return wrap;
+        results.add(sp, BorderLayout.CENTER);
+        return results;
     }
 
-    private void styleTextField(JTextField tf) {
-        tf.setFont(DentalTheme.textFont(12));
-        tf.setForeground(DentalTheme.TEXT2);
-        tf.setBackground(Color.WHITE);
-        tf.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 1, true),
-                new EmptyBorder(8, 10, 8, 10)
-        ));
-        tf.setPreferredSize(new Dimension(300, 36));
+    private JComponent buildActions() {
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+
+        actions.add(btnAdd);
+        actions.add(btnEdit);
+        actions.add(btnDelete);
+
+        return actions;
     }
 
     private void wireActions() {
         btnRefresh.addActionListener(e -> refresh());
 
-        btnSearch.addActionListener(e -> {
-            String nom = searchNom.getText();
-            if (nom == null || nom.isBlank()) {
-                refresh();
-                return;
-            }
+        btnSearch.addActionListener(e -> doSearch());
+
+        btnAdd.addActionListener(e -> {
+            PatientFormDialog dlg = new PatientFormDialog(SwingUtilities.getWindowAncestor(this),
+                    "Ajouter un patient", null);
+            dlg.setVisible(true);
+
+            if (!dlg.isConfirmed()) return;
+
             try {
-                List<PatientListDto> list = controller.rechercherParNom(nom.trim());
-                loadTable(list);
+                controller.creer(dlg.getDto());
+                refresh();
             } catch (Exception ex) {
                 showError(ex);
             }
         });
+
+        btnEdit.addActionListener(e -> {
+            Long id = selectedId();
+            if (id == null) return;
+
+            try {
+                PatientFormDto current = controller.consulter(id);
+                PatientFormDialog dlg = new PatientFormDialog(SwingUtilities.getWindowAncestor(this),
+                        "Modifier patient #" + id, current);
+                dlg.setVisible(true);
+
+                if (!dlg.isConfirmed()) return;
+
+                controller.modifier(id, dlg.getDto());
+                refresh();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        });
+
+        btnDelete.addActionListener(e -> {
+            Long id = selectedId();
+            if (id == null) return;
+
+            int ok = JOptionPane.showConfirmDialog(this,
+                    "Supprimer le patient #" + id + " ?",
+                    "Confirmation",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (ok != JOptionPane.YES_OPTION) return;
+
+            try {
+                controller.supprimer(id);
+                refresh();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        });
+    }
+
+    private void doSearch() {
+        String nom = searchNom.getText();
+        if (nom == null || nom.isBlank()) {
+            refresh();
+            return;
+        }
+        try {
+            List<PatientListDto> list = controller.rechercherParNom(nom.trim());
+            loadTable(list);
+        } catch (Exception ex) {
+            showError(ex);
+        }
     }
 
     public void refresh() {
@@ -172,6 +209,17 @@ public class PatientView extends JPanel {
                     p.getTelephone()
             });
         }
+    }
+
+    private Long selectedId() {
+        int row = table.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Sélectionne une ligne d’abord.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return null;
+        }
+        Object v = model.getValueAt(row, 0);
+        if (v == null) return null;
+        return Long.valueOf(v.toString());
     }
 
     private void showError(Exception ex) {
