@@ -1,5 +1,6 @@
 package ma.dentalTech.mvc.ui.modules.agenda;
 
+import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.NavButton;
 import ma.dentalTech.mvc.ui.modules.agenda.AgendaSemainePagePanel;
@@ -55,54 +56,68 @@ public class AgendaHomePanel extends JPanel {
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setBackground(DentalTheme.BG);
 
-        JPanel nav = new JPanel(new GridLayout(4, 1, 10, 10));
-        nav.setBackground(DentalTheme.BG);
-        nav.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
-                "Navigation"
-        ));
+        // ===== Colonne Médecins (à gauche) =====
+        CardPanel doctorsCard = new CardPanel("Médecins");
+        doctorsCard.setPreferredSize(new Dimension(220, 0));
 
-        NavButton bSemaine = new NavButton("📅 Semaine", true);
-        NavButton bRdv = new NavButton("📄 RDV", false);
-        NavButton bAgenda = new NavButton("🗓️ Agenda mensuel", false);
-        NavButton bListe = new NavButton("⏳ Liste d'attente", false);
+        DefaultListModel<String> doctorsModel = new DefaultListModel<>();
+        doctorsModel.addElement("TAMARA");
+        doctorsModel.addElement("CIEL");
+        doctorsModel.addElement("PLUIE");
 
-        navButtons.put("SEMAINE", bSemaine);
-        navButtons.put("RDV", bRdv);
-        navButtons.put("AGENDA", bAgenda);
-        navButtons.put("LISTE", bListe);
+        JList<String> doctorsList = new JList<>(doctorsModel);
+        doctorsList.setFont(DentalTheme.textBold(12));
+        doctorsList.setBackground(DentalTheme.BG);
+        doctorsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        doctorsList.setSelectedIndex(0);
 
-        bSemaine.addActionListener(e -> showPage("SEMAINE"));
-        bRdv.addActionListener(e -> showPage("RDV"));
-        bAgenda.addActionListener(e -> showPage("AGENDA"));
-        bListe.addActionListener(e -> showPage("LISTE"));
+        // ✅ Renderer style maquette
+        doctorsList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel lbl = new JLabel(value);
+            lbl.setOpaque(true);
+            lbl.setFont(DentalTheme.textBold(12));
+            lbl.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+            lbl.setForeground(DentalTheme.TEXT2);
 
-        nav.add(bSemaine);
-        nav.add(bRdv);
-        nav.add(bAgenda);
-        nav.add(bListe);
+            if (isSelected) {
+                lbl.setBackground(new Color(0xE8, 0xD9, 0xCC));
+            } else {
+                lbl.setBackground(DentalTheme.BG);
+            }
+            return lbl;
+        });
 
+        doctorsCard.add(new JScrollPane(doctorsList), BorderLayout.CENTER);
+
+
+        // ===== Zone centrale (pages agenda) =====
         content.setLayout(card);
         content.setBackground(DentalTheme.BG);
-        content.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
 
         content.add(semainePage, "SEMAINE");
         content.add(rdvPage, "RDV");
         content.add(agendaMensuelPage, "AGENDA");
         content.add(listeAttentePage, "LISTE");
 
-        body.add(nav, BorderLayout.WEST);
-        body.add(content, BorderLayout.CENTER);
+        CardPanel centerCard = new CardPanel(null, new BorderLayout());
+        centerCard.add(content, BorderLayout.CENTER);
+
+        body.add(doctorsCard, BorderLayout.WEST);
+        body.add(centerCard, BorderLayout.CENTER);
         return body;
+
     }
+
 
     private void showPage(String key) {
         card.show(content, key);
-
-        // nécessite NavButton.setActive(boolean)
-        navButtons.forEach((k, btn) -> btn.setActive(k.equals(key)));
-
         revalidate();
         repaint();
     }
+
+    public void open(String key) {
+        showPage(key);
+    }
+
+
 }
