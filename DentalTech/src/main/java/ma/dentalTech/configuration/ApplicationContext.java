@@ -213,14 +213,33 @@ public final class ApplicationContext {
                 currentBean = "chargesControllerV2";
                 ChargesServiceV2 chargesServiceV2 = getBean(ChargesServiceV2.class);
 
-                Object ctrlCharges = newFlexibleInstance(
-                        props.getProperty("chargesControllerV2"),
-                        known,
-                        chargesServiceV2
-                );
+                if (chargesServiceV2 != null) {
+                    Object ctrlCharges = newFlexibleInstance(
+                            props.getProperty("chargesControllerV2"),
+                            known,
+                            chargesServiceV2
+                    );
+                    contextByName.put("chargesControllerV2", ctrlCharges);
+                    registerKnown(known, ctrlCharges);
+                }
+            }
 
-                contextByName.put("chargesControllerV2", ctrlCharges);
-                registerKnown(known, ctrlCharges);
+// Controller Facture V2
+            if (hasKey(props, "factureControllerV2")) {
+                currentBean = "factureControllerV2";
+                FactureServiceV2 factureServiceV2 = getBean(FactureServiceV2.class);
+
+                if (factureServiceV2 != null) {
+                    Object ctrl = newFlexibleInstance(
+                            props.getProperty("factureControllerV2"),
+                            known,
+                            factureServiceV2
+                    );
+                    put(ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2.class,
+                            (ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2) ctrl,
+                            "factureControllerV2");
+                    registerKnown(known, ctrl);
+                }
             }
 
 

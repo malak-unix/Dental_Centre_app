@@ -15,7 +15,6 @@ public class CaisseMainPanel extends JPanel {
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JTabbedPane tabs = new JTabbedPane();
-
         tabs.addTab("Dashboard", new CaisseDashboardPanel(role, currentUserId));
         tabs.addTab("Factures", new CaisseFacturesPanel());
         tabs.addTab("Charges", new CaisseChargesPanel());

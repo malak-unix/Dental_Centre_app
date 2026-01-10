@@ -1,16 +1,24 @@
 package ma.dentalTech.mvc.ui.modules.caisse;
 
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
 import ma.dentalTech.mvc.dto.caisse.CaisseFactureRowDTO;
+import ma.dentalTech.mvc.dto.caisse.FacturePaiementDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-import ma.dentalTech.mvc.ui.modules.caisse.table.FactureActionsColumn;
+import ma.dentalTech.mvc.ui.modules.caisse.dialogs.FacturePaiementDialog;
 import ma.dentalTech.mvc.ui.modules.caisse.table.CaisseFacturesTableModel;
+import ma.dentalTech.mvc.ui.modules.caisse.table.FactureActionsColumn;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.File;
+import java.nio.file.Files;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 public class CaisseFacturesPanel extends JPanel {
@@ -28,10 +36,16 @@ public class CaisseFacturesPanel extends JPanel {
     private final JLabel vTotalImpaye = kpiValue();
     private final JLabel vTotal = kpiValue();
 
+    private final FactureControllerV2 controller;
+
     public CaisseFacturesPanel() {
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
         setBorder(new EmptyBorder(14, 14, 14, 14));
+
+        FactureControllerV2 c = null;
+        try { c = ApplicationContext.getBean(FactureControllerV2.class); } catch (Exception ignored) {}
+        controller = c;
 
         add(buildTop(), BorderLayout.NORTH);
         add(buildCenter(), BorderLayout.CENTER);
@@ -40,8 +54,7 @@ public class CaisseFacturesPanel extends JPanel {
         applyDefaultDates();
         wire();
 
-        // TODO: remplace par controller/service
-        loadFakeData();
+        refreshData();
     }
 
     private JComponent buildTop() {
@@ -49,18 +62,18 @@ public class CaisseFacturesPanel extends JPanel {
         top.setOpaque(false);
 
         JLabel title = new JLabel("La Caisse");
-        title.setFont(DentalTheme.titleFont(20));
+        title.setFont(DentalTheme.titleFont(22));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         filters.setOpaque(false);
 
-        filters.add(new JLabel("Date début"));
-        styleField(txtDateDebut);
-        filters.add(txtDateDebut);
+        styleInput(txtDateDebut);
+        styleInput(txtDateFin);
 
+        filters.add(new JLabel("Date début"));
+        filters.add(txtDateDebut);
         filters.add(new JLabel("Date fin"));
-        styleField(txtDateFin);
         filters.add(txtDateFin);
 
         styleCombo(cbMedecin);
@@ -76,15 +89,16 @@ public class CaisseFacturesPanel extends JPanel {
     private JComponent buildCenter() {
         CardPanel card = new CardPanel("Liste des factures");
 
-        table.setRowHeight(30);
+        table.setRowHeight(36);
         table.setFillsViewportHeight(true);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionBackground(new Color(255, 245, 225));
+        table.setFont(DentalTheme.textFont(13));
+        table.getTableHeader().setFont(DentalTheme.textBold(13));
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
         card.add(sp, BorderLayout.CENTER);
 
-        // mêmes actions que dashboard
         FactureActionsColumn.install(
                 table,
                 this::onView,
@@ -108,12 +122,10 @@ public class CaisseFacturesPanel extends JPanel {
         return bottom;
     }
 
-    private CardPanel kpi(String title, JLabel value) {
-        CardPanel c = new CardPanel(title);
-        JPanel center = new JPanel(new BorderLayout());
-        center.setOpaque(false);
-        center.add(value, BorderLayout.WEST);
-        c.add(center, BorderLayout.CENTER);
+    private JPanel kpi(String label, JLabel value) {
+        CardPanel c = new CardPanel(label);
+        c.setLayout(new BorderLayout());
+        c.add(value, BorderLayout.CENTER);
         return c;
     }
 
@@ -125,17 +137,15 @@ public class CaisseFacturesPanel extends JPanel {
     }
 
     private void wire() {
-        btnFilter.addActionListener(e -> {
-            // TODO: brancher service: rechercher factures entre dates + médecin
-            loadFakeData();
-        });
+        btnFilter.addActionListener(e -> refreshData());
 
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    int row = table.getSelectedRow();
-                    if (row < 0) return;
-                    CaisseFactureRowDTO dto = model.getRowAt(row);
+                    int viewRow = table.getSelectedRow();
+                    if (viewRow < 0) return;
+                    int modelRow = table.convertRowIndexToModel(viewRow);
+                    CaisseFactureRowDTO dto = model.getRowAt(modelRow);
                     if (dto != null) onView(dto);
                 }
             }
@@ -146,6 +156,44 @@ public class CaisseFacturesPanel extends JPanel {
         LocalDate now = LocalDate.now();
         txtDateDebut.setText(now.withDayOfMonth(1).toString());
         txtDateFin.setText(now.toString());
+    }
+
+    private void refreshData() {
+        if (controller == null) {
+            model.setRows(List.of());
+            vTotalFactures.setText("0");
+            vTotalPaye.setText("—");
+            vTotalImpaye.setText("—");
+            vTotal.setText("—");
+            JOptionPane.showMessageDialog(this,
+                    "factureControllerV2 non disponible.",
+                    "Controller manquant",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            LocalDate d1 = LocalDate.parse(txtDateDebut.getText().trim());
+            LocalDate d2 = LocalDate.parse(txtDateFin.getText().trim());
+
+            LocalDateTime start = d1.atStartOfDay();
+            LocalDateTime end = d2.atTime(LocalTime.MAX);
+
+            List<CaisseFactureRowDTO> list = controller.listBetween(start, end);
+            model.setRows(list);
+
+            double total = (list == null) ? 0.0 : list.stream().mapToDouble(x -> n(x.getTotalFacture())).sum();
+            double paye  = (list == null) ? 0.0 : list.stream().mapToDouble(x -> n(x.getTotalPaye())).sum();
+            double imp   = (list == null) ? 0.0 : list.stream().mapToDouble(x -> n(x.getReste())).sum();
+
+            vTotalFactures.setText(String.valueOf(list == null ? 0 : list.size()));
+            vTotalPaye.setText(money(paye) + " DH");
+            vTotalImpaye.setText(money(imp) + " DH");
+            vTotal.setText(money(total) + " DH");
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // ===== Actions =====
@@ -159,53 +207,79 @@ public class CaisseFacturesPanel extends JPanel {
     }
 
     private void onPdf(CaisseFactureRowDTO dto) {
-        JOptionPane.showMessageDialog(this, "PDF: " + dto.getNumeroFacture(), "PDF", JOptionPane.INFORMATION_MESSAGE);
-    }
+        try {
+            byte[] bytes = controller.exportPdf(dto.getFactureId());
+            if (bytes == null || bytes.length == 0) throw new IllegalStateException("PDF vide");
 
-    private void onPay(CaisseFactureRowDTO dto) {
-        JOptionPane.showMessageDialog(this, "Paiement: " + dto.getNumeroFacture(), "Paiement", JOptionPane.INFORMATION_MESSAGE);
-    }
+            String name = (dto.getNumeroFacture() == null || dto.getNumeroFacture().isBlank())
+                    ? ("facture_" + dto.getFactureId() + ".pdf")
+                    : (dto.getNumeroFacture().replaceAll("[^a-zA-Z0-9_-]", "_") + ".pdf");
 
-    private void onCancel(CaisseFactureRowDTO dto) {
-        int ok = JOptionPane.showConfirmDialog(this, "Annuler " + dto.getNumeroFacture() + " ?", "Confirmation", JOptionPane.YES_NO_OPTION);
-        if (ok == JOptionPane.YES_OPTION) {
-            JOptionPane.showMessageDialog(this, "Annulée (brancher service ensuite)", "OK", JOptionPane.INFORMATION_MESSAGE);
+            savePdf(bytes, name);
+
+        } catch (Exception ex) {
+            showError("Erreur export PDF", ex);
         }
     }
 
-    // ===== styles =====
+    private void onPay(CaisseFactureRowDTO dto) {
+        try {
+            FacturePaiementDTO pay = FacturePaiementDialog.open(this);
+            if (pay == null) return;
 
-    private void styleCombo(JComboBox<?> cb) {
-        cb.setBackground(Color.WHITE);
-        cb.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
-                new EmptyBorder(6, 10, 6, 10)
-        ));
+            controller.payer(dto.getFactureId(), pay);
+            refreshData();
+
+            JOptionPane.showMessageDialog(this, "Paiement enregistré.", "OK", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            showError("Erreur paiement", ex);
+        }
     }
 
-    private void styleField(JTextField tf) {
+    private void onCancel(CaisseFactureRowDTO dto) {
+        JOptionPane.showMessageDialog(this,
+                "Annulation non implémentée dans ce sprint.",
+                "Info",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // ===== Utils =====
+
+    private void savePdf(byte[] bytes, String defaultName) throws Exception {
+        JFileChooser fc = new JFileChooser();
+        fc.setSelectedFile(new File(defaultName));
+
+        int ok = fc.showSaveDialog(this);
+        if (ok != JFileChooser.APPROVE_OPTION) return;
+
+        File out = fc.getSelectedFile();
+        Files.write(out.toPath(), bytes);
+
+        JOptionPane.showMessageDialog(this, "PDF enregistré: " + out.getAbsolutePath(), "OK", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private double n(java.math.BigDecimal bd) { return bd == null ? 0.0 : bd.doubleValue(); }
+
+    private String money(double v) {
+        return String.format(java.util.Locale.US, "%,.2f", v).replace(',', ' ');
+    }
+
+    private void showError(String title, Exception ex) {
+        JOptionPane.showMessageDialog(this, title + " : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void styleInput(JTextField tf) {
+        tf.setFont(DentalTheme.textFont(13));
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
                 new EmptyBorder(6, 10, 6, 10)
         ));
     }
 
-    private void loadFakeData() {
-        List<CaisseFactureRowDTO> list = List.of(
-                CaisseFactureRowDTO.builder().factureId(1L).numeroFacture("#T00564").patientNom("Sumit Estève").medecinNom("Dr. Ebaï").dateEmission(LocalDate.now().minusDays(2)).montant(300.0).statut("IMPAYEE").canView(true).canPrint(true).canPay(true).canCancel(true).build(),
-                CaisseFactureRowDTO.builder().factureId(2L).numeroFacture("#T00355").patientNom("Toupey Carificle").medecinNom("Dr. El Idrissi").dateEmission(LocalDate.now().minusDays(5)).montant(300.0).statut("PAYEE").canView(true).canPrint(true).canPay(false).canCancel(false).build(),
-                CaisseFactureRowDTO.builder().factureId(3L).numeroFacture("#T00362").patientNom("Sami Enlibais").medecinNom("Dr. El Idrissi").dateEmission(LocalDate.now().minusDays(8)).montant(300.0).statut("IMPAYEE").canView(true).canPrint(true).canPay(true).canCancel(true).build()
-        );
-
-        model.setRows(list);
-
-        double total = list.stream().mapToDouble(f -> f.getMontant() == null ? 0.0 : f.getMontant()).sum();
-        double paye = list.stream().filter(f -> "PAYEE".equalsIgnoreCase(f.getStatut())).mapToDouble(f -> f.getMontant() == null ? 0.0 : f.getMontant()).sum();
-        double impaye = list.stream().filter(f -> "IMPAYEE".equalsIgnoreCase(f.getStatut())).mapToDouble(f -> f.getMontant() == null ? 0.0 : f.getMontant()).sum();
-
-        vTotalFactures.setText(String.valueOf(list.size()));
-        vTotalPaye.setText(String.format("%,.2f DH", paye));
-        vTotalImpaye.setText(String.format("%,.2f DH", impaye));
-        vTotal.setText(String.format("%,.2f DH", total));
+    private void styleCombo(JComboBox<?> cb) {
+        cb.setFont(DentalTheme.textFont(13));
+        cb.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
+        cb.setBackground(Color.WHITE);
     }
 }

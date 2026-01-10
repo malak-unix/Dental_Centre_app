@@ -290,17 +290,10 @@ public class CaisseChargesPanel extends JPanel {
         if (viewRow < 0) return null;
 
         int modelRow = table.convertRowIndexToModel(viewRow);
-
-        // Hypothèse standard: 1ère colonne = ID
-        Object v = table.getModel().getValueAt(modelRow, 0);
-        if (v instanceof Long) return (Long) v;
-        if (v instanceof Number) return ((Number) v).longValue();
-        try {
-            return Long.parseLong(String.valueOf(v));
-        } catch (Exception e) {
-            return null;
-        }
+        ChargeItemDTO row = model.getRowAt(modelRow);
+        return row == null ? null : row.getId();
     }
+
 
     private boolean ensureController() {
         if (controller != null) return true;

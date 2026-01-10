@@ -12,6 +12,12 @@ import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.modules.caisse.table.CaisseFacturesTableModel;
 import ma.dentalTech.mvc.ui.modules.caisse.table.FactureActionsColumn;
+import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
+import ma.dentalTech.mvc.dto.caisse.FacturePaiementDTO;
+import ma.dentalTech.mvc.ui.modules.caisse.dialogs.FacturePaiementDialog;
+
+import java.io.File;
+import java.nio.file.Files;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -47,6 +53,8 @@ public class CaisseDashboardPanel extends JPanel {
     private final CaisseFacturesTableModel tableModel = new CaisseFacturesTableModel();
     private final JTable table = new JTable(tableModel);
 
+    private final FactureControllerV2 factureController;
+
     private final JLabel vTotalFacturesCount = valueLabel();
     private final JLabel vTotalPaye = valueLabel();
     private final JLabel vTotalImpaye = valueLabel();
@@ -58,6 +66,9 @@ public class CaisseDashboardPanel extends JPanel {
         this.role = role;
         this.currentUserId = currentUserId;
         this.controller = (CaisseDashboardControllerV2) ApplicationContext.getBean("caisseDashboardControllerV2");
+        FactureControllerV2 fc = null;
+        try { fc = ApplicationContext.getBean(FactureControllerV2.class); } catch (Exception ignored) {}
+        this.factureController = fc;
 
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
@@ -286,12 +297,48 @@ public class CaisseDashboardPanel extends JPanel {
     }
 
     private void onPdf(CaisseFactureRowDTO dto) {
-        JOptionPane.showMessageDialog(this, "PDF: " + dto.getNumeroFacture(), "PDF", JOptionPane.INFORMATION_MESSAGE);
+        try {
+            if (factureController == null) throw new IllegalStateException("factureControllerV2 non disponible");
+
+            byte[] bytes = factureController.exportPdf(dto.getFactureId());
+            if (bytes == null || bytes.length == 0) throw new IllegalStateException("PDF vide");
+
+            String name = (dto.getNumeroFacture() == null || dto.getNumeroFacture().isBlank())
+                    ? ("facture_" + dto.getFactureId() + ".pdf")
+                    : (dto.getNumeroFacture().replaceAll("[^a-zA-Z0-9_-]", "_") + ".pdf");
+
+            JFileChooser fc = new JFileChooser();
+            fc.setSelectedFile(new File(name));
+            int ok = fc.showSaveDialog(this);
+            if (ok != JFileChooser.APPROVE_OPTION) return;
+
+            Files.write(fc.getSelectedFile().toPath(), bytes);
+            JOptionPane.showMessageDialog(this, "PDF enregistré.", "OK", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur PDF: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void onPay(CaisseFactureRowDTO dto) {
-        JOptionPane.showMessageDialog(this, "Paiement: " + dto.getNumeroFacture(), "Paiement", JOptionPane.INFORMATION_MESSAGE);
+        try {
+            if (factureController == null) throw new IllegalStateException("factureControllerV2 non disponible");
+
+            FacturePaiementDTO pay = FacturePaiementDialog.open(this);
+            if (pay == null) return;
+
+            factureController.payer(dto.getFactureId(), pay);
+
+            // refresh dashboard
+            refreshData();
+
+            JOptionPane.showMessageDialog(this, "Paiement enregistré.", "OK", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur paiement: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
     }
+
 
     private void onCancel(CaisseFactureRowDTO dto) {
         int ok = JOptionPane.showConfirmDialog(this, "Annuler " + dto.getNumeroFacture() + " ?", "Confirmation", JOptionPane.YES_NO_OPTION);

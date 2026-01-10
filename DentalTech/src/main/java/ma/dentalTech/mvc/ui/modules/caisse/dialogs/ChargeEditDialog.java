@@ -6,8 +6,6 @@ import ma.dentalTech.mvc.dto.caisse.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,7 +35,9 @@ public class ChargeEditDialog extends JDialog {
     }
 
     private ChargeEditDialog(Component parent, ChargesControllerV2 controller, ChargeItemDTO existing) {
-        super(SwingUtilities.getWindowAncestor(parent), existing == null ? "Ajouter une charge" : "Modifier une charge", ModalityType.APPLICATION_MODAL);
+        super(SwingUtilities.getWindowAncestor(parent),
+                existing == null ? "Ajouter / Modifier Charge" : "Ajouter / Modifier Charge",
+                ModalityType.APPLICATION_MODAL);
         this.controller = controller;
         this.existing = existing;
 
@@ -46,6 +46,7 @@ public class ChargeEditDialog extends JDialog {
         setLocationRelativeTo(parent);
 
         if (existing != null) fillFromExisting(existing);
+        else tfDate.setText(LocalDate.now().toString());
     }
 
     private JComponent buildUi() {
@@ -53,23 +54,17 @@ public class ChargeEditDialog extends JDialog {
         root.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         JPanel form = new JPanel(new GridBagLayout());
-        form.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(6, 6, 6, 6);
+        c.anchor = GridBagConstraints.WEST;
 
         tfTitre = new JTextField(24);
         tfDesc = new JTextField(24);
         tfMontant = new JTextField(12);
         tfDate = new JTextField(12);
 
-        if (existing == null) {
-            tfDate.setText(LocalDate.now().toString());
-        }
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(6, 6, 6, 6);
-        c.anchor = GridBagConstraints.WEST;
-
         c.gridx = 0; c.gridy = 0;
-        form.add(new JLabel("Titre *"), c);
+        form.add(new JLabel("Libellé *"), c);
         c.gridx = 1;
         form.add(tfTitre, c);
 
@@ -79,7 +74,7 @@ public class ChargeEditDialog extends JDialog {
         form.add(tfDesc, c);
 
         c.gridx = 0; c.gridy++;
-        form.add(new JLabel("Montant *"), c);
+        form.add(new JLabel("Montant (DH) *"), c);
         c.gridx = 1;
         form.add(tfMontant, c);
 
@@ -103,33 +98,45 @@ public class ChargeEditDialog extends JDialog {
     }
 
     private void fillFromExisting(ChargeItemDTO ex) {
-        tfTitre.setText(nz(ex.getTitre()));
-        tfDesc.setText(nz(ex.getDescription()));
+        tfTitre.setText(ex.getTitre() == null ? "" : ex.getTitre());
+        tfDesc.setText(ex.getDescription() == null ? "" : ex.getDescription());
         tfMontant.setText(ex.getMontant() == null ? "" : ex.getMontant().toString());
-        if (ex.getDateCharge() != null) {
-            tfDate.setText(ex.getDateCharge().toLocalDate().toString());
-        }
+        if (ex.getDateCharge() != null) tfDate.setText(ex.getDateCharge().toLocalDate().toString());
     }
 
     private void onSave() {
         try {
-            String titre = tfTitre.getText() == null ? "" : tfTitre.getText().trim();
-            String desc = tfDesc.getText() == null ? "" : tfDesc.getText().trim();
-            String montantStr = tfMontant.getText() == null ? "" : tfMontant.getText().trim();
-            String dateStr = tfDate.getText() == null ? "" : tfDate.getText().trim();
+            String titre = val(tfTitre);
+            String desc = val(tfDesc);
+            String montantStr = val(tfMontant);
+            String dateStr = val(tfDate);
 
-            if (titre.isBlank()) throw new IllegalArgumentException("Titre obligatoire");
+            if (titre.isBlank()) throw new IllegalArgumentException("Libellé obligatoire");
             if (montantStr.isBlank()) throw new IllegalArgumentException("Montant obligatoire");
             if (dateStr.isBlank()) throw new IllegalArgumentException("Date obligatoire");
 
             BigDecimal montant = new BigDecimal(montantStr);
             LocalDateTime dateCharge = LocalDate.parse(dateStr).atStartOfDay();
 
+            // ✅ cabinetId temporaire (si tu as un vrai cabinetId dans ton login/session, on le branchera)
+            Long cabinetId = (existing != null && existing.getCabinetId() != null) ? existing.getCabinetId() : 1L;
+
             if (existing == null) {
-                ChargeCreateDTO dto = buildChargeCreateDTO(1L, titre, desc, montant, dateCharge);
+                ChargeCreateDTO dto = ChargeCreateDTO.builder()
+                        .cabinetId(cabinetId)
+                        .titre(titre)
+                        .description(desc)
+                        .montant(montant)
+                        .dateCharge(dateCharge)
+                        .build();
                 controller.create(dto);
             } else {
-                ChargeUpdateDTO dto = buildChargeUpdateDTO(1L, titre, desc, montant, dateCharge);
+                ChargeUpdateDTO dto = ChargeUpdateDTO.builder()
+                         .titre(titre)
+                        .description(desc)
+                        .montant(montant)
+                        .dateCharge(dateCharge)
+                        .build();
                 controller.update(existing.getId(), dto);
             }
 
@@ -141,95 +148,7 @@ public class ChargeEditDialog extends JDialog {
         }
     }
 
-    // ===== DTO factories (reflection-safe) =====
-
-    private ChargeCreateDTO buildChargeCreateDTO(Long cabinetId, String titre, String desc, BigDecimal montant, LocalDateTime dateCharge) throws Exception {
-        // Try Lombok builder()
-        try {
-            Method builderM = ChargeCreateDTO.class.getMethod("builder");
-            Object b = builderM.invoke(null);
-            call(b, "cabinetId", cabinetId);
-            call(b, "titre", titre);
-            call(b, "description", desc);
-            call(b, "montant", montant);
-            call(b, "dateCharge", dateCharge);
-            return (ChargeCreateDTO) b.getClass().getMethod("build").invoke(b);
-        } catch (NoSuchMethodException ignored) {
-            // fallback ctor
-        }
-
-        // Try constructor by types (common order)
-        for (Constructor<?> ct : ChargeCreateDTO.class.getDeclaredConstructors()) {
-            Class<?>[] p = ct.getParameterTypes();
-            if (p.length == 5
-                    && p[0] == Long.class
-                    && p[1] == String.class
-                    && p[2] == String.class
-                    && p[3] == BigDecimal.class
-                    && p[4] == LocalDateTime.class) {
-                ct.setAccessible(true);
-                return (ChargeCreateDTO) ct.newInstance(cabinetId, titre, desc, montant, dateCharge);
-            }
-        }
-
-        // Last resort: no-args + setters if exist
-        ChargeCreateDTO dto = ChargeCreateDTO.class.getDeclaredConstructor().newInstance();
-        set(dto, "setCabinetId", cabinetId);
-        set(dto, "setTitre", titre);
-        set(dto, "setDescription", desc);
-        set(dto, "setMontant", montant);
-        set(dto, "setDateCharge", dateCharge);
-        return dto;
+    private String val(JTextField tf) {
+        return tf.getText() == null ? "" : tf.getText().trim();
     }
-
-    private ChargeUpdateDTO buildChargeUpdateDTO(Long cabinetId, String titre, String desc, BigDecimal montant, LocalDateTime dateCharge) throws Exception {
-        try {
-            Method builderM = ChargeUpdateDTO.class.getMethod("builder");
-            Object b = builderM.invoke(null);
-            call(b, "cabinetId", cabinetId);
-            call(b, "titre", titre);
-            call(b, "description", desc);
-            call(b, "montant", montant);
-            call(b, "dateCharge", dateCharge);
-            return (ChargeUpdateDTO) b.getClass().getMethod("build").invoke(b);
-        } catch (NoSuchMethodException ignored) {
-        }
-
-        for (Constructor<?> ct : ChargeUpdateDTO.class.getDeclaredConstructors()) {
-            Class<?>[] p = ct.getParameterTypes();
-            if (p.length == 5
-                    && p[0] == Long.class
-                    && p[1] == String.class
-                    && p[2] == String.class
-                    && p[3] == BigDecimal.class
-                    && p[4] == LocalDateTime.class) {
-                ct.setAccessible(true);
-                return (ChargeUpdateDTO) ct.newInstance(cabinetId, titre, desc, montant, dateCharge);
-            }
-        }
-
-        ChargeUpdateDTO dto = ChargeUpdateDTO.class.getDeclaredConstructor().newInstance();
-        set(dto, "setCabinetId", cabinetId);
-        set(dto, "setTitre", titre);
-        set(dto, "setDescription", desc);
-        set(dto, "setMontant", montant);
-        set(dto, "setDateCharge", dateCharge);
-        return dto;
-    }
-
-    private void call(Object target, String method, Object arg) {
-        try {
-            Method m = target.getClass().getMethod(method, arg.getClass());
-            m.invoke(target, arg);
-        } catch (Exception ignored) { }
-    }
-
-    private void set(Object target, String setter, Object arg) {
-        try {
-            Method m = target.getClass().getMethod(setter, arg.getClass());
-            m.invoke(target, arg);
-        } catch (Exception ignored) { }
-    }
-
-    private String nz(String s) { return s == null ? "" : s; }
 }
