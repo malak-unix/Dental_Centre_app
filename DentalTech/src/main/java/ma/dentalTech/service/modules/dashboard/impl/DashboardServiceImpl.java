@@ -30,9 +30,6 @@ public class DashboardServiceImpl implements DashboardService {
             throw new ServiceException("utilisateurId null");
         }
 
-        // Ici: on construit au minimum le dashboard secrétaire (notifications + alertes).
-        // Si tu as déjà la logique admin/medecin ailleurs, tu pourras la brancher après.
-
         SecretaireDashboardResponseDTO secretaire = buildSecretaire(utilisateurId);
 
         DashboardFeaturesDTO features = DashboardFeaturesDTO.builder()
@@ -44,11 +41,13 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
 
         return DashboardDTO.builder()
+                .role("SECRETAIRE")
                 .features(features)
                 .secretaire(secretaire)
                 .medecin(null)
                 .admin(null)
                 .build();
+
     }
 
     private SecretaireDashboardResponseDTO buildSecretaire(Long utilisateurId) throws ServiceException {
@@ -117,7 +116,7 @@ public class DashboardServiceImpl implements DashboardService {
         try {
             PrioriteNotification p = n.getPriorite();
             // adapte si ton enum a d'autres valeurs
-            return p == PrioriteNotification.HAUTE || p == PrioriteNotification.HAUTE;
+            return p == PrioriteNotification.HAUTE;
         } catch (Exception e) {
             return false;
         }

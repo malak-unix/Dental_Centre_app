@@ -1,7 +1,8 @@
 package ma.dentalTech.mvc.ui.modules.caisse.dialogs;
 
-import ma.dentalTech.mvc.controllers.modules.caisse.api.ChargesControllerV2;
-import ma.dentalTech.mvc.dto.caisse.*;
+import ma.dentalTech.mvc.dto.caisse.ChargeCreateDTO;
+import ma.dentalTech.mvc.dto.caisse.ChargeItemDTO;
+import ma.dentalTech.mvc.dto.caisse.ChargeUpdateDTO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -9,10 +10,14 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+/**
+ * Dialog UI-only (ne touche PAS le controller/service).
+ * Retourne un DTO prêt à être envoyé au controller.
+ */
 public class ChargeEditDialog extends JDialog {
 
-    private final ChargesControllerV2 controller;
     private final ChargeItemDTO existing;
 
     private JTextField tfTitre;
@@ -20,33 +25,37 @@ public class ChargeEditDialog extends JDialog {
     private JTextField tfMontant;
     private JTextField tfDate; // yyyy-MM-dd
 
-    private boolean saved = false;
+    private Optional<ChargeCreateDTO> createResult = Optional.empty();
+    private Optional<ChargeUpdateDTO> updateResult = Optional.empty();
 
-    public static boolean openCreate(Component parent, ChargesControllerV2 controller) {
-        ChargeEditDialog dlg = new ChargeEditDialog(parent, controller, null);
-        dlg.setVisible(true);
-        return dlg.saved;
-    }
-
-    public static boolean openEdit(Component parent, ChargesControllerV2 controller, ChargeItemDTO existing) {
-        ChargeEditDialog dlg = new ChargeEditDialog(parent, controller, existing);
-        dlg.setVisible(true);
-        return dlg.saved;
-    }
-
-    private ChargeEditDialog(Component parent, ChargesControllerV2 controller, ChargeItemDTO existing) {
+    private ChargeEditDialog(Component parent, ChargeItemDTO existing) {
         super(SwingUtilities.getWindowAncestor(parent),
                 existing == null ? "Ajouter / Modifier Charge" : "Ajouter / Modifier Charge",
                 ModalityType.APPLICATION_MODAL);
-        this.controller = controller;
+
         this.existing = existing;
 
         setContentPane(buildUi());
         pack();
         setLocationRelativeTo(parent);
 
-        if (existing != null) fillFromExisting(existing);
-        else tfDate.setText(LocalDate.now().toString());
+        if (existing != null) {
+            fillFromExisting(existing);
+        } else {
+            tfDate.setText(LocalDate.now().toString());
+        }
+    }
+
+    public static Optional<ChargeCreateDTO> showCreate(Component parent) {
+        ChargeEditDialog dlg = new ChargeEditDialog(parent, null);
+        dlg.setVisible(true);
+        return dlg.createResult;
+    }
+
+    public static Optional<ChargeUpdateDTO> showEdit(Component parent, ChargeItemDTO existing) {
+        ChargeEditDialog dlg = new ChargeEditDialog(parent, existing);
+        dlg.setVisible(true);
+        return dlg.updateResult;
     }
 
     private JComponent buildUi() {
@@ -100,7 +109,7 @@ public class ChargeEditDialog extends JDialog {
     private void fillFromExisting(ChargeItemDTO ex) {
         tfTitre.setText(ex.getTitre() == null ? "" : ex.getTitre());
         tfDesc.setText(ex.getDescription() == null ? "" : ex.getDescription());
-        tfMontant.setText(ex.getMontant() == null ? "" : ex.getMontant().toString());
+        tfMontant.setText(ex.getMontant() == null ? "" : ex.getMontant().toPlainString());
         if (ex.getDateCharge() != null) tfDate.setText(ex.getDateCharge().toLocalDate().toString());
     }
 
@@ -118,33 +127,30 @@ public class ChargeEditDialog extends JDialog {
             BigDecimal montant = new BigDecimal(montantStr);
             LocalDateTime dateCharge = LocalDate.parse(dateStr).atStartOfDay();
 
-            // ✅ cabinetId temporaire (si tu as un vrai cabinetId dans ton login/session, on le branchera)
-            Long cabinetId = (existing != null && existing.getCabinetId() != null) ? existing.getCabinetId() : 1L;
-
             if (existing == null) {
-                ChargeCreateDTO dto = ChargeCreateDTO.builder()
+                // cabinetId: si tu as une session/cabinetId réel, on le branchera après.
+                Long cabinetId = 1L;
+
+                createResult = Optional.of(ChargeCreateDTO.builder()
                         .cabinetId(cabinetId)
                         .titre(titre)
                         .description(desc)
                         .montant(montant)
                         .dateCharge(dateCharge)
-                        .build();
-                controller.create(dto);
+                        .build());
             } else {
-                ChargeUpdateDTO dto = ChargeUpdateDTO.builder()
-                         .titre(titre)
+                updateResult = Optional.of(ChargeUpdateDTO.builder()
+                        .titre(titre)
                         .description(desc)
                         .montant(montant)
                         .dateCharge(dateCharge)
-                        .build();
-                controller.update(existing.getId(), dto);
+                        .build());
             }
 
-            saved = true;
             dispose();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation", JOptionPane.WARNING_MESSAGE);
         }
     }
 

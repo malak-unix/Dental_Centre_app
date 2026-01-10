@@ -16,9 +16,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
 
 @RequiredArgsConstructor
 public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
@@ -54,9 +57,8 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
         double totalCharges = nvl(chargesRepository.calculateTotalCharges(start, end));
         double soldeNet = totalRevenus - totalCharges;
 
-        CaisseChartDTO chart = CaisseChartDTO.builder()
-                .title("Revenus vs Charges")
-                .build();
+        CaisseChartDTO chart = build6MonthsChart(req);
+        res.setChart(chart);
 
         return CaisseDashboardResponseDTO.builder()
                 .filters(req)
@@ -70,6 +72,8 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .factures(rows)
                 .build();
     }
+
+
 
     private CaisseFactureRowDTO toRowDTO(Facture f, LibelleRole role) {
         boolean isPayee = (f.getStatut() == StatutFacture.PAYEE);
@@ -139,6 +143,41 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .mapToDouble(Double::doubleValue)
                 .sum();
     }
+
+    private CaisseChartDTO build6MonthsChart(CaisseDashboardRequestDTO req) {
+        LocalDate end = (req != null && req.getDateFin() != null) ? req.getDateFin() : LocalDate.now();
+
+        YearMonth endYm = YearMonth.from(end);
+        YearMonth startYm = endYm.minusMonths(5);
+
+        List<String> labels = new ArrayList<>();
+        List<Double> revenus = new ArrayList<>();
+        List<Double> charges = new ArrayList<>();
+
+        for (int i = 0; i < 6; i++) {
+            YearMonth ym = startYm.plusMonths(i);
+
+            LocalDate from = ym.atDay(1);
+            LocalDate to = ym.atEndOfMonth();
+
+            String label = ym.getMonth().getDisplayName(TextStyle.SHORT, Locale.FRANCE) + " " + ym.getYear();
+            labels.add(label);
+
+            BigDecimal r = revenuesRepository.calculateTotalRevenus(from, to);
+            BigDecimal c = chargesRepository.calculateTotalCharges(from, to);
+
+            revenus.add(r == null ? 0.0 : r.doubleValue());
+            charges.add(c == null ? 0.0 : c.doubleValue());
+        }
+
+        return CaisseChartDTO.builder()
+                .labels(labels)
+                .revenus(revenus)
+                .charges(charges)
+                .build();
+    }
+
+
 
     private double nvl(Double v) { return v == null ? 0.0 : v; }
     private Double nvlObj(Double v) { return v == null ? 0.0 : v; }

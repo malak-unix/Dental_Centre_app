@@ -132,6 +132,16 @@ public final class ApplicationContext {
             put(RevenuesRepository.class, revenusRepo, "revenusRepo");
             registerKnown(known, revenusRepo);
 
+            currentBean = "chartService";
+            ChartService chartService = newServiceInstance(
+                    props, "chartService", ChartService.class,
+                    new Class<?>[]{RevenuesRepository.class, ChargesRepository.class},
+                    new Object[]{revenusRepo, chargesRepo}
+            );
+            put(ChartService.class, chartService, "chartService");
+            registerKnown(known, chartService);
+
+
             currentBean = "sitFinRepo";
             SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo", SituationFinanciereRepository.class, known);
             put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
