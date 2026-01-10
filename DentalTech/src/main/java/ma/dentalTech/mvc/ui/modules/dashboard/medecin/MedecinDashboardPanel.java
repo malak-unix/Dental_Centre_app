@@ -1,13 +1,22 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.medecin;
 
+import ma.dentalTech.mvc.dto.agenda.RdvDto;
+import ma.dentalTech.mvc.dto.dashboard.medecin.MedecinDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.dashboard.medecin.PatientCurrentDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.util.List;
 
 public class MedecinDashboardPanel extends JPanel {
+
+    private DefaultTableModel rdvModel;
+    private JLabel footer;
+    private JTextArea currentInfo;
 
     public MedecinDashboardPanel() {
         setOpaque(false);
@@ -24,6 +33,41 @@ public class MedecinDashboardPanel extends JPanel {
 
         main.add(rdvCard());
         main.add(currentPatientCard());
+
+        setData(null);
+    }
+
+    public void setData(MedecinDashboardResponseDTO dto) {
+        rdvModel.setRowCount(0);
+
+        List<RdvDto> rdv = dto != null ? dto.getRdvDuJour() : null;
+        if (rdv != null && !rdv.isEmpty()) {
+            for (RdvDto r : rdv) {
+                rdvModel.addRow(new Object[]{
+                        r.getHeure() != null ? r.getHeure().toString() : "",
+                        r.getPatientNom() != null ? r.getPatientNom() : "",
+                        r.getMotif() != null ? r.getMotif() : "",
+                        r.getStatut() != null ? r.getStatut().name() : ""
+                });
+            }
+        } else {
+            rdvModel.addRow(new Object[]{"", "Aucun RDV", "", ""});
+        }
+
+        int nbRdv = dto != null && dto.getNbRdvDuJour() != null ? dto.getNbRdvDuJour() : 0;
+        int nbActes = dto != null && dto.getNbActesRealises() != null ? dto.getNbActesRealises() : 0;
+        BigDecimal rec = dto != null ? dto.getRecetteDuJour() : null;
+        footer.setText("Aujourd’hui : " + nbRdv + " RDV   |   Actes réalisés : " + nbActes + "   |   Recettes : " + formatDh(rec));
+
+        PatientCurrentDTO p = dto != null ? dto.getPatientEnCours() : null;
+        if (p == null) {
+            currentInfo.setText("Aucun client en cours.");
+        } else {
+            currentInfo.setText(
+                    (p.getNomComplet() != null ? p.getNomComplet() : "Patient") + "\n\n" +
+                            "Actions :\n• Dossier\n• Consultation\n• Radio\n• Ordonnance\n"
+            );
+        }
     }
 
     private CardPanel rdvCard() {
@@ -35,23 +79,17 @@ public class MedecinDashboardPanel extends JPanel {
         c.add(t, BorderLayout.NORTH);
 
         String[] cols = {"Heure", "Patient", "Motif", "Statut"};
-        Object[][] data = {
-                {"09:00", "Sumit Estève", "Blanchiment dentaire", "Arrivé"},
-                {"10:00", "Eve Leptot Lamiss", "Douleur aiguë", "À venir"},
-                {"10:20", "Sarm Enlibais", "Blanchiment dentaire", "À venir"},
-                {"11:20", "Troqué Carifice", "Douleur aiguë", "Arrivé"},
-                {"12:00", "Bayé Dorachat", "Contrôle", "Réalisé"}
-        };
-
-        JTable table = new JTable(new DefaultTableModel(data, cols));
+        rdvModel = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(rdvModel);
         table.setRowHeight(28);
 
         c.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        footer.setOpaque(false);
-        footer.add(new JLabel("Aujourd’hui : 15 RDV   |   Actes réalisés : 15   |   Recettes : 1,200 DH"));
-        c.add(footer, BorderLayout.SOUTH);
+        JPanel footerWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        footerWrap.setOpaque(false);
+        footer = new JLabel("");
+        footerWrap.add(footer);
+        c.add(footerWrap, BorderLayout.SOUTH);
 
         return c;
     }
@@ -64,11 +102,11 @@ public class MedecinDashboardPanel extends JPanel {
         t.setFont(DentalTheme.H2);
         c.add(t, BorderLayout.NORTH);
 
-        JTextArea info = new JTextArea("Driss Gafar\n\nActions :\n• Dossier\n• Consultation\n• Radio\n• Ordonnance\n");
-        info.setOpaque(false);
-        info.setEditable(false);
-        info.setFont(DentalTheme.BASE);
-        c.add(info, BorderLayout.CENTER);
+        currentInfo = new JTextArea();
+        currentInfo.setOpaque(false);
+        currentInfo.setEditable(false);
+        currentInfo.setFont(DentalTheme.BASE);
+        c.add(currentInfo, BorderLayout.CENTER);
 
         JPanel actions = new JPanel(new GridLayout(2, 2, 10, 10));
         actions.setOpaque(false);
@@ -79,5 +117,10 @@ public class MedecinDashboardPanel extends JPanel {
         c.add(actions, BorderLayout.SOUTH);
 
         return c;
+    }
+
+    private String formatDh(BigDecimal v) {
+        if (v == null) return "0 DH";
+        return v.stripTrailingZeros().toPlainString() + " DH";
     }
 }

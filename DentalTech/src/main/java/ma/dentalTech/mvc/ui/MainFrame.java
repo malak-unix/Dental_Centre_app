@@ -12,6 +12,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import ma.dentalTech.entities.enums.LibelleRole;
+import ma.dentalTech.mvc.ui.modules.caisse.CaisseMainPanel;
+import ma.dentalTech.mvc.ui.modules.dashboard.DashboardMainPanel;
+
 
 public class MainFrame extends JFrame {
 
@@ -40,15 +44,17 @@ public class MainFrame extends JFrame {
         sidebar.setBackground(DentalTheme.BG2);
 
         content.setBackground(DentalTheme.BG2);
+        LibelleRole role = LibelleRole.SECRETAIRE; // demo (tu peux changer)
+        Long currentUserId = 1L;                   // demo (id existant dans ta DB)
+
 
         // Pages
-        addPage("dashboard", buildPlaceholder("Dashboard (à brancher)"));
+        addPage("dashboard", new DashboardMainPanel(role, currentUserId));
         addPage("patients", buildPatientPage());
         addPage("agenda", buildAgendaPage());
         addPage("waitlist", buildPlaceholder("Liste d'attente (à brancher)"));
         addPage("rdv", buildPlaceholder("Rendez-vous (à brancher)"));
-        addPage("caisse", buildPlaceholder("Caisse (à brancher)"));
-
+        addPage("caisse", new CaisseMainPanel(role, currentUserId));
         root.add(sidebar, BorderLayout.WEST);
 
         // zone centrale avec padding comme maquette

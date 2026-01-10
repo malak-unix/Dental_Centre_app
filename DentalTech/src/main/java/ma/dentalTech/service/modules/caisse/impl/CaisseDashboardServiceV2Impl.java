@@ -5,7 +5,10 @@ import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.enums.StatutFacture;
-import ma.dentalTech.mvc.dto.caisse.*;
+import ma.dentalTech.mvc.dto.caisse.CaisseChartDTO;
+import ma.dentalTech.mvc.dto.caisse.CaisseDashboardRequestDTO;
+import ma.dentalTech.mvc.dto.caisse.CaisseDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.caisse.CaisseFactureRowDTO;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
@@ -16,12 +19,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-import java.time.YearMonth;
-import java.time.format.TextStyle;
 
 @RequiredArgsConstructor
 public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
@@ -38,12 +41,13 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
 
         validation.validateDashboardRequest(req, role, currentUserId);
 
-        LocalDateTime start = toStart(req.getDateDebut());
-        LocalDateTime end = toEnd(req.getDateFin());
+        // ✅ Toujours en LocalDateTime pour les repos
+        LocalDateTime start = toStart(req == null ? null : req.getDateDebut());
+        LocalDateTime end = toEnd(req == null ? null : req.getDateFin());
 
         List<Facture> factures = factureRepository.findByDateBetween(start, end);
-        factures = applyStatutFilter(factures, req.getStatut());
-        factures = applySearchFilter(factures, req.getSearch());
+        factures = applyStatutFilter(factures, req == null ? null : req.getStatut());
+        factures = applySearchFilter(factures, req == null ? null : req.getSearch());
 
         List<CaisseFactureRowDTO> rows = factures.stream()
                 .map(f -> toRowDTO(f, role))
@@ -57,8 +61,8 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
         double totalCharges = nvl(chargesRepository.calculateTotalCharges(start, end));
         double soldeNet = totalRevenus - totalCharges;
 
-        CaisseChartDTO chart = build6MonthsChart(req);
-        res.setChart(chart);
+        // ✅ Chart réel (6 derniers mois), sans toucher à ApplicationContext / beans
+        CaisseChartDTO chart = buildRevenusVsCharges6MonthsChart(req == null ? null : req.getDateFin());
 
         return CaisseDashboardResponseDTO.builder()
                 .filters(req)
@@ -73,7 +77,41 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .build();
     }
 
+    private CaisseChartDTO buildRevenusVsCharges6MonthsChart(LocalDate dateFinUi) {
+        LocalDate base = (dateFinUi == null) ? LocalDate.now() : dateFinUi;
 
+        YearMonth endMonth = YearMonth.from(base);
+        YearMonth startMonth = endMonth.minusMonths(5);
+
+        List<String> labels = new ArrayList<>();
+        List<Double> revenus = new ArrayList<>();
+        List<Double> charges = new ArrayList<>();
+
+        YearMonth cur = startMonth;
+        while (!cur.isAfter(endMonth)) {
+
+            String label = cur.getMonth().getDisplayName(TextStyle.SHORT, Locale.FRENCH) + " " + cur.getYear();
+            labels.add(label);
+
+            LocalDateTime from = cur.atDay(1).atStartOfDay();
+            LocalDateTime to = cur.atEndOfMonth().atTime(LocalTime.MAX);
+
+            Double r = revenuesRepository.calculateTotalRevenus(from, to);
+            Double c = chargesRepository.calculateTotalCharges(from, to);
+
+            revenus.add(nvl(r));
+            charges.add(nvl(c));
+
+            cur = cur.plusMonths(1);
+        }
+
+        return CaisseChartDTO.builder()
+                .title("Revenus vs Charges")
+                .labels(labels)
+                .revenus(revenus)
+                .charges(charges)
+                .build();
+    }
 
     private CaisseFactureRowDTO toRowDTO(Facture f, LibelleRole role) {
         boolean isPayee = (f.getStatut() == StatutFacture.PAYEE);
@@ -106,6 +144,7 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
         String s = statutUi.trim().toUpperCase(Locale.ROOT);
         if ("TOUTES".equals(s) || "TOUT".equals(s)) return list;
 
+        // ✅ Impayés = NON_PAYEE + PARTIEL
         if ("IMPAYEE".equals(s)) {
             return list.stream()
                     .filter(f -> f.getStatut() == StatutFacture.NON_PAYEE || f.getStatut() == StatutFacture.PARTIEL)
@@ -144,44 +183,15 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .sum();
     }
 
-    private CaisseChartDTO build6MonthsChart(CaisseDashboardRequestDTO req) {
-        LocalDate end = (req != null && req.getDateFin() != null) ? req.getDateFin() : LocalDate.now();
-
-        YearMonth endYm = YearMonth.from(end);
-        YearMonth startYm = endYm.minusMonths(5);
-
-        List<String> labels = new ArrayList<>();
-        List<Double> revenus = new ArrayList<>();
-        List<Double> charges = new ArrayList<>();
-
-        for (int i = 0; i < 6; i++) {
-            YearMonth ym = startYm.plusMonths(i);
-
-            LocalDate from = ym.atDay(1);
-            LocalDate to = ym.atEndOfMonth();
-
-            String label = ym.getMonth().getDisplayName(TextStyle.SHORT, Locale.FRANCE) + " " + ym.getYear();
-            labels.add(label);
-
-            BigDecimal r = revenuesRepository.calculateTotalRevenus(from, to);
-            BigDecimal c = chargesRepository.calculateTotalCharges(from, to);
-
-            revenus.add(r == null ? 0.0 : r.doubleValue());
-            charges.add(c == null ? 0.0 : c.doubleValue());
-        }
-
-        return CaisseChartDTO.builder()
-                .labels(labels)
-                .revenus(revenus)
-                .charges(charges)
-                .build();
-    }
-
-
-
     private double nvl(Double v) { return v == null ? 0.0 : v; }
     private Double nvlObj(Double v) { return v == null ? 0.0 : v; }
 
-    private LocalDateTime toStart(LocalDate d) { return d == null ? null : d.atStartOfDay(); }
-    private LocalDateTime toEnd(LocalDate d) { return d == null ? null : d.atTime(LocalTime.of(23, 59, 59)); }
+    // ✅ Defaults safe (si UI envoie null)
+    private LocalDateTime toStart(LocalDate d) {
+        return d == null ? LocalDate.now().minusMonths(1).atStartOfDay() : d.atStartOfDay();
+    }
+
+    private LocalDateTime toEnd(LocalDate d) {
+        return d == null ? LocalDate.now().atTime(LocalTime.MAX) : d.atTime(LocalTime.MAX);
+    }
 }

@@ -1,12 +1,29 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.secretaire;
 
+import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
+import ma.dentalTech.mvc.dto.dashboard.common.AlerteDTO;
+import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
+import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class SecretaireDashboardPanel extends JPanel {
+
+    private JLabel vNbPatients;
+    private JLabel vRecette;
+    private JLabel vNbRdv;
+    private JLabel vNbAttente;
+
+    private JPanel waitRow; // file d’attente
+    private DefaultListModel<String> activitiesModel;
+    private JTextArea notifArea;
+    private JLabel notifBadge;
 
     public SecretaireDashboardPanel() {
         setOpaque(false);
@@ -25,29 +42,32 @@ public class SecretaireDashboardPanel extends JPanel {
         // KPIs
         JPanel kpis = new JPanel(new GridLayout(1, 5, 18, 18));
         kpis.setOpaque(false);
-        kpis.add(kpi("1286", "Nb patients"));
-        kpis.add(kpi("1200 DH", "Recette du jour"));
-        kpis.add(kpi("32", "RDV du jour"));
-        kpis.add(kpi("8", "Patients en attente"));
-        kpis.add(actionCard("Voir +statistiques"));
-        main.add(kpis);
 
+        vNbPatients = new JLabel("—");
+        vRecette = new JLabel("—");
+        vNbRdv = new JLabel("—");
+        vNbAttente = new JLabel("—");
+
+        kpis.add(kpi(vNbPatients, "Nb patients"));
+        kpis.add(kpi(vRecette, "Recette du jour"));
+        kpis.add(kpi(vNbRdv, "RDV du jour"));
+        kpis.add(kpi(vNbAttente, "Patients en attente"));
+        kpis.add(actionCard("Voir +statistiques"));
+
+        main.add(kpis);
         main.add(Box.createVerticalStrut(18));
 
-        // File d’attente (scroll horizontal)
+        // File d’attente
         CardPanel waitCard = new CardPanel();
         waitCard.setLayout(new BorderLayout(10, 10));
         JLabel wt = new JLabel("File d’Attente");
         wt.setFont(DentalTheme.H2);
         waitCard.add(wt, BorderLayout.NORTH);
 
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 8));
-        row.setOpaque(false);
-        for (int i = 0; i < 7; i++) {
-            row.add(patientChip("Patient " + (i + 1)));
-        }
+        waitRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 8));
+        waitRow.setOpaque(false);
 
-        JScrollPane sp = new JScrollPane(row);
+        JScrollPane sp = new JScrollPane(waitRow);
         sp.setOpaque(false);
         sp.getViewport().setOpaque(false);
         sp.setBorder(null);
@@ -56,30 +76,93 @@ public class SecretaireDashboardPanel extends JPanel {
         waitCard.add(sp, BorderLayout.CENTER);
 
         main.add(waitCard);
-
         main.add(Box.createVerticalStrut(18));
 
-        // Activités + Notifications
         JPanel bottom = new JPanel(new GridLayout(1, 2, 18, 18));
         bottom.setOpaque(false);
-        bottom.add(activitiesCard("Activités Récentes"));
-        bottom.add(notifCard("Notifications / Alertes"));
+        bottom.add(activitiesCard());
+        bottom.add(notifCard());
         main.add(bottom);
+
+        // default (si service pas encore branché)
+        setData(null);
     }
 
-    private CardPanel kpi(String value, String label) {
+    public void setData(SecretaireDashboardResponseDTO dto) {
+        int nbPatients = dto != null && dto.getNbPatients() != null ? dto.getNbPatients() : 0;
+        int nbRdv = dto != null && dto.getNbRdvDuJour() != null ? dto.getNbRdvDuJour() : 0;
+        int nbAtt = dto != null && dto.getNbEnAttente() != null ? dto.getNbEnAttente() : 0;
+
+        BigDecimal recette = dto != null ? dto.getRecetteDuJour() : null;
+
+        vNbPatients.setText(String.valueOf(nbPatients));
+        vNbRdv.setText(String.valueOf(nbRdv));
+        vNbAttente.setText(String.valueOf(nbAtt));
+        vRecette.setText(formatDh(recette));
+
+        // file attente
+        waitRow.removeAll();
+        List<ListeAttenteDto> file = dto != null ? dto.getFileAttente() : null;
+        if (file == null || file.isEmpty()) {
+            waitRow.add(patientChip("—"));
+        } else {
+            for (ListeAttenteDto p : file) {
+                String name = (p.getPatientNom() != null && !p.getPatientNom().isBlank())
+                        ? p.getPatientNom()
+                        : (p.getNom() != null ? p.getNom() : "Patient");
+                waitRow.add(patientChip(name));
+            }
+        }
+        waitRow.revalidate();
+        waitRow.repaint();
+
+        // activities = notifications (simple)
+        activitiesModel.clear();
+        List<NotificationDTO> notifs = dto != null ? dto.getNotifications() : null;
+        if (notifs != null && !notifs.isEmpty()) {
+            int limit = Math.min(8, notifs.size());
+            for (int i = 0; i < limit; i++) {
+                NotificationDTO n = notifs.get(i);
+                activitiesModel.addElement(formatNotifLine(n));
+            }
+        } else {
+            activitiesModel.addElement("Aucune activité récente.");
+        }
+
+        // notif/alert area
+        int nbA = dto != null && dto.getNbAlertesNonLues() != null ? dto.getNbAlertesNonLues() : 0;
+        int nbN = dto != null && dto.getNbNotificationsNonLues() != null ? dto.getNbNotificationsNonLues() : 0;
+        notifBadge.setText("  " + (nbA + nbN) + "  ");
+
+        StringBuilder sb = new StringBuilder();
+        List<AlerteDTO> alertes = dto != null ? dto.getAlertes() : null;
+        if (alertes != null && !alertes.isEmpty()) {
+            int limit = Math.min(6, alertes.size());
+            for (int i = 0; i < limit; i++) {
+                AlerteDTO a = alertes.get(i);
+                sb.append("• ").append(a.getTitre() != null ? a.getTitre() : "Alerte")
+                        .append(" : ")
+                        .append(a.getMessage() != null ? a.getMessage() : "")
+                        .append("\n");
+            }
+        } else {
+            sb.append("• Aucune alerte.\n");
+        }
+        notifArea.setText(sb.toString());
+    }
+
+    private CardPanel kpi(JLabel valueLabel, String label) {
         CardPanel c = new CardPanel();
         c.setLayout(new BoxLayout(c, BoxLayout.Y_AXIS));
 
-        JLabel v = new JLabel(value);
-        v.setFont(DentalTheme.H2);
-        v.setForeground(DentalTheme.TEXT);
+        valueLabel.setFont(DentalTheme.H2);
+        valueLabel.setForeground(DentalTheme.TEXT);
 
         JLabel l = new JLabel(label);
         l.setFont(DentalTheme.BASE);
         l.setForeground(DentalTheme.MUTED);
 
-        c.add(v);
+        c.add(valueLabel);
         c.add(Box.createVerticalStrut(6));
         c.add(l);
         return c;
@@ -108,57 +191,64 @@ public class SecretaireDashboardPanel extends JPanel {
         return chip;
     }
 
-    private CardPanel activitiesCard(String title) {
+    private CardPanel activitiesCard() {
         CardPanel c = new CardPanel();
         c.setLayout(new BorderLayout(10, 10));
-        JLabel t = new JLabel(title);
+
+        JLabel t = new JLabel("Activités Récentes");
         t.setFont(DentalTheme.H2);
         c.add(t, BorderLayout.NORTH);
 
-        DefaultListModel<String> model = new DefaultListModel<>();
-        model.addElement("RDV confirmé avec Samin Paradness  •  il y a 1h");
-        model.addElement("RDV confirmé avec Daimon Ativa     •  il y a 1h");
-        model.addElement("Dossier mis à jour Driss Gafar      •  il y a 3h");
-        model.addElement("Cas ajouté pour Bat Skemp           •  il y a 5h");
-
-        JList<String> list = new JList<>(model);
+        activitiesModel = new DefaultListModel<>();
+        JList<String> list = new JList<>(activitiesModel);
         list.setFont(DentalTheme.BASE);
         list.setBorder(null);
-        c.add(new JScrollPane(list), BorderLayout.CENTER);
 
+        c.add(new JScrollPane(list), BorderLayout.CENTER);
         return c;
     }
 
-    private CardPanel notifCard(String title) {
+    private CardPanel notifCard() {
         CardPanel c = new CardPanel();
         c.setLayout(new BorderLayout(10, 10));
 
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
 
-        JLabel t = new JLabel(title);
+        JLabel t = new JLabel("Notifications / Alertes");
         t.setFont(DentalTheme.H2);
 
-        JLabel badge = new JLabel("  3  ");
-        badge.setOpaque(true);
-        badge.setBackground(new Color(0x1F4C5B));
-        badge.setForeground(Color.WHITE);
+        notifBadge = new JLabel("  0  ");
+        notifBadge.setOpaque(true);
+        notifBadge.setBackground(new Color(0x1F4C5B));
+        notifBadge.setForeground(Color.WHITE);
 
         head.add(t, BorderLayout.WEST);
-        head.add(badge, BorderLayout.EAST);
+        head.add(notifBadge, BorderLayout.EAST);
 
         c.add(head, BorderLayout.NORTH);
 
-        JTextArea area = new JTextArea(
-                "• Alerte : Factures impayées (2)\n" +
-                        "• Notification : RDV déplacé\n" +
-                        "• Alerte : Patient en attente > 20 min\n"
-        );
-        area.setFont(DentalTheme.BASE);
-        area.setOpaque(false);
-        area.setEditable(false);
-        c.add(area, BorderLayout.CENTER);
+        notifArea = new JTextArea();
+        notifArea.setFont(DentalTheme.BASE);
+        notifArea.setOpaque(false);
+        notifArea.setEditable(false);
+        c.add(notifArea, BorderLayout.CENTER);
 
         return c;
+    }
+
+    private String formatDh(BigDecimal v) {
+        if (v == null) return "0 DH";
+        return v.stripTrailingZeros().toPlainString() + " DH";
+    }
+
+    private String formatNotifLine(NotificationDTO n) {
+        String titre = n.getTitre() != null ? n.getTitre() : "Notification";
+        String msg = n.getMessage() != null ? n.getMessage() : "";
+        String d = "";
+        if (n.getDate() != null) {
+            d = " • " + n.getDate().format(DateTimeFormatter.ofPattern("dd/MM HH:mm"));
+        }
+        return titre + " : " + msg + d;
     }
 }
