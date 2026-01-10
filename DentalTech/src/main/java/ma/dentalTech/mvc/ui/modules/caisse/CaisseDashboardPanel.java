@@ -32,7 +32,7 @@ public class CaisseDashboardPanel extends JPanel {
 
     private final JComboBox<String> cbPeriode = new JComboBox<>(new String[]{"Ce mois ci", "Cette semaine", "Aujourd'hui", "Custom"});
     private final JComboBox<String> cbMedecin = new JComboBox<>(new String[]{"Tous"}); // pour plus tard
-    private final JComboBox<String> cbStatut  = new JComboBox<>(new String[]{"Toutes", "PAYEE", "IMPAYEE", "ANNULEE"});
+    private final JComboBox<String> cbStatut  = new JComboBox<>(new String[]{"Toutes", "PAYEE", "IMPAYEE"});
     private final JTextField txtSearch = new JTextField(18);
     private final DentalButton btnFilter = new DentalButton("Filter");
 
@@ -201,6 +201,7 @@ public class CaisseDashboardPanel extends JPanel {
             String statut = "Toutes".equalsIgnoreCase(statutUi) ? "TOUTES" : statutUi;
 
             String search = txtSearch.getText();
+            if ("Rechercher un client...".equalsIgnoreCase(search)) search = null;
             if (search != null && search.isBlank()) search = null;
 
             CaisseDashboardRequestDTO req = CaisseDashboardRequestDTO.builder()
@@ -221,7 +222,7 @@ public class CaisseDashboardPanel extends JPanel {
             vBenefice.setText(money(benefice) + " DH");
 
             List<CaisseFactureRowDTO> list = res.getFactures();
-            long nbImpayees = list == null ? 0 : list.stream().filter(f -> "IMPAYEE".equalsIgnoreCase(f.getStatut())).count();
+            long nbImpayees = list == null ? 0 : list.stream().filter(f -> isImpaye(f.getStatut())).count();
             vImpayes.setText(nbImpayees + " Factures");
 
             tableModel.setRows(list);
@@ -356,4 +357,17 @@ public class CaisseDashboardPanel extends JPanel {
         double x = v == null ? 0.0 : v;
         return String.format("%,.2f", x);
     }
+
+    private boolean isImpaye(String s) {
+        if (s == null) return false;
+        return s.equalsIgnoreCase("IMPAYEE")
+                || s.equalsIgnoreCase("NON_PAYEE")
+                || s.equalsIgnoreCase("PARTIEL");
+    }
+
+    private boolean isPayee(String s) {
+        return s != null && (s.equalsIgnoreCase("PAYEE"));
+    }
+
+
 }

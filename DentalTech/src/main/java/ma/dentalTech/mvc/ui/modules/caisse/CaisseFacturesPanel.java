@@ -5,7 +5,7 @@ import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.modules.caisse.table.FactureActionsColumn;
-import ma.dentalTech.mvc.ui.modules.caisse.table.FactureTableModel;
+import ma.dentalTech.mvc.ui.modules.caisse.table.CaisseFacturesTableModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -20,7 +20,7 @@ public class CaisseFacturesPanel extends JPanel {
     private final JComboBox<String> cbMedecin = new JComboBox<>(new String[]{"Tous"});
     private final DentalButton btnFilter = new DentalButton("Filtrer");
 
-    private final FactureTableModel model = new FactureTableModel();
+    private final CaisseFacturesTableModel model = new CaisseFacturesTableModel();
     private final JTable table = new JTable(model);
 
     private final JLabel vTotalFactures = kpiValue();

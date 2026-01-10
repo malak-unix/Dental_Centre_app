@@ -12,7 +12,7 @@ public class CaisseDashboardRequestDTO {
     private LocalDate dateFin;
 
 
-    // "TOUTES" | "PAYEE" | "IMPAYEE" | "ANNULEE"
+    // "TOUTES" | "PAYEE" | "IMPAYEE"
     private String statut;
 
     // barre recherche "Rechercher un client..."

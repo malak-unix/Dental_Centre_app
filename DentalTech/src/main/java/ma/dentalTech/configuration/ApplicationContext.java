@@ -208,6 +208,22 @@ public final class ApplicationContext {
                 registerKnown(known, ctrl);
             }
 
+            // Controller Charges V2
+            if (hasKey(props, "chargesControllerV2")) {
+                currentBean = "chargesControllerV2";
+                ChargesServiceV2 chargesServiceV2 = getBean(ChargesServiceV2.class);
+
+                Object ctrlCharges = newFlexibleInstance(
+                        props.getProperty("chargesControllerV2"),
+                        known,
+                        chargesServiceV2
+                );
+
+                contextByName.put("chargesControllerV2", ctrlCharges);
+                registerKnown(known, ctrlCharges);
+            }
+
+
             // =========================================================
             // RDV : repo -> service -> controller ✅ CORRIGÉ
             // =========================================================

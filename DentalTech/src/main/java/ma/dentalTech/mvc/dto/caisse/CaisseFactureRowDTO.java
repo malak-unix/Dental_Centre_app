@@ -34,7 +34,7 @@ public class CaisseFactureRowDTO {
     private String patientNom;
     private LocalDate dateEmission;
     private Double montant;
-    private String statut; // PAYEE, IMPAYEE, ANNULEE
+    private String statut; // PAYEE, IMPAYEE
 
     // =========================
     // Droits / actions (UI)
