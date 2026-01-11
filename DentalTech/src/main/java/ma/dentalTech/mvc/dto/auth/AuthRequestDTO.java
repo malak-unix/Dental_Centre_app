@@ -1,15 +1,9 @@
 package ma.dentalTech.mvc.dto.auth;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class AuthRequestDTO {
-    private String login;
-    private String password;
-}
+/**
+ * DTO du prof : Utilise la syntaxe Record.
+ */
+public record AuthRequestDTO(
+        String login,
+        String password
+) {}
