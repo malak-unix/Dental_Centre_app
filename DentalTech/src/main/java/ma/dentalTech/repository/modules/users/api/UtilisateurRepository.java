@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface UtilisateurRepository extends CrudRepository<Utilisateur, Long> {
 
     Optional<Utilisateur> findByEmail(String email);
+    void updatePassword(Long userId, String newEncodedPassword);
     Optional<Utilisateur> findByLogin(String login);
     boolean existsByEmail(String email);
     boolean existsByLogin(String login);

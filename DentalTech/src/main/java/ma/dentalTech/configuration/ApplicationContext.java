@@ -318,4 +318,29 @@ public final class ApplicationContext {
             return null;
         }
     }
+    // ==========================
+    // Ajout pour la configuration
+    // ==========================
+    private static final Properties configProps = new Properties();
+
+    static {
+        // On charge aussi un fichier de configuration générale s'il existe
+        try (InputStream in = ApplicationContext.class.getResourceAsStream("/application.properties")) {
+            if (in != null) {
+                configProps.load(in);
+            }
+        } catch (Exception e) {
+            // Pas bloquant si le fichier n'existe pas
+        }
+    }
+
+    public static String getProperty(String key, String defaultValue) {
+        return configProps.getProperty(key, defaultValue);
+    }
+
+    // Version pour matcher exactement l'appel du prof : ApplicationContext.getInstance().getProperty(...)
+    private static final ApplicationContext INSTANCE = new ApplicationContext();
+    public static ApplicationContext getInstance() {
+        return INSTANCE;
+    }
 }

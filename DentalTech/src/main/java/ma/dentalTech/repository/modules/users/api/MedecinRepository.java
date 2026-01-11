@@ -10,5 +10,6 @@ public interface MedecinRepository extends CrudRepository<Medecin, Long> {
 
     List<Medecin> findAllOrderByNom();
     List<Medecin> findBySpecialite(String specialiteLike);
+    void updateMedecinFields(Medecin medecin);
 }
 
