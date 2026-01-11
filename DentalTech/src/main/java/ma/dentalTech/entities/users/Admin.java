@@ -2,6 +2,7 @@ package ma.dentalTech.entities.users;
 
 import java.time.LocalDate;
 import lombok.*;
+import ma.dentalTech.entities.enums.Sexe;
 
 /**
  * Entité représentant un administrateur du système.
@@ -12,12 +13,14 @@ import lombok.*;
 public class Admin extends Staff {
 
     @Builder(builderMethodName = "adminBuilder")
-    public Admin(String nom, String email, String adresse, String cin, String tel,
-                 ma.dentalTech.entities.enums.Sexe sexe, String login, String motDePasse,
+    public Admin(String nom, String prenom, String email, String adresse, String cin, String tel,
+                 Sexe sexe, String login, String motDePasse,
                  LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
-                 LocalDate dateRecrutement, Integer soldeCongé) {
-        super(nom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
-                dateNaissance, salaire, prime, dateRecrutement, soldeCongé);
+                 LocalDate dateRecrutement, int soldeConge) {
+
+        // On passe désormais les 15 arguments attendus par le constructeur de Staff
+        super(nom, prenom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
+                dateNaissance, salaire, prime, dateRecrutement, soldeConge);
     }
 
     @Override

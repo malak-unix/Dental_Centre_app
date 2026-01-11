@@ -122,6 +122,12 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
     }
 
     @Override public Optional<Utilisateur> findByEmail(String email) { return Optional.empty(); }
+
+    @Override
+    public void updatePassword(Long userId, String newEncodedPassword) {
+
+    }
+
     @Override public boolean existsByEmail(String email) { return false; }
     @Override public boolean existsByLogin(String login) { return false; }
     @Override public List<Utilisateur> searchByNom(String keyword) { return new ArrayList<>(); }
