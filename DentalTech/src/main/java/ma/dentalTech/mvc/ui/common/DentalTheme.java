@@ -6,7 +6,8 @@ public final class DentalTheme {
     private DentalTheme(){}
 
     // Couleurs (comme ma charte graphique )
-    public static final Color BG = new Color(0xFA, 0xF8, 0xF5);        // FAF8F5
+    public static final Color BG = new Color(0xFA, 0xF8, 0xF5);// FAF8F5
+    public static final Color CARD = new Color(250, 246, 240);
     public static final Color PRIMARY_DARK = new Color(0x0B, 0x13, 0x2B); // 0B132B
     public static final Color PRIMARY = new Color(0x1C, 0x25, 0x41);     // 1C2541
     public static final Color GOLD = new Color(0xCB, 0xA1, 0x35);        // CBA135
@@ -15,6 +16,20 @@ public final class DentalTheme {
     public static final Color MUTED = new Color(0x75, 0x75, 0x75);       // 757575
     public static final Color BEIGE = new Color(0xD4, 0xAF, 0x8F);   // D4AF8F
     public static final Color BEIGE_LIGHT = new Color(0xFA, 0xF8, 0xF5); // FAF8F5
+    public static final java.awt.Color BG2 = new java.awt.Color(0xF2E3D6);          // fond beige
+    public static final java.awt.Color PANEL = new java.awt.Color(0xF8F1EA);       // cartes
+    public static final java.awt.Color STROKE = new java.awt.Color(0xC7A26A);      // doré
+    public static final java.awt.Color PRIMARY2 = new java.awt.Color(0x1F4C5B);     // bleu pétrole
+    public static final java.awt.Color PRIMARY_2 = new java.awt.Color(0x173A45);   // hover
+    public static final java.awt.Color TEXT2 = new java.awt.Color(0x3A2F2A);        // texte brun
+
+    public static final int RADIUS = 18;
+    public static final int BTN_RADIUS = 16;
+
+    public static final java.awt.Font H1 = new java.awt.Font("Serif", java.awt.Font.BOLD, 28);
+    public static final java.awt.Font H2 = new java.awt.Font("Serif", java.awt.Font.BOLD, 22);
+    public static final java.awt.Font BASE = new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 13);
+    public static final Font BASE_BOLD = new Font("SansSerif", Font.BOLD, 13);
 
     public static Font titleFont(int size){ return new Font("Poppins", Font.BOLD, size); }
     public static Font textFont(int size){ return new Font("Roboto", Font.PLAIN, size); }

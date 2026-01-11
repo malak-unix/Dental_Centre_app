@@ -48,100 +48,80 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
     @Override
     public void create(Ordonnance ordonnance) {
         String sql = """
-                INSERT INTO ordonnance(dossier_id, consultation_id, date_ordo, date_creation)
-                VALUES (?, ?, ?, ?)
-                """;
+        INSERT INTO ordonnance(dossier_id, consultation_id, date_ordo, cree_par, modifie_par)
+        VALUES (?, ?, ?, ?, ?)
+        """;
+
+        if (ordonnance == null) throw new IllegalArgumentException("Ordonnance null dans create()");
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // dossier_id
-            if (ordonnance.getDossierId() != null) {
-                ps.setLong(1, ordonnance.getDossierId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+            if (ordonnance.getDossierId() != null) ps.setLong(1, ordonnance.getDossierId());
+            else ps.setNull(1, Types.BIGINT);
 
             // consultation_id
-            if (ordonnance.getConsultationId() != null) {
-                ps.setLong(2, ordonnance.getConsultationId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
+            if (ordonnance.getConsultationId() != null) ps.setLong(2, ordonnance.getConsultationId());
+            else ps.setNull(2, Types.BIGINT);
 
-            // date_ordo
-            if (ordonnance.getDate() != null) {
-                ps.setDate(3, Date.valueOf(ordonnance.getDate()));
-            } else {
-                ps.setNull(3, Types.DATE);
-            }
+            // date_ordo (NOT NULL)
+            LocalDate d = ordonnance.getDate() != null ? ordonnance.getDate() : LocalDate.now();
+            ps.setDate(3, Date.valueOf(d));
 
-            // date_creation
-            LocalDateTime dc = ordonnance.getDateCreation() != null
-                    ? ordonnance.getDateCreation()
-                    : LocalDateTime.now();
-            ps.setTimestamp(4, Timestamp.valueOf(dc));
+            ps.setString(4, ordonnance.getCreePar());
+            ps.setString(5, ordonnance.getModifiePar());
 
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    ordonnance.setId(rs.getLong(1));
-                }
+                if (rs.next()) ordonnance.setId(rs.getLong(1));
             }
-        } catch (SQLException  e) {
+
+        } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
         }
     }
 
+
     @Override
     public void update(Ordonnance ordonnance) {
+        if (ordonnance == null) throw new IllegalArgumentException("Ordonnance null dans update()");
+        if (ordonnance.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
+
         String sql = """
-                UPDATE ordonnance
-                   SET dossier_id = ?,
-                       consultation_id = ?,
-                       date_ordo = ?,
-                       date_modification = ?
-                 WHERE id = ?
-                """;
+        UPDATE ordonnance
+           SET dossier_id = ?,
+               consultation_id = ?,
+               date_ordo = ?,
+               modifie_par = ?,
+               date_modification = CURRENT_TIMESTAMP
+         WHERE id = ?
+        """;
 
         try (Connection conn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // dossier_id
-            if (ordonnance.getDossierId() != null) {
-                ps.setLong(1, ordonnance.getDossierId());
-            } else {
-                ps.setNull(1, Types.BIGINT);
-            }
+            if (ordonnance.getDossierId() != null) ps.setLong(1, ordonnance.getDossierId());
+            else ps.setNull(1, Types.BIGINT);
 
-            // consultation_id
-            if (ordonnance.getConsultationId() != null) {
-                ps.setLong(2, ordonnance.getConsultationId());
-            } else {
-                ps.setNull(2, Types.BIGINT);
-            }
+            if (ordonnance.getConsultationId() != null) ps.setLong(2, ordonnance.getConsultationId());
+            else ps.setNull(2, Types.BIGINT);
 
-            // date_ordo
-            if (ordonnance.getDate() != null) {
-                ps.setDate(3, Date.valueOf(ordonnance.getDate()));
-            } else {
-                ps.setNull(3, Types.DATE);
-            }
+            // date_ordo (NOT NULL)
+            LocalDate d = ordonnance.getDate() != null ? ordonnance.getDate() : LocalDate.now();
+            ps.setDate(3, Date.valueOf(d));
 
-            // date_modification -> mapped sur BaseEntity.dateDerniereModification
-            LocalDateTime dm = ordonnance.getDateDerniereModification() != null
-                    ? ordonnance.getDateDerniereModification()
-                    : LocalDateTime.now();
-            ps.setTimestamp(4, Timestamp.valueOf(dm));
-
+            ps.setString(4, ordonnance.getModifiePar());
             ps.setLong(5, ordonnance.getId());
 
             ps.executeUpdate();
-        } catch (SQLException  e) {
-            throw new RuntimeException("Erreur lors de la création de l'ordonnance", e);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la modification de l'ordonnance", e);
         }
     }
+
 
     @Override
     public Ordonnance findById(Long id) {

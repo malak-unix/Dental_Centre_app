@@ -1,0 +1,5 @@
+package ma.dentalTech.service.modules.dossierMedical.exception;
+
+public class NotFoundException extends ServiceException {
+    public NotFoundException(String message) { super(message); }
+}

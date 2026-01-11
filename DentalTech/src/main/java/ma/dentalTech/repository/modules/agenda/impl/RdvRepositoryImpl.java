@@ -1,13 +1,14 @@
 package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
-import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.agenda.RDV;
+import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,9 @@ public class RdvRepositoryImpl implements RdvRepository {
 
     @Override
     public void create(RDV r) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
+        if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire (date_rdv NOT NULL)");
+
         String sql = """
             INSERT INTO rdv
             (patient_id, detail_journee_id, liste_attente_id, date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par)
@@ -63,13 +67,15 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
 
-            ps.setDate(4, Date.valueOf(r.getDateRdv())); // date_rdv NOT NULL
+            ps.setDate(4, Date.valueOf(r.getDateRdv()));
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatut() != null ? r.getStatut() : EtatRendezVous.PREVU.name());
-            ps.setString(8, r.getNoteMedecin());
 
+            EtatRendezVous statut = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PLANIFIE;
+            ps.setString(7, statut.name());
+
+            ps.setString(8, r.getNoteMedecin());
             ps.setString(9, r.getCreePar());
             ps.setString(10, r.getModifiePar());
 
@@ -85,7 +91,9 @@ public class RdvRepositoryImpl implements RdvRepository {
 
     @Override
     public void update(RDV r) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
         if (r.getId() == null) throw new IllegalArgumentException("id obligatoire");
+        if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire (date_rdv NOT NULL)");
 
         String sql = """
             UPDATE rdv
@@ -100,13 +108,16 @@ public class RdvRepositoryImpl implements RdvRepository {
             ps.setObject(1, r.getPatientId(), Types.BIGINT);
             ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
             ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
+
             ps.setDate(4, Date.valueOf(r.getDateRdv()));
             ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
 
             ps.setString(6, r.getMotif());
-            ps.setString(7, r.getStatut());
-            ps.setString(8, r.getNoteMedecin());
 
+            EtatRendezVous statut = (r.getStatut() != null) ? r.getStatut() : EtatRendezVous.PLANIFIE;
+            ps.setString(7, statut.name());
+
+            ps.setString(8, r.getNoteMedecin());
             ps.setString(9, r.getModifiePar());
             ps.setLong(10, r.getId());
 
@@ -141,20 +152,17 @@ public class RdvRepositoryImpl implements RdvRepository {
 
     @Override
     public List<RDV> findByPatientId(Long patientId) {
-        String sql = "SELECT * FROM rdv WHERE patient_id = ?";
-        return selectList(sql, patientId);
+        return selectList("SELECT * FROM rdv WHERE patient_id = ?", patientId);
     }
 
     @Override
     public List<RDV> findByDetailJourneeId(Long detailJourneeId) {
-        String sql = "SELECT * FROM rdv WHERE detail_journee_id = ?";
-        return selectList(sql, detailJourneeId);
+        return selectList("SELECT * FROM rdv WHERE detail_journee_id = ?", detailJourneeId);
     }
 
     @Override
     public List<RDV> findByListeAttenteId(Long listeAttenteId) {
-        String sql = "SELECT * FROM rdv WHERE liste_attente_id = ?";
-        return selectList(sql, listeAttenteId);
+        return selectList("SELECT * FROM rdv WHERE liste_attente_id = ?", listeAttenteId);
     }
 
     @Override
@@ -228,22 +236,9 @@ public class RdvRepositoryImpl implements RdvRepository {
             throw new RuntimeException("Erreur selectList()", e);
         }
     }
-    @Override
-    public Integer countByDate(java.time.LocalDateTime start, java.time.LocalDateTime end) {
-        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
-        return 0;
-    }
 
-    @Override
-    public Integer countRdvEnRetard(java.time.LocalDate today) {
-        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
-        return 0;
-    }
-
-    @Override
-    public Integer countByMedecinAndDate(Long medecinId, java.time.LocalDateTime start, java.time.LocalDateTime end) {
-        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
-        return 0;
-    }
-
+    // stubs dashboard
+    @Override public Integer countByDate(LocalDateTime start, LocalDateTime end) { return 0; }
+    @Override public Integer countRdvEnRetard(LocalDate today) { return 0; }
+    @Override public Integer countByMedecinAndDate(Long medecinId, LocalDateTime start, LocalDateTime end) { return 0; }
 }

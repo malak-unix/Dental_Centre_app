@@ -2,6 +2,7 @@ package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.agenda.DetailJournee;
+import ma.dentalTech.entities.enums.StatutJournee;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.DetailJourneeRepository;
 
@@ -60,16 +61,16 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
             if (d == null) throw new IllegalArgumentException("DetailJournee null");
             if (d.getAgendaId() == null) throw new IllegalArgumentException("agendaId obligatoire");
+            if (d.getDateJour() == null) throw new IllegalArgumentException("dateJour obligatoire");
 
             ps.setLong(1, d.getAgendaId());
-            ps.setDate(2, d.getDateJour() != null ? Date.valueOf(d.getDateJour()) : null);
+            ps.setDate(2, Date.valueOf(d.getDateJour()));
 
-            // ✅ noms corrects (pas *Travaillee*)
             ps.setTime(3, d.getHeureDebutTravail() != null ? Time.valueOf(d.getHeureDebutTravail()) : null);
             ps.setTime(4, d.getHeureFinTravail() != null ? Time.valueOf(d.getHeureFinTravail()) : null);
 
-            // ✅ etatJour est String => pas de .name()
-            ps.setString(5, d.getEtatJour());
+            // ✅ IMPORTANT: éviter "null" string dans l'ENUM MySQL
+            ps.setString(5, toSqlEtatJour(d.getEtatJour()));
 
             ps.setString(6, d.getCommentaire());
             ps.setString(7, d.getCreePar());
@@ -87,7 +88,10 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
     @Override
     public void update(DetailJournee d) {
-        if (d == null || d.getId() == null) throw new IllegalArgumentException("id obligatoire");
+        if (d == null) throw new IllegalArgumentException("DetailJournee null");
+        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire");
+        if (d.getAgendaId() == null) throw new IllegalArgumentException("agendaId obligatoire");
+        if (d.getDateJour() == null) throw new IllegalArgumentException("dateJour obligatoire");
 
         String sql = """
             UPDATE detail_journee
@@ -100,14 +104,13 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, d.getAgendaId());
-            ps.setDate(2, d.getDateJour() != null ? Date.valueOf(d.getDateJour()) : null);
+            ps.setDate(2, Date.valueOf(d.getDateJour()));
 
-            // ✅ noms corrects
             ps.setTime(3, d.getHeureDebutTravail() != null ? Time.valueOf(d.getHeureDebutTravail()) : null);
             ps.setTime(4, d.getHeureFinTravail() != null ? Time.valueOf(d.getHeureFinTravail()) : null);
 
-            // ✅ String
-            ps.setString(5, d.getEtatJour());
+            // ✅ IMPORTANT
+            ps.setString(5, toSqlEtatJour(d.getEtatJour()));
 
             ps.setString(6, d.getCommentaire());
             ps.setString(7, d.getModifiePar());
@@ -144,6 +147,8 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
     @Override
     public List<DetailJournee> findByAgendaId(Long agendaId) {
+        if (agendaId == null) return List.of();
+
         String sql = "SELECT * FROM detail_journee WHERE agenda_id = ?";
         List<DetailJournee> list = new ArrayList<>();
 
@@ -163,6 +168,8 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
 
     @Override
     public DetailJournee findByAgendaIdAndDateJour(Long agendaId, LocalDate dateJour) {
+        if (agendaId == null || dateJour == null) return null;
+
         String sql = "SELECT * FROM detail_journee WHERE agenda_id = ? AND date_jour = ?";
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -178,5 +185,10 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findByAgendaIdAndDateJour()", e);
         }
+    }
+
+    private String toSqlEtatJour(StatutJournee etat) {
+        // DB ENUM: ('OUVERT','FERME','FERIE','VACANCES')
+        return (etat == null) ? "OUVERT" : etat.name();
     }
 }

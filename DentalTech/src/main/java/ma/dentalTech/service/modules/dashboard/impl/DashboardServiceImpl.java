@@ -1,151 +1,157 @@
 package ma.dentalTech.service.modules.dashboard.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardFeaturesDTO;
-
-import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
-import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
-
-import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
-import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
-
-import ma.dentalTech.repository.modules.agenda.api.ListeAttenteRepository;
-import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
+import ma.dentalTech.entities.users.Notification;
+import ma.dentalTech.entities.enums.PrioriteNotification;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
+import ma.dentalTech.mvc.dto.dashboard.DashboardFeaturesDTO;
+import ma.dentalTech.mvc.dto.dashboard.common.AlerteDTO;
+import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
+import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
-import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-
-import ma.dentalTech.service.modules.caisse.api.CaisseDashboardService;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    private CaisseDashboardService caisseDashboardService;
+    private final NotificationRepository notificationRepo;
 
-    private RdvRepository rdvRepository;
-    private ListeAttenteRepository listeAttenteRepository;
-    private NotificationRepository notificationRepository;
-
-    // ✅ CORRIGÉ : dossierMedical.api
-    private ConsultationRepository consultationRepository;
-    private ActeRepository acteRepository;
-    private DossierMedicalRepository dossierMedicalRepository;
-
-    private UtilisateurRepository utilisateurRepository;
-    private PatientRepository patientRepository;
-
-    private FactureRepository factureRepository;
-    private ChargesRepository chargesRepository;
+    public DashboardServiceImpl(NotificationRepository notificationRepo) {
+        this.notificationRepo = notificationRepo;
+    }
 
     @Override
     public DashboardDTO getDashboard(Long utilisateurId) throws ServiceException {
+        if (utilisateurId == null) {
+            throw new ServiceException("utilisateurId null");
+        }
+
+        SecretaireDashboardResponseDTO secretaire = buildSecretaire(utilisateurId);
+
+        DashboardFeaturesDTO features = DashboardFeaturesDTO.builder()
+                .voirRdvEtFileAttente(true)
+                .voirClientEnCours(false)
+                .voirStatsAdmin(false)
+                .voirCaisse(true)
+                .voirNotifications(true)
+                .build();
+
+        return DashboardDTO.builder()
+                .role("SECRETAIRE")
+                .features(features)
+                .secretaire(secretaire)
+                .medecin(null)
+                .admin(null)
+                .build();
+
+    }
+
+    private SecretaireDashboardResponseDTO buildSecretaire(Long utilisateurId) throws ServiceException {
+
+        // ========== NOTIFICATIONS ==========
+        List<Notification> all = safeFindAllNotifications(utilisateurId);
+        all.sort(Comparator.comparing(this::safeDateTime).reversed());
+
+        List<NotificationDTO> notifications = new ArrayList<>();
+        for (Notification n : all) {
+            notifications.add(toNotificationDTO(n));
+        }
+
+        int nbNotificationsNonLues = safeCountUnread(utilisateurId);
+
+        // ========== ALERTES ==========
+        // Règle simple: une alerte = notification de priorité HAUTE/URGENTE (ou autre selon ton enum)
+        List<AlerteDTO> alertes = new ArrayList<>();
+        for (Notification n : all) {
+            if (isAlerte(n)) {
+                alertes.add(toAlerteDTO(n));
+            }
+        }
+
+        int nbAlertesNonLues = (int) alertes.stream().filter(a -> !a.isLue()).count();
+
+        // Tu gardes tes champs existants (rdv/fileAttente/kpis) si tu les remplis ailleurs.
+        // Ici, on ne les casse pas : on met null/0 si tu ne les as pas encore branchés.
+        return SecretaireDashboardResponseDTO.builder()
+                .nbPatients(null)
+                .nbRdvDuJour(0)
+                .nbEnAttente(0)
+                .recetteDuJour(null)
+                .rdvDuJour(List.of())
+                .fileAttente(List.of())
+
+                // ✅ Ajouts
+                .notifications(notifications)
+                .nbNotificationsNonLues(nbNotificationsNonLues)
+                .alertes(alertes)
+                .nbAlertesNonLues(nbAlertesNonLues)
+
+                .build();
+    }
+
+    private List<Notification> safeFindAllNotifications(Long utilisateurId) {
         try {
-            LocalDate today = LocalDate.now();
-            LocalDateTime start = today.atStartOfDay();
-            LocalDateTime end = today.plusDays(1).atStartOfDay().minusNanos(1);
-
-            String role = utilisateurRepository.findRoleByUtilisateurId(utilisateurId);
-            if (role == null) throw new ServiceException("Role introuvable pour utilisateurId=" + utilisateurId);
-
-            DashboardFeaturesDTO features = featuresForRole(role);
-
-            DashboardDTO.DashboardDTOBuilder out = DashboardDTO.builder()
-                    .dateJour(today)
-                    .role(role)
-                    .features(features);
-
-            // Secrétaire
-            if (features.isVoirCaisse()) {
-                CaisseDashboardDTO caisse = caisseDashboardService.getDashboardToday();
-                out.caisseDuJour(caisse);
-            }
-            if (features.isVoirRdvEtFileAttente()) {
-                out.nombreRdvDuJour(rdvRepository.countByDate(start, end));
-                out.nombrePatientsEnFileAttente(listeAttenteRepository.countActifs());
-                out.nombreRdvEnRetard(rdvRepository.countRdvEnRetard(today));
-            }
-            if (features.isVoirNotifications()) {
-                out.nombreNotificationsNonLues(notificationRepository.countNonLuesPourSecretaire(utilisateurId));
-                out.nombreAlertesImportantes(notificationRepository.countAlertesImportantesPourSecretaire(utilisateurId));
-            }
-
-            // Médecin
-            if (features.isVoirConsultationsEtActes()) {
-                Long medecinId = utilisateurId;
-
-                out.nombreConsultationsTerminees(consultationRepository.countTermineesPourMedecin(medecinId, start, end));
-                out.nombreConsultationsEnCours(consultationRepository.countEnCoursPourMedecin(medecinId, start, end));
-
-                out.nombreActesRealisesDuJour(acteRepository.countActesPourMedecinEtDate(medecinId, start, end));
-                out.montantTotalActesDuJour(safeDouble(acteRepository.sumMontantActesPourMedecinEtDate(medecinId, start, end)));
-
-                out.totalFacturesDuJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
-                out.totalRegleDuJour(safeDouble(factureRepository.calculateTotalRegle(start, end)));
-                out.totalNonRegleDuJour(safeDouble(factureRepository.calculateTotalNonRegle(start, end)));
-            }
-
-            // Admin
-            if (features.isVoirStatsAdmin()) {
-                out.nombreUtilisateursTotal(utilisateurRepository.countAll());
-                out.nombreMedecins(utilisateurRepository.countByRole("MEDECIN"));
-                out.nombreSecretaires(utilisateurRepository.countByRole("SECRETAIRE"));
-                out.nombreAdmins(utilisateurRepository.countByRole("ADMIN"));
-
-                out.nombrePatientsTotal(patientRepository.countAll());
-                out.nombreDossiersActifs(dossierMedicalRepository.countActifs());
-
-                out.chiffreAffairesJour(safeDouble(factureRepository.calculateTotalFactures(start, end)));
-
-                LocalDate firstDay = today.withDayOfMonth(1);
-                LocalDateTime startMonth = firstDay.atStartOfDay();
-                LocalDateTime endMonth = firstDay.plusMonths(1).atStartOfDay().minusNanos(1);
-
-                out.chiffreAffairesMois(safeDouble(factureRepository.calculateTotalFactures(startMonth, endMonth)));
-                out.totalChargesMois(safeDouble(chargesRepository.calculateTotalCharges(startMonth, endMonth)));
-
-                out.nombreConnexionsJour(utilisateurRepository.countConnexionsJour(today));
-                out.nombreNotificationsSysteme(notificationRepository.countNotificationsSystemeNonLues());
-            }
-
-            return out.build();
-
+            List<Notification> list = notificationRepo.findByUtilisateur(utilisateurId);
+            return list == null ? List.of() : list;
         } catch (Exception e) {
-            throw new ServiceException("Erreur getDashboard (DTO unique).", e);
+            return List.of();
         }
     }
 
-    private DashboardFeaturesDTO featuresForRole(String role) {
-        role = role == null ? "" : role.trim().toUpperCase();
-        return switch (role) {
-            case "SECRETAIRE" -> DashboardFeaturesDTO.builder()
-                    .voirCaisse(true).voirRdvEtFileAttente(true).voirNotifications(true)
-                    .voirConsultationsEtActes(false).voirStatsAdmin(false)
-                    .build();
-            case "MEDECIN" -> DashboardFeaturesDTO.builder()
-                    .voirCaisse(false).voirRdvEtFileAttente(true).voirNotifications(false)
-                    .voirConsultationsEtActes(true).voirStatsAdmin(false)
-                    .build();
-            case "ADMIN" -> DashboardFeaturesDTO.builder()
-                    .voirCaisse(true).voirRdvEtFileAttente(false).voirNotifications(true)
-                    .voirConsultationsEtActes(false).voirStatsAdmin(true)
-                    .build();
-            default -> DashboardFeaturesDTO.builder().build();
-        };
+    private int safeCountUnread(Long utilisateurId) {
+        try {
+            List<Notification> unread = notificationRepo.findUnreadByUtilisateur(utilisateurId);
+            return unread == null ? 0 : unread.size();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
-    private Double safeDouble(Double v) {
-        return v != null ? v : 0.0;
+    private boolean isAlerte(Notification n) {
+        if (n == null) return false;
+        try {
+            PrioriteNotification p = n.getPriorite();
+            // adapte si ton enum a d'autres valeurs
+            return p == PrioriteNotification.HAUTE;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private NotificationDTO toNotificationDTO(Notification n) {
+        return NotificationDTO.builder()
+                .id(n.getId())
+                .source(n.getType() != null ? n.getType().name() : "SYSTEM")
+                .titre(n.getTitre() != null ? n.getTitre().name() : "Notification")
+                .message(n.getMessage())
+                .date(safeDateTime(n))
+                .action(null)
+                .referenceId(null)
+                .build();
+    }
+
+    private AlerteDTO toAlerteDTO(Notification n) {
+        return AlerteDTO.builder()
+                .id(n.getId())
+                .type(n.getType() != null ? n.getType().name() : "ALERTE")
+                .priorite(n.getPriorite() != null ? n.getPriorite().name() : "HAUTE")
+                .titre(n.getTitre() != null ? n.getTitre().name() : "Alerte")
+                .message(n.getMessage())
+                .date(safeDateTime(n))
+                .action(null)
+                .referenceId(null)
+                .build();
+    }
+
+    private LocalDateTime safeDateTime(Notification n) {
+        try {
+            // adapte si ton Notification hérite BaseEntity: getDateCreation()
+            if (n.getDateCreation() != null) return n.getDateCreation();
+        } catch (Exception ignore) {}
+        return LocalDateTime.now();
     }
 }

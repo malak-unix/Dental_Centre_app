@@ -2,9 +2,10 @@ package ma.dentalTech.repository.common;
 
 import ma.dentalTech.entities.agenda.*;
 import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.cabinet.Revenues;
-import ma.dentalTech.entities.dossierMedical.Facture;
-import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
+import ma.dentalTech.entities.cabinet.SituationFinanciere;
+import ma.dentalTech.entities.dossierMedical.*;
 import ma.dentalTech.entities.enums.*;
 import ma.dentalTech.entities.patient.Patient;
 
@@ -90,9 +91,9 @@ public final class RowMappers {
         return switch (v.toUpperCase()) {
             case "CNSS" -> Assurance.CNSS;
             case "CNOPS" -> Assurance.CNOPS;
-            case "MUTUELLE" -> Assurance.Mutuelle;
-            case "AUTRE" -> Assurance.Autre;
-            case "AUCUNE" -> Assurance.Aucune;
+            case "MUTUELLE" -> Assurance.MUTUELLE;
+            case "AUTRE" -> Assurance.AUTRE;
+            case "AUCUNE" -> Assurance.AUCUNE;
             default -> null;
         };
     }
@@ -109,9 +110,6 @@ public final class RowMappers {
         catch (Exception e) { return null; }
     }
 
-    // ==================================================
-    // AGENDA_MENSUEL
-    // ==================================================
     public static AgendaMensuel mapAgendaMensuel(ResultSet rs) throws SQLException {
         return AgendaMensuel.builder()
                 .id(getLong(rs, "id"))
@@ -119,15 +117,12 @@ public final class RowMappers {
                 .mois(Mois.valueOf(rs.getString("mois")))
                 .annee(getInt(rs, "annee"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // DETAIL_JOURNEE
-    // ==================================================
     public static DetailJournee mapDetailJournee(ResultSet rs) throws SQLException {
         return DetailJournee.builder()
                 .id(getLong(rs, "id"))
@@ -135,33 +130,31 @@ public final class RowMappers {
                 .dateJour(getLd(rs, "date_jour"))
                 .heureDebutTravail(getLt(rs, "heure_debut_travail"))
                 .heureFinTravail(getLt(rs, "heure_fin_travail"))
-                .etatJour(rs.getString("etat_jour"))
+                .etatJour(toStatutJournee(rs.getString("etat_jour")))
                 .commentaire(rs.getString("commentaire"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // LISTE_ATTENTE
-    // ==================================================
     public static ListeAttente mapListeAttente(ResultSet rs) throws SQLException {
         return ListeAttente.builder()
                 .id(getLong(rs, "id"))
                 .nom(rs.getString("nom"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // RDV
-    // ==================================================
     public static RDV mapRdv(ResultSet rs) throws SQLException {
+        String st = rs.getString("statut");
+        EtatRendezVous statut = null;
+        try { statut = (st != null) ? EtatRendezVous.valueOf(st) : null; } catch (Exception ignored) {}
+
         return RDV.builder()
                 .id(getLong(rs, "id"))
                 .patientId(getLong(rs, "patient_id"))
@@ -170,18 +163,17 @@ public final class RowMappers {
                 .dateRdv(getLd(rs, "date_rdv"))
                 .heure(getLt(rs, "heure"))
                 .motif(rs.getString("motif"))
-                .statut(rs.getString("statut"))
+                .statut(statut)
                 .noteMedecin(rs.getString("note_medecin"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
 
-    // ==================================================
-    // PLAGE_HORAIRE
-    // ==================================================
+
+
     public static PlageHoraire mapPlageHoraire(ResultSet rs) throws SQLException {
         return PlageHoraire.builder()
                 .id(getLong(rs, "id"))
@@ -190,11 +182,12 @@ public final class RowMappers {
                 .heureFin(getLt(rs, "heure_fin"))
                 .disponible(getBoolean(rs, "disponible"))
                 .dateCreation(getLdt(rs, "date_creation"))
-                .dateModification(getLdt(rs, "date_modification"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
 
     // ==================================================
     // PATIENT
@@ -207,8 +200,6 @@ public final class RowMappers {
                 .adresse(rs.getString("adresse"))
                 .telephone(rs.getString("telephone"))
                 .dateNaissance(getLd(rs, "date_naissance"))
-                .numAffiliation(rs.getString("num_affiliation"))
-                .etatCivil(toEtatCivil(rs.getString("etat_civil")))
                 .sexe(toSexe(rs.getString("sexe")))
                 .assurance(toAssurance(rs.getString("assurance")))
                 .dateCreation(getLdt(rs, "date_creation"))
@@ -291,4 +282,185 @@ public final class RowMappers {
                 .modifiePar(rs.getString("modifie_par"))
                 .build();
     }
+
+    // ==================================================
+// DOSSIER_MEDICAL
+// ==================================================
+    public static ma.dentalTech.entities.dossierMedical.DossierMedical mapDossierMedical(ResultSet rs) throws SQLException {
+        return DossierMedical.builder()
+                .id(getLong(rs, "id"))
+                .patientId(getLong(rs, "patient_id"))
+                .medecinId(getLong(rs, "medecin_id"))
+                .notes(rs.getString("notes"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+    // ==================================================
+// ACTE
+// ==================================================
+    public static ma.dentalTech.entities.dossierMedical.Acte mapActe(ResultSet rs) throws SQLException {
+        return Acte.builder()
+                .id(getLong(rs, "id"))
+                .libelle(rs.getString("libelle"))
+                .categorie(rs.getString("categorie"))
+                .prixBase(getDouble(rs, "prix_base"))
+                .description(rs.getString("description"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+    // ==================================================
+// CONSULTATION
+// ==================================================
+    private static StatutConsultation toStatutConsultation(String v) {
+        if (v == null) return null;
+        try { return ma.dentalTech.entities.enums.StatutConsultation.valueOf(v); }
+        catch (Exception e) { return null; }
+    }
+
+    public static Consultation mapConsultation(ResultSet rs) throws SQLException {
+        // colonne SQL = date_consultation (DATETIME)
+        LocalDateTime ldt = getLdt(rs, "date_consultation");
+
+        return Consultation.builder()
+                .id(getLong(rs, "id"))
+                .dossierId(getLong(rs, "dossier_id"))
+                .date(ldt == null ? null : ldt.toLocalDate()) // ton entity = LocalDate
+                .status(toStatutConsultation(rs.getString("statut")))
+                .observationMedecin(rs.getString("observation_medecin"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+    // ==================================================
+// INTERVENTION_MEDECIN
+// ==================================================
+    public static InterventionMedecin mapInterventionMedecin(ResultSet rs) throws SQLException {
+        return InterventionMedecin.builder()
+                .id(getLong(rs, "id"))
+                .consultationId(getLong(rs, "consultation_id"))
+                .acteId(getLong(rs, "acte_id"))
+                .prixDePatient(getDouble(rs, "prix_patient"))
+                .numDent(getInt(rs, "num_dent"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+    // ==================================================
+// ORDONNANCE
+// ==================================================
+    public static Ordonnance mapOrdonnance(ResultSet rs) throws SQLException {
+        return Ordonnance.builder()
+                .id(getLong(rs, "id"))
+                .dossierId(getLong(rs, "dossier_id"))
+                .consultationId(getLong(rs, "consultation_id"))
+                .date(getLd(rs, "date_ordo"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+    // ==================================================
+// MEDICAMENT
+// ==================================================
+    private static FormeMedicament toFormeMedicament(String v) {
+        if (v == null) return null;
+        try { return FormeMedicament.valueOf(v); }
+        catch (Exception e) { return null; }
+    }
+
+    public static Medicament mapMedicament(ResultSet rs) throws SQLException {
+        return Medicament.builder()
+                .id(getLong(rs, "id"))
+                .nom(rs.getString("nom"))
+                .laboratoire(rs.getString("laboratoire"))
+                .type(rs.getString("type_medicament"))
+                .forme(toFormeMedicament(rs.getString("forme")))
+                .remboursable(rs.getBoolean("remboursable"))
+                .prixUnitaire(getDouble(rs, "prix_unitaire"))
+                .description(rs.getString("description"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+
+    // ==================================================
+// PRESCRIPTION
+// ==================================================
+    public static Prescription mapPrescription(ResultSet rs) throws SQLException {
+        return Prescription.builder()
+                .id(getLong(rs, "id"))
+                .ordonnanceId(getLong(rs, "ordonnance_id"))
+                .medicamentId(getLong(rs, "medicament_id"))
+                .quantite(rs.getInt("quantite"))
+                .frequence(rs.getString("frequence"))
+                .dureeEnJours(rs.getInt("duree_en_jours"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+    public static Certificat mapCertificat(ResultSet rs) throws SQLException {
+        return Certificat.builder()
+                .id(getLong(rs, "id"))
+                .dossierId(getLong(rs, "dossier_id"))
+                .dateDebut(getLd(rs, "date_debut"))
+                .dateFin(getLd(rs, "date_fin"))
+                .duree(rs.getInt("duree"))
+                .noteMedecin(rs.getString("note_medecin"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+    // ==================================================
+// DOCUMENT_MEDICAL
+// ==================================================
+    private static TypeDocument toTypeDocument(String v) {
+        if (v == null) return null;
+        try { return TypeDocument.valueOf(v); }
+        catch (Exception e) { return TypeDocument.AUTRE; }
+    }
+
+    public static DocumentMedical mapDocumentMedical(ResultSet rs) throws SQLException {
+        return DocumentMedical.builder()
+                .id(getLong(rs, "id"))
+                .dossierId(getLong(rs, "dossier_id"))
+                .consultationId(getLong(rs, "consultation_id"))
+                .typeDocument(toTypeDocument(rs.getString("type_document")))
+                .titre(rs.getString("titre"))
+                .nomFichier(rs.getString("nom_fichier"))
+                .cheminFichier(rs.getString("chemin_fichier"))
+                .tailleOctets(getLong(rs, "taille_octets"))
+                .dateDocument(getLdt(rs, "date_document"))
+                .dateCreation(getLdt(rs, "date_creation"))
+                .dateDerniereModification(getLdt(rs, "date_modification"))
+                .creePar(rs.getString("cree_par"))
+                .modifiePar(rs.getString("modifie_par"))
+                .build();
+    }
+
+
+
 }

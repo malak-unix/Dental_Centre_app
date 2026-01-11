@@ -1,13 +1,16 @@
 package ma.dentalTech;
 
+import ma.dentalTech.mvc.ui.MainFrame;
+import ma.dentalTech.mvc.ui.common.UiTheme;
 
-import ma.dentalTech.configuration.ApplicationContext;
-import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import javax.swing.*;
 
-public class MainApp
-{
-    public static void main( String[] args )
-    {
-        ApplicationContext.getBean(PatientController.class).showRecentPatients();
+public class MainApp {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            UiTheme.install();
+            MainFrame f = new MainFrame();
+            f.setVisible(true);
+        });
     }
 }

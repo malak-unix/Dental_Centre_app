@@ -1,223 +1,125 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
-import ma.dentalTech.mvc.dto.CaisseDashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardDTO;
-import ma.dentalTech.mvc.dto.DashboardFeaturesDTO;
-import ma.dentalTech.mvc.ui.common.*;
+import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.NavButton;
+import ma.dentalTech.mvc.ui.modules.dashboard.admin.AdminDashboardPanel;
+import ma.dentalTech.mvc.ui.modules.dashboard.medecin.MedecinDashboardPanel;
+import ma.dentalTech.mvc.ui.modules.dashboard.secretaire.SecretaireDashboardPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DashboardView extends JPanel {
 
-    private static final DecimalFormat DF = new DecimalFormat("#0.00");
+    private final DashboardPanel shell;
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cards = new JPanel(cardLayout);
 
-    public DashboardView(DashboardDTO dto) {
-        setLayout(new BorderLayout(16, 16));
-        setBackground(DentalTheme.BG);
-        setBorder(new EmptyBorder(16, 16, 16, 16));
+    private final List<NavButton> navButtons = new ArrayList<>();
 
-        add(buildSidebar(), BorderLayout.WEST);
-        add(buildMain(dto), BorderLayout.CENTER);
+    public DashboardView() {
+        setLayout(new BorderLayout());
+        setOpaque(false);
+
+        shell = new DashboardPanel();
+        add(shell, BorderLayout.CENTER);
+
+        // Cards (écrans rôle)
+        cards.setOpaque(false);
+        cards.add(new SecretaireDashboardPanel(), "SECRETAIRE");
+        cards.add(new AdminDashboardPanel(), "ADMIN");
+        cards.add(new MedecinDashboardPanel(), "MEDECIN");
+
+        shell.setContent(cards);
+
+        buildHeader();
+        buildSidebarForRole("SECRETAIRE");
+        cardLayout.show(cards, "SECRETAIRE");
     }
 
-    private JComponent buildSidebar() {
-        JPanel side = new JPanel();
-        side.setPreferredSize(new Dimension(220, 0));
-        side.setBackground(DentalTheme.BEIGE); // beige maquette
-        side.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
-                new EmptyBorder(12, 12, 12, 12)
-        ));
-        side.setLayout(new BoxLayout(side, BoxLayout.Y_AXIS));
+    private void buildHeader() {
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        left.setOpaque(false);
 
         JLabel logo = new JLabel("DENTAL CENTER");
-        logo.setFont(DentalTheme.titleFont(16));
-        logo.setForeground(DentalTheme.PRIMARY_DARK);
+        logo.setFont(DentalTheme.H2);
+        logo.setForeground(DentalTheme.TEXT);
+        left.add(logo);
 
-        side.add(logo);
-        side.add(Box.createVerticalStrut(14));
+        JTextField search = new JTextField("Rechercher ...");
+        search.setPreferredSize(new Dimension(420, 36));
+        left.add(search);
 
-        side.add(new NavButton("Dashboard", true));
-        side.add(Box.createVerticalStrut(8));
-        side.add(new NavButton("Les patients", false));
-        side.add(Box.createVerticalStrut(8));
-        side.add(new NavButton("Rendez-vous", false));
-        side.add(Box.createVerticalStrut(8));
-        side.add(new NavButton("La caisse", false));
-        side.add(Box.createVerticalStrut(8));
-        side.add(new NavButton("Stock", false));
-        side.add(Box.createVerticalStrut(8));
-        side.add(new NavButton("Agenda", false));
+        shell.header().add(left, BorderLayout.WEST);
 
-        side.add(Box.createVerticalGlue());
-        return side;
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.setOpaque(false);
+
+        JComboBox<String> roleSwitch = new JComboBox<>(new String[]{"SECRETAIRE", "ADMIN", "MEDECIN"});
+        roleSwitch.setPreferredSize(new Dimension(140, 34));
+        roleSwitch.addActionListener(e -> {
+            String role = (String) roleSwitch.getSelectedItem();
+            buildSidebarForRole(role);
+            cardLayout.show(cards, role);
+        });
+
+        JLabel user = new JLabel("Utilisateur");
+        user.setFont(DentalTheme.BASE_BOLD);
+
+        right.add(roleSwitch);
+        right.add(user);
+
+        shell.header().add(right, BorderLayout.EAST);
     }
 
-    private JComponent buildMain(DashboardDTO dto) {
-        JPanel main = new JPanel(new BorderLayout(16, 16));
-        main.setOpaque(false);
+    private void buildSidebarForRole(String role) {
+        JPanel sb = shell.sidebar();
+        sb.removeAll();
+        navButtons.clear();
 
-        main.add(buildTopbar(dto), BorderLayout.NORTH);
+        // Espace haut (comme maquette)
+        sb.add(Box.createVerticalStrut(10));
 
-        JPanel grid = new JPanel(new GridLayout(0, 3, 16, 16));
-        grid.setOpaque(false);
+        if ("SECRETAIRE".equals(role)) {
+            addNav(sb, "Dashboard", () -> cardLayout.show(cards, "SECRETAIRE"));
+            addNav(sb, "Les patients", () -> {});
+            addNav(sb, "Rendez-vous", () -> {});
+            addNav(sb, "La caisse", () -> {});
+        } else if ("ADMIN".equals(role)) {
+            addNav(sb, "Dashboard", () -> cardLayout.show(cards, "ADMIN"));
+            addNav(sb, "Utilisateurs", () -> {});
+            addNav(sb, "Référentiels", () -> {});
+            addNav(sb, "Sauvegardes", () -> {});
+        } else {
+            addNav(sb, "Dashboard", () -> cardLayout.show(cards, "MEDECIN"));
+            addNav(sb, "Mes patients", () -> {});
+            addNav(sb, "Mes consultations", () -> {});
+            addNav(sb, "Les planning", () -> {});
+            addNav(sb, "Ordonnances", () -> {});
+        }
 
-        DashboardFeaturesDTO f = dto.getFeatures();
+        // sélection visuelle du 1er
+        if (!navButtons.isEmpty()) navButtons.get(0).setSelectedStyle(true);
 
-        if (f != null && f.isVoirRdvEtFileAttente()) grid.add(cardRdv(dto));
-        if (f != null && f.isVoirRdvEtFileAttente()) grid.add(cardFile(dto));
-        if (f != null && f.isVoirCaisse()) grid.add(cardCaisse(dto.getCaisseDuJour()));
-
-        if (f != null && f.isVoirNotifications()) grid.add(cardNotif(dto));
-        if (f != null && f.isVoirConsultationsEtActes()) grid.add(cardMedecin(dto));
-        if (f != null && f.isVoirStatsAdmin()) grid.add(cardAdmin(dto));
-
-        main.add(grid, BorderLayout.CENTER);
-
-        return main;
+        sb.add(Box.createVerticalGlue());
+        sb.revalidate();
+        sb.repaint();
     }
 
-    private JComponent buildTopbar(DashboardDTO dto) {
-        JPanel top = new JPanel(new BorderLayout(12, 12));
-        top.setOpaque(false);
+    private void addNav(JPanel sb, String label, Runnable action) {
+        NavButton b = new NavButton(label);
+        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
-        JLabel title = new JLabel("Dashboard " + dto.getRole());
-        title.setFont(DentalTheme.titleFont(20));
-        title.setForeground(DentalTheme.PRIMARY_DARK);
+        b.addActionListener(e -> {
+            navButtons.forEach(x -> x.setSelectedStyle(false));
+            b.setSelectedStyle(true);
+            action.run();
+        });
 
-        JTextField search = new JTextField("Rechercher un client ...");
-        search.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
-                new EmptyBorder(8, 12, 8, 12)
-        ));
-
-        JButton nouveau = new DentalButton("+ Nouveau");
-
-        top.add(title, BorderLayout.WEST);
-        top.add(search, BorderLayout.CENTER);
-        top.add(nouveau, BorderLayout.EAST);
-        return top;
+        navButtons.add(b);
+        sb.add(b);
+        sb.add(Box.createVerticalStrut(12));
     }
-
-    private JComponent cardRdv(DashboardDTO d) {
-        CardPanel c = new CardPanel("LISTE DE RENDEZ-VOUS");
-        JPanel body = new JPanel(new GridLayout(1, 3, 10, 10));
-        body.setOpaque(false);
-
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardFile(DashboardDTO d) {
-        CardPanel c = new CardPanel("FILE D’ATTENTE");
-        JPanel body = new JPanel(new GridLayout(1, 3, 10, 10));
-        body.setOpaque(false);
-
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-        body.add(emptyMiniCard());
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardCaisse(CaisseDashboardDTO caisse) {
-        CardPanel c = new CardPanel("CAISSE (AUJOURD'HUI)");
-        JPanel body = new JPanel();
-        body.setOpaque(false);
-        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-
-        double revenus = caisse == null ? 0 : n(caisse.getTotalRevenus());
-        double charges = caisse == null ? 0 : n(caisse.getTotalCharges());
-        double solde = revenus - charges; // ✅ pas besoin de getSolde()
-
-        body.add(line("Total factures", caisse == null ? "0" : DF.format(n(caisse.getTotalFactures()))));
-        body.add(line("Total réglé", caisse == null ? "0" : DF.format(n(caisse.getTotalRegle()))));
-        body.add(line("Total non réglé", caisse == null ? "0" : DF.format(n(caisse.getTotalNonRegle()))));
-        body.add(Box.createVerticalStrut(8));
-        body.add(line("Revenus", DF.format(revenus)));
-        body.add(line("Charges", DF.format(charges)));
-        body.add(line("Solde", DF.format(solde)));
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardNotif(DashboardDTO d) {
-        CardPanel c = new CardPanel("ALERTES / NOTIFICATIONS");
-        JPanel body = new JPanel();
-        body.setOpaque(false);
-        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-
-        body.add(line("Non lues", String.valueOf(i(d.getNombreNotificationsNonLues()))));
-        body.add(line("Alertes importantes", String.valueOf(i(d.getNombreAlertesImportantes()))));
-        body.add(line("Système", String.valueOf(i(d.getNombreNotificationsSysteme()))));
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardMedecin(DashboardDTO d) {
-        CardPanel c = new CardPanel("MEDECIN");
-        JPanel body = new JPanel();
-        body.setOpaque(false);
-        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-
-        body.add(line("Consultations terminées", String.valueOf(i(d.getNombreConsultationsTerminees()))));
-        body.add(line("Consultations en cours", String.valueOf(i(d.getNombreConsultationsEnCours()))));
-        body.add(line("Actes du jour", String.valueOf(i(d.getNombreActesRealisesDuJour()))));
-        body.add(line("Montant actes", DF.format(n(d.getMontantTotalActesDuJour()))));
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JComponent cardAdmin(DashboardDTO d) {
-        CardPanel c = new CardPanel("ADMIN - STATISTIQUES");
-        JPanel body = new JPanel();
-        body.setOpaque(false);
-        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-
-        body.add(line("Utilisateurs", String.valueOf(i(d.getNombreUtilisateursTotal()))));
-        body.add(line("Patients", String.valueOf(i(d.getNombrePatientsTotal()))));
-        body.add(line("Dossiers actifs", String.valueOf(i(d.getNombreDossiersActifs()))));
-
-        c.add(body, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JPanel emptyMiniCard() {
-        JPanel p = new JPanel();
-        p.setBackground(DentalTheme.BG);
-        p.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
-        p.setPreferredSize(new Dimension(120, 70));
-        return p;
-    }
-
-    private JPanel line(String label, String value) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-
-        JLabel l = new JLabel(label);
-        l.setFont(DentalTheme.textFont(12));
-        l.setForeground(DentalTheme.MUTED);
-
-        JLabel v = new JLabel(value);
-        v.setFont(DentalTheme.textBold(12));
-        v.setForeground(DentalTheme.PRIMARY_DARK);
-
-        row.add(l, BorderLayout.WEST);
-        row.add(v, BorderLayout.EAST);
-        return row;
-    }
-
-    private int i(Integer v){ return v == null ? 0 : v; }
-    private double n(Double v){ return v == null ? 0.0 : v; }
 }

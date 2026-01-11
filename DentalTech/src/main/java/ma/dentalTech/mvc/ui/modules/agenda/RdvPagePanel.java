@@ -58,9 +58,14 @@ public class RdvPagePanel extends JPanel {
     private void refresh(List<RdvDto> list) {
         model.setRowCount(0);
         for (RdvDto r : list) {
+
+            String patientAff = (r.getPatientNom() != null && !r.getPatientNom().isBlank())
+                    ? r.getPatientNom()
+                    : ("#" + r.getPatientId());
+
             model.addRow(new Object[]{
                     r.getId(),
-                    r.getPatientId(),
+                    patientAff,
                     r.getDateRdv(),
                     r.getHeure(),
                     r.getMotif(),
@@ -68,6 +73,7 @@ public class RdvPagePanel extends JPanel {
             });
         }
     }
+
 
     private interface SupplierX<T> { T get() throws Exception; }
 
@@ -77,7 +83,8 @@ public class RdvPagePanel extends JPanel {
             return s.get();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
-            return (T) java.util.List.of();
+            return (T) java.util.Collections.emptyList();
+
         }
     }
 }

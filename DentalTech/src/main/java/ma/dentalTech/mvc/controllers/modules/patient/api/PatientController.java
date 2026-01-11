@@ -1,18 +1,26 @@
 package ma.dentalTech.mvc.controllers.modules.patient.api;
 
-import ma.dentalTech.entities.patient.Patient;
+import ma.dentalTech.mvc.dto.patient.PatientFormDto;
+import ma.dentalTech.mvc.dto.patient.PatientListDto;
 
 import java.util.List;
 
 public interface PatientController {
-    List<Patient> findAll();
-    Patient findById(Long id);
-    void create(Patient p);
-    void update(Patient p);
-    void deleteById(Long id);
 
-    List<Patient> searchByNom(String nomPart);
-    Patient findByTelephone(String tel);
-    void showRecentPatients();
+    List<PatientListDto> lister();
 
+    PatientFormDto consulter(Long id);
+
+    PatientFormDto creer(PatientFormDto dto);
+
+    PatientFormDto modifier(Long id, PatientFormDto dto);
+
+    void supprimer(Long id);
+
+    List<PatientListDto> rechercherParNom(String nom);
+
+    PatientFormDto rechercherParTelephone(String tel);
+
+    // ✅ utilisé dans ton UI
+    List<PatientListDto> showRecentPatients();
 }
