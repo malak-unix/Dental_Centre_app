@@ -2,142 +2,222 @@ package ma.dentalTech.mvc.ui.modules.agenda;
 
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto;
-import ma.dentalTech.mvc.dto.agenda.DetailJourneeDto;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-
 import ma.dentalTech.service.modules.agenda.api.AgendaAppService;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Page "Semaine" (maquette).
- * Elle appelle AgendaAppService.consulterAgendaSemaine(...)
- * et affiche : jours de la semaine + rdvs de la semaine.
- */
 public class AgendaSemainePagePanel extends JPanel {
 
     private final AgendaAppService agendaApp;
 
-    private final DefaultTableModel joursModel;
-    private final DefaultTableModel rdvModel;
+    private final JTextField medecinIdField = new JTextField();
+    private final JTextField dateField = new JTextField();
+    private final JLabel weekLabel = new JLabel("Semaine du --/--/---- au --/--/----");
 
-    private final JTextField medecinIdField;
-    private final JTextField dateField;
+
+    private final Map<DayOfWeek, JPanel> dayColumns = new EnumMap<>(DayOfWeek.class);
+
+    private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public AgendaSemainePagePanel() {
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
 
-        // ✅ On récupère le bean "agendaAppService" (déjà dans ApplicationContext)
         agendaApp = ApplicationContext.getBean(AgendaAppService.class);
 
-        CardPanel card = new CardPanel("Agenda - Semaine");
+        CardPanel card = new CardPanel((String) null);
+        card.setLayout(new BorderLayout(12, 12));
         add(card, BorderLayout.CENTER);
 
-        // ===== Top filters
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        card.add(buildTopBar(), BorderLayout.NORTH);
+        card.add(buildWeekGrid(), BorderLayout.CENTER);
+
+        medecinIdField.setText("1");
+        dateField.setText(LocalDate.now().toString());
+
+        loadSemaine();
+    }
+
+    private JComponent buildTopBar() {
+        JPanel top = new JPanel(new GridBagLayout());
         top.setOpaque(false);
 
-        top.add(new JLabel("Médecin ID:"));
-        medecinIdField = new JTextField("1", 6);
-        top.add(medecinIdField);
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.insets = new Insets(8, 10, 8, 10);
+        c.anchor = GridBagConstraints.WEST;
 
-        top.add(new JLabel("Date (yyyy-mm-dd):"));
-        dateField = new JTextField(LocalDate.now().toString(), 10);
-        top.add(dateField);
+        // ===== 1) Gros titre AGENDA (à gauche)
+        JLabel agendaTitle = new JLabel("AGENDA");
+        agendaTitle.setFont(new Font("Serif", Font.BOLD, 40)); // ajuste si tu veux
+        agendaTitle.setForeground(DentalTheme.TEXT2);
+
+        c.gridx = 0;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        top.add(agendaTitle, c);
+
+        // ===== 2) Semaine du ... (au milieu)
+        weekLabel.setFont(DentalTheme.textFont(14));
+        weekLabel.setForeground(DentalTheme.TEXT2);
+
+        c.gridx = 1;
+        c.weightx = 1;                 // prend l'espace restant
+        c.fill = GridBagConstraints.HORIZONTAL;
+        top.add(weekLabel, c);
+
+        // ===== 3) Champs + bouton (à droite)
+        JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        filters.setOpaque(false);
+
+        JLabel medLbl = new JLabel("Médecin ID:");
+        medLbl.setFont(DentalTheme.textBold(12));
+        filters.add(medLbl);
+
+        medecinIdField.setColumns(8); // PLUS LARGE (important)
+        medecinIdField.setPreferredSize(new Dimension(110, 30));
+        filters.add(medecinIdField);
+
+        JLabel dateLbl = new JLabel("Date:");
+        dateLbl.setFont(DentalTheme.textBold(12));
+        filters.add(dateLbl);
+
+        dateField.setColumns(12);     // PLUS LARGE (important)
+        dateField.setPreferredSize(new Dimension(150, 30));
+        filters.add(dateField);
 
         DentalButton load = new DentalButton("Charger");
-        top.add(load);
-
-        card.add(top, BorderLayout.NORTH);
-
-        // ===== Center split: jours / rdvs
-        JPanel center = new JPanel(new GridLayout(1, 2, 12, 12));
-        center.setOpaque(false);
-
-        CardPanel joursCard = new CardPanel("Jours (semaine)");
-        CardPanel rdvCard = new CardPanel("RDV (semaine)");
-
-        center.add(joursCard);
-        center.add(rdvCard);
-
-        // Table jours
-        joursModel = new DefaultTableModel(new Object[]{"Date", "Début", "Fin", "Etat", "Commentaire"}, 0);
-        JTable joursTable = new JTable(joursModel);
-        joursTable.setRowHeight(26);
-        joursTable.setFont(DentalTheme.textFont(12));
-        joursTable.getTableHeader().setFont(DentalTheme.textBold(12));
-        joursCard.add(new JScrollPane(joursTable), BorderLayout.CENTER);
-
-        // Table rdvs
-        rdvModel = new DefaultTableModel(new Object[]{"ID", "Patient", "Date", "Heure", "Motif", "Type", "Statut"}, 0);
-        JTable rdvTable = new JTable(rdvModel);
-        rdvTable.setRowHeight(26);
-        rdvTable.setFont(DentalTheme.textFont(12));
-        rdvTable.getTableHeader().setFont(DentalTheme.textBold(12));
-        rdvCard.add(new JScrollPane(rdvTable), BorderLayout.CENTER);
-
-        card.add(center, BorderLayout.CENTER);
-
-        // Events
+        load.setPreferredSize(new Dimension(150, 38));
         load.addActionListener(e -> loadSemaine());
+        filters.add(load);
 
-        // initial load
-        loadSemaine();
+        c.gridx = 2;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
+        top.add(filters, c);
+
+        return top;
+    }
+
+    private JComponent buildWeekGrid() {
+        JPanel grid = new JPanel(new GridLayout(1, 5, 14, 0));
+        grid.setOpaque(false);
+        grid.setBorder(new EmptyBorder(10, 14, 14, 14));
+
+        grid.add(makeDayColumn(DayOfWeek.MONDAY, "LUNDI"));
+        grid.add(makeDayColumn(DayOfWeek.TUESDAY, "MARDI"));
+        grid.add(makeDayColumn(DayOfWeek.WEDNESDAY, "MERCREDI"));
+        grid.add(makeDayColumn(DayOfWeek.THURSDAY, "JEUDI"));
+        grid.add(makeDayColumn(DayOfWeek.FRIDAY, "VENDREDI"));
+
+        return grid;
+    }
+
+    private JComponent makeDayColumn(DayOfWeek day, String label) {
+        JPanel colWrap = new JPanel(new BorderLayout(8, 8));
+        colWrap.setOpaque(false);
+
+        // header like maquette
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
+        JLabel dayLabel = new JLabel(label, SwingConstants.CENTER);
+        dayLabel.setOpaque(true);
+        dayLabel.setBackground(new Color(0xF7, 0xF2, 0xEC));
+        dayLabel.setForeground(DentalTheme.TEXT2);
+        dayLabel.setFont(DentalTheme.textBold(12));
+        dayLabel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        ));
+
+        header.add(dayLabel, BorderLayout.CENTER);
+
+        // body cards
+        JPanel body = new JPanel();
+        body.setOpaque(true);
+        body.setBackground(new Color(0xF7, 0xF2, 0xEC));
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        JScrollPane sp = new JScrollPane(body);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.getViewport().setOpaque(true);
+        sp.getViewport().setBackground(new Color(0xF7, 0xF2, 0xEC));
+        sp.setOpaque(false);
+
+        dayColumns.put(day, body);
+
+        colWrap.add(header, BorderLayout.NORTH);
+        colWrap.add(sp, BorderLayout.CENTER);
+        return colWrap;
     }
 
     private void loadSemaine() {
         try {
-            if (agendaApp == null) throw new IllegalStateException("Bean AgendaAppService introuvable (agendaAppService)");
+            if (agendaApp == null) throw new IllegalStateException("Bean AgendaAppService introuvable");
 
             Long medecinId = Long.valueOf(medecinIdField.getText().trim());
             LocalDate date = LocalDate.parse(dateField.getText().trim());
 
+            LocalDate monday = date.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            LocalDate friday = monday.plusDays(4);
+
+            weekLabel.setText("Semaine du " + DF.format(monday) + " au " + DF.format(friday));
+
+            // clear columns
+            for (JPanel p : dayColumns.values()) {
+                p.removeAll();
+            }
+
             AgendaMensuelDto dto = agendaApp.consulterAgendaSemaine(medecinId, date);
 
-            // ✅ remplir jours
-            joursModel.setRowCount(0);
-            List<DetailJourneeDto> jours = dto.getJoursSemaine();
-            if (jours != null) {
-                for (DetailJourneeDto d : jours) {
-                    joursModel.addRow(new Object[]{
-                            d.getDateJour(),
-                            d.getHeureDebutTravail(),
-                            d.getHeureFinTravail(),
-                            d.getEtatJour(),
-                            d.getCommentaire()
-                    });
-                }
+            List<RdvDto> rdvs = dto != null ? dto.getRdvsSemaine() : null;
+            if (rdvs == null) rdvs = new ArrayList<>();
+
+            for (RdvDto r : rdvs) {
+                if (r.getDateRdv() == null) continue;
+
+                DayOfWeek dow = r.getDateRdv().getDayOfWeek();
+                JPanel target = dayColumns.get(dow);
+                if (target == null) continue; // ignore weekend
+
+                String patient = (r.getPatientNom() != null && !r.getPatientNom().isBlank())
+                        ? r.getPatientNom()
+                        : ("Patient #" + r.getPatientId());
+
+                String time = (r.getHeure() != null ? r.getHeure().toString() : "--:--");
+                String status = (r.getStatut() != null ? r.getStatut().toString() : "");
+
+                RdvCardPanel card = new RdvCardPanel(patient, time, status);
+                card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                target.add(card);
+                target.add(Box.createVerticalStrut(10));
             }
 
-            // ✅ remplir rdvs
-            rdvModel.setRowCount(0);
-            List<RdvDto> rdvs = dto.getRdvsSemaine();
-            if (rdvs != null) {
-                for (RdvDto r : rdvs) {
-                    String patientAff = (r.getPatientNom() != null && !r.getPatientNom().isBlank())
-                            ? r.getPatientNom()
-                            : ("#" + r.getPatientId());
-
-                    rdvModel.addRow(new Object[]{
-                            r.getId(),
-                            patientAff,
-                            r.getDateRdv(),
-                            r.getHeure(),
-                            r.getMotif(),
-                            r.getTypeRdv(),
-                            r.getStatut()
-                    });
-                }
+            // refresh
+            for (JPanel p : dayColumns.values()) {
+                p.revalidate();
+                p.repaint();
             }
-
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur Agenda Semaine", JOptionPane.ERROR_MESSAGE);
