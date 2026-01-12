@@ -1,8 +1,16 @@
 package ma.dentalTech.service.modules.dossierMedical.impl;
 
+import ma.dentalTech.common.exceptions.NotFoundException;
 import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.cabinet.SituationFinanciere;
 import ma.dentalTech.entities.dossierMedical.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.BooleanResponseDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.IdRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.LongResponseDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.PageResponseDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.dossier.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.readonly.FactureDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.readonly.SituationFinanciereDTO;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.SituationFinanciereRepository;
 import ma.dentalTech.repository.modules.caisse.impl.FactureRepositoryImpl;
@@ -12,13 +20,10 @@ import ma.dentalTech.repository.modules.dossierMedical.api.*;
 import ma.dentalTech.repository.modules.dossierMedical.impl.*;
 
 import ma.dentalTech.service.modules.dossierMedical.api.DossierMedicalService;
-import ma.dentalTech.service.modules.dossierMedical.dto.certificat.CertificatDTO;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.consultation.ConsultationDTO;
-import ma.dentalTech.service.modules.dossierMedical.dto.document.DocumentMedicalDTO;
-import ma.dentalTech.service.modules.dossierMedical.dto.dossier.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.ordonnance.OrdonnanceDTO;
-import ma.dentalTech.service.modules.dossierMedical.dto.readonly.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.DocumentMedicalDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
 import ma.dentalTech.service.modules.dossierMedical.exception.*;
 
 import java.util.List;

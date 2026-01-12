@@ -1,9 +1,9 @@
 package ma.dentalTech.service.modules.dossierMedical.api;
 
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.ordonnance.*;
-
-import java.time.LocalDate;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceBetweenDatesRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.SaveOrdonnanceRequestDTO;
 
 public interface OrdonnanceService {
     OrdonnanceDTO getById(IdRequestDTO in);
