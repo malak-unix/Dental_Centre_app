@@ -2,24 +2,35 @@ package ma.dentalTech.service.modules.profileService.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import java.util.*;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
-// Tes utilitaires
 import ma.dentalTech.common.utilitaire.RepoFactory;
 import ma.dentalTech.common.utilitaire.Transaction;
 
-// Tes entités et enums
 import ma.dentalTech.entities.enums.LibelleRole;
-import ma.dentalTech.entities.users.*;
+import ma.dentalTech.entities.users.Admin;
+import ma.dentalTech.entities.users.Medecin;
+import ma.dentalTech.entities.users.Role;
+import ma.dentalTech.entities.users.Secretaire;
+import ma.dentalTech.entities.users.Staff;
+import ma.dentalTech.entities.users.Utilisateur;
 
-// Tes DTOs
-import ma.dentalTech.mvc.dto.auth.*;
+import ma.dentalTech.mvc.dto.auth.ChangePasswordRequest;
+import ma.dentalTech.mvc.dto.auth.ChangePasswordResult;
+import ma.dentalTech.mvc.dto.auth.ProfileData;
+import ma.dentalTech.mvc.dto.auth.ProfileUpdateRequest;
+import ma.dentalTech.mvc.dto.auth.ProfileUpdateResult;
 
-// Tes Repositories
-import ma.dentalTech.repository.modules.users.api.*;
+import ma.dentalTech.repository.modules.users.api.AdminRepository;
+import ma.dentalTech.repository.modules.users.api.MedecinRepository;
+import ma.dentalTech.repository.modules.users.api.RoleRepository;
+import ma.dentalTech.repository.modules.users.api.SecretaireRepository;
+import ma.dentalTech.repository.modules.users.api.StaffRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 
-// Tes Services API
 import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
 import ma.dentalTech.service.modules.profileService.api.ChangePasswordValidator;
 import ma.dentalTech.service.modules.profileService.api.ProfileService;
@@ -48,10 +59,10 @@ public class ProfileServiceImpl implements ProfileService {
             UtilisateurRepository userRepo = userRepoFactory.create(cnx);
             RoleRepository roleRepo = roleRepoFactory.create(cnx);
 
-            // CORRECTION : On utilise getType() pour obtenir l'Enum LibelleRole
+            // ✅ FIX: getType() -> getLibelle()
             LibelleRole rolePrincipal = roleRepo.findRolesByUtilisateurId(userId)
                     .stream()
-                    .map(Role::getType)
+                    .map(Role::getLibelle)
                     .filter(Objects::nonNull)
                     .findFirst()
                     .orElse(null);
@@ -92,10 +103,10 @@ public class ProfileServiceImpl implements ProfileService {
             AdminRepository adminRepo = adminRepoFactory.create(cnx);
             RoleRepository roleRepo = roleRepoFactory.create(cnx);
 
-            // CORRECTION : On utilise getType() ici aussi
+            // ✅ FIX: getType() -> getLibelle()
             LibelleRole rolePrincipal = roleRepo.findRolesByUtilisateurId(req.id())
                     .stream()
-                    .map(Role::getType)
+                    .map(Role::getLibelle)
                     .filter(Objects::nonNull)
                     .findFirst()
                     .orElse(null);
@@ -104,7 +115,12 @@ public class ProfileServiceImpl implements ProfileService {
             if (!uniqErrors.isEmpty()) return ProfileUpdateResult.failure("Conflit d'unicité", uniqErrors);
 
             Utilisateur u = userRepo.findById(req.id());
-            if (u == null) return ProfileUpdateResult.failure("Utilisateur introuvable", Map.of("_global", "Utilisateur introuvable."));
+            if (u == null) {
+                return ProfileUpdateResult.failure(
+                        "Utilisateur introuvable",
+                        Map.of("_global", "Utilisateur introuvable.")
+                );
+            }
 
             applyUserFields(u, req);
             userRepo.update(u);
@@ -139,10 +155,14 @@ public class ProfileServiceImpl implements ProfileService {
         return Transaction.initTransaction(cnx -> {
             UtilisateurRepository userRepo = userRepoFactory.create(cnx);
             Utilisateur u = userRepo.findById(req.userId());
-            if (u == null) return ChangePasswordResult.failure("Utilisateur introuvable.", Map.of("_global", "Utilisateur introuvable."));
+            if (u == null) {
+                return ChangePasswordResult.failure("Utilisateur introuvable.",
+                        Map.of("_global", "Utilisateur introuvable."));
+            }
 
             if (!passwordEncoder.matches(req.currentPassword(), u.getMotDePasse())) {
-                return ChangePasswordResult.failure("Mot de passe actuel incorrect.", Map.of("currentPassword", "Mot de passe actuel incorrect."));
+                return ChangePasswordResult.failure("Mot de passe actuel incorrect.",
+                        Map.of("currentPassword", "Mot de passe actuel incorrect."));
             }
 
             userRepo.updatePassword(req.userId(), passwordEncoder.encode(req.newPassword()));

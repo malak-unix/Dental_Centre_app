@@ -25,8 +25,6 @@ public class Staff extends Utilisateur {
     // ==========================
     private Object cabinetMedicale;
 
-    public Staff(String nom, String email, String adresse, String cin, String tel, Sexe sexe, String login, String motDePasse, LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime, LocalDate dateRecrutement, Integer soldeCongé) {
-    }
 
     @Override
     public boolean equals(Object o) {

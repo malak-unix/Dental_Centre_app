@@ -2,6 +2,8 @@ package ma.dentalTech.service.modules.auth.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import ma.dentalTech.common.utilitaire.RepoFactory;
+import ma.dentalTech.common.utilitaire.Transaction;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.entities.users.Utilisateur;
@@ -14,15 +16,16 @@ import ma.dentalTech.service.modules.auth.api.AuthService;
 import ma.dentalTech.service.modules.auth.api.LoginFormValidator;
 import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
 
-// Voici les imports corrigés vers ton dossier 'utilitaire'
-import ma.dentalTech.common.utilitaire.RepoFactory;
-import ma.dentalTech.common.utilitaire.Transaction;
-
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-@Data @AllArgsConstructor
+@Data
+@AllArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final RepoFactory<UtilisateurRepository> userRepoFactory;
@@ -32,60 +35,61 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResultDTO authenticate(AuthRequestDTO request) {
-        // 1. Validation du formulaire (syntaxe Record : .login())
         Map<String, String> errors = validator.validate(request);
 
         if (!errors.isEmpty()) {
             return AuthResultDTO.failure("Formulaire invalide", errors);
         }
 
-        // 2. Initialisation de la transaction
         return Transaction.initTransaction(cnx -> {
             UtilisateurRepository userRepo = userRepoFactory.create(cnx);
             RoleRepository roleRepo = roleRepoFactory.create(cnx);
 
-            // 3. Recherche de l'utilisateur (gère l'Optional de ton repo)
             Utilisateur user = userRepo.findByLogin(request.login()).orElse(null);
-
             if (user == null) {
                 return AuthResultDTO.failure("Authentification échouée :: Utilisateur introuvable");
             }
 
-            // 4. Vérification du mot de passe
             boolean ok = passwordEncoder.matches(request.password(), user.getMotDePasse());
             if (!ok) {
                 return AuthResultDTO.failure("Mot de passe incorrect");
             }
 
-            // 5. Construction du principal pour la session
             UserPrincipalDTO principal = buildUserPrincipal(user, roleRepo);
-
             return AuthResultDTO.success(principal);
         });
     }
 
     private UserPrincipalDTO buildUserPrincipal(Utilisateur u, RoleRepository roleRepo) {
-        // Récupérer les rôles affectés à l'utilisateur
         List<Role> roles = roleRepo.findRolesByUtilisateurId(u.getId());
 
-        // Transformer en set de LibelleRole (ton Enum)
+        // Roles -> Set<LibelleRole>
         Set<LibelleRole> roleTypes = roles.stream()
-                .map(Role::getType)
+                .filter(Objects::nonNull)
+                .map(Role::getLibelle) // ✅ anciennement getType()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // Récupérer les privilèges affectés aux rôles
+        // Roles -> Set<String> privileges (CSV -> split)
         Set<String> privileges = roles.stream()
                 .filter(Objects::nonNull)
-                .flatMap(r -> r.getPrivileges() != null ? r.getPrivileges().stream() : Stream.empty())
-                .collect(Collectors.toSet());
+                .map(Role::getPrivileges) // ✅ String CSV
+                .filter(Objects::nonNull)
+                .flatMap(p -> Arrays.stream(p.split(",")))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // Le premier rôle est considéré comme rôle principal
         LibelleRole rolePrincipal = roleTypes.stream().findFirst().orElse(null);
 
         return new UserPrincipalDTO(
-                u.getId(), u.getNom(), u.getEmail(), u.getLogin(),
-                rolePrincipal, roleTypes, privileges
+                u.getId(),
+                u.getNom(),
+                u.getEmail(),
+                u.getLogin(),
+                rolePrincipal,
+                roleTypes,
+                privileges
         );
     }
 }

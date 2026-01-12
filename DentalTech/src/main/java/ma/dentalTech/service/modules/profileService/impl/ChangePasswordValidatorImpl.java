@@ -2,7 +2,6 @@ package ma.dentalTech.service.modules.profileService.impl;
 
 import ma.dentalTech.mvc.dto.auth.ChangePasswordRequest;
 import ma.dentalTech.service.modules.profileService.api.ChangePasswordValidator;
-import ma.dentalTech.configuration.ApplicationContext;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,9 +15,8 @@ public class ChangePasswordValidatorImpl implements ChangePasswordValidator {
             return errors;
         }
 
-        // Récupération des config ou valeurs par défaut
-        int min = Integer.parseInt(ApplicationContext.getInstance().getProperty("profile.password.min", "8"));
-        int max = Integer.parseInt(ApplicationContext.getInstance().getProperty("profile.password.max", "128"));
+        int min = 8;
+        int max = 128;
 
         String cur = req.currentPassword();
         String nw  = req.newPassword();
