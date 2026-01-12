@@ -4,6 +4,7 @@ import ma.dentalTech.mvc.controllers.modules.auth.api.AuthController;
 import ma.dentalTech.mvc.controllers.modules.auth.impl.AuthControllerImpl;
 import ma.dentalTech.mvc.dto.auth.AuthRequestDTO;
 import ma.dentalTech.mvc.dto.auth.AuthResultDTO;
+import ma.dentalTech.mvc.dto.auth.UserPrincipalDTO;
 import ma.dentalTech.mvc.ui.MainFrame;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.UiTheme;
@@ -121,14 +122,24 @@ public class LoginFrame extends JFrame {
         if (!res.isSuccess()) {
             String msg = res.getMessage();
             if (res.getFieldErrors() != null && !res.getFieldErrors().isEmpty()) {
-                msg += "\n" + res.getFieldErrors().toString();
+                msg += "\n" + res.getFieldErrors();
             }
             JOptionPane.showMessageDialog(this, msg, "Connexion", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // OK -> ouvrir MainFrame(principal)
-        MainFrame main = new MainFrame(res.getPrincipal());
+        UserPrincipalDTO p = res.getPrincipal();
+        if (p == null) {
+            JOptionPane.showMessageDialog(this, "Connexion OK mais principal null", "Connexion", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // ✅ Adapter à ton nouveau MainFrame(role, userId, fullName)
+        Long userId = p.id() != null ? p.id() : 1L;
+        String fullName = (p.nom() != null && !p.nom().isBlank()) ? p.nom() : p.login();
+        if (fullName == null || fullName.isBlank()) fullName = "Utilisateur";
+
+        MainFrame main = new MainFrame(p.rolePrincipal(), userId, fullName);
         main.setVisible(true);
         dispose();
     }
