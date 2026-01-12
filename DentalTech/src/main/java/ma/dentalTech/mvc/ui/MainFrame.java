@@ -41,9 +41,12 @@ public class MainFrame extends JFrame {
 
     public MainFrame(LibelleRole role, Long userId, String fullName) {
         super("DentalTech - Dental Center");
+
         this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
         this.userId = (userId != null) ? userId : 1L;
-        this.fullName = (fullName != null) ? fullName : "Utilisateur";
+
+        String name = (fullName == null) ? "" : fullName.trim();
+        this.fullName = name.isBlank() ? "Utilisateur" : name;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1280, 780);
@@ -81,10 +84,9 @@ public class MainFrame extends JFrame {
         addPage("patients", buildPatientPage());
         addPage("rdv", new RdvPagePanel());
         addPage("caisse", new CaisseMainPanel(role, userId));
-        addPage("agenda_med", new AgendaHomePanel());
+        addPage("agenda_med", buildAgendaPage());
 
-        // Agenda / file d’attente (existe dans ton module agenda)
-        // (pas dans le menu par défaut, mais dispo si besoin)
+        // Liste d’attente (si vous voulez la brancher plus tard dans le menu)
         addPage("liste_attente", new ListeAttentePagePanel());
 
         // Placeholders (modules collègues / à brancher plus tard)
@@ -118,14 +120,16 @@ public class MainFrame extends JFrame {
 
     private void showPage(String key) {
         if (!pages.containsKey(key)) {
-            // si menu pointe vers une clé non ajoutée
             JOptionPane.showMessageDialog(this, "Page non disponible: " + key);
             return;
         }
-        cardLayout.show(cards, key);
-        sidebar.setActive(key);
 
-        // refresh patient si besoin
+        cardLayout.show(cards, key);
+
+        if (sidebar != null) {
+            sidebar.setActive(key);
+        }
+
         if ("patients".equals(key) && patientView != null) {
             patientView.refresh();
         }
@@ -142,6 +146,13 @@ public class MainFrame extends JFrame {
         JPanel wrap = new JPanel(new BorderLayout());
         wrap.setOpaque(false);
         wrap.add(patientView, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildAgendaPage() {
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(new AgendaHomePanel(), BorderLayout.CENTER);
         return wrap;
     }
 
