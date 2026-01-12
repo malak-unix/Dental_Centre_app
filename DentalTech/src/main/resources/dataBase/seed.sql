@@ -32,26 +32,24 @@ VALUES
    'system');
 
 --  UTILISATEURS
-
 INSERT INTO utilisateur (id, nom, prenom, email, adresse, cin, tel, sexe,
                          login, mot_de_passe, date_naissance, actif,
                          role_id, cree_par)
 VALUES
   (1, 'Admin',   'Tech',   'admin@dentalsoft.ma', 'Casablanca', 'X000000', '+212600000000', 'AUTRE',
-   'admin',   'admin123', '1990-01-01', 1, 1, 'system'),
+   'admin',   '$2b$10$A3a0ymwfAYPc8kXV9ll.0OtokztmxGQ8N.j8v7i6wtKxMnCKcIUgm', '1990-01-01', 1, 1, 'system'),
 
   (2, 'Achari',  'Malak',  'malak@dentalsoft.ma', 'yaacoub mansour, Rabat', 'J123456', '+212612345601', 'FEMME',
-   'malak',  'password', '2002-03-14', 1, 3, 'admin'),
+   'malak',  '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '2002-03-14', 1, 3, 'admin'),
 
   (3, 'Berday',  'Aya',    'aya@dentalsoft.ma', 'Mehdia, Kenitra', 'J654321', '+212612345602', 'FEMME',
-   'aya',    'password', '2002-09-21', 1, 3, 'admin'),
+   'aya',    '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '2002-09-21', 1, 3, 'admin'),
 
   (4, 'El bekali','Aicha', 'aicha@dentalsoft.ma', 'massira, Temara', 'J789456', '+212612345603', 'FEMME',
-   'aicha',  'password', '2001-12-05', 1, 3, 'admin'),
+   'aicha',  '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '2001-12-05', 1, 3, 'admin'),
 
   (5, 'Ou-tamssout','Jihane','jihane@dentalsoft.ma','Agdal, Rabat','J147258', '+212612345604','FEMME',
-   'drjihane','password','1988-06-10', 1, 2, 'admin');
-
+   'drjihane','$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1988-06-10', 1, 2, 'admin');
 
 --  STAFF
 
@@ -66,7 +64,7 @@ VALUES
 
 
 --  MEDECIN & SECRETAIRES
-=
+
 INSERT INTO medecin (id, specialite, cree_par)
 VALUES
   (5, 'Chirurgie dentaire', 'admin');

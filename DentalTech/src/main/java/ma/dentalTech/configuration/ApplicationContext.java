@@ -1,5 +1,7 @@
 package ma.dentalTech.configuration;
 
+import ma.dentalTech.mvc.controllers.modules.caisse.api.ChargesControllerV2;
+import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
 import ma.dentalTech.repository.common.RowMappers;
 
 import ma.dentalTech.repository.modules.patient.api.*;
@@ -116,6 +118,11 @@ public final class ApplicationContext {
             // =========================================================
             // CAISSE V2
             // =========================================================
+            // CaisseValidationService (indispensable)
+            CaisseValidationService validationSvc = new CaisseValidationServiceImpl();
+            put(CaisseValidationService.class, validationSvc, "caisseValidationService");
+            registerKnown(known, validationSvc);
+
             currentBean = "factureRepo";
             FactureRepository factureRepo = newRepoInstance(props, "factureRepo", FactureRepository.class, known);
             put(FactureRepository.class, factureRepo, "factureRepo");
@@ -206,6 +213,23 @@ public final class ApplicationContext {
                 contextByName.put("caisseDashboardControllerV2", ctrl);
                 registerKnown(known, ctrl);
             }
+
+            // ✅ FactureControllerV2
+            if (hasKey(props, "factureControllerV2") && hasBean("factureServiceV2")) {
+                FactureServiceV2 fs = getBean(FactureServiceV2.class);
+                Object fc = newFlexibleInstance(props.getProperty("factureControllerV2"), known, fs);
+                put(FactureControllerV2.class, fc, "factureControllerV2");
+                registerKnown(known, fc);
+            }
+
+            // ✅ ChargesControllerV2
+            if (hasKey(props, "chargesControllerV2") && hasBean("chargesServiceV2")) {
+                ChargesServiceV2 cs = getBean(ChargesServiceV2.class);
+                Object cc = newFlexibleInstance(props.getProperty("chargesControllerV2"), known, cs);
+                put(ChargesControllerV2.class, cc, "chargesControllerV2");
+                registerKnown(known, cc);
+            }
+
 
             // =========================================================
             // RDV : repo -> service -> controller
