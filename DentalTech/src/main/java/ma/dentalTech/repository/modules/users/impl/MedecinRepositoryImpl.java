@@ -93,4 +93,9 @@ public class MedecinRepositoryImpl implements MedecinRepository {
     }
 
     @Override public List<Medecin> findBySpecialite(String spec) { return new ArrayList<>(); }
+
+    @Override
+    public void updateMedecinFields(Medecin medecin) {
+
+    }
 }

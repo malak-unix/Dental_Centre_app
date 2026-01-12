@@ -11,4 +11,5 @@ public interface StaffRepository extends CrudRepository<Staff, Long> {
     List<Staff> findAllOrderByNom();
     List<Staff> findBySalaireBetween(Double min, Double max);
     List<Staff> findByDateRecrutementAfter(LocalDate date);
+    void updateStaffFields(Staff staff);
 }

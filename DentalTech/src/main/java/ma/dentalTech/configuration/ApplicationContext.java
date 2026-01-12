@@ -52,7 +52,6 @@ public final class ApplicationContext {
             known.put(SessionFactory.class, sf);
 
             // ✅ IMPORTANT : garder une connexion partagée pour les repos qui ont ctor(Connection)
-            // (sinon si tu la fermes, les repos qui stockent connection vont casser)
             Connection sharedCn = sf.getConnection();
             known.put(Connection.class, sharedCn);
 
@@ -132,16 +131,6 @@ public final class ApplicationContext {
             put(RevenuesRepository.class, revenusRepo, "revenusRepo");
             registerKnown(known, revenusRepo);
 
-            currentBean = "chartService";
-            ChartService chartService = newServiceInstance(
-                    props, "chartService", ChartService.class,
-                    new Class<?>[]{RevenuesRepository.class, ChargesRepository.class},
-                    new Object[]{revenusRepo, chargesRepo}
-            );
-            put(ChartService.class, chartService, "chartService");
-            registerKnown(known, chartService);
-
-
             currentBean = "sitFinRepo";
             SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo", SituationFinanciereRepository.class, known);
             put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
@@ -218,43 +207,8 @@ public final class ApplicationContext {
                 registerKnown(known, ctrl);
             }
 
-            // Controller Charges V2
-            if (hasKey(props, "chargesControllerV2")) {
-                currentBean = "chargesControllerV2";
-                ChargesServiceV2 chargesServiceV2 = getBean(ChargesServiceV2.class);
-
-                if (chargesServiceV2 != null) {
-                    Object ctrlCharges = newFlexibleInstance(
-                            props.getProperty("chargesControllerV2"),
-                            known,
-                            chargesServiceV2
-                    );
-                    contextByName.put("chargesControllerV2", ctrlCharges);
-                    registerKnown(known, ctrlCharges);
-                }
-            }
-
-// Controller Facture V2
-            if (hasKey(props, "factureControllerV2")) {
-                currentBean = "factureControllerV2";
-                FactureServiceV2 factureServiceV2 = getBean(FactureServiceV2.class);
-
-                if (factureServiceV2 != null) {
-                    Object ctrl = newFlexibleInstance(
-                            props.getProperty("factureControllerV2"),
-                            known,
-                            factureServiceV2
-                    );
-                    put(ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2.class,
-                            (ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2) ctrl,
-                            "factureControllerV2");
-                    registerKnown(known, ctrl);
-                }
-            }
-
-
             // =========================================================
-            // RDV : repo -> service -> controller ✅ CORRIGÉ
+            // RDV : repo -> service -> controller
             // =========================================================
             currentBean = "rdv.repository";
             RdvRepository rdvRepo = newRepoInstance(props, "rdv.repository", RdvRepository.class, known);
@@ -273,7 +227,6 @@ public final class ApplicationContext {
                 registerKnown(known, rdvService);
             }
 
-            // ✅ ICI: ton controller attend (RdvService, PatientRepository)
             if (hasKey(props, "rdv.controller") && rdvService != null) {
                 currentBean = "rdv.controller";
                 Object rdvCtrl = newFlexibleInstance(
@@ -286,7 +239,7 @@ public final class ApplicationContext {
             }
 
             // =========================================================
-            // AGENDA : repos -> service -> controller -> appService
+            // AGENDA
             // =========================================================
             currentBean = "agendaMensuelRepo";
             AgendaMensuelRepository agendaMensuelRepo = newRepoInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class, known);
@@ -332,7 +285,7 @@ public final class ApplicationContext {
             }
 
             // =========================================================
-            // LISTE D'ATTENTE : repo -> service -> controller
+            // LISTE D'ATTENTE
             // =========================================================
             currentBean = "listeAttente.repository";
             ListeAttenteRepository listeRepo = newRepoInstance(props, "listeAttente.repository", ListeAttenteRepository.class, known);
@@ -363,7 +316,7 @@ public final class ApplicationContext {
             }
 
             // =========================================================
-            // PLAGE HORAIRE : repo -> service
+            // PLAGE HORAIRE
             // =========================================================
             currentBean = "plageHoraire.repository";
             PlageHoraireRepository plageRepo = newRepoInstance(props, "plageHoraire.repository", PlageHoraireRepository.class, known);

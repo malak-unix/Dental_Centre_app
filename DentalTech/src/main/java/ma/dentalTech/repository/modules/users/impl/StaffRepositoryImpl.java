@@ -76,4 +76,9 @@ public class StaffRepositoryImpl implements StaffRepository {
     public List<Staff> findByDateRecrutementAfter(LocalDate date) {
         return List.of();
     }
+
+    @Override
+    public void updateStaffFields(Staff staff) {
+
+    }
 }
