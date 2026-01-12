@@ -17,11 +17,7 @@ public class Secretaire extends Staff {
                       Sexe sexe, String login, String motDePasse,
                       LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
                       LocalDate dateRecrutement, int soldeConge, String numCNSS, Double commission) {
-
-        // Cet appel correspond maintenant exactement au constructeur de Staff créé ci-dessus
-        super(nom, prenom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
-                dateNaissance, salaire, prime, dateRecrutement, soldeConge);
-
+        
         this.numCNSS = numCNSS;
         this.commission = commission;
     }

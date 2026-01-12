@@ -2,6 +2,7 @@ package ma.dentalTech.entities.users;
 
 import java.time.LocalDate;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.agenda.AgendaMensuel;
 import ma.dentalTech.entities.enums.Sexe;
 
@@ -10,26 +11,13 @@ import ma.dentalTech.entities.enums.Sexe;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 public class Medecin extends Staff {
 
     private String specialite;
     private AgendaMensuel agendaMensuel;
-
-    @Builder(builderMethodName = "medecinBuilder")
-    public Medecin(String nom, String prenom, String email, String adresse, String cin, String tel,
-                   Sexe sexe, String login, String motDePasse,
-                   LocalDate lastLoginDate, LocalDate dateNaissance, Double salaire, Double prime,
-                   LocalDate dateRecrutement, int soldeConge, String specialite,
-                   AgendaMensuel agendaMensuel) {
-
-        // Appel au constructeur de Staff (avec prenom et les types corrigés)
-        super(nom, prenom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate,
-                dateNaissance, salaire, prime, dateRecrutement, soldeConge);
-
-        this.specialite = specialite;
-        this.agendaMensuel = agendaMensuel;
-    }
 
     @Override
     public String toString() {

@@ -3,7 +3,9 @@ package ma.dentalTech.entities.users;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.Sexe;
@@ -12,10 +14,10 @@ import ma.dentalTech.entities.enums.Sexe;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
 public class Utilisateur extends BaseEntity {
 
-    protected String nom; // passage en protected pour faciliter l'accès aux enfants
+    // Passage en protected pour faciliter l'accès aux enfants (Staff, etc.)
+    protected String nom;
     protected String prenom;
     protected String email;
     protected String adresse;
@@ -28,13 +30,23 @@ public class Utilisateur extends BaseEntity {
     protected LocalDate dateNaissance;
     protected boolean actif;
 
-    private List<Role> roles = new ArrayList<>();
-    private List<Notification> notifications = new ArrayList<>();
+    private Long roleId;
 
-    // Constructeur manuel pour l'héritage
-    public Utilisateur(String nom, String prenom, String email, String adresse, String cin, String tel,
-                       Sexe sexe, String login, String motDePasse, LocalDate lastLoginDate,
-                       LocalDate dateNaissance) {
+    private List<Notification> notifications = new ArrayList<>();
+    public Utilisateur(
+            String nom,
+            String prenom,
+            String email,
+            String adresse,
+            String cin,
+            String tel,
+            Sexe sexe,
+            String login,
+            String motDePasse,
+            LocalDate lastLoginDate,
+            LocalDate dateNaissance,
+            Long roleId
+    ) {
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
@@ -47,7 +59,42 @@ public class Utilisateur extends BaseEntity {
         this.lastLoginDate = lastLoginDate;
         this.dateNaissance = dateNaissance;
         this.actif = true;
+        this.roleId = roleId;
     }
 
-    // ... toString et hashCode inchangés
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Utilisateur)) return false;
+        Utilisateur that = (Utilisateur) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return """
+            Utilisateur {
+                id = %s,
+                nom = '%s',
+                prenom = '%s',
+                login = '%s',
+                email = '%s',
+                actif = %s,
+                roleId = %s
+            }
+            """.formatted(
+                String.valueOf(id),
+                nom,
+                prenom,
+                login,
+                email,
+                actif,
+                String.valueOf(roleId)
+        );
+    }
 }
