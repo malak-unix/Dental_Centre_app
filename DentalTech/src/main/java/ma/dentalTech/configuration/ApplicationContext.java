@@ -16,7 +16,15 @@ import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
+//ajouté par jihane
+import ma.dentalTech.common.utilitaire.RepoFactory;
 
+import ma.dentalTech.repository.modules.users.api.RoleRepository;
+
+import ma.dentalTech.service.modules.auth.api.AuthService;
+import ma.dentalTech.service.modules.auth.api.LoginFormValidator;
+import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
+//
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
@@ -353,6 +361,49 @@ public final class ApplicationContext {
                 put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
                 registerKnown(known, utilisateurRepo);
             }
+            //ajouté par jihane
+            // =========================================================
+            // AUTH : validator -> encoder -> service -> controller
+            // =========================================================
+            if (hasKey(props, "authValidator") && hasKey(props, "authEncoder")
+                    && hasKey(props, "authService") && hasKey(props, "authController")) {
+
+                currentBean = "authValidator";
+                LoginFormValidator authValidator = newServiceInstance(props, "authValidator", LoginFormValidator.class);
+                put(LoginFormValidator.class, authValidator, "authValidator");
+                registerKnown(known, authValidator);
+
+                currentBean = "authEncoder";
+                PasswordEncoder authEncoder = newServiceInstance(props, "authEncoder", PasswordEncoder.class);
+                put(PasswordEncoder.class, authEncoder, "authEncoder");
+                registerKnown(known, authEncoder);
+
+                // Factories repos (Connection -> RepoImpl)
+                RepoFactory<UtilisateurRepository> userFactory =
+                        ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
+
+                RepoFactory<RoleRepository> roleFactory =
+                        ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
+
+                // AuthService (constructeur compat, donc LoginFrame reste intact)
+                currentBean = "authService";
+                AuthService authService = new ma.dentalTech.service.modules.auth.impl.AuthServiceImpl(
+                        userFactory, roleFactory, authValidator, authEncoder
+                );
+                put(AuthService.class, authService, "authService");
+                registerKnown(known, authService);
+
+                // Controller (interface AuthController ne contient que login())
+                currentBean = "authController";
+                Object authController = newFlexibleInstance(
+                        props.getProperty("authController"),
+                        known,
+                        authService
+                );
+                contextByName.put("authController", authController);
+                registerKnown(known, authController);
+            }
+
 
             // =========================================================
             // DASHBOARD : service -> controller (optionnel)
