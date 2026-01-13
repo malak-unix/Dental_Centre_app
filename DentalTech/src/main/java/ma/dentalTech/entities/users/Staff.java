@@ -24,8 +24,8 @@ public class Staff extends Utilisateur {
                  LocalDate dateNaissance, Double salaire, Double prime,
                  LocalDate dateRecrutement, int soldeConge) {
 
-        // Appel au constructeur de Utilisateur (11 paramètres)
-        super(nom, prenom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate, dateNaissance);
+        // Appel au constructeur de Utilisateur (11 paramètres) //aya
+        super(nom, prenom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate, dateNaissance, null);
 
         this.salaire = salaire;
         this.prime = prime;

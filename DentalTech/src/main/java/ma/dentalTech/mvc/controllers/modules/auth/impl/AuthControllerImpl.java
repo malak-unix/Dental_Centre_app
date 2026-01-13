@@ -9,7 +9,15 @@ public class AuthControllerImpl implements AuthController {
 
     private final AuthService authService;
 
+    public AuthControllerImpl(AuthService authService) {
+        this.authService = authService;
+    }
+
     @Override
     public AuthResultDTO login(AuthRequestDTO request) {
+        if (request == null) {
+            return AuthResultDTO.failure("Requête invalide");
+        }
+        return authService.authenticate(request);
     }
 }
