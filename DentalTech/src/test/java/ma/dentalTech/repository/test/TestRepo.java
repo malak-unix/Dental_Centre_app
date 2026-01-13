@@ -1,6 +1,5 @@
 package ma.dentalTech.repository.test;
 
-import ma.dentalTech.entities.dossierMedical.*;
 import ma.dentalTech.entities.agenda.*;
 import ma.dentalTech.entities.patient.*;
 import ma.dentalTech.entities.enums.*;
@@ -15,9 +14,7 @@ import ma.dentalTech.repository.modules.patient.api.*;
 import ma.dentalTech.repository.modules.patient.impl.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
 
 public class TestRepo {
 
@@ -48,6 +45,45 @@ public class TestRepo {
     // ==========================
     private final PatientRepository patientRepo = new PatientRepositoryImpl();
     private final AntecedentRepository antecedentRepo = new AntecedentRepositoryImpl();
+
+    void testAntecedentCrud() {
+        System.out.println("\n=== TEST ANTECEDENT CRUD ===");
+
+        Patient p = Patient.builder()
+                .nom("P_TEST")
+                .prenom("ANTE")
+                .telephone("0600001111")
+                .adresse("Rabat")
+                .assurance(Assurance.AUCUNE)
+                .creePar("TEST")
+                .modifiePar("TEST")
+                .build();
+        patientRepo.create(p);
+        System.out.println("✅ Patient créé id=" + p.getId());
+
+        Antecedents a = Antecedents.builder()
+                .patientId(p.getId())
+                .nom("Allergie test")
+                .categorie("Allergie")
+                .niveauDeRisque(NiveauDeRisque.ELEVE)
+                .description("Test description")
+                .creePar("TEST")
+                .modifiePar("TEST")
+                .build();
+        antecedentRepo.create(a);
+        System.out.println("✅ Antecedent créé id=" + a.getId());
+
+        Antecedents read = antecedentRepo.findById(a.getId());
+        System.out.println("✅ Read antecedent: " + read);
+
+        read.setDescription("Desc modifiée");
+        read.setModifiePar("TEST");
+        antecedentRepo.update(read);
+        System.out.println("✅ Update OK");
+
+        antecedentRepo.deleteById(read.getId());
+        System.out.println("✅ Delete OK");
+    }
 
     // =========================================================
     // INSERT PATIENT + ANTECEDENT
@@ -193,6 +229,8 @@ public class TestRepo {
         TestRepo t = new TestRepo();
 
         t.insertPatientAntecedent();
+        t.testAntecedentCrud();
+
         t.insertAgenda();
 
         t.selectAgenda();

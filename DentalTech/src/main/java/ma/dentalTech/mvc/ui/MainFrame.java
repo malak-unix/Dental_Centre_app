@@ -108,12 +108,15 @@ public class MainFrame extends JFrame {
     }
 
     private JComponent buildDashboardByRole() {
+        var dashboardController = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class);
+
         return switch (role) {
-            case SECRETAIRE -> new SecretaireDashboardPanel(userId);
-            case MEDECIN -> new MedecinDashboardPanel(userId);
-            case ADMIN -> new AdminDashboardPanel(userId);
+            case SECRETAIRE -> new SecretaireDashboardPanel(userId, dashboardController, this::showPage);
+            case MEDECIN    -> new MedecinDashboardPanel(userId, dashboardController, this::showPage);
+            case ADMIN      -> new AdminDashboardPanel(userId, dashboardController, this::showPage);
         };
     }
+
 
     private void addPage(String key, JComponent page) {
         pages.put(key, page);

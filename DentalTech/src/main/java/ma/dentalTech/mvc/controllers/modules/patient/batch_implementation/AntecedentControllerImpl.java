@@ -30,6 +30,23 @@ public class AntecedentControllerImpl implements AntecedentController {
     }
 
     @Override
+    public AntecedentFormDto getById(Long id) {
+        try {
+            if (id == null) throw new IllegalArgumentException("id null");
+
+            Antecedents a = service.getById(id);
+            if (a == null) {
+                throw new ControllerException("Antécédent introuvable id=" + id);
+            }
+
+            return toFormDto(a);
+        } catch (Exception e) {
+            throw new ControllerException("Erreur UI: récupérer antécédent", e);
+        }
+    }
+
+
+    @Override
     public AntecedentFormDto create(Long patientId, AntecedentFormDto dto) {
         try {
             if (dto == null) throw new IllegalArgumentException("DTO null");

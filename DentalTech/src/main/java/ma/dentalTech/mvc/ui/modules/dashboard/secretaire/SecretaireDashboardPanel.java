@@ -1,6 +1,6 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.secretaire;
 
-import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.common.exceptions.ControllerException;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
@@ -9,34 +9,34 @@ import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
 import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SecretaireDashboardPanel extends JPanel {
 
+    private final DashboardController dashboardController;
     private final Long userId;
+    private final Consumer<String> navigate;
 
     private JLabel vNbPatients;
     private JLabel vRecette;
     private JLabel vNbRdv;
     private JLabel vNbAttente;
 
-    private JPanel waitRow; // file d’attente
+    private JPanel waitRow;
     private DefaultListModel<String> activitiesModel;
     private JTextArea notifArea;
     private JLabel notifBadge;
 
-    public SecretaireDashboardPanel() {
-        this(1L);
-    }
-
-    public SecretaireDashboardPanel(Long userId) {
-        this.userId = (userId != null) ? userId : 1L;
+    public SecretaireDashboardPanel(DashboardController dashboardController, Long userId, Consumer<String> navigate) {
+        this.dashboardController = dashboardController;
+        this.userId = userId;
+        this.navigate = navigate;
 
         setOpaque(false);
         setLayout(new BorderLayout(18, 18));
@@ -51,7 +51,6 @@ public class SecretaireDashboardPanel extends JPanel {
         main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
         add(main, BorderLayout.CENTER);
 
-        // KPIs
         JPanel kpis = new JPanel(new GridLayout(1, 5, 18, 18));
         kpis.setOpaque(false);
 
@@ -64,12 +63,11 @@ public class SecretaireDashboardPanel extends JPanel {
         kpis.add(kpi(vRecette, "Recette du jour"));
         kpis.add(kpi(vNbRdv, "RDV du jour"));
         kpis.add(kpi(vNbAttente, "Patients en attente"));
-        kpis.add(actionCard("Rafraîchir", this::refresh));
+        kpis.add(actionCard("Aller aux RDV", () -> navigate.accept("rdv")));
 
         main.add(kpis);
         main.add(Box.createVerticalStrut(18));
 
-        // File d’attente
         CardPanel waitCard = new CardPanel();
         waitCard.setLayout(new BorderLayout(10, 10));
         JLabel wt = new JLabel("File d’Attente");
@@ -96,34 +94,16 @@ public class SecretaireDashboardPanel extends JPanel {
         bottom.add(notifCard());
         main.add(bottom);
 
-        refresh();
+        reload();
     }
 
-    public final void refresh() {
-        SecretaireDashboardResponseDTO secDto = null;
+    private void reload() {
         try {
-            DashboardDTO dash = fetchDashboardDTO();
-            if (dash != null) secDto = dash.getSecretaire();
-        } catch (Exception ignore) {}
-
-        setData(secDto);
-    }
-
-    private DashboardDTO fetchDashboardDTO() {
-        Object bean = ApplicationContext.getBean("dashboardController");
-        if (bean instanceof DashboardController ctrl) {
-            try {
-                return ctrl.getDashboardDTO(userId);
-            } catch (Exception ignore) {}
+            DashboardDTO dto = dashboardController.getDashboardDTO(userId);
+            setData(dto != null ? dto.getSecretaire() : null);
+        } catch (ControllerException ex) {
+            setData(null);
         }
-
-        DashboardService service = ApplicationContext.getBean(DashboardService.class);
-        if (service != null) {
-            try {
-                return service.getDashboard(userId);
-            } catch (Exception ignore) {}
-        }
-        return null;
     }
 
     public void setData(SecretaireDashboardResponseDTO dto) {
@@ -138,7 +118,6 @@ public class SecretaireDashboardPanel extends JPanel {
         vNbAttente.setText(String.valueOf(nbAtt));
         vRecette.setText(formatDh(recette));
 
-        // file attente
         waitRow.removeAll();
         List<ListeAttenteDto> file = dto != null ? dto.getFileAttente() : null;
         if (file == null || file.isEmpty()) {
@@ -154,7 +133,6 @@ public class SecretaireDashboardPanel extends JPanel {
         waitRow.revalidate();
         waitRow.repaint();
 
-        // activities = notifications (simple)
         activitiesModel.clear();
         List<NotificationDTO> notifs = dto != null ? dto.getNotifications() : null;
         if (notifs != null && !notifs.isEmpty()) {
@@ -167,7 +145,6 @@ public class SecretaireDashboardPanel extends JPanel {
             activitiesModel.addElement("Aucune activité récente.");
         }
 
-        // notif/alert area
         int nbA = dto != null && dto.getNbAlertesNonLues() != null ? dto.getNbAlertesNonLues() : 0;
         int nbN = dto != null && dto.getNbNotificationsNonLues() != null ? dto.getNbNotificationsNonLues() : 0;
         notifBadge.setText("  " + (nbA + nbN) + "  ");
@@ -226,6 +203,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
         JButton dossier = new JButton("Dossier");
         dossier.setFocusPainted(false);
+        dossier.addActionListener(e -> navigate.accept("patients")); // ou dossier_medical si tu préfères
         chip.add(dossier, BorderLayout.EAST);
         return chip;
     }

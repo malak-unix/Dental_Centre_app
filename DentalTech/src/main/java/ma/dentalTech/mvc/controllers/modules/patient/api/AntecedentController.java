@@ -11,6 +11,8 @@ public interface AntecedentController {
 
     AntecedentFormDto create(Long patientId, AntecedentFormDto dto);
 
+    AntecedentFormDto getById(Long id);//aya
+
     AntecedentFormDto update(Long id, AntecedentFormDto dto);
 
     void delete(Long id);
