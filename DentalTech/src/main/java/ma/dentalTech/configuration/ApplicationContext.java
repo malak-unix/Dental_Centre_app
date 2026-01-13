@@ -106,7 +106,25 @@ public final class ApplicationContext {
                     put(AntecedentService.class, antecedentService, "antecedentService");
                     registerKnown(known, antecedentService);
                 }
+
+                // ✅ AJOUT IMPORTANT : antecedentController (bean name EXACT)
+                if (hasKey(props, "antecedentController") && hasBean("antecedentService")) {
+                    currentBean = "antecedentController";
+
+                    AntecedentService antecedentServiceBean = getBean(AntecedentService.class);
+
+                    Object antecedentController = newFlexibleInstance(
+                            props.getProperty("antecedentController"),
+                            known,
+                            antecedentServiceBean
+                    );
+
+                    contextByName.put("antecedentController", antecedentController);
+                    registerKnown(known, antecedentController);
+                }
             }
+
+
 
             if (hasKey(props, "patientController")) {
                 currentBean = "patientController";

@@ -24,6 +24,10 @@ public final class RoleMenuConfig {
         items.add(new NavItem("dashboard", "Dashboard"));
         items.add(new NavItem("patients", "Les patients"));
         items.add(new NavItem("rdv", "Rendez-vous"));
+
+        // ✅ AJOUT IMPORTANT : correspond à MainFrame.addPage("liste_attente", ...)
+        items.add(new NavItem("liste_attente", "Liste d'attente"));
+
         items.add(new NavItem("caisse", "La caisse"));
         items.add(new NavItem("stock", "Stock"));
         items.add(new NavItem("agenda_med", "Agenda med"));

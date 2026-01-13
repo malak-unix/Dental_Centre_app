@@ -58,9 +58,8 @@ public class MainFrame extends JFrame {
 
         // Header (haut)
         header.setUser(this.fullName, RoleMenuConfig.roleLabel(this.role));
-        header.logoutButton().addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Déconnexion (à brancher)")
-        );
+        header.logoutButton().addActionListener(e -> doLogout());
+
         shell.header().add(header, BorderLayout.CENTER);
 
         // Sidebar (gauche) + navigation
@@ -77,6 +76,28 @@ public class MainFrame extends JFrame {
         // Page par défaut
         showPage("dashboard");
     }
+
+    private void doLogout() {
+        int ok = JOptionPane.showConfirmDialog(
+                this,
+                "Voulez-vous vous déconnecter ?",
+                "Déconnexion",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (ok != JOptionPane.YES_OPTION) return;
+
+        // Fermer la fenêtre principale
+        dispose();
+
+        // Revenir à l’écran de connexion
+        SwingUtilities.invokeLater(() -> {
+            ma.dentalTech.mvc.ui.modules.auth.LoginFrame lf =
+                    new ma.dentalTech.mvc.ui.modules.auth.LoginFrame();
+            lf.setVisible(true);
+        });
+    }
+
 
     private void buildPages() {
         // Dashboard selon rôle (réel)
