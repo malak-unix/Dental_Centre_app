@@ -32,6 +32,9 @@ public class PatientView extends JPanel {
     private final DentalButton btnEdit = new DentalButton("Modifier");
     private final DentalButton btnDelete = new DentalButton("Supprimer");
 
+    // ✅ NOUVEAU : Antécédents
+    private final DentalButton btnAntecedents = new DentalButton("Antécédents");
+
     public PatientView(PatientController controller) {
         this.controller = controller;
 
@@ -112,6 +115,10 @@ public class PatientView extends JPanel {
 
         actions.add(btnAdd);
         actions.add(btnEdit);
+
+        // ✅ bouton Antécédents avant Supprimer (plus logique)
+        actions.add(btnAntecedents);
+
         actions.add(btnDelete);
 
         return actions;
@@ -119,7 +126,6 @@ public class PatientView extends JPanel {
 
     private void wireActions() {
         btnRefresh.addActionListener(e -> refresh());
-
         btnSearch.addActionListener(e -> doSearch());
 
         btnAdd.addActionListener(e -> {
@@ -156,6 +162,16 @@ public class PatientView extends JPanel {
             }
         });
 
+        // ✅ NOUVEAU : ouvrir Antécédents du patient sélectionné
+        btnAntecedents.addActionListener(e -> openAntecedents());
+
+        // bonus: double clic sur la ligne => ouvrir antécédents
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) openAntecedents();
+            }
+        });
+
         btnDelete.addActionListener(e -> {
             Long id = selectedId();
             if (id == null) return;
@@ -174,6 +190,21 @@ public class PatientView extends JPanel {
                 showError(ex);
             }
         });
+    }
+
+    private void openAntecedents() {
+        Long id = selectedId();
+        if (id == null) return;
+
+        int row = table.getSelectedRow();
+        String nomComplet = String.valueOf(model.getValueAt(row, 1));
+
+        AntecedentManagerDialog dlg = new AntecedentManagerDialog(
+                SwingUtilities.getWindowAncestor(this),
+                id,
+                nomComplet
+        );
+        dlg.setVisible(true);
     }
 
     private void doSearch() {
