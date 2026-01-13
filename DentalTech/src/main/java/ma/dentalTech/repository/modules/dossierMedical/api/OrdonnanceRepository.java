@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
 import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListItemDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListRequestDTO;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDate;
@@ -29,7 +31,7 @@ public interface OrdonnanceRepository extends CrudRepository<Ordonnance, Long> {
     List<Ordonnance> findByDateBetween(LocalDate start, LocalDate end);
 
     /**
-     * Nombre total d’ordonnances (pour stats / pagination).
+     * Nombre total d'ordonnances (pour stats / pagination).
      */
     long count();
 
@@ -37,4 +39,8 @@ public interface OrdonnanceRepository extends CrudRepository<Ordonnance, Long> {
      * Pagination simple.
      */
     List<Ordonnance> findPage(int limit, int offset);
+    
+    // Méthode pour la liste avec nom du patient (JOIN)
+    List<OrdonnanceListItemDTO> searchForList(OrdonnanceListRequestDTO req);
+    long countForList(OrdonnanceListRequestDTO req);
 }

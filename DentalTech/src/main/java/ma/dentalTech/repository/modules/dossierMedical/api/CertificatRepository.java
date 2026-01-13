@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.dossierMedical.api;
 
 import ma.dentalTech.entities.dossierMedical.Certificat;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatListItemDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatListRequestDTO;
 import ma.dentalTech.repository.common.CrudRepository;
 
 import java.time.LocalDate;
@@ -14,4 +16,8 @@ public interface CertificatRepository extends CrudRepository<Certificat, Long> {
     long count();
     List<Certificat> findPage(int limit, int offset);
     List<Certificat> searchByNote(String keyword);
+    
+    // Méthode pour la liste avec nom du patient (JOIN)
+    List<CertificatListItemDTO> searchForList(CertificatListRequestDTO req);
+    long countForList(CertificatListRequestDTO req);
 }

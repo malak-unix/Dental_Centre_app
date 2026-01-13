@@ -1,9 +1,11 @@
-package ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance;
+package ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier;
 
-import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController;
-import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
-import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListItemDTO;
-import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListRequestDTO;
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
+import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.PageRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierListEnrichedItemDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
@@ -14,43 +16,43 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.Frame;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Interface liste des ordonnances selon la maquette.
- * Affiche : Nom du patient, Date, Actions
+ * Interface liste des dossiers médicaux selon la maquette.
+ * Affiche : Nom (avec avatar, âge), Téléphone, Dernière consultation, Actions
  */
-public class OrdonnanceListUI extends JPanel {
+public class DossierMedicalListUI extends JPanel {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final OrdonnanceController controller;
-    private final Long medecinId;
+    private final DossierMedicalController controller;
+    private final PatientController patientController;
+    private final Long medecinId; // null si on veut tous les dossiers
     private final String username;
 
-    private final JTextField txtPatient = new JTextField(15);
-    private final JTextField txtDateFrom = new JTextField(10); // yyyy-MM-dd
-    private final JTextField txtDateTo = new JTextField(10);
+    private final JTextField txtPatient = new JTextField(20);
 
     private final JButton btnSearch = new JButton("Rechercher");
-    private final JButton btnReset = new JButton("Actualiser");
-    private final JButton btnAdd = new JButton("+ Ajouter une ordonnance");
+    private final JButton btnAdd = new JButton("+ Nouveau dossier");
 
     private final JTable table = new JTable();
-    private final OrdonnanceTableModel model = new OrdonnanceTableModel();
+    private final DossierMedicalTableModel model = new DossierMedicalTableModel();
 
-    public OrdonnanceListUI(OrdonnanceController controller, Long medecinId) {
-        this(controller, medecinId, "medecin");
-    }
-
-    public OrdonnanceListUI(OrdonnanceController controller, Long medecinId, String username) {
+    public DossierMedicalListUI(DossierMedicalController controller, Long medecinId, String username) {
         this.controller = controller;
         this.medecinId = medecinId;
         this.username = username;
+        
+        // Récupérer le PatientController depuis ApplicationContext
+        Object bean = ApplicationContext.getBean("patientController");
+        if (bean instanceof PatientController pc) {
+            this.patientController = pc;
+        } else {
+            throw new RuntimeException("patientController introuvable dans ApplicationContext");
+        }
 
         setLayout(new BorderLayout());
         setOpaque(false);
@@ -72,67 +74,75 @@ public class OrdonnanceListUI extends JPanel {
         wrap.setOpaque(false);
         wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
 
-        // Titre + Bouton Ajouter
-        JPanel titleRow = new JPanel(new BorderLayout());
-        titleRow.setOpaque(false);
-
-        JLabel title = new JLabel("Liste des ordonnances");
+        // Titre
+        JLabel title = new JLabel("DOSSIERS");
         title.setFont(DentalTheme.titleFont(22));
         title.setForeground(DentalTheme.TEXT2);
-        titleRow.add(title, BorderLayout.WEST);
+        wrap.add(title);
+        wrap.add(Box.createVerticalStrut(12));
+
+        // Recherche et boutons
+        JPanel searchRow = new JPanel(new BorderLayout());
+        searchRow.setOpaque(false);
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
+        searchPanel.setOpaque(false);
+        
+        JLabel lblSearch = new JLabel("Rechercher un patient:");
+        searchPanel.add(lblSearch);
+        txtPatient.setPreferredSize(new Dimension(250, 30));
+        searchPanel.add(txtPatient);
+        
+        searchRow.add(searchPanel, BorderLayout.WEST);
+
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        buttonsPanel.setOpaque(false);
+        
+        btnSearch.setFont(DentalTheme.textFont(13));
+        btnSearch.setBackground(new Color(0x1C, 0x25, 0x41));
+        btnSearch.setForeground(Color.WHITE);
+        btnSearch.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+        btnSearch.setFocusPainted(false);
 
         btnAdd.setFont(DentalTheme.textBold(13));
-        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé selon maquette
+        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2), // Bordure dorée
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
                 new EmptyBorder(8, 16, 8, 16)
         ));
         btnAdd.setFocusPainted(false);
-        btnAdd.addActionListener(e -> onAddOrdonnance());
-        titleRow.add(btnAdd, BorderLayout.EAST);
+        
+        buttonsPanel.add(btnSearch);
+        buttonsPanel.add(btnAdd);
+        
+        searchRow.add(buttonsPanel, BorderLayout.EAST);
 
-        wrap.add(titleRow);
-        wrap.add(Box.createVerticalStrut(12));
-
-        // Filtres (optionnels)
-        JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
-        filters.setOpaque(false);
-
-        filters.add(new JLabel("Patient:"));
-        filters.add(txtPatient);
-
-        filters.add(Box.createHorizontalStrut(10));
-        filters.add(new JLabel("Date:"));
-        filters.add(txtDateFrom);
-        filters.add(new JLabel("à"));
-        filters.add(txtDateTo);
-
-        filters.add(Box.createHorizontalStrut(10));
-        filters.add(btnSearch);
-        filters.add(btnReset);
-
-        wrap.add(filters);
+        wrap.add(searchRow);
 
         return wrap;
     }
 
     private JComponent buildTable() {
         table.setModel(model);
-        table.setRowHeight(40);
+        table.setRowHeight(60);
         table.setFont(DentalTheme.textFont(13));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setGridColor(DentalTheme.BORDER);
         table.setShowGrid(true);
 
         // Colonnes
-        table.getColumnModel().getColumn(0).setPreferredWidth(250); // Nom patient
-        table.getColumnModel().getColumn(1).setPreferredWidth(120); // Date
-        table.getColumnModel().getColumn(2).setPreferredWidth(300); // Actions
+        table.getColumnModel().getColumn(0).setPreferredWidth(250); // Nom
+        table.getColumnModel().getColumn(1).setPreferredWidth(150); // Téléphone
+        table.getColumnModel().getColumn(2).setPreferredWidth(250); // Dernière consultation
+        table.getColumnModel().getColumn(3).setPreferredWidth(300); // Actions
 
         // Renderer pour les actions
-        table.getColumnModel().getColumn(2).setCellRenderer(new ActionsCellRenderer());
-        table.getColumnModel().getColumn(2).setCellEditor(new ActionsCellEditor());
+        table.getColumnModel().getColumn(3).setCellRenderer(new ActionsCellRenderer());
+        table.getColumnModel().getColumn(3).setCellEditor(new ActionsCellEditor());
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -143,26 +153,15 @@ public class OrdonnanceListUI extends JPanel {
     }
 
     private void wireActions() {
-        btnReset.addActionListener(e -> {
-            txtPatient.setText("");
-            txtDateFrom.setText("");
-            txtDateTo.setText("");
-            refresh();
-        });
-
         btnSearch.addActionListener(e -> refresh());
+        btnAdd.addActionListener(e -> onAddDossier());
     }
 
-    private void onAddOrdonnance() {
-        // Pour l'instant, on utilise une liste vide pour les consultations
-        // TODO: Récupérer la liste réelle des consultations pour le médecin
-        java.util.List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
-        java.util.List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
-        OrdonnanceAddFormUI dialog = new OrdonnanceAddFormUI(
+    private void onAddDossier() {
+        DossierMedicalAddFormUI dialog = new DossierMedicalAddFormUI(
                 (Frame) SwingUtilities.getWindowAncestor(this),
                 controller,
-                consultations,
-                medicaments,
+                patientController,
                 username
         );
         dialog.setVisible(true);
@@ -173,40 +172,16 @@ public class OrdonnanceListUI extends JPanel {
 
     public void refresh() {
         try {
-            OrdonnanceListRequestDTO req = buildRequestFromUI();
-            List<OrdonnanceListItemDTO> list = controller.searchForList(req);
+            DossierListRequestDTO request = new DossierListRequestDTO(
+                    txtPatient.getText().trim().isEmpty() ? null : txtPatient.getText().trim(),
+                    medecinId,
+                    new PageRequestDTO(100, 0)
+            );
+            List<DossierListEnrichedItemDTO> list = controller.searchForList(request);
             model.setRows(list);
         } catch (Exception ex) {
             showError(ex);
         }
-    }
-
-    private OrdonnanceListRequestDTO buildRequestFromUI() {
-        OrdonnanceListRequestDTO req = new OrdonnanceListRequestDTO();
-        req.setMedecinId(medecinId);
-
-        String kw = txtPatient.getText();
-        if (kw != null && !kw.isBlank()) req.setPatientKeyword(kw.trim());
-
-        String d1 = txtDateFrom.getText();
-        if (d1 != null && !d1.isBlank()) {
-            try {
-                req.setDateFrom(LocalDate.parse(d1.trim()));
-            } catch (DateTimeParseException e) {
-                // Ignorer
-            }
-        }
-
-        String d2 = txtDateTo.getText();
-        if (d2 != null && !d2.isBlank()) {
-            try {
-                req.setDateTo(LocalDate.parse(d2.trim()));
-            } catch (DateTimeParseException e) {
-                // Ignorer
-            }
-        }
-
-        return req;
     }
 
     private void showError(Exception ex) {
@@ -221,16 +196,16 @@ public class OrdonnanceListUI extends JPanel {
     // =========================================================
     // Table model
     // =========================================================
-    private class OrdonnanceTableModel extends AbstractTableModel {
-        private final String[] cols = {"Nom du patient", "Date", "Actions"};
-        private List<OrdonnanceListItemDTO> rows = new ArrayList<>();
+    private class DossierMedicalTableModel extends AbstractTableModel {
+        private final String[] cols = {"Nom", "Téléphone", "Dernière consultation", "Actions"};
+        private List<DossierListEnrichedItemDTO> rows = new ArrayList<>();
 
-        void setRows(List<OrdonnanceListItemDTO> data) {
+        void setRows(List<DossierListEnrichedItemDTO> data) {
             this.rows = (data == null) ? new ArrayList<>() : new ArrayList<>(data);
             fireTableDataChanged();
         }
 
-        OrdonnanceListItemDTO getAt(int row) {
+        DossierListEnrichedItemDTO getAt(int row) {
             if (row < 0 || row >= rows.size()) return null;
             return rows.get(row);
         }
@@ -238,16 +213,23 @@ public class OrdonnanceListUI extends JPanel {
         @Override public int getRowCount() { return rows.size(); }
         @Override public int getColumnCount() { return cols.length; }
         @Override public String getColumnName(int col) { return cols[col]; }
-        @Override public boolean isCellEditable(int row, int col) { return col == 2; }
+        @Override public boolean isCellEditable(int row, int col) { return col == 3; }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            OrdonnanceListItemDTO r = rows.get(rowIndex);
+            DossierListEnrichedItemDTO r = rows.get(rowIndex);
             if (r == null) return "";
             return switch (columnIndex) {
-                case 0 -> r.getPatientNomComplet() == null ? "" : r.getPatientNomComplet();
-                case 1 -> r.getDate() == null ? "" : r.getDate().format(DATE_FMT);
-                case 2 -> ""; // actions renderer
+                case 0 -> r.getPatientNomComplet() != null ? r.getPatientNomComplet() : "";
+                case 1 -> r.getPatientTelephone() != null ? r.getPatientTelephone() : "";
+                case 2 -> {
+                    if (r.getDerniereConsultation() != null && r.getDerniereConsultationId() != null) {
+                        yield "Consultation #" + r.getDerniereConsultationId() + " - " +
+                                r.getDerniereConsultation().format(DATE_FMT);
+                    }
+                    yield "";
+                }
+                case 3 -> ""; // actions renderer
                 default -> "";
             };
         }
@@ -279,7 +261,7 @@ public class OrdonnanceListUI extends JPanel {
         }
     }
 
-    private class ActionsCellEditor extends AbstractCellEditor implements TableCellEditor {
+    private class ActionsCellEditor extends javax.swing.AbstractCellEditor implements TableCellEditor {
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
         private final JButton b1 = new JButton("Consulter");
         private final JButton b2 = new JButton("Modifier");
@@ -304,7 +286,7 @@ public class OrdonnanceListUI extends JPanel {
             ));
 
             b2.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré
-            b2.setForeground(Color.WHITE);
+            b2.setForeground(new Color(0x1C, 0x25, 0x41));
             b2.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
                     new EmptyBorder(4, 8, 4, 8)
@@ -319,40 +301,48 @@ public class OrdonnanceListUI extends JPanel {
 
             b1.addActionListener(e -> {
                 stopCellEditing();
-                OrdonnanceListItemDTO r = model.getAt(currentRow);
+                DossierListEnrichedItemDTO r = model.getAt(currentRow);
                 if (r == null) return;
-                // Ouvrir l'interface de consultation
-                JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(OrdonnanceListUI.this),
-                        "Consultation de l'ordonnance", true);
-                OrdonnanceDetailUI detailUI = new OrdonnanceDetailUI(controller, r.getOrdonnanceId(), () -> dialog.dispose());
-                dialog.setContentPane(detailUI);
-                dialog.setSize(900, 700);
-                dialog.setLocationRelativeTo(OrdonnanceListUI.this);
+                
+                JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(DossierMedicalListUI.this),
+                        "Détails du dossier médical", true);
+                dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                dialog.setLayout(new BorderLayout());
+
+                DossierMedicalDetailUI detailUI = new DossierMedicalDetailUI(
+                        controller,
+                        r.getDossierId(),
+                        () -> dialog.dispose()
+                );
+                dialog.add(detailUI, BorderLayout.CENTER);
+
+                dialog.pack();
+                dialog.setSize(1200, 800);
+                dialog.setLocationRelativeTo(DossierMedicalListUI.this);
                 dialog.setVisible(true);
             });
 
             b2.addActionListener(e -> {
                 stopCellEditing();
-                OrdonnanceListItemDTO r = model.getAt(currentRow);
+                DossierListEnrichedItemDTO r = model.getAt(currentRow);
                 if (r == null) return;
                 
+                // Récupérer le dossier pour modification
                 try {
-                    OrdonnanceDTO ordonnanceDTO = controller.getById(r.getOrdonnanceId());
-                    if (ordonnanceDTO == null) {
-                        JOptionPane.showMessageDialog(OrdonnanceListUI.this,
-                                "Ordonnance introuvable",
-                                "Erreur",
-                                JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
+                    ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierDetailEnrichedDTO detail = 
+                            controller.getDetail(r.getDossierId());
                     
-                    // TODO: Créer un formulaire de modification OrdonnanceEditFormUI si nécessaire
-                    // Pour l'instant, on affiche un message
-                    JOptionPane.showMessageDialog(OrdonnanceListUI.this,
-                            "Modification de l'ordonnance #" + r.getOrdonnanceId() + "\n" +
-                            "Fonctionnalité à implémenter (formulaire de modification)",
-                            "Information",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    DossierMedicalAddFormUI dialog = new DossierMedicalAddFormUI(
+                            (Frame) SwingUtilities.getWindowAncestor(DossierMedicalListUI.this),
+                            controller,
+                            patientController,
+                            username,
+                            detail.dossier()
+                    );
+                    dialog.setVisible(true);
+                    if (dialog.isConfirmed()) {
+                        refresh();
+                    }
                 } catch (Exception ex) {
                     showError(ex);
                 }
@@ -360,21 +350,21 @@ public class OrdonnanceListUI extends JPanel {
 
             b3.addActionListener(e -> {
                 stopCellEditing();
-                OrdonnanceListItemDTO r = model.getAt(currentRow);
+                DossierListEnrichedItemDTO r = model.getAt(currentRow);
                 if (r == null) return;
                 int ok = JOptionPane.showConfirmDialog(
-                        OrdonnanceListUI.this,
-                        "Supprimer l'ordonnance #" + r.getOrdonnanceId() + " ?",
+                        DossierMedicalListUI.this,
+                        "Supprimer le dossier de \"" + r.getPatientNomComplet() + "\" ?",
                         "Confirmation",
                         JOptionPane.YES_NO_OPTION
                 );
                 if (ok != JOptionPane.YES_OPTION) return;
 
                 try {
-                    controller.delete(r.getOrdonnanceId());
+                    controller.delete(r.getDossierId(), username);
                     refresh();
-                    JOptionPane.showMessageDialog(OrdonnanceListUI.this,
-                            "Ordonnance supprimée avec succès",
+                    JOptionPane.showMessageDialog(DossierMedicalListUI.this,
+                            "Dossier supprimé avec succès",
                             "Succès",
                             JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {

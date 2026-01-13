@@ -2,11 +2,12 @@ package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListItemDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListRequestDTO;
 import ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepository;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -322,5 +323,172 @@ public class OrdonnanceRepositoryImpl implements OrdonnanceRepository {
         }
 
         return list;
+    }
+
+    // =========================================================================================
+    // Méthodes pour la liste avec nom du patient (JOIN)
+    // =========================================================================================
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    private static void bindParams(PreparedStatement ps, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            Object p = params.get(i);
+            int idx = i + 1;
+            if (p == null) {
+                ps.setNull(idx, Types.VARCHAR);
+            } else if (p instanceof String) {
+                ps.setString(idx, (String) p);
+            } else if (p instanceof Long) {
+                ps.setLong(idx, (Long) p);
+            } else if (p instanceof Integer) {
+                ps.setInt(idx, (Integer) p);
+            } else if (p instanceof LocalDate) {
+                ps.setDate(idx, Date.valueOf((LocalDate) p));
+            } else if (p instanceof Date) {
+                ps.setDate(idx, (Date) p);
+            } else {
+                ps.setObject(idx, p);
+            }
+        }
+    }
+
+    @Override
+    public List<OrdonnanceListItemDTO> searchForList(OrdonnanceListRequestDTO req) {
+        if (req == null) throw new IllegalArgumentException("OrdonnanceListRequestDTO null");
+        if (req.getMedecinId() == null) throw new IllegalArgumentException("medecinId obligatoire pour 'Mes ordonnances'");
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT
+          o.id AS ordonnance_id,
+          o.dossier_id AS dossier_id,
+          o.consultation_id AS consultation_id,
+          o.date_ordo AS date_ordo,
+          p.id AS patient_id,
+          CONCAT(p.nom, ' ', p.prenom) AS patient_nom_complet
+        FROM ordonnance o
+        JOIN dossier_medical d ON d.id = o.dossier_id
+        JOIN patient p ON p.id = d.patient_id
+        WHERE d.medecin_id = ?
+    """);
+
+        List<Object> params = new ArrayList<>();
+        params.add(req.getMedecinId());
+
+        // Filtre patientKeyword
+        if (!isBlank(req.getPatientKeyword())) {
+            sql.append("""
+            AND (
+                 LOWER(p.nom) LIKE ?
+              OR LOWER(p.prenom) LIKE ?
+              OR LOWER(CONCAT(p.nom,' ',p.prenom)) LIKE ?
+            )
+        """);
+            String kw = "%" + req.getPatientKeyword().trim().toLowerCase() + "%";
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        // Filtre date
+        if (req.getDateFrom() != null) {
+            sql.append(" AND o.date_ordo >= ? ");
+            params.add(req.getDateFrom());
+        }
+        if (req.getDateTo() != null) {
+            sql.append(" AND o.date_ordo <= ? ");
+            params.add(req.getDateTo());
+        }
+
+        sql.append(" ORDER BY o.date_ordo DESC, o.id DESC ");
+
+        List<OrdonnanceListItemDTO> out = new ArrayList<>();
+
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql.toString())) {
+
+            bindParams(ps, params);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrdonnanceListItemDTO dto = new OrdonnanceListItemDTO();
+
+                    dto.setOrdonnanceId(rs.getLong("ordonnance_id"));
+                    dto.setDossierId(rs.getLong("dossier_id"));
+
+                    long cid = rs.getLong("consultation_id");
+                    dto.setConsultationId(rs.wasNull() ? null : cid);
+
+                    Date d = rs.getDate("date_ordo");
+                    dto.setDate(d != null ? d.toLocalDate() : null);
+
+                    dto.setPatientId(rs.getLong("patient_id"));
+                    dto.setPatientNomComplet(rs.getString("patient_nom_complet"));
+
+                    out.add(dto);
+                }
+            }
+
+            return out;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Ordonnance.searchForList()", e);
+        }
+    }
+
+    @Override
+    public long countForList(OrdonnanceListRequestDTO req) {
+        if (req == null) throw new IllegalArgumentException("OrdonnanceListRequestDTO null");
+        if (req.getMedecinId() == null) throw new IllegalArgumentException("medecinId obligatoire pour 'Mes ordonnances'");
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM ordonnance o
+        JOIN dossier_medical d ON d.id = o.dossier_id
+        JOIN patient p ON p.id = d.patient_id
+        WHERE d.medecin_id = ?
+    """);
+
+        List<Object> params = new ArrayList<>();
+        params.add(req.getMedecinId());
+
+        if (!isBlank(req.getPatientKeyword())) {
+            sql.append("""
+            AND (
+                 LOWER(p.nom) LIKE ?
+              OR LOWER(p.prenom) LIKE ?
+              OR LOWER(CONCAT(p.nom,' ',p.prenom)) LIKE ?
+            )
+        """);
+            String kw = "%" + req.getPatientKeyword().trim().toLowerCase() + "%";
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if (req.getDateFrom() != null) {
+            sql.append(" AND o.date_ordo >= ? ");
+            params.add(req.getDateFrom());
+        }
+        if (req.getDateTo() != null) {
+            sql.append(" AND o.date_ordo <= ? ");
+            params.add(req.getDateTo());
+        }
+
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql.toString())) {
+
+            bindParams(ps, params);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getLong(1);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur SQL: Ordonnance.countForList()", e);
+        }
     }
 }

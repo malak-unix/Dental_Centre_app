@@ -1,7 +1,6 @@
 package ma.dentalTech.mvc.dto.dossierMedicale.consultation;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import ma.dentalTech.entities.enums.StatutConsultation;

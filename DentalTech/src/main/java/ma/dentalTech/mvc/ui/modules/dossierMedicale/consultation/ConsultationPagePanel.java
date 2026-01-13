@@ -2,22 +2,26 @@ package ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation;
 
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController;
+import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.Frame;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Page Swing: Liste des consultations (filtre statut, date, patient) + actions.
@@ -29,6 +33,7 @@ public class ConsultationPagePanel extends JPanel {
 
     private final ConsultationController controller;
     private final Long medecinId;
+    private final String username; // Username du médecin pour créer les consultations
 
     private final JTextField txtPatient = new JTextField();
     private final JTextField txtDate = new JTextField(); // yyyy-MM-dd
@@ -42,13 +47,19 @@ public class ConsultationPagePanel extends JPanel {
 
     private final JButton btnSearch = new JButton("Rechercher");
     private final JButton btnReset = new JButton("Actualiser");
+    private final JButton btnAdd = new JButton("+ Ajouter une consultation");
 
     private final ConsultationTableModel model = new ConsultationTableModel();
     private final JTable table = new JTable(model);
 
     public ConsultationPagePanel(ConsultationController controller, Long medecinId) {
+        this(controller, medecinId, "medecin"); // Default username
+    }
+
+    public ConsultationPagePanel(ConsultationController controller, Long medecinId, String username) {
         this.controller = controller;
         this.medecinId = medecinId;
+        this.username = username != null ? username : "medecin";
 
         setLayout(new BorderLayout());
         setOpaque(false);
@@ -70,10 +81,29 @@ public class ConsultationPagePanel extends JPanel {
         wrap.setOpaque(false);
         wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
 
-        JLabel title = new JLabel("Consultations");
+        // Titre avec bouton "Ajouter"
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setOpaque(false);
+        titlePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel title = new JLabel("Mes consultations");
         title.setFont(DentalTheme.titleFont(22));
         title.setForeground(DentalTheme.TEXT2);
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Bouton "+ Ajouter une consultation" (selon maquette)
+        btnAdd.setFont(DentalTheme.textBold(13));
+        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé selon maquette
+        btnAdd.setForeground(Color.WHITE);
+        btnAdd.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2), // Bordure dorée
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+        btnAdd.setFocusPainted(false);
+        btnAdd.setPreferredSize(new Dimension(220, 40));
+        btnAdd.addActionListener(e -> onAddConsultation());
+
+        titlePanel.add(title, BorderLayout.WEST);
+        titlePanel.add(btnAdd, BorderLayout.EAST);
 
         JPanel filters = new JPanel(new GridBagLayout());
         filters.setOpaque(false);
@@ -123,7 +153,7 @@ public class ConsultationPagePanel extends JPanel {
         line.add(filters, BorderLayout.CENTER);
         line.add(actions, BorderLayout.EAST);
 
-        wrap.add(title);
+        wrap.add(titlePanel);
         wrap.add(Box.createVerticalStrut(10));
         wrap.add(line);
         return wrap;
@@ -156,6 +186,28 @@ public class ConsultationPagePanel extends JPanel {
         });
 
         btnSearch.addActionListener(e -> refresh());
+    }
+
+    private void onAddConsultation() {
+        // Pour l'instant, on utilise une liste vide pour les dossiers
+        // TODO: Récupérer la liste réelle des dossiers médicaux pour le médecin
+        java.util.List<ConsultationAddFormUI.DossierComboItem> dossiers = new ArrayList<>();
+
+        Optional<ConsultationDTO> result = ConsultationAddFormUI.showDialog(this, dossiers);
+
+        if (result.isPresent()) {
+            try {
+                ConsultationDTO consultation = result.get();
+                Long consultationId = controller.create(consultation, username);
+                JOptionPane.showMessageDialog(this,
+                        "Consultation créée avec succès (ID: " + consultationId + ")",
+                        "Succès",
+                        JOptionPane.INFORMATION_MESSAGE);
+                refresh(); // Rafraîchir la liste
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        }
     }
 
     public void refresh() {
@@ -307,11 +359,47 @@ public class ConsultationPagePanel extends JPanel {
                 panel.add(b);
             }
 
+            // Style des boutons selon la maquette
+            b1.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé
+            b1.setForeground(Color.WHITE);
+            b1.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
+                    new EmptyBorder(4, 8, 4, 8)
+            ));
+
+            b2.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré
+            b2.setForeground(Color.WHITE);
+            b2.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
+                    new EmptyBorder(4, 8, 4, 8)
+            ));
+
+            b3.setBackground(new Color(0xDC, 0x35, 0x45)); // Rouge
+            b3.setForeground(Color.WHITE);
+            b3.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xDC, 0x35, 0x45), 1),
+                    new EmptyBorder(4, 8, 4, 8)
+            ));
+
+            b4.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré pour Facture
+            b4.setForeground(Color.WHITE);
+            b4.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
+                    new EmptyBorder(4, 8, 4, 8)
+            ));
+
             b1.addActionListener(e -> {
                 stopCellEditing();
                 ConsultationListItemDTO r = model.getAt(currentRow);
-                JOptionPane.showMessageDialog(ConsultationPagePanel.this,
-                        "À brancher: consulter consultation id=" + (r == null ? null : r.getConsultationId()));
+                if (r == null) return;
+                // Ouvrir l'interface de consultation
+                JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(ConsultationPagePanel.this),
+                        "Détails de la consultation", true);
+                ConsultationDetailUI detailUI = new ConsultationDetailUI(controller, r.getConsultationId(), () -> dialog.dispose());
+                dialog.setContentPane(detailUI);
+                dialog.setSize(1000, 700);
+                dialog.setLocationRelativeTo(ConsultationPagePanel.this);
+                dialog.setVisible(true);
             });
 
             b2.addActionListener(e -> {

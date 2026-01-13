@@ -2,6 +2,12 @@ package ma.dentalTech.mvc.ui;
 
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.LibelleRole;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.CertificatController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.SituationFinanciereController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
@@ -9,6 +15,12 @@ import ma.dentalTech.mvc.ui.common.NavButton;
 import ma.dentalTech.mvc.ui.modules.agenda.AgendaHomePanel;
 import ma.dentalTech.mvc.ui.modules.caisse.CaisseMainPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.DashboardMainPanel;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeListUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.certificat.CertificatListUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation.ConsultationPagePanel;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance.OrdonnanceListUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.situationFinanciere.SituationFinanciereListUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier.DossierMedicalListUI;
 import ma.dentalTech.mvc.ui.modules.patient.PatientView;
 
 import javax.swing.*;
@@ -69,11 +81,12 @@ public class MainFrame extends JFrame {
 
         if (this.role == LibelleRole.MEDECIN) {
             addPage("myPatients", buildPlaceholder("Mes patients (à brancher)"));
-            addPage("consultations", buildPlaceholder("Mes consultations (à brancher)"));
-            addPage("ordonnances", buildPlaceholder("Ordonnances (à brancher)"));
-            addPage("dossiers", buildPlaceholder("Les dossiers (à brancher)"));
-            addPage("certificats", buildPlaceholder("Certificats (à brancher)"));
-            addPage("situation", buildPlaceholder("Situation financière (à brancher)"));
+            addPage("consultations", buildConsultationsPage());
+            addPage("ordonnances", buildOrdonnancesPage());
+            addPage("dossiers", buildDossiersPage());
+            addPage("certificats", buildCertificatsPage());
+            addPage("actes", buildActesPage());
+            addPage("situation", buildSituationFinancierePage());
         }
 
         if (this.role == LibelleRole.ADMIN) {
@@ -158,6 +171,8 @@ public class MainFrame extends JFrame {
             navCard.add(Box.createVerticalStrut(8));
             navCard.add(makeNav("Certificats", "certificats"));
             navCard.add(Box.createVerticalStrut(8));
+            navCard.add(makeNav("Actes", "actes"));
+            navCard.add(Box.createVerticalStrut(8));
             navCard.add(makeNav("Situation financière", "situation"));
         }
 
@@ -237,6 +252,110 @@ public class MainFrame extends JFrame {
         JPanel wrap = new JPanel(new BorderLayout());
         wrap.setOpaque(false);
         wrap.add(new AgendaHomePanel(), BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildConsultationsPage() {
+        Object bean = ApplicationContext.getBean("consultationController");
+        if (!(bean instanceof ConsultationController controller)) {
+            return buildPlaceholder("❌ consultationController introuvable dans ApplicationContext");
+        }
+
+        // Utiliser currentUserId comme medecinId (à ajuster selon votre logique)
+        Long medecinId = this.currentUserId;
+        String username = "medecin_" + medecinId; // TODO: récupérer depuis la session
+
+        ConsultationPagePanel panel = new ConsultationPagePanel(controller, medecinId, username);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(panel, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildCertificatsPage() {
+        Object bean = ApplicationContext.getBean("certificatController");
+        if (!(bean instanceof CertificatController controller)) {
+            return buildPlaceholder("❌ certificatController introuvable dans ApplicationContext");
+        }
+
+        // Utiliser currentUserId comme medecinId (à ajuster selon votre logique)
+        Long medecinId = this.currentUserId;
+        String username = "medecin_" + medecinId; // TODO: récupérer depuis la session
+
+        CertificatListUI panel = new CertificatListUI(controller, medecinId, username);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(panel, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildOrdonnancesPage() {
+        Object bean = ApplicationContext.getBean("ordonnanceController");
+        if (!(bean instanceof OrdonnanceController controller)) {
+            return buildPlaceholder("❌ ordonnanceController introuvable dans ApplicationContext");
+        }
+
+        // Utiliser currentUserId comme medecinId (à ajuster selon votre logique)
+        Long medecinId = this.currentUserId;
+        String username = "medecin_" + medecinId; // TODO: récupérer depuis la session
+
+        OrdonnanceListUI panel = new OrdonnanceListUI(controller, medecinId, username);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(panel, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildActesPage() {
+        Object bean = ApplicationContext.getBean("acteController");
+        if (!(bean instanceof ActeController controller)) {
+            return buildPlaceholder("❌ acteController introuvable dans ApplicationContext");
+        }
+
+        String username = "medecin_" + this.currentUserId; // TODO: récupérer depuis la session
+
+        ActeListUI panel = new ActeListUI(controller, username);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(panel, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildSituationFinancierePage() {
+        Object bean = ApplicationContext.getBean("situationFinanciereController");
+        if (!(bean instanceof SituationFinanciereController controller)) {
+            return buildPlaceholder("❌ situationFinanciereController introuvable dans ApplicationContext");
+        }
+
+        Long medecinId = this.currentUserId;
+        String username = "medecin_" + medecinId; // TODO: récupérer depuis la session
+
+        SituationFinanciereListUI panel = new SituationFinanciereListUI(controller, medecinId, username);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(panel, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JComponent buildDossiersPage() {
+        Object bean = ApplicationContext.getBean("dossierMedicalController");
+        if (!(bean instanceof DossierMedicalController controller)) {
+            return buildPlaceholder("❌ dossierMedicalController introuvable dans ApplicationContext");
+        }
+
+        Long medecinId = this.currentUserId; // null pour voir tous les dossiers, ou this.currentUserId pour filtrer
+        String username = "medecin_" + medecinId; // TODO: récupérer depuis la session
+
+        DossierMedicalListUI panel = new DossierMedicalListUI(controller, medecinId, username);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(panel, BorderLayout.CENTER);
         return wrap;
     }
 }
