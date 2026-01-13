@@ -8,6 +8,7 @@ import ma.dentalTech.mvc.ui.modules.agenda.AgendaHomePanel;
 import ma.dentalTech.mvc.ui.modules.agenda.ListeAttentePagePanel;
 import ma.dentalTech.mvc.ui.modules.agenda.RdvPagePanel;
 import ma.dentalTech.mvc.ui.modules.caisse.CaisseMainPanel;
+import ma.dentalTech.mvc.ui.modules.dashboard.DashboardMainPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.admin.AdminDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.medecin.MedecinDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.secretaire.SecretaireDashboardPanel;
@@ -17,8 +18,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import ma.dentalTech.service.modules.dashboard.api.DashboardService;
-import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
+
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier.DossierMedicalListUI;
 
 public class MainFrame extends JFrame {
 
@@ -100,16 +102,16 @@ public class MainFrame extends JFrame {
 
 
     private void buildPages() {
+
         // Dashboard selon rôle (réel)
         addPage("dashboard", buildDashboardByRole());
 
         // Secrétaire (réel)
         addPage("patients", buildPatientPage());
         addPage("rdv", new RdvPagePanel());
+        addPage("dossiers", buildDossiersPage());
         addPage("caisse", new CaisseMainPanel(role, userId));
         addPage("agenda_med", buildAgendaPage());
-
-        // Liste d’attente (si vous voulez la brancher plus tard dans le menu)
         addPage("liste_attente", new ListeAttentePagePanel());
 
         // Placeholders (modules collègues / à brancher plus tard)
@@ -121,21 +123,20 @@ public class MainFrame extends JFrame {
         addPage("certificats", buildPlaceholder("Certificats (à brancher)"));
         addPage("situation_fin", buildPlaceholder("Situation financière (à brancher)"));
 
+
         // Admin (placeholders)
         addPage("utilisateurs", buildPlaceholder("Utilisateurs (à brancher)"));
         addPage("referentiels", buildPlaceholder("Référentiels (à brancher)"));
         addPage("sauvegardes", buildPlaceholder("Sauvegardes (à brancher)"));
         addPage("roles", buildPlaceholder("Rôles (à brancher)"));
+
     }
-
     private JComponent buildDashboardByRole() {
-        var dashboardController = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class);
+        var dashboardController =
+                ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class);
 
-        return switch (role) {
-            case SECRETAIRE -> new SecretaireDashboardPanel(userId, dashboardController, this::showPage);
-            case MEDECIN    -> new MedecinDashboardPanel(userId, dashboardController, this::showPage);
-            case ADMIN      -> new AdminDashboardPanel(userId, dashboardController, this::showPage);
-        };
+        return new DashboardMainPanel(role, userId, dashboardController, this::showPage);
+
     }
 
 
@@ -197,4 +198,16 @@ public class MainFrame extends JFrame {
         p.add(card, BorderLayout.CENTER);
         return p;
     }
+
+    private JComponent buildDossiersPage() {
+        DossierMedicalController controller = ApplicationContext.getBean(DossierMedicalController.class);
+
+        // Pour médecin : on filtre par medecinId = userId
+        // Pour secrétaire/admin : on affiche tous les dossiers (medecinId = null)
+        Long medecinId = (role != null && role.name().equals("MEDECIN")) ? userId : null;
+
+        // username = ce qui est affiché comme auteur (créé par / modifié par)
+        return new DossierMedicalListUI(controller, medecinId, fullName);
+    }
+
 }

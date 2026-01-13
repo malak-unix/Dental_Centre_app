@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.test;
 
 import ma.dentalTech.entities.agenda.*;
+import ma.dentalTech.entities.cabinet.Facture;
+import ma.dentalTech.entities.cabinet.SituationFinanciere;
 import ma.dentalTech.entities.patient.*;
 import ma.dentalTech.entities.enums.*;
 
@@ -13,8 +15,16 @@ import ma.dentalTech.repository.modules.agenda.impl.*;
 import ma.dentalTech.repository.modules.patient.api.*;
 import ma.dentalTech.repository.modules.patient.impl.*;
 
+import ma.dentalTech.entities.cabinet.*;
+import ma.dentalTech.entities.enums.StatutFacture;
+import ma.dentalTech.entities.enums.StatutSituationFinanciere;
+
+import java.time.LocalDateTime;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.repository.modules.caisse.api.*;
 
 public class TestRepo {
 
@@ -30,6 +40,19 @@ public class TestRepo {
     private final OrdonnanceRepository ordonnanceRepo = new OrdonnanceRepositoryImpl();
     private final MedicamentRepository medicamentRepo = new MedicamentRepositoryImpl();
     private final PrescriptionRepository prescriptionRepo = new PrescriptionRepositoryImpl();
+
+    // ==========================
+    // Repos (caisse)
+    // ==========================
+
+    private final FactureRepository factureRepo =
+            ApplicationContext.getBean(FactureRepository.class);
+    private final ChargesRepository chargesRepo =
+            ApplicationContext.getBean(ChargesRepository.class);
+    private final RevenuesRepository revenusRepo =
+            ApplicationContext.getBean(RevenuesRepository.class);
+    private final SituationFinanciereRepository sitRepo =
+            ApplicationContext.getBean(SituationFinanciereRepository.class);
 
     // ==========================
     // Repos (agenda)
@@ -220,6 +243,98 @@ public class TestRepo {
         listeAttenteRepo.findAll().forEach(l -> listeAttenteRepo.deleteById(l.getId()));
         System.out.println("🧹 Agenda supprimé");
     }
+    // =========================================================
+// TEST CAISSE - CHARGES CRUD
+// =========================================================
+    void testChargesCrud() {
+        System.out.println("\n=== TEST CHARGES CRUD ===");
+
+        Charges c = Charges.builder()
+                .cabinetId(1L)
+                .titre("Charge TEST")
+                .description("Desc charge test")
+                .montant(123.45)
+                .dateCharge(LocalDateTime.now())
+                .creePar("TEST")
+                .modifiePar("TEST")
+                .build();
+
+        chargesRepo.create(c);
+        System.out.println("✅ Charge créée id=" + c.getId());
+
+        Charges read = chargesRepo.findById(c.getId());
+        System.out.println("✅ Read charge=" + read);
+
+        read.setMontant(200.0);
+        read.setModifiePar("TEST");
+        chargesRepo.update(read);
+        System.out.println("✅ Update OK");
+
+        chargesRepo.deleteById(read.getId());
+        System.out.println("✅ Delete OK");
+    }
+
+    // =========================================================
+// TEST CAISSE - REVENUS CRUD
+// =========================================================
+    void testRevenusCrud() {
+        System.out.println("\n=== TEST REVENUS CRUD ===");
+
+        Revenues r = Revenues.builder()
+                .cabinetId(1L)
+                .titre("Revenu TEST")
+                .description("Desc revenu test")
+                .montant(500.0)
+                .dateRevenu(LocalDateTime.now())
+                .creePar("TEST")
+                .modifiePar("TEST")
+                .build();
+
+        revenusRepo.create(r);
+        System.out.println("✅ Revenu créé id=" + r.getId());
+
+        Revenues read = revenusRepo.findById(r.getId());
+        System.out.println("✅ Read revenu=" + read);
+
+        read.setMontant(700.0);
+        read.setModifiePar("TEST");
+        revenusRepo.update(read);
+        System.out.println("✅ Update OK");
+
+        revenusRepo.deleteById(read.getId());
+        System.out.println("✅ Delete OK");
+    }
+
+    // =========================================================
+// TEST CAISSE - FACTURE (read + paiement) + SITUATION FIN
+// =========================================================
+    void testFactureEtSituation() {
+        System.out.println("\n=== TEST FACTURE + SITUATION FINANCIERE ===");
+
+        // On évite de CREATE facture (FK consultation), on teste sur la seed (id=1)
+        Facture f = factureRepo.findById(1L);
+        System.out.println("✅ Facture seed id=1 : " + f);
+
+        // Test paiement (updatePayment)
+        boolean ok = factureRepo.updatePayment(
+                1L,
+                999.0,
+                StatutFacture.PAYEE,
+                "TEST"
+        );
+        System.out.println("✅ updatePayment OK ? " + ok);
+
+        // Situation financière (seed)
+        SituationFinanciere s = sitRepo.findById(1L);
+        System.out.println("✅ Situation seed id=1 : " + s);
+
+        SituationFinanciere byDossier = sitRepo.findByDossierId(1L);
+        System.out.println("✅ Situation byDossierId(1) : " + byDossier);
+
+        SituationFinanciere last = sitRepo.findLast();
+        System.out.println("✅ Situation findLast : " + last);
+    }
+
 
     // =========================================================
     // MAIN (ordre PROF)
@@ -228,6 +343,9 @@ public class TestRepo {
 
         TestRepo t = new TestRepo();
 
+        t.testChargesCrud();
+        t.testRevenusCrud();
+        t.testFactureEtSituation();
         t.insertPatientAntecedent();
         t.testAntecedentCrud();
 
