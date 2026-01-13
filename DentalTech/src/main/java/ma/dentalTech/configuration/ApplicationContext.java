@@ -5,6 +5,7 @@ import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
 import ma.dentalTech.repository.common.RowMappers;
 
 import ma.dentalTech.repository.modules.patient.api.*;
+import ma.dentalTech.repository.modules.users.api.*;
 import ma.dentalTech.service.modules.patient.api.*;
 
 import ma.dentalTech.repository.modules.caisse.api.*;
@@ -14,11 +15,14 @@ import ma.dentalTech.service.modules.caisse.impl.*;
 import ma.dentalTech.repository.modules.agenda.api.*;
 import ma.dentalTech.service.modules.agenda.api.*;
 
-import ma.dentalTech.repository.modules.users.api.NotificationRepository;
-import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
-
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
+//ajouté par jihane
+import ma.dentalTech.common.utilitaire.RepoFactory;
 
+import ma.dentalTech.service.modules.auth.api.AuthService;
+import ma.dentalTech.service.modules.auth.api.LoginFormValidator;
+import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
+//
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
@@ -366,6 +370,33 @@ public final class ApplicationContext {
             NotificationRepository notificationRepo = null;
             UtilisateurRepository utilisateurRepo = null;
 
+            // ajouté par jihane (3lignes)
+            RoleRepository roleRepo = null;
+            MedecinRepository medecinRepo = null;
+            SecretaireRepository secretaireRepo = null;
+            // ajouté par jihane (safe)
+            if (hasKey(props, "roleRepo")) {
+                currentBean = "roleRepo";
+                roleRepo = newRepoInstance(props, "roleRepo", RoleRepository.class, known);
+                put(RoleRepository.class, roleRepo, "roleRepo");
+                registerKnown(known, roleRepo);
+            }
+
+            if (hasKey(props, "medecinRepo")) {
+                currentBean = "medecinRepo";
+                medecinRepo = newRepoInstance(props, "medecinRepo", MedecinRepository.class, known);
+                put(MedecinRepository.class, medecinRepo, "medecinRepo");
+                registerKnown(known, medecinRepo);
+            }
+
+            if (hasKey(props, "secretaireRepo")) {
+                currentBean = "secretaireRepo";
+                secretaireRepo = newRepoInstance(props, "secretaireRepo", SecretaireRepository.class, known);
+                put(SecretaireRepository.class, secretaireRepo, "secretaireRepo");
+                registerKnown(known, secretaireRepo);
+            }
+            //
+
             if (hasKey(props, "notificationRepo")) {
                 currentBean = "notificationRepo";
                 notificationRepo = newRepoInstance(props, "notificationRepo", NotificationRepository.class, known);
@@ -379,6 +410,100 @@ public final class ApplicationContext {
                 put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
                 registerKnown(known, utilisateurRepo);
             }
+            //jihane
+            // =========================================================
+            // USERS : service (Management)
+            // =========================================================
+            if (hasKey(props, "userManagementService")) {
+                currentBean = "userManagementService";
+
+                // Factories (Connection -> RepoImpl)
+                RepoFactory<UtilisateurRepository> userFactory =
+                        ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
+
+                RepoFactory<MedecinRepository> medecinFactory =
+                        ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl::new;
+
+                RepoFactory<SecretaireRepository> secretaireFactory =
+                        ma.dentalTech.repository.modules.users.impl.SecretaireRepositoryImpl::new;
+
+                RepoFactory<RoleRepository> roleFactory =
+                        ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
+
+                PasswordEncoder encoder;
+                Object encObj = contextByName.get("authEncoder");
+                if (encObj instanceof PasswordEncoder) {
+                    encoder = (PasswordEncoder) encObj;
+                } else {
+                    encoder = new ma.dentalTech.service.modules.auth.impl.PasswordEncoderImpl();
+                }
+
+                ma.dentalTech.service.modules.users.api.UserManagementService userManagementService =
+                        new ma.dentalTech.service.modules.users.impl.UserManagementServiceImpl(
+                                userFactory, medecinFactory, secretaireFactory, roleFactory, encoder
+                        );
+
+                contextByName.put("userManagementService", userManagementService);
+                registerKnown(known, userManagementService);
+            }
+            if (hasKey(props, "userManagementController")
+                    && contextByName.containsKey("userManagementService")) {
+
+                currentBean = "userManagementController";
+
+                Object userCtrl = newFlexibleInstance(
+                        props.getProperty("userManagementController"),
+                        known,
+                        contextByName.get("userManagementService")
+                );
+
+                contextByName.put("userManagementController", userCtrl);
+                registerKnown(known, userCtrl);
+            }
+
+            //ajouté par jihane
+            // =========================================================
+            // AUTH : validator -> encoder -> service -> controller
+            // =========================================================
+            if (hasKey(props, "authValidator") && hasKey(props, "authEncoder")
+                    && hasKey(props, "authService") && hasKey(props, "authController")) {
+
+                currentBean = "authValidator";
+                LoginFormValidator authValidator = newServiceInstance(props, "authValidator", LoginFormValidator.class);
+                put(LoginFormValidator.class, authValidator, "authValidator");
+                registerKnown(known, authValidator);
+
+                currentBean = "authEncoder";
+                PasswordEncoder authEncoder = newServiceInstance(props, "authEncoder", PasswordEncoder.class);
+                put(PasswordEncoder.class, authEncoder, "authEncoder");
+                registerKnown(known, authEncoder);
+
+                // Factories repos (Connection -> RepoImpl)
+                RepoFactory<UtilisateurRepository> userFactory =
+                        ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
+
+                RepoFactory<RoleRepository> roleFactory =
+                        ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
+
+                // AuthService (constructeur compat, donc LoginFrame reste intact)
+                currentBean = "authService";
+                AuthService authService = new ma.dentalTech.service.modules.auth.impl.AuthServiceImpl(
+                        userFactory, roleFactory, authValidator, authEncoder
+                );
+                put(AuthService.class, authService, "authService");
+                registerKnown(known, authService);
+
+                // Controller (interface AuthController ne contient que login())
+                currentBean = "authController";
+                Object authController = newFlexibleInstance(
+                        props.getProperty("authController"),
+                        known,
+                        authService
+                );
+                contextByName.put("authController", authController);
+                registerKnown(known, authController);
+            }
+
 
             // =========================================================
             // DASHBOARD : service -> controller (optionnel)
