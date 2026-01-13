@@ -15,7 +15,6 @@ public class RdvControllerImpl implements RdvController {
     private final RdvService service;
     private final PatientRepository patientRepo;
 
-    // ✅ Mets ce constructeur et adapte ApplicationContext (ou beans wiring)
     public RdvControllerImpl(RdvService service, PatientRepository patientRepo) {
         this.service = service;
         this.patientRepo = patientRepo;
@@ -41,6 +40,50 @@ public class RdvControllerImpl implements RdvController {
         return service.getByStatus(statut).stream().map(this::toDto).toList();
     }
 
+    @Override
+    public RdvDto getById(Long id) {
+        RDV r = service.getById(id);
+        if (r == null) throw new IllegalArgumentException("RDV introuvable (id=" + id + ")");
+        return toDto(r);
+    }
+
+    @Override
+    public RdvDto create(RdvDto dto) {
+        RDV r = toEntity(dto);
+        r.setId(null); // création
+        service.create(r);
+        return toDto(r);
+    }
+
+    @Override
+    public RdvDto update(RdvDto dto) {
+        RDV r = toEntity(dto);
+        service.update(r);
+        return toDto(r);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        service.deleteById(id);
+    }
+
+    private RDV toEntity(RdvDto dto) {
+        if (dto == null) throw new IllegalArgumentException("dto null");
+
+        RDV r = new RDV();
+        r.setId(dto.getId());
+        r.setPatientId(dto.getPatientId());
+        r.setDetailJourneeId(dto.getDetailJourneeId());
+        r.setListeAttenteId(dto.getListeAttenteId());
+        r.setDateRdv(dto.getDateRdv());
+        r.setHeure(dto.getHeure());
+        r.setMotif(dto.getMotif());
+        r.setStatut(dto.getStatut());
+        r.setNoteMedecin(dto.getNoteMedecin());
+
+        return r;
+    }
+
     private RdvDto toDto(RDV r) {
         if (r == null) return null;
 
@@ -55,8 +98,7 @@ public class RdvControllerImpl implements RdvController {
                 .patientId(r.getPatientId())
                 .detailJourneeId(r.getDetailJourneeId())
                 .listeAttenteId(r.getListeAttenteId())
-                // typeRdv: si ton entity RDV ne l’a pas -> null
-                .typeRdv(null)
+                .typeRdv(null) // pas dans RDV => on laisse null
                 .dateRdv(r.getDateRdv())
                 .heure(r.getHeure())
                 .motif(r.getMotif())
