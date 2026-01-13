@@ -128,8 +128,8 @@ public class LoginFrame extends JFrame {
         }
 
         // OK -> ouvrir MainFrame(principal)
-        MainFrame main = new MainFrame(res.getPrincipal());
-        main.setVisible(true);
+       // MainFrame main = new MainFrame(res.getPrincipal());
+        //main.setVisible(true);
         dispose();
     }
 }

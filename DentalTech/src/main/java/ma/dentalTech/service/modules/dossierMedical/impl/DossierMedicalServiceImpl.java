@@ -171,7 +171,7 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
     }
 
     private ConsultationDTO toDTO(Consultation c) {
-        return new ConsultationDTO(c.getId(), c.getDossierId(), c.getDate(), c.getStatus(), c.getObservationMedecin());
+        return new ConsultationDTO(c.getId(), c.getDossierId(), c.getDate().toLocalDate(), c.getStatus(), c.getObservationMedecin());
     }
 
     private DocumentMedicalDTO toDTO(DocumentMedical d) {

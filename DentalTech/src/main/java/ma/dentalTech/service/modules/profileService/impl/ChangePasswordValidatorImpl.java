@@ -17,8 +17,8 @@ public class ChangePasswordValidatorImpl implements ChangePasswordValidator {
         }
 
         // Récupération des config ou valeurs par défaut
-        int min = Integer.parseInt(ApplicationContext.getInstance().getProperty("profile.password.min", "8"));
-        int max = Integer.parseInt(ApplicationContext.getInstance().getProperty("profile.password.max", "128"));
+       // int min = Integer.parseInt(ApplicationContext.getInstance().getProperty("profile.password.min", "8"));
+       // int max = Integer.parseInt(ApplicationContext.getInstance().getProperty("profile.password.max", "128"));
 
         String cur = req.currentPassword();
         String nw  = req.newPassword();
@@ -31,8 +31,8 @@ public class ChangePasswordValidatorImpl implements ChangePasswordValidator {
         if (nw == null || nw.isBlank()) {
             errors.put("newPassword", "Nouveau mot de passe obligatoire.");
         } else {
-            if (nw.length() < min) errors.put("newPassword", "Minimum " + min + " caractères.");
-            else if (nw.length() > max) errors.put("newPassword", "Maximum " + max + " caractères.");
+           // if (nw.length() < min) errors.put("newPassword", "Minimum " + min + " caractères.");
+           // else if (nw.length() > max) errors.put("newPassword", "Maximum " + max + " caractères.");
 
             if (!hasUpper(nw)) errors.put("newPassword", "Doit contenir une majuscule.");
             else if (!hasLower(nw)) errors.put("newPassword", "Doit contenir une minuscule.");

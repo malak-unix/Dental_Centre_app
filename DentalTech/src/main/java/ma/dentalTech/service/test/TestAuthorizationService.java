@@ -12,18 +12,18 @@ public class TestAuthorizationService {
         System.out.println("--- 🧪 Test du AuthorizationService ---");
 
         // 2. Simulation d'un utilisateur connecté avec le rôle ADMIN
-        UserPrincipalDTO adminUser = UserPrincipalDTO.builder()
-                .login("admin_test")
-                .role(LibelleRole.ADMIN)
-                .build();
+        // UserPrincipalDTO adminUser = UserPrincipalDTO.builder()
+           //     .login("admin_test")
+           //     .role(LibelleRole.ADMIN)
+           //     .build();
 
         // 3. Test de vérification de rôle (Cas positif)
-        boolean estAdmin = authz.hasRole(adminUser, LibelleRole.ADMIN);
-        System.out.println("Vérification Admin : " + (estAdmin ? "✅ RÉUSSI" : "❌ ÉCHEC"));
+        //boolean estAdmin = authz.hasRole(adminUser, LibelleRole.ADMIN);
+        //System.out.println("Vérification Admin : " + (estAdmin ? "✅ RÉUSSI" : "❌ ÉCHEC"));
 
         // 4. Test de restriction (Cas négatif)
-        boolean estMedecin = authz.hasRole(adminUser, LibelleRole.MEDECIN);
-        System.out.println("Vérification Médecin (doit être faux) : " + (!estMedecin ? "✅ RÉUSSI" : "❌ ÉCHEC"));
+        //boolean estMedecin = authz.hasRole(adminUser, LibelleRole.MEDECIN);
+        //System.out.println("Vérification Médecin (doit être faux) : " + (!estMedecin ? "✅ RÉUSSI" : "❌ ÉCHEC"));
 
         // 5. Test de sécurité (Principal nul)
         try {

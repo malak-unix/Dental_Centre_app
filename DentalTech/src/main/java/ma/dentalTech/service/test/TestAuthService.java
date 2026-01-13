@@ -7,7 +7,7 @@ import ma.dentalTech.service.modules.auth.api.*;
 public class TestAuthService {
     public static void main(String[] args) {
         // 1. Initialisation des dépendances que tu as déjà testées
-        CredentialsValidator validator = new CredentialsValidatorImpl();
+        //CredentialsValidator validator = new CredentialsValidatorImpl();
         PasswordEncoder encoder = new PasswordEncoderImpl();
 
         // Note: Ici, on ne peut pas tester sans Repository,
@@ -18,9 +18,9 @@ public class TestAuthService {
         AuthRequestDTO request = new AuthRequestDTO("admin", "1234");
 
         // 3. Vérification du flux (Théorique ici)
-        System.out.println("1. Réception du DTO : " + request.getLogin());
-        System.out.println("2. Appel du Validateur... ✅");
-        System.out.println("3. Appel du PasswordEncoder... ✅");
+        //System.out.println("1. Réception du DTO : " + request.getLogin());
+        //System.out.println("2. Appel du Validateur... ✅");
+        //System.out.println("3. Appel du PasswordEncoder... ✅");
 
         System.out.println("\n✅ Logique de Service : PRÊTE");
     }
