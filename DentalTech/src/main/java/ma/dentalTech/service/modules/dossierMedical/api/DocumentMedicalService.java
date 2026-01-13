@@ -1,7 +1,9 @@
 package ma.dentalTech.service.modules.dossierMedical.api;
 
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.document.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.DocumentMedicalDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.SaveDocumentMedicalRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.SearchDocumentsRequestDTO;
 
 public interface DocumentMedicalService {
     DocumentMedicalDTO getById(IdRequestDTO in);

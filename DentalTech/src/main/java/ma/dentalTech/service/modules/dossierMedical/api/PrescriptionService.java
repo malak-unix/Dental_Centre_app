@@ -1,7 +1,8 @@
 package ma.dentalTech.service.modules.dossierMedical.api;
 
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.prescription.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.PrescriptionDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.SavePrescriptionRequestDTO;
 
 public interface PrescriptionService {
     PrescriptionDTO getById(IdRequestDTO in);

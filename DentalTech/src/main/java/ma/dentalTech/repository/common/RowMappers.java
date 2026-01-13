@@ -332,7 +332,7 @@ public final class RowMappers {
         return Consultation.builder()
                 .id(getLong(rs, "id"))
                 .dossierId(getLong(rs, "dossier_id"))
-                .date(ldt == null ? null : ldt.toLocalDate()) // ton entity = LocalDate
+                .date(ldt == null ? null : ldt) //
                 .status(toStatutConsultation(rs.getString("statut")))
                 .observationMedecin(rs.getString("observation_medecin"))
                 .dateCreation(getLdt(rs, "date_creation"))

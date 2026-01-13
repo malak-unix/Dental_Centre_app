@@ -1,12 +1,15 @@
 package ma.dentalTech.service.modules.dossierMedical.impl;
 
+import ma.dentalTech.common.exceptions.NotFoundException;
 import ma.dentalTech.entities.dossierMedical.DocumentMedical;
 import ma.dentalTech.entities.enums.TypeDocument;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.DocumentMedicalDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.SaveDocumentMedicalRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.SearchDocumentsRequestDTO;
 import ma.dentalTech.repository.modules.dossierMedical.api.DocumentMedicalRepository;
 import ma.dentalTech.repository.modules.dossierMedical.impl.DocumentMedicalRepositoryImpl;
 import ma.dentalTech.service.modules.dossierMedical.api.DocumentMedicalService;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.document.*;
 import ma.dentalTech.service.modules.dossierMedical.exception.*;
 
 import java.time.LocalDateTime;

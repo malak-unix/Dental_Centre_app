@@ -1,7 +1,9 @@
 package ma.dentalTech.service.modules.dossierMedical.api;
 
-import ma.dentalTech.service.modules.dossierMedical.dto.certificat.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.FindCertificatsRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.SaveCertificatRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
 
 public interface CertificatService {
     CertificatDTO getById(IdRequestDTO in);

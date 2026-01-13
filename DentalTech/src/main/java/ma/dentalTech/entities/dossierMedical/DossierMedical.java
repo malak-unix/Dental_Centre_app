@@ -38,6 +38,8 @@ public class DossierMedical extends BaseEntity {
     // Relation : DossierMedical (1) -> (1) SituationFinanciere
     private SituationFinanciere situationFinanciere;
 
+    private  List<DocumentMedical> documentMedicals;
+
     private Medecin medecin;
     public DossierMedical() {
         super();

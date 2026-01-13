@@ -24,6 +24,7 @@ public class DocumentMedical extends BaseEntity {
 
     private Long tailleOctets;
     private LocalDateTime dateDocument;
+    private DossierMedical dossierMedical;
 
     @Override
     public boolean equals(Object o) {

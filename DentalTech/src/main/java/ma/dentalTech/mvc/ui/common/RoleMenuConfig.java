@@ -39,6 +39,7 @@ public final class RoleMenuConfig {
         items.add(new NavItem("consultations", "Mes consultations"));
         items.add(new NavItem("ordonnances", "Ordonnances"));
         items.add(new NavItem("certificats", "Certificats"));
+        items.add(new NavItem("actes","Actes"));
         items.add(new NavItem("situation_fin", "Situation financière"));
         return items;
     }

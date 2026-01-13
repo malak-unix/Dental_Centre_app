@@ -9,6 +9,7 @@ import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.enums.StatutConsultation;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class Consultation extends BaseEntity {
 
     private Long dossierId;               // FK vers DossierMedical
-    private LocalDate date;
+    private LocalDateTime date;
     private StatutConsultation status;
     private String observationMedecin;
 

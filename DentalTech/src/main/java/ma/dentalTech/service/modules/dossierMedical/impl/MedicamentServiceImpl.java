@@ -1,11 +1,14 @@
 package ma.dentalTech.service.modules.dossierMedical.impl;
 
+import ma.dentalTech.common.exceptions.NotFoundException;
 import ma.dentalTech.entities.dossierMedical.Medicament;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.medicament.MedicamentDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.medicament.SaveMedicamentRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.medicament.SearchMedicamentsRequestDTO;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
 import ma.dentalTech.repository.modules.dossierMedical.impl.MedicamentRepositoryImpl;
 import ma.dentalTech.service.modules.dossierMedical.api.MedicamentService;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.medicament.*;
 import ma.dentalTech.service.modules.dossierMedical.exception.*;
 
 import java.util.List;
