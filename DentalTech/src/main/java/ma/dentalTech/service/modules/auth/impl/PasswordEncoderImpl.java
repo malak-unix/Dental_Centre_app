@@ -3,16 +3,12 @@ package ma.dentalTech.service.modules.auth.impl;
 import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
 import org.mindrot.jbcrypt.BCrypt;
 
-/**
- * Implémentation du service d'encodage des mots de passe utilisant BCrypt.
- * Nom du fichier conservé : PasswordEncoderImpl.java
- */
 public class PasswordEncoderImpl implements PasswordEncoder {
 
     private final int strength;
 
     public PasswordEncoderImpl() {
-        this(10); // Coût par défaut pour BCrypt
+        this(10);
     }
 
     public PasswordEncoderImpl(int strength) {
@@ -24,17 +20,31 @@ public class PasswordEncoderImpl implements PasswordEncoder {
         if (rawPassword == null) {
             throw new IllegalArgumentException("Le mot de passe ne peut pas être null");
         }
-        // Génération du sel et hachage
         String salt = BCrypt.gensalt(strength);
         return BCrypt.hashpw(rawPassword.toString(), salt);
     }
 
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
-        if (rawPassword == null || encodedPassword == null) {
+        if (rawPassword == null || encodedPassword == null) return false;
+
+        String raw = rawPassword.toString();
+
+        // ✅ DEV: si ce n'est pas un hash BCrypt → on compare en clair
+        if (!isBcryptHash(encodedPassword)) {
+            return raw.equals(encodedPassword);
+        }
+
+        // ✅ PROD: BCrypt normal
+        try {
+            return BCrypt.checkpw(raw, encodedPassword);
+        } catch (Exception e) {
             return false;
         }
-        // Vérification de la correspondance entre le clair et le haché
-        return BCrypt.checkpw(rawPassword.toString(), encodedPassword);
+    }
+
+    private boolean isBcryptHash(String s) {
+        if (s == null) return false;
+        return s.startsWith("$2a$") || s.startsWith("$2b$") || s.startsWith("$2y$");
     }
 }

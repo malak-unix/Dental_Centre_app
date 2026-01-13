@@ -36,7 +36,8 @@ public class AgendaHomePanel extends JPanel {
     }
 
     private JComponent buildHeader() {
-        JPanel header = new JPanel(new GridLayout(2, 1, 4, 4));
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBackground(DentalTheme.BG);
 
         JLabel title = new JLabel("Module Agenda");
@@ -47,10 +48,40 @@ public class AgendaHomePanel extends JPanel {
         sub.setFont(DentalTheme.textFont(12));
         sub.setForeground(DentalTheme.MUTED);
 
+        // ✅ barre boutons
+        JPanel tabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
+        tabs.setOpaque(false);
+
+        JButton bSemaine = new JButton("Semaine");
+        JButton bRdv = new JButton("RDV");
+        JButton bAgenda = new JButton("Agenda Mensuel");
+        JButton bListe = new JButton("Liste d'attente");
+
+        // style simple (tu peux adapter au thème)
+        for (JButton b : new JButton[]{bSemaine, bRdv, bAgenda, bListe}) {
+            b.setFont(DentalTheme.textFont(12));
+            b.setFocusPainted(false);
+        }
+
+        bSemaine.addActionListener(e -> showPage("SEMAINE"));
+        bRdv.addActionListener(e -> showPage("RDV"));
+        bAgenda.addActionListener(e -> showPage("AGENDA"));
+        bListe.addActionListener(e -> showPage("LISTE"));
+
+        tabs.add(bSemaine);
+        tabs.add(bRdv);
+        tabs.add(bAgenda);
+        tabs.add(bListe);
+
         header.add(title);
+        header.add(Box.createVerticalStrut(4));
         header.add(sub);
+        header.add(Box.createVerticalStrut(8));
+        header.add(tabs);
+
         return header;
     }
+
 
     private JComponent buildBody() {
         JPanel body = new JPanel(new BorderLayout(12, 12));
