@@ -1,11 +1,15 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.secretaire;
 
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.AlerteDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
 import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +18,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class SecretaireDashboardPanel extends JPanel {
+
+    private final Long userId;
 
     private JLabel vNbPatients;
     private JLabel vRecette;
@@ -26,6 +32,12 @@ public class SecretaireDashboardPanel extends JPanel {
     private JLabel notifBadge;
 
     public SecretaireDashboardPanel() {
+        this(1L);
+    }
+
+    public SecretaireDashboardPanel(Long userId) {
+        this.userId = (userId != null) ? userId : 1L;
+
         setOpaque(false);
         setLayout(new BorderLayout(18, 18));
 
@@ -52,7 +64,7 @@ public class SecretaireDashboardPanel extends JPanel {
         kpis.add(kpi(vRecette, "Recette du jour"));
         kpis.add(kpi(vNbRdv, "RDV du jour"));
         kpis.add(kpi(vNbAttente, "Patients en attente"));
-        kpis.add(actionCard("Voir +statistiques"));
+        kpis.add(actionCard("Rafraîchir", this::refresh));
 
         main.add(kpis);
         main.add(Box.createVerticalStrut(18));
@@ -84,8 +96,34 @@ public class SecretaireDashboardPanel extends JPanel {
         bottom.add(notifCard());
         main.add(bottom);
 
-        // default (si service pas encore branché)
-        setData(null);
+        refresh();
+    }
+
+    public final void refresh() {
+        SecretaireDashboardResponseDTO secDto = null;
+        try {
+            DashboardDTO dash = fetchDashboardDTO();
+            if (dash != null) secDto = dash.getSecretaire();
+        } catch (Exception ignore) {}
+
+        setData(secDto);
+    }
+
+    private DashboardDTO fetchDashboardDTO() {
+        Object bean = ApplicationContext.getBean("dashboardController");
+        if (bean instanceof DashboardController ctrl) {
+            try {
+                return ctrl.getDashboardDTO(userId);
+            } catch (Exception ignore) {}
+        }
+
+        DashboardService service = ApplicationContext.getBean(DashboardService.class);
+        if (service != null) {
+            try {
+                return service.getDashboard(userId);
+            } catch (Exception ignore) {}
+        }
+        return null;
     }
 
     public void setData(SecretaireDashboardResponseDTO dto) {
@@ -168,11 +206,12 @@ public class SecretaireDashboardPanel extends JPanel {
         return c;
     }
 
-    private CardPanel actionCard(String text) {
+    private CardPanel actionCard(String text, Runnable action) {
         CardPanel c = new CardPanel();
         c.setLayout(new BorderLayout());
         JButton b = new JButton(text);
         b.setFocusPainted(false);
+        b.addActionListener(e -> action.run());
         c.add(b, BorderLayout.CENTER);
         return c;
     }

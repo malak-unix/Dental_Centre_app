@@ -2,9 +2,7 @@ package ma.dentalTech.configuration;
 
 import ma.dentalTech.repository.common.RowMappers;
 
-import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
 import ma.dentalTech.repository.modules.patient.api.*;
-import ma.dentalTech.service.modules.dossierMedical.api.ConsultationService;
 import ma.dentalTech.service.modules.patient.api.*;
 
 import ma.dentalTech.repository.modules.caisse.api.*;
@@ -113,40 +111,6 @@ public final class ApplicationContext {
                 );
                 contextByName.put("patientController", patientController);
                 registerKnown(known, patientController);
-            }
-
-            // =========================================================
-            // DOSSIER MEDICAL : Consultation (écran liste)
-            // =========================================================
-            ConsultationRepository consultationRepo = null;
-            if (hasKey(props, "consultationRepo")) {
-                currentBean = "consultationRepo";
-                consultationRepo = newRepoInstance(props, "consultationRepo", ConsultationRepository.class, known);
-                put(ConsultationRepository.class, consultationRepo, "consultationRepo");
-                registerKnown(known, consultationRepo);
-            }
-
-            ConsultationService consultationService = null;
-            if (hasKey(props, "consultationService") && consultationRepo != null) {
-                currentBean = "consultationService";
-                consultationService = newServiceInstance(
-                        props, "consultationService", ConsultationService.class,
-                        new Class<?>[]{ConsultationRepository.class},
-                        new Object[]{consultationRepo}
-                );
-                put(ConsultationService.class, consultationService, "consultationService");
-                registerKnown(known, consultationService);
-            }
-
-            if (hasKey(props, "consultationController") && consultationService != null) {
-                currentBean = "consultationController";
-                Object consultationController = newFlexibleInstance(
-                        props.getProperty("consultationController"),
-                        known,
-                        consultationService
-                );
-                contextByName.put("consultationController", consultationController);
-                registerKnown(known, consultationController);
             }
 
             // =========================================================

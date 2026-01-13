@@ -1,8 +1,8 @@
 package ma.dentalTech.service.modules.auth.impl;
 
-import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.regex.Pattern;
+import java.util.Map;
+
 import ma.dentalTech.mvc.dto.auth.AuthRequestDTO;
 import ma.dentalTech.service.modules.auth.api.LoginFormValidator;
 
@@ -23,19 +23,17 @@ public class CredentialsValidatorImpl implements LoginFormValidator {
             return errors;
         }
 
-        // CORRECTION : Utilisation de login() et password() car c'est un Record
-        // On enlève les "get" qui causaient l'erreur rouge
-        String login = (request.login() == null) ? null : request.login().trim();
+        String login = request.login() == null ? null : request.login().trim();
         String password = request.password();
 
-        // 1) Validation du LOGIN
+        // LOGIN
         if (login == null || login.isEmpty()) {
             errors.put("login", "Le login est obligatoire.");
         } else if (login.length() < LOGIN_MIN) {
             errors.put("login", "Le login doit contenir au moins " + LOGIN_MIN + " caractères.");
         }
 
-        // 2) Validation du PASSWORD
+        // PASSWORD
         if (password == null || password.isBlank()) {
             errors.put("password", "Le mot de passe est obligatoire.");
         } else if (password.length() < PASSWORD_MIN) {

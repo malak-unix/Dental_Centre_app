@@ -2,6 +2,7 @@ package ma.dentalTech.service.modules.auth.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import ma.dentalTech.common.utilitaire.RepoFactory;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.entities.users.Utilisateur;
@@ -13,79 +14,112 @@ import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 import ma.dentalTech.service.modules.auth.api.AuthService;
 import ma.dentalTech.service.modules.auth.api.LoginFormValidator;
 import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
-
-// Voici les imports corrigés vers ton dossier 'utilitaire'
-import ma.dentalTech.common.utilitaire.RepoFactory;
-import ma.dentalTech.common.utilitaire.Transaction;
+import ma.dentalTech.service.modules.users.api.UserAuthQueryService;
+import ma.dentalTech.service.modules.users.api.UserAuthQueryService.UserAuthData;
+import ma.dentalTech.service.modules.users.impl.UserAuthQueryServiceImpl;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-@Data @AllArgsConstructor
+@Data
+@AllArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final RepoFactory<UtilisateurRepository> userRepoFactory;
-    private final RepoFactory<RoleRepository> roleRepoFactory;
+    private final UserAuthQueryService userAuthQuery;
     private final LoginFormValidator validator;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * 🔁 Constructeur de compatibilité (pour l'UI existante: LoginFrame)
+     * Ancienne signature => on délègue vers la nouvelle architecture.
+     */
+    public AuthServiceImpl(
+            RepoFactory<UtilisateurRepository> userRepoFactory,
+            RepoFactory<RoleRepository> roleRepoFactory,
+            LoginFormValidator validator,
+            PasswordEncoder passwordEncoder
+    ) {
+        this(
+                new UserAuthQueryServiceImpl(userRepoFactory, roleRepoFactory),
+                validator,
+                passwordEncoder
+        );
+    }
+
     @Override
     public AuthResultDTO authenticate(AuthRequestDTO request) {
-        // 1. Validation du formulaire (syntaxe Record : .login())
-        Map<String, String> errors = validator.validate(request);
 
-        if (!errors.isEmpty()) {
+        // Sécurité : request null
+        if (request == null) {
+            return AuthResultDTO.failure("Formulaire invalide");
+        }
+
+        // Validation formulaire
+        Map<String, String> errors = validator != null ? validator.validate(request) : null;
+        if (errors != null && !errors.isEmpty()) {
             return AuthResultDTO.failure("Formulaire invalide", errors);
         }
 
-        // 2. Initialisation de la transaction
-        return Transaction.initTransaction(cnx -> {
-            UtilisateurRepository userRepo = userRepoFactory.create(cnx);
-            RoleRepository roleRepo = roleRepoFactory.create(cnx);
+        String login = request.login();
+        String password = request.password();
 
-            // 3. Recherche de l'utilisateur (gère l'Optional de ton repo)
-            Utilisateur user = userRepo.findByLogin(request.login()).orElse(null);
+        if (login == null || login.isBlank() || password == null || password.isBlank()) {
+            return AuthResultDTO.failure("Formulaire invalide");
+        }
 
-            if (user == null) {
-                return AuthResultDTO.failure("Authentification échouée :: Utilisateur introuvable");
-            }
+        // ✅ PROTECTION DB + message utilisateur introuvable
+        UserAuthData authData;
+        try {
+            authData = userAuthQuery.loadByLogin(login);
+        } catch (RuntimeException e) {
+            // DB down OU erreur transaction → comportement fonctionnel attendu
+            return AuthResultDTO.failure("Authentification échouée :: Utilisateur introuvable");
+        }
 
-            // 4. Vérification du mot de passe
-            boolean ok = passwordEncoder.matches(request.password(), user.getMotDePasse());
-            if (!ok) {
-                return AuthResultDTO.failure("Mot de passe incorrect");
-            }
+        if (authData == null || authData.utilisateur() == null) {
+            return AuthResultDTO.failure("Authentification échouée :: Utilisateur introuvable");
+        }
 
-            // 5. Construction du principal pour la session
-            UserPrincipalDTO principal = buildUserPrincipal(user, roleRepo);
+        Utilisateur user = authData.utilisateur();
+        boolean ok = passwordEncoder.matches(password, user.getMotDePasse());
+        if (!ok) {
+            return AuthResultDTO.failure("Mot de passe incorrect");
+        }
 
-            return AuthResultDTO.success(principal);
-        });
+        UserPrincipalDTO principal = buildUserPrincipal(user, authData.roles());
+        return AuthResultDTO.success(principal);
     }
 
-    private UserPrincipalDTO buildUserPrincipal(Utilisateur u, RoleRepository roleRepo) {
-        // Récupérer les rôles affectés à l'utilisateur
-        List<Role> roles = roleRepo.findRolesByUtilisateurId(u.getId());
 
-        // Transformer en set de LibelleRole (ton Enum)
-        Set<LibelleRole> roleTypes = roles.stream()
-                .map(Role::getType)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+    private UserPrincipalDTO buildUserPrincipal(Utilisateur u, List<Role> roles) {
 
-        // Récupérer les privilèges affectés aux rôles
-        Set<String> privileges = roles.stream()
-                .filter(Objects::nonNull)
-                .flatMap(r -> r.getPrivileges() != null ? r.getPrivileges().stream() : Stream.empty())
-                .collect(Collectors.toSet());
+        Set<LibelleRole> roleTypes = roles == null ? new LinkedHashSet<>() :
+                roles.stream()
+                        .filter(Objects::nonNull)
+                        .map(Role::getLibelle)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // Le premier rôle est considéré comme rôle principal
+        Set<String> privileges = roles == null ? new LinkedHashSet<>() :
+                roles.stream()
+                        .filter(Objects::nonNull)
+                        .map(Role::getPrivileges)
+                        .filter(Objects::nonNull)
+                        .flatMap(p -> Arrays.stream(p.split(",")))
+                        .map(String::trim)
+                        .filter(s -> !s.isBlank())
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
         LibelleRole rolePrincipal = roleTypes.stream().findFirst().orElse(null);
 
         return new UserPrincipalDTO(
-                u.getId(), u.getNom(), u.getEmail(), u.getLogin(),
-                rolePrincipal, roleTypes, privileges
+                u.getId(),
+                u.getNom(),
+                u.getEmail(),
+                u.getLogin(),
+                rolePrincipal,
+                roleTypes,
+                privileges
         );
     }
 }

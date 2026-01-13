@@ -1,3 +1,6 @@
+# Config locale DB
+src/main/resources/config/db.properties
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -39,3 +42,6 @@ build/
 .DS_Store
 
 src/main/resources/config/db.properties
+
+
+dependency-reduced-pom.xml

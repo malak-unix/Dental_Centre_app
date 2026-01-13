@@ -1,7 +1,5 @@
 package ma.dentalTech.entities.users;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
@@ -9,17 +7,19 @@ import ma.dentalTech.entities.enums.LibelleRole;
 
 /**
  * Entité représentant un rôle avec ses privilèges.
+ * DB: role(libelle ENUM, privileges VARCHAR)
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
 public class Role extends BaseEntity {
 
-    private String libelle;
-    private LibelleRole type;
-    private List<String> privileges = new ArrayList<>();
+    // Correspond à la colonne ENUM "libelle" en DB
+    private LibelleRole libelle;
+
+    // Correspond à la colonne "privileges" en DB (CSV: "A,B,C")
+    private String privileges;
 
     @Override
     public boolean equals(Object o) {
@@ -36,6 +36,6 @@ public class Role extends BaseEntity {
 
     @Override
     public String toString() {
-        return "Role{id=" + id + ", libelle='" + libelle + "', type=" + type + "}";
+        return "Role{id=" + id + ", libelle=" + libelle + "}";
     }
 }
