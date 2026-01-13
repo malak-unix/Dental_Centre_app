@@ -17,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import ma.dentalTech.service.modules.dashboard.api.DashboardService;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 
 public class MainFrame extends JFrame {
 
@@ -107,9 +109,9 @@ public class MainFrame extends JFrame {
 
     private JComponent buildDashboardByRole() {
         return switch (role) {
-            case SECRETAIRE -> new SecretaireDashboardPanel();
-            case MEDECIN -> new MedecinDashboardPanel();
-            case ADMIN -> new AdminDashboardPanel();
+            case SECRETAIRE -> new SecretaireDashboardPanel(userId);
+            case MEDECIN -> new MedecinDashboardPanel(userId);
+            case ADMIN -> new AdminDashboardPanel(userId);
         };
     }
 

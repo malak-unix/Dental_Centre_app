@@ -1,16 +1,21 @@
 package ma.dentalTech.service.modules.dashboard.impl;
 
 import ma.dentalTech.common.exceptions.ServiceException;
-import ma.dentalTech.entities.users.Notification;
+import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.enums.PrioriteNotification;
+import ma.dentalTech.entities.users.Notification;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.DashboardFeaturesDTO;
+import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.AlerteDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
+import ma.dentalTech.mvc.dto.dashboard.medecin.MedecinDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,79 +24,145 @@ import java.util.List;
 public class DashboardServiceImpl implements DashboardService {
 
     private final NotificationRepository notificationRepo;
+    private final UtilisateurRepository utilisateurRepo;
 
+    // ✅ constructeur principal (celui qu’on veut utiliser)
+    public DashboardServiceImpl(NotificationRepository notificationRepo, UtilisateurRepository utilisateurRepo) {
+        this.notificationRepo = notificationRepo;
+        this.utilisateurRepo = utilisateurRepo;
+    }
+
+    // ✅ fallback si jamais (ApplicationContext garde compatibilité)
     public DashboardServiceImpl(NotificationRepository notificationRepo) {
         this.notificationRepo = notificationRepo;
+        this.utilisateurRepo = null;
     }
 
     @Override
     public DashboardDTO getDashboard(Long utilisateurId) throws ServiceException {
-        if (utilisateurId == null) {
-            throw new ServiceException("utilisateurId null");
+        if (utilisateurId == null) throw new ServiceException("utilisateurId null");
+
+        // ✅ détecter rôle via utilisateur.role_id
+        LibelleRole role = detectRole(utilisateurId);
+
+        DashboardFeaturesDTO features = buildFeatures(role);
+
+        DashboardDTO.DashboardDTOBuilder b = DashboardDTO.builder()
+                .role(role.name())
+                .features(features);
+
+        switch (role) {
+            case ADMIN -> b.admin(buildAdmin());
+            case MEDECIN -> b.medecin(buildMedecin());
+            default -> b.secretaire(buildSecretaire(utilisateurId));
         }
 
-        SecretaireDashboardResponseDTO secretaire = buildSecretaire(utilisateurId);
-
-        DashboardFeaturesDTO features = DashboardFeaturesDTO.builder()
-                .voirRdvEtFileAttente(true)
-                .voirClientEnCours(false)
-                .voirStatsAdmin(false)
-                .voirCaisse(true)
-                .voirNotifications(true)
-                .build();
-
-        return DashboardDTO.builder()
-                .role("SECRETAIRE")
-                .features(features)
-                .secretaire(secretaire)
-                .medecin(null)
-                .admin(null)
-                .build();
-
+        return b.build();
     }
 
-    private SecretaireDashboardResponseDTO buildSecretaire(Long utilisateurId) throws ServiceException {
+    private LibelleRole detectRole(Long userId) {
+        if (utilisateurRepo == null) return LibelleRole.SECRETAIRE;
 
-        // ========== NOTIFICATIONS ==========
+        try {
+            List<String> roles = utilisateurRepo.getRoleLibellesOfUser(userId);
+            if (roles == null || roles.isEmpty()) return LibelleRole.SECRETAIRE;
+            return LibelleRole.valueOf(roles.get(0));
+        } catch (Exception e) {
+            return LibelleRole.SECRETAIRE;
+        }
+    }
+
+    private DashboardFeaturesDTO buildFeatures(LibelleRole role) {
+        if (role == LibelleRole.ADMIN) {
+            return DashboardFeaturesDTO.builder()
+                    .voirStatsAdmin(true)
+                    .voirNotifications(true)
+                    .voirAlertes(true)
+                    .voirCaisse(false)
+                    .voirClientEnCours(false)
+                    .voirRdvEtFileAttente(false)
+                    .build();
+        }
+        if (role == LibelleRole.MEDECIN) {
+            return DashboardFeaturesDTO.builder()
+                    .voirRdvEtFileAttente(true)
+                    .voirClientEnCours(true)
+                    .voirCaisse(false)
+                    .voirStatsAdmin(false)
+                    .voirNotifications(true)
+                    .voirAlertes(true)
+                    .build();
+        }
+        // SECRETAIRE
+        return DashboardFeaturesDTO.builder()
+                .voirRdvEtFileAttente(true)
+                .voirClientEnCours(false)
+                .voirCaisse(true)
+                .voirStatsAdmin(false)
+                .voirNotifications(true)
+                .voirAlertes(true)
+                .build();
+    }
+
+    // ========================= SECRETAIRE =========================
+
+    private SecretaireDashboardResponseDTO buildSecretaire(Long utilisateurId) {
+
         List<Notification> all = safeFindAllNotifications(utilisateurId);
         all.sort(Comparator.comparing(this::safeDateTime).reversed());
 
         List<NotificationDTO> notifications = new ArrayList<>();
-        for (Notification n : all) {
-            notifications.add(toNotificationDTO(n));
-        }
+        for (Notification n : all) notifications.add(toNotificationDTO(n));
 
         int nbNotificationsNonLues = safeCountUnread(utilisateurId);
 
-        // ========== ALERTES ==========
-        // Règle simple: une alerte = notification de priorité HAUTE/URGENTE (ou autre selon ton enum)
         List<AlerteDTO> alertes = new ArrayList<>();
         for (Notification n : all) {
-            if (isAlerte(n)) {
-                alertes.add(toAlerteDTO(n));
-            }
+            if (isAlerte(n)) alertes.add(toAlerteDTO(n));
         }
 
-        int nbAlertesNonLues = (int) alertes.stream().filter(a -> !a.isLue()).count();
+        int nbAlertesNonLues = alertes.size();
 
-        // Tu gardes tes champs existants (rdv/fileAttente/kpis) si tu les remplis ailleurs.
-        // Ici, on ne les casse pas : on met null/0 si tu ne les as pas encore branchés.
         return SecretaireDashboardResponseDTO.builder()
-                .nbPatients(null)
+                .nbPatients(0)
                 .nbRdvDuJour(0)
                 .nbEnAttente(0)
-                .recetteDuJour(null)
+                .recetteDuJour(BigDecimal.ZERO)
                 .rdvDuJour(List.of())
                 .fileAttente(List.of())
-
-                // ✅ Ajouts
-                .notifications(notifications)
                 .nbNotificationsNonLues(nbNotificationsNonLues)
-                .alertes(alertes)
                 .nbAlertesNonLues(nbAlertesNonLues)
-
+                .alertes(alertes)
+                .notifications(notifications)
                 .build();
     }
+
+    // ========================= MEDECIN =========================
+    private MedecinDashboardResponseDTO buildMedecin() {
+        return MedecinDashboardResponseDTO.builder()
+                .nbPatientsDuJour(0)
+                .nbRdvDuJour(0)
+                .nbActesRealises(0)
+                .recetteDuJour(BigDecimal.ZERO)
+                .rdvDuJour(List.of())
+                .patientEnCours(null)
+                .build();
+    }
+
+    // ========================= ADMIN =========================
+    private AdminDashboardResponseDTO buildAdmin() {
+        return AdminDashboardResponseDTO.builder()
+                .nbUtilisateurs(0)
+                .nbAdmins(0)
+                .nbActesRealises(0)
+                .recetteDuJour(BigDecimal.ZERO)
+                .utilisateurs(List.of())
+                .referentiels(null)
+                .sauvegarde(null)
+                .build();
+    }
+
+    // ========================= HELPERS NOTIFS =========================
 
     private List<Notification> safeFindAllNotifications(Long utilisateurId) {
         try {
@@ -112,11 +183,8 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private boolean isAlerte(Notification n) {
-        if (n == null) return false;
         try {
-            PrioriteNotification p = n.getPriorite();
-            // adapte si ton enum a d'autres valeurs
-            return p == PrioriteNotification.HAUTE;
+            return n.getPriorite() == PrioriteNotification.HAUTE;
         } catch (Exception e) {
             return false;
         }
@@ -149,7 +217,6 @@ public class DashboardServiceImpl implements DashboardService {
 
     private LocalDateTime safeDateTime(Notification n) {
         try {
-            // adapte si ton Notification hérite BaseEntity: getDateCreation()
             if (n.getDateCreation() != null) return n.getDateCreation();
         } catch (Exception ignore) {}
         return LocalDateTime.now();

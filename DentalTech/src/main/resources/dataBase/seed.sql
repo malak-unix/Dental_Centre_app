@@ -51,6 +51,11 @@ VALUES
   (5, 'Ou-tamssout','Jihane','jihane@dentalsoft.ma','Agdal, Rabat','J147258', '+212612345604','FEMME',
    'drjihane','$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1988-06-10', 1, 2, 'admin');
 
+    (6, 'El Idrissi', 'Imane', 'imane@dentalsoft.ma', 'Rabat', 'J999111', '+212612300006', 'FEMME',
+      'drimane', '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1989-02-10', 1, 2, 'admin'),
+
+     (7, 'Berrada', 'Yassine', 'yassine@dentalsoft.ma', 'Rabat', 'J999222', '+212612300007', 'HOMME',
+      'dryassine', '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1985-07-22', 1, 2, 'admin');
 --  STAFF
 
 INSERT INTO staff (id, salaire, prime, date_recrutement, solde_conge,
@@ -61,13 +66,16 @@ VALUES
   (3,  5800.00, 300.00, '2024-02-10', 10, 1, 'admin'),  -- Aya (secrétaire)
   (4,  5800.00, 300.00, '2024-02-10', 10, 1, 'admin'),  -- Aicha (secrétaire)
   (5, 15000.00,1000.00, '2018-09-01', 15, 1, 'admin');  -- Dr Jihane (médecin)
-
+  (6, 14000.00, 800.00, '2019-01-01', 12, 1, 'admin'), --DR El idrisse imane (medecin)
+  (7, 16000.00,1000.00, '2017-03-01', 15, 1, 'admin'); --DR Berrada Yassine ( medecin)
 
 --  MEDECIN & SECRETAIRES
 
 INSERT INTO medecin (id, specialite, cree_par)
 VALUES
   (5, 'Chirurgie dentaire', 'admin');
+   (6, 'Orthodontie', 'admin'),
+    (7, 'Endodontie',  'admin');
 
 INSERT INTO secretaire (id, num_cnss, commission, cree_par)
 VALUES

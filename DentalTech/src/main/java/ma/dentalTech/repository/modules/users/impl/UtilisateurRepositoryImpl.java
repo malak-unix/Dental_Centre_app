@@ -120,19 +120,164 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
         } catch (SQLException e) { e.printStackTrace(); }
         return Optional.ofNullable(u);
     }
+//fait par AYA
+    @Override
+    public Optional<Utilisateur> findByEmail(String email) {
+        if (email == null || email.isBlank()) return Optional.empty();
 
-    @Override public Optional<Utilisateur> findByEmail(String email) { return Optional.empty(); }
+        String sql = "SELECT * FROM utilisateur WHERE email = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToUtilisateur(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
 
     @Override
     public void updatePassword(Long userId, String newEncodedPassword) {
+        if (userId == null || newEncodedPassword == null) return;
 
+        String sql = "UPDATE utilisateur SET mot_de_passe = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, newEncodedPassword);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override public boolean existsByEmail(String email) { return false; }
-    @Override public boolean existsByLogin(String login) { return false; }
-    @Override public List<Utilisateur> searchByNom(String keyword) { return new ArrayList<>(); }
-    @Override public List<Utilisateur> findPage(int limit, int offset) { return new ArrayList<>(); }
-    @Override public List<String> getRoleLibellesOfUser(Long utilisateurId) { return new ArrayList<>(); }
-    @Override public void addRoleToUser(Long utilisateurId, Long roleId) {}
-    @Override public void removeRoleFromUser(Long utilisateurId, Long roleId) {}
+    @Override
+    public boolean existsByEmail(String email) {
+        if (email == null || email.isBlank()) return false;
+
+        String sql = "SELECT 1 FROM utilisateur WHERE email = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean existsByLogin(String login) {
+        if (login == null || login.isBlank()) return false;
+
+        String sql = "SELECT 1 FROM utilisateur WHERE login = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, login.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public List<Utilisateur> searchByNom(String keyword) {
+        List<Utilisateur> list = new ArrayList<>();
+        if (keyword == null) keyword = "";
+        String k = "%" + keyword.trim() + "%";
+
+        String sql = "SELECT * FROM utilisateur WHERE nom LIKE ? OR prenom LIKE ? ORDER BY nom, prenom";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, k);
+            ps.setString(2, k);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToUtilisateur(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    @Override
+    public List<Utilisateur> findPage(int limit, int offset) {
+        List<Utilisateur> list = new ArrayList<>();
+        int l = Math.max(1, limit);
+        int o = Math.max(0, offset);
+
+        String sql = "SELECT * FROM utilisateur ORDER BY id DESC LIMIT ? OFFSET ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, l);
+            ps.setInt(2, o);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToUtilisateur(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    @Override
+    public List<String> getRoleLibellesOfUser(Long utilisateurId) {
+        if (utilisateurId == null) return new ArrayList<>();
+
+        String sql = """
+            SELECT r.libelle
+            FROM utilisateur u
+            JOIN role r ON r.id = u.role_id
+            WHERE u.id = ?
+            """;
+
+        List<String> roles = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, utilisateurId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String lib = rs.getString("libelle");
+                    if (lib != null) roles.add(lib);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return roles;
+    }
+
+    @Override
+    public void addRoleToUser(Long utilisateurId, Long roleId) {
+        if (utilisateurId == null || roleId == null) return;
+
+        String sql = "UPDATE utilisateur SET role_id = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, roleId);
+            ps.setLong(2, utilisateurId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void removeRoleFromUser(Long utilisateurId, Long roleId) {
+        if (utilisateurId == null || roleId == null) return;
+
+        String sql = "UPDATE utilisateur SET role_id = NULL WHERE id = ? AND role_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, utilisateurId);
+            ps.setLong(2, roleId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

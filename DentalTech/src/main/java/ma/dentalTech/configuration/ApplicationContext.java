@@ -118,10 +118,6 @@ public final class ApplicationContext {
             // =========================================================
             // CAISSE V2
             // =========================================================
-            // CaisseValidationService (indispensable)
-            CaisseValidationService validationSvc = new CaisseValidationServiceImpl();
-            put(CaisseValidationService.class, validationSvc, "caisseValidationService");
-            registerKnown(known, validationSvc);
 
             currentBean = "factureRepo";
             FactureRepository factureRepo = newRepoInstance(props, "factureRepo", FactureRepository.class, known);
@@ -142,6 +138,12 @@ public final class ApplicationContext {
             SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo", SituationFinanciereRepository.class, known);
             put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
             registerKnown(known, sitFinRepo);
+
+            // CaisseValidationService (indispensable)
+            CaisseValidationService validationSvc = new CaisseValidationServiceImpl();
+            put(CaisseValidationService.class, validationSvc, "caisseValidationService");
+            registerKnown(known, validationSvc);
+
 
             FacturePdfService facturePdfService = null;
             if (hasKey(props, "facturePdfService")) {
@@ -552,18 +554,34 @@ public final class ApplicationContext {
         String className = props.getProperty("dashboardService");
         Class<?> clazz = Class.forName(className);
 
+        //  On privilégie les constructeurs qui permettent de détecter le rôle
         try {
-            return (DashboardService) clazz.getDeclaredConstructor(NotificationRepository.class)
-                    .newInstance(notificationRepo);
+            return (DashboardService) clazz.getDeclaredConstructor(
+                    NotificationRepository.class,
+                    UtilisateurRepository.class
+            ).newInstance(notificationRepo, utilisateurRepo);
         } catch (NoSuchMethodException ignored) {}
 
-        if (utilisateurRepo != null) {
-            try {
-                return (DashboardService) clazz.getDeclaredConstructor(NotificationRepository.class, UtilisateurRepository.class)
-                        .newInstance(notificationRepo, utilisateurRepo);
-            } catch (NoSuchMethodException ignored) {}
-        }
+        // Constructeur complet si tu veux dashboard riche (si présent)
+        try {
+            return (DashboardService) clazz.getDeclaredConstructor(
+                    NotificationRepository.class,
+                    UtilisateurRepository.class,
+                    PatientRepository.class,
+                    RdvRepository.class,
+                    ListeAttenteRepository.class,
+                    CaisseDashboardServiceV2.class
+            ).newInstance(notificationRepo, utilisateurRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
+        } catch (NoSuchMethodException ignored) {}
 
+        //  Ancien constructeur fallback (sans rôle)
+        try {
+            return (DashboardService) clazz.getDeclaredConstructor(
+                    NotificationRepository.class
+            ).newInstance(notificationRepo);
+        } catch (NoSuchMethodException ignored) {}
+
+        // Constructeur utilisé auparavant dans ton code (si présent)
         try {
             return (DashboardService) clazz.getDeclaredConstructor(
                     NotificationRepository.class,
@@ -576,4 +594,5 @@ public final class ApplicationContext {
 
         throw new IllegalStateException("Aucun constructeur compatible pour dashboardService=" + className);
     }
+
 }
