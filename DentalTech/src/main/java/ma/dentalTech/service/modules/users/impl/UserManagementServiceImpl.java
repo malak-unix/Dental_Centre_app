@@ -105,7 +105,8 @@ public class UserManagementServiceImpl implements UserManagementService {
             List<UserSummaryDTO> dtos = new ArrayList<>();
             if (users != null) {
                 for (Utilisateur u : users) {
-                    if (u != null) dtos.add(mapToSummary(u));
+                    if (u != null)
+                        dtos.add(mapToSummary(u));
                 }
             }
             return dtos;
@@ -128,7 +129,8 @@ public class UserManagementServiceImpl implements UserManagementService {
             List<UserSummaryDTO> dtos = new ArrayList<>();
             if (users != null) {
                 for (Utilisateur u : users) {
-                    if (u != null) dtos.add(mapToSummary(u));
+                    if (u != null)
+                        dtos.add(mapToSummary(u));
                 }
             }
             return dtos;
@@ -138,7 +140,8 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Override
     public UserSummaryDTO updateUserProfile(Long id, UserSaveRequestDTO request) {
 
-        if (id == null || request == null) return null;
+        if (id == null || request == null)
+            return null;
 
         return Transaction.initTransaction(cnx -> {
 
@@ -204,7 +207,8 @@ public class UserManagementServiceImpl implements UserManagementService {
     // Helpers
     // ==========================
     private void assignRoleInternal(java.sql.Connection cnx, Long userId, LibelleRole roleType) {
-        if (userId == null || roleType == null) return;
+        if (userId == null || roleType == null)
+            return;
 
         RoleRepository roleRepo = roleRepoFactory.create(cnx);
         UtilisateurRepository userRepo = utilisateurRepoFactory.create(cnx);
@@ -220,7 +224,8 @@ public class UserManagementServiceImpl implements UserManagementService {
      * → on supprime les rôles actuels puis on ajoute le nouveau.
      */
     private void replaceRolesInternal(java.sql.Connection cnx, Long userId, LibelleRole newRole) {
-        if (userId == null || newRole == null) return;
+        if (userId == null || newRole == null)
+            return;
 
         UtilisateurRepository userRepo = utilisateurRepoFactory.create(cnx);
         RoleRepository roleRepo = roleRepoFactory.create(cnx);
@@ -229,7 +234,8 @@ public class UserManagementServiceImpl implements UserManagementService {
         List<String> current = userRepo.getRoleLibellesOfUser(userId);
         if (current != null) {
             for (String lib : current) {
-                if (lib == null || lib.isBlank()) continue;
+                if (lib == null || lib.isBlank())
+                    continue;
 
                 roleRepo.findByLibelle(lib.trim())
                         .ifPresent(r -> userRepo.removeRoleFromUser(userId, r.getId()));
@@ -239,6 +245,30 @@ public class UserManagementServiceImpl implements UserManagementService {
         // 2) ajouter le nouveau rôle
         roleRepo.findByType(newRole)
                 .ifPresent(r -> userRepo.addRoleToUser(userId, r.getId()));
+    }
+
+    @Override
+    public void activateUser(Long utilisateurId) {
+        setActivationStatus(utilisateurId, true);
+    }
+
+    @Override
+    public void deactivateUser(Long utilisateurId) {
+        setActivationStatus(utilisateurId, false);
+    }
+
+    private void setActivationStatus(Long userId, boolean status) {
+        if (userId == null)
+            return;
+        Transaction.initTransaction(cnx -> {
+            UtilisateurRepository userRepo = utilisateurRepoFactory.create(cnx);
+            Utilisateur u = userRepo.findById(userId);
+            if (u != null) {
+                u.setActif(status);
+                userRepo.update(u);
+            }
+            return null;
+        });
     }
 
     private UserSummaryDTO mapToSummary(Utilisateur user) {

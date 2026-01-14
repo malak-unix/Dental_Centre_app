@@ -13,15 +13,60 @@ public class TestUserManagementUiNoDb {
 
         // Service fake: on veut juste ouvrir l'UI sans crash
         UserManagementService fakeService = new UserManagementService() {
-            @Override public ma.dentalTech.mvc.dto.users.UserSummaryDTO createAdmin(ma.dentalTech.mvc.dto.users.CreateAdminRequestDTO request) { throw new RuntimeException("DB not connected"); }
-            @Override public ma.dentalTech.mvc.dto.users.UserSummaryDTO createMedecin(ma.dentalTech.mvc.dto.users.CreateMedecinRequestDTO request) { throw new RuntimeException("DB not connected"); }
-            @Override public ma.dentalTech.mvc.dto.users.UserSummaryDTO createSecretaire(ma.dentalTech.mvc.dto.users.CreateSecretaireRequestDTO request) { throw new RuntimeException("DB not connected"); }
-            @Override public ma.dentalTech.mvc.dto.users.UserSummaryDTO getUserById(Long id) { return null; }
-            @Override public java.util.List<ma.dentalTech.mvc.dto.users.UserSummaryDTO> getAllUsers() { return java.util.List.of(); }
-            @Override public java.util.List<ma.dentalTech.mvc.dto.users.UserSummaryDTO> searchUsersByKeyword(String keyword) { return java.util.List.of(); }
-            @Override public ma.dentalTech.mvc.dto.users.UserSummaryDTO updateUserProfile(Long id, ma.dentalTech.mvc.dto.users.UserSaveRequestDTO request) { return null; }
-            @Override public void assignRoleToUser(Long utilisateurId, ma.dentalTech.entities.enums.LibelleRole roleType) {}
-            @Override public void removeRoleFromUser(Long utilisateurId, ma.dentalTech.entities.enums.LibelleRole roleType) {}
+            @Override
+            public ma.dentalTech.mvc.dto.users.UserSummaryDTO createAdmin(
+                    ma.dentalTech.mvc.dto.users.CreateAdminRequestDTO request) {
+                throw new RuntimeException("DB not connected");
+            }
+
+            @Override
+            public ma.dentalTech.mvc.dto.users.UserSummaryDTO createMedecin(
+                    ma.dentalTech.mvc.dto.users.CreateMedecinRequestDTO request) {
+                throw new RuntimeException("DB not connected");
+            }
+
+            @Override
+            public ma.dentalTech.mvc.dto.users.UserSummaryDTO createSecretaire(
+                    ma.dentalTech.mvc.dto.users.CreateSecretaireRequestDTO request) {
+                throw new RuntimeException("DB not connected");
+            }
+
+            @Override
+            public ma.dentalTech.mvc.dto.users.UserSummaryDTO getUserById(Long id) {
+                return null;
+            }
+
+            @Override
+            public java.util.List<ma.dentalTech.mvc.dto.users.UserSummaryDTO> getAllUsers() {
+                return java.util.List.of();
+            }
+
+            @Override
+            public java.util.List<ma.dentalTech.mvc.dto.users.UserSummaryDTO> searchUsersByKeyword(String keyword) {
+                return java.util.List.of();
+            }
+
+            @Override
+            public ma.dentalTech.mvc.dto.users.UserSummaryDTO updateUserProfile(Long id,
+                    ma.dentalTech.mvc.dto.users.UserSaveRequestDTO request) {
+                return null;
+            }
+
+            @Override
+            public void assignRoleToUser(Long utilisateurId, ma.dentalTech.entities.enums.LibelleRole roleType) {
+            }
+
+            @Override
+            public void removeRoleFromUser(Long utilisateurId, ma.dentalTech.entities.enums.LibelleRole roleType) {
+            }
+
+            @Override
+            public void activateUser(Long utilisateurId) {
+            }
+
+            @Override
+            public void deactivateUser(Long utilisateurId) {
+            }
         };
 
         UserManagementController ctrl = new UserManagementControllerImpl(fakeService);

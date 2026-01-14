@@ -15,25 +15,29 @@ public class UserManagementControllerImpl implements UserManagementController {
 
     @Override
     public UserSummaryDTO createAdmin(CreateAdminRequestDTO request) {
-        if (request == null) throw new IllegalArgumentException("createAdmin: request null");
+        if (request == null)
+            throw new IllegalArgumentException("createAdmin: request null");
         return userManagementService.createAdmin(request);
     }
 
     @Override
     public UserSummaryDTO createMedecin(CreateMedecinRequestDTO request) {
-        if (request == null) throw new IllegalArgumentException("createMedecin: request null");
+        if (request == null)
+            throw new IllegalArgumentException("createMedecin: request null");
         return userManagementService.createMedecin(request);
     }
 
     @Override
     public UserSummaryDTO createSecretaire(CreateSecretaireRequestDTO request) {
-        if (request == null) throw new IllegalArgumentException("createSecretaire: request null");
+        if (request == null)
+            throw new IllegalArgumentException("createSecretaire: request null");
         return userManagementService.createSecretaire(request);
     }
 
     @Override
     public UserSummaryDTO getUserById(Long id) {
-        if (id == null) throw new IllegalArgumentException("getUserById: id null");
+        if (id == null)
+            throw new IllegalArgumentException("getUserById: id null");
         return userManagementService.getUserById(id);
     }
 
@@ -44,28 +48,49 @@ public class UserManagementControllerImpl implements UserManagementController {
 
     @Override
     public List<UserSummaryDTO> searchUsersByKeyword(String keyword) {
-        if (keyword == null || keyword.isBlank()) return List.of();
+        if (keyword == null || keyword.isBlank())
+            return List.of();
         return userManagementService.searchUsersByKeyword(keyword);
     }
 
     @Override
     public UserSummaryDTO updateUserProfile(Long id, UserSaveRequestDTO request) {
-        if (id == null) throw new IllegalArgumentException("updateUserProfile: id null");
-        if (request == null) throw new IllegalArgumentException("updateUserProfile: request null");
+        if (id == null)
+            throw new IllegalArgumentException("updateUserProfile: id null");
+        if (request == null)
+            throw new IllegalArgumentException("updateUserProfile: request null");
         return userManagementService.updateUserProfile(id, request);
     }
 
     @Override
     public void assignRoleToUser(Long utilisateurId, LibelleRole roleType) {
-        if (utilisateurId == null) throw new IllegalArgumentException("assignRoleToUser: utilisateurId null");
-        if (roleType == null) throw new IllegalArgumentException("assignRoleToUser: roleType null");
+        if (utilisateurId == null)
+            throw new IllegalArgumentException("assignRoleToUser: utilisateurId null");
+        if (roleType == null)
+            throw new IllegalArgumentException("assignRoleToUser: roleType null");
         userManagementService.assignRoleToUser(utilisateurId, roleType);
     }
 
     @Override
     public void removeRoleFromUser(Long utilisateurId, LibelleRole roleType) {
-        if (utilisateurId == null) throw new IllegalArgumentException("removeRoleFromUser: utilisateurId null");
-        if (roleType == null) throw new IllegalArgumentException("removeRoleFromUser: roleType null");
+        if (utilisateurId == null)
+            throw new IllegalArgumentException("removeRoleFromUser: utilisateurId null");
+        if (roleType == null)
+            throw new IllegalArgumentException("removeRoleFromUser: roleType null");
         userManagementService.removeRoleFromUser(utilisateurId, roleType);
+    }
+
+    @Override
+    public void activateUser(Long utilisateurId) {
+        if (utilisateurId == null)
+            throw new IllegalArgumentException("activateUser: ID cannot be null");
+        userManagementService.activateUser(utilisateurId);
+    }
+
+    @Override
+    public void deactivateUser(Long utilisateurId) {
+        if (utilisateurId == null)
+            throw new IllegalArgumentException("deactivateUser: ID cannot be null");
+        userManagementService.deactivateUser(utilisateurId);
     }
 }

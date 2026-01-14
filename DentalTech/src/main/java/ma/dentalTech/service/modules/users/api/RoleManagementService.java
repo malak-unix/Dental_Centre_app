@@ -1,23 +1,22 @@
 package ma.dentalTech.service.modules.users.api;
 
+import ma.dentalTech.mvc.dto.users.RoleDTO;
 import ma.dentalTech.entities.enums.LibelleRole;
-import ma.dentalTech.entities.users.Role;
 import java.util.List;
 
 public interface RoleManagementService {
 
-    Role createRole(Role role);
+    RoleDTO createRole(RoleDTO roleAndPrivileges);
 
-    Role updateRole(Role role);
+    RoleDTO updateRole(RoleDTO roleDto);
 
     void deleteRole(Long roleId);
 
-    Role getRoleById(Long id);
+    RoleDTO getRoleById(Long id);
 
-    Role getRoleByType(LibelleRole type);
+    RoleDTO getRoleByType(LibelleRole type);
 
-    List<Role> getAllRoles();
+    List<RoleDTO> getAllRoles();
 
-    // Permet d'ajouter ou supprimer des permissions à un rôle
-    Role updateRolePrivileges(Long roleId, List<String> privileges);
+    RoleDTO updateRolePrivileges(Long roleId, List<String> privileges);
 }

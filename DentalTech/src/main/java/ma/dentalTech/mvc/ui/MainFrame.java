@@ -28,30 +28,6 @@ public class MainFrame extends JFrame {
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cards = new JPanel(cardLayout);
-    //jihane
-    private void openUsersManagement() {
-        // ✅ autoriser seulement ADMIN
-        if (role != LibelleRole.ADMIN) {
-            JOptionPane.showMessageDialog(this,
-                    "Accès refusé : ADMIN uniquement",
-                    "Sécurité",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Object bean = ApplicationContext.getBean("userManagementController");
-        if (!(bean instanceof ma.dentalTech.mvc.controllers.modules.users.api.UserManagementController ctrl)) {
-            JOptionPane.showMessageDialog(this,
-                    "userManagementController introuvable dans ApplicationContext",
-                    "Wiring",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        ma.dentalTech.mvc.ui.modules.users.UserManagementFrame f =
-                new ma.dentalTech.mvc.ui.modules.users.UserManagementFrame(ctrl);
-        f.setVisible(true);
-    }
 
     private final Map<String, JComponent> pages = new LinkedHashMap<>();
 
@@ -87,9 +63,7 @@ public class MainFrame extends JFrame {
 
         // Header (haut)
         header.setUser(this.fullName, RoleMenuConfig.roleLabel(this.role));
-        header.logoutButton().addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Déconnexion (à brancher)")
-        );
+        header.logoutButton().addActionListener(e -> JOptionPane.showMessageDialog(this, "Déconnexion (à brancher)"));
         shell.header().add(header, BorderLayout.CENTER);
 
         // Sidebar (gauche) + navigation
@@ -112,22 +86,20 @@ public class MainFrame extends JFrame {
                 this,
                 "Voulez-vous vous déconnecter ?",
                 "Déconnexion",
-                JOptionPane.YES_NO_OPTION
-        );
+                JOptionPane.YES_NO_OPTION);
 
-        if (ok != JOptionPane.YES_OPTION) return;
+        if (ok != JOptionPane.YES_OPTION)
+            return;
 
         // Fermer la fenêtre principale
         dispose();
 
         // Revenir à l’écran de connexion
         SwingUtilities.invokeLater(() -> {
-            ma.dentalTech.mvc.ui.modules.auth.LoginFrame lf =
-                    new ma.dentalTech.mvc.ui.modules.auth.LoginFrame();
+            ma.dentalTech.mvc.ui.modules.auth.LoginFrame lf = new ma.dentalTech.mvc.ui.modules.auth.LoginFrame();
             lf.setVisible(true);
         });
     }
-
 
     private void buildPages() {
         // Dashboard selon rôle (réel)
@@ -140,31 +112,79 @@ public class MainFrame extends JFrame {
         addPage("caisse", new CaisseMainPanel(role, userId));
         addPage("agenda_med", buildAgendaPage());
 
-        // Liste d’attente (si vous voulez la brancher plus tard dans le menu)
+        // Liste d’attente
         addPage("liste_attente", new ListeAttentePagePanel());
 
-        // Placeholders (modules collègues / à brancher plus tard)
+        // Placeholders
         addPage("stock", buildPlaceholder("Stock (module en cours)"));
 
-        // Médecin (placeholders)
+        // Médecin
         addPage("consultations", buildPlaceholder("Mes consultations (à brancher)"));
         addPage("ordonnances", buildPlaceholder("Ordonnances (à brancher)"));
         addPage("certificats", buildPlaceholder("Certificats (à brancher)"));
         addPage("situation_fin", buildPlaceholder("Situation financière (à brancher)"));
         addPage("actes", buildActesPage());
 
-
-        // Admin (placeholders)
-        addPage("utilisateurs", buildPlaceholder("Utilisateurs (à brancher)"));
-        addPage("referentiels", buildPlaceholder("Référentiels (à brancher)"));
-        addPage("sauvegardes", buildPlaceholder("Sauvegardes (à brancher)"));
-        addPage("roles", buildPlaceholder("Rôles (à brancher)"));
+        // Admin (REAL IMPL)
+        addPage("utilisateurs", buildUsersPage());
+        addPage("referentiels", buildReferentielPage());
+        addPage("sauvegardes", buildSecurityPage());
+        addPage("roles", buildRolesPage());
     }
 
+    private JComponent buildUsersPage() {
+        if (role != LibelleRole.ADMIN)
+            return buildPlaceholder("Accès ADMIN requis");
+        var ctrl = ApplicationContext.getBean("userManagementController");
+        if (ctrl instanceof ma.dentalTech.mvc.controllers.modules.users.api.UserManagementController c) {
+            return new ma.dentalTech.mvc.ui.modules.users.UserManagementPanel(c);
+        }
+        return buildPlaceholder("User Ctrl manquant");
     }
+
+    private JComponent buildReferentielPage() {
+        if (role != LibelleRole.ADMIN)
+            return buildPlaceholder("Accès ADMIN requis");
+        var ctrl = ApplicationContext.getBean("referentielController");
+        if (ctrl instanceof ma.dentalTech.mvc.controllers.modules.referentiel.api.ReferentielController c) {
+            return new ma.dentalTech.mvc.ui.modules.referentiel.ReferentielManagementPanel(c);
+        }
+        return buildPlaceholder("Referentiel Ctrl manquant");
+    }
+
+    private JComponent buildRolesPage() {
+        if (role != LibelleRole.ADMIN)
+            return buildPlaceholder("Accès ADMIN requis");
+        var ctrl = ApplicationContext.getBean("roleManagementController");
+        if (ctrl instanceof ma.dentalTech.mvc.controllers.modules.users.api.RoleManagementController c) {
+            return new ma.dentalTech.mvc.ui.modules.users.RoleManagementPanel(c);
+        }
+        return buildPlaceholder("Role Ctrl manquant");
+    }
+
+    private JComponent buildSecurityPage() {
+        if (role != LibelleRole.ADMIN)
+            return buildPlaceholder("Accès ADMIN requis");
+
+        // Manual wiring since ApplicationContext might not have it yet
+        // Ideally: ApplicationContext.getBean("securityController")
+        // But to be safe and immediate:
+        try {
+            ma.dentalTech.common.utilitaire.RepoFactory<ma.dentalTech.repository.modules.log.api.LogRepository> logRepoFactory = connection -> new ma.dentalTech.repository.modules.log.impl.LogRepositoryImpl(
+                    connection);
+
+            var service = new ma.dentalTech.service.modules.security.impl.SecurityServiceImpl(logRepoFactory);
+            var controller = new ma.dentalTech.mvc.controllers.modules.security.impl.SecurityControllerImpl(service);
+            return new ma.dentalTech.mvc.ui.modules.security.SecurityManagementPanel(controller);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return buildPlaceholder("Erreur Init Security: " + e.getMessage());
+        }
+    }
+
     private JComponent buildDashboardByRole() {
-        var dashboardController =
-                ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class);
+        var dashboardController = ApplicationContext
+                .getBean(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class);
 
         return new DashboardMainPanel(role, userId, dashboardController, this::showPage);
 
@@ -177,8 +197,6 @@ public class MainFrame extends JFrame {
         }
         return new ActeListUI(controller, fullName);
     }
-
-
 
     private void addPage(String key, JComponent page) {
         pages.put(key, page);
