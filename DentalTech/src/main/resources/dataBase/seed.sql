@@ -13,7 +13,7 @@ VALUES
 
 --  CABINET MEDICAL
 
--- Mot de passe commun : 123456
+-- Mot de passe commun : 1234
 SET @PWD_BCRYPT = '$2b$10$RJ1gWIa0QI62ROUSEduCG.TqUJOeObk0bNtS7poGMoMagTEW3QfcC';
 
 INSERT INTO cabinet_medical (id, nom, nom_medecin, logo, adresse, telephone1, telephone2,
