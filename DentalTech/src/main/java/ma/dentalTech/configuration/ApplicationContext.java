@@ -625,7 +625,8 @@ public final class ApplicationContext {
             // =========================================================
             // DASHBOARD : service -> controller
             // =========================================================
-            if (hasKey(props, "dashboardService") && notificationRepo != null) {
+            if (hasKey(props, "dashboardService") && notificationRepo != null && utilisateurRepo != null) {
+
                 currentBean = "dashboardService";
                 DashboardService dashboardService = createDashboardServiceFlexible(
                         props, notificationRepo, utilisateurRepo, rdvRepo, listeRepo, patientRepo, caisseDashboardServiceV2
