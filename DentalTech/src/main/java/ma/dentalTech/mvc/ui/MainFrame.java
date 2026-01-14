@@ -63,7 +63,7 @@ public class MainFrame extends JFrame {
 
         // Header (haut)
         header.setUser(this.fullName, RoleMenuConfig.roleLabel(this.role));
-        header.logoutButton().addActionListener(e -> JOptionPane.showMessageDialog(this, "Déconnexion (à brancher)"));
+        header.logoutButton().addActionListener(e -> doLogout());
         shell.header().add(header, BorderLayout.CENTER);
 
         // Sidebar (gauche) + navigation
