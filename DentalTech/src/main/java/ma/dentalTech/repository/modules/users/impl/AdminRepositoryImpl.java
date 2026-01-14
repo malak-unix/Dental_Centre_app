@@ -1,93 +1,139 @@
 package ma.dentalTech.repository.modules.users.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.users.Admin;
 import ma.dentalTech.repository.modules.users.api.AdminRepository;
+
 import java.sql.*;
 import java.util.*;
 
 public class AdminRepositoryImpl implements AdminRepository {
 
+    @SuppressWarnings("unused")
     private final Connection connection;
 
     public AdminRepositoryImpl(Connection connection) {
         this.connection = connection;
     }
 
-    private Admin mapResultSetToAdmin(ResultSet rs) throws SQLException {
-        Admin admin = new Admin();
-
-        // --- Données héritées de Utilisateur ---
-        admin.setId(rs.getLong("id"));
-        admin.setNom(rs.getString("nom"));
-        admin.setPrenom(rs.getString("prenom"));
-        admin.setEmail(rs.getString("email"));
-        admin.setLogin(rs.getString("login"));
-        admin.setMotDePasse(rs.getString("mot_de_passe"));
-        admin.setActif(rs.getBoolean("actif"));
-
-        return admin;
+    public AdminRepositoryImpl() {
+        this.connection = null;
     }
 
     @Override
     public Admin findById(Long id) {
-        // Simple requête sur la table utilisateur car Admin n'a pas de table de jointure
-        String sql = "SELECT * FROM utilisateur WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        if (id == null) return null;
+
+        String sql = """
+            SELECT u.*
+            FROM utilisateur u
+            JOIN role r ON r.id = u.role_id
+            WHERE u.id = ? AND r.libelle = 'ADMIN'
+        """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, id);
+
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapResultSetToAdmin(rs);
+                return rs.next() ? map(rs) : null;
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur findById(Admin) id=" + id, e);
         }
-        return null;
     }
 
     @Override
     public List<Admin> findAll() {
-        List<Admin> admins = new ArrayList<>();
-        // Note: Dans une logique métier, on pourrait filtrer par rôle ici
-        String sql = "SELECT * FROM utilisateur";
-        try (Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) {
-                admins.add(mapResultSetToAdmin(rs));
-            }
+        String sql = """
+            SELECT u.*
+            FROM utilisateur u
+            JOIN role r ON r.id = u.role_id
+            WHERE r.libelle = 'ADMIN'
+            ORDER BY u.nom, u.prenom
+        """;
+
+        List<Admin> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) list.add(map(rs));
+            return list;
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur findAll(Admin)", e);
         }
-        return admins;
     }
+
+    @Override public void create(Admin admin) {}
+    @Override public void update(Admin admin) {}
 
     @Override
     public void deleteById(Long id) {
+        if (id == null) return;
+
         String sql = "DELETE FROM utilisateur WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             ps.executeUpdate();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur deleteById(Admin) id=" + id, e);
         }
     }
 
     @Override
     public void delete(Admin admin) {
-        if (admin != null && admin.getId() != null) {
-            deleteById(admin.getId());
-        }
+        if (admin == null || admin.getId() == null) return;
+        deleteById(admin.getId());
     }
-
-    // --- Stubs pour l'API ---
-    @Override public void create(Admin admin) { /* Logique INSERT utilisateur */ }
-    @Override public void update(Admin admin) { /* Logique UPDATE utilisateur */ }
 
     @Override
     public List<Admin> findAllOrderByNom() {
-        return List.of();
+        return findAll();
     }
 
     @Override
     public Optional<Admin> findByEmail(String email) {
-        return Optional.empty();
+        if (email == null || email.isBlank()) return Optional.empty();
+
+        String sql = """
+            SELECT u.*
+            FROM utilisateur u
+            JOIN role r ON r.id = u.role_id
+            WHERE u.email = ? AND r.libelle = 'ADMIN'
+        """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, email.trim());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(map(rs)) : Optional.empty();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByEmail(Admin)", e);
+        }
+    }
+
+    private Admin map(ResultSet rs) throws SQLException {
+        Admin a = new Admin();
+        a.setId(rs.getLong("id"));
+        a.setNom(rs.getString("nom"));
+        a.setPrenom(rs.getString("prenom"));
+        a.setEmail(rs.getString("email"));
+        a.setLogin(rs.getString("login"));
+        a.setMotDePasse(rs.getString("mot_de_passe"));
+        a.setActif(rs.getBoolean("actif"));
+        return a;
     }
 }
