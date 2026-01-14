@@ -29,6 +29,8 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import ma.dentalTech.service.modules.users.api.NotificationService;
+import ma.dentalTech.mvc.controllers.modules.users.api.NotificationController;
 
 public final class ApplicationContext {
 
@@ -246,13 +248,15 @@ public final class ApplicationContext {
                 registerKnown(known, fc);
             }
 
-            // ✅ ChargesControllerV2
+            // ChargesControllerV2
             if (hasKey(props, "chargesControllerV2") && hasBean("chargesServiceV2")) {
                 ChargesServiceV2 cs = getBean(ChargesServiceV2.class);
                 Object cc = newFlexibleInstance(props.getProperty("chargesControllerV2"), known, cs);
                 put(ChargesControllerV2.class, cc, "chargesControllerV2");
                 registerKnown(known, cc);
             }
+
+
 
 
             // =========================================================
@@ -464,11 +468,9 @@ public final class ApplicationContext {
                 contextByName.put("userManagementService", userManagementService);
                 registerKnown(known, userManagementService);
             }
+            if (hasKey(props, "userManagementController")
+                    && contextByName.containsKey("userManagementService")) {
 
-            // =========================================================
-                // USERS : controller (optionnel)
-                // =========================================================
-            if (hasKey(props, "userManagementController")) {
                 currentBean = "userManagementController";
 
                 Object svc = contextByName.get("userManagementService");
@@ -485,6 +487,35 @@ public final class ApplicationContext {
                 contextByName.put("userManagementController", ctrl);
                 registerKnown(known, ctrl);
             }
+
+            //ajouté par aya
+            // =========================================================
+            // NOTIFICATION : service -> controller
+            // =========================================================
+            NotificationService notificationService = null;
+
+            if (hasKey(props, "notificationService") && notificationRepo != null) {
+                currentBean = "notificationService";
+                notificationService = newServiceInstance(
+                        props, "notificationService", NotificationService.class,
+                        new Class<?>[]{NotificationRepository.class},
+                        new Object[]{notificationRepo}
+                );
+                put(NotificationService.class, notificationService, "notificationService");
+                registerKnown(known, notificationService);
+            }
+
+            if (hasKey(props, "notificationController") && notificationService != null) {
+                currentBean = "notificationController";
+                NotificationController notificationController = newServiceInstance(
+                        props, "notificationController", NotificationController.class,
+                        new Class<?>[]{NotificationService.class},
+                        new Object[]{notificationService}
+                );
+                put(NotificationController.class, notificationController, "notificationController");
+                registerKnown(known, notificationController);
+            }
+
 
 
             //ajouté par jihane
