@@ -1,5 +1,9 @@
 package ma.dentalTech.repository.test;
 
+import ma.dentalTech.configuration.ApplicationContext;
+// ⚠️ adapte si ta classe connexion n'a pas ce nom
+import ma.dentalTech.configuration.SessionFactory;
+
 import ma.dentalTech.entities.agenda.*;
 import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.cabinet.SituationFinanciere;
@@ -17,14 +21,13 @@ import ma.dentalTech.repository.modules.patient.impl.*;
 
 import ma.dentalTech.entities.cabinet.*;
 import ma.dentalTech.entities.enums.StatutFacture;
-import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 
-import java.time.LocalDateTime;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.repository.modules.caisse.api.*;
+
+import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public class TestRepo {
 
@@ -44,15 +47,10 @@ public class TestRepo {
     // ==========================
     // Repos (caisse)
     // ==========================
-
-    private final FactureRepository factureRepo =
-            ApplicationContext.getBean(FactureRepository.class);
-    private final ChargesRepository chargesRepo =
-            ApplicationContext.getBean(ChargesRepository.class);
-    private final RevenuesRepository revenusRepo =
-            ApplicationContext.getBean(RevenuesRepository.class);
-    private final SituationFinanciereRepository sitRepo =
-            ApplicationContext.getBean(SituationFinanciereRepository.class);
+    private final FactureRepository factureRepo = ApplicationContext.getBean(FactureRepository.class);
+    private final ChargesRepository chargesRepo = ApplicationContext.getBean(ChargesRepository.class);
+    private final RevenuesRepository revenusRepo = ApplicationContext.getBean(RevenuesRepository.class);
+    private final SituationFinanciereRepository sitRepo = ApplicationContext.getBean(SituationFinanciereRepository.class);
 
     // ==========================
     // Repos (agenda)
@@ -69,6 +67,174 @@ public class TestRepo {
     private final PatientRepository patientRepo = new PatientRepositoryImpl();
     private final AntecedentRepository antecedentRepo = new AntecedentRepositoryImpl();
 
+    // =========================================================
+    // CONNEXION JDBC (via votre infra)
+    // =========================================================
+    private Connection getConn() throws SQLException {
+        return SessionFactory.getInstance().getConnection();
+    }
+
+
+    // =========================================================
+    // UTIL : récupère un id généré
+    // =========================================================
+    private long extractGeneratedId(PreparedStatement ps) throws SQLException {
+        try (ResultSet keys = ps.getGeneratedKeys()) {
+            if (keys.next()) return keys.getLong(1);
+        }
+        throw new SQLException("Aucun ID généré retourné.");
+    }
+
+    private String uniq(String prefix) {
+        return prefix + "_" + System.currentTimeMillis();
+    }
+
+    // =========================================================
+    // ENSURE : CABINET MEDICAL
+    // =========================================================
+    private Long ensureCabinetId() {
+        try (Connection conn = getConn()) {
+
+            // 1) si existe déjà, prendre le premier
+            try (PreparedStatement st = conn.prepareStatement("SELECT id FROM cabinet_medical LIMIT 1");
+                 ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+
+            // 2) sinon créer
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO cabinet_medical (nom, email, adresse, telephone1, cree_par, modifie_par) VALUES (?,?,?,?,?,?)",
+                    Statement.RETURN_GENERATED_KEYS
+            )) {
+                ps.setString(1, "CABINET_TEST");
+                ps.setString(2, "cabinet@test.ma");
+                ps.setString(3, "Rabat");
+                ps.setString(4, "0600000000");
+                ps.setString(5, "TEST");
+                ps.setString(6, "TEST");
+                ps.executeUpdate();
+                Long id = extractGeneratedId(ps);
+                System.out.println("✅ Cabinet créé id=" + id);
+                return id;
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("ensureCabinetId() failed", e);
+        }
+    }
+
+    // =========================================================
+    // ENSURE : ROLE (MEDECIN)
+    // =========================================================
+    private Long ensureRoleMedecinId() {
+        try (Connection conn = getConn()) {
+
+            try (PreparedStatement st = conn.prepareStatement("SELECT id FROM role WHERE libelle='MEDECIN' LIMIT 1");
+                 ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO role (libelle, privileges, cree_par, modifie_par) VALUES ('MEDECIN', ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS
+            )) {
+                ps.setString(1, "ALL");
+                ps.setString(2, "TEST");
+                ps.setString(3, "TEST");
+                ps.executeUpdate();
+                Long id = extractGeneratedId(ps);
+                System.out.println("✅ Role MEDECIN créé id=" + id);
+                return id;
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("ensureRoleMedecinId() failed", e);
+        }
+    }
+
+    // =========================================================
+    // ENSURE : MEDECIN (utilisateur + staff + medecin)
+    // =========================================================
+    private Long ensureMedecinId() {
+        try (Connection conn = getConn()) {
+
+            // 1) si un medecin existe déjà
+            try (PreparedStatement st = conn.prepareStatement("SELECT id FROM medecin LIMIT 1");
+                 ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+
+            Long cabinetId = ensureCabinetId();
+            Long roleId = ensureRoleMedecinId();
+
+            // 2) créer utilisateur
+            String login = uniq("medecin");
+            String email = login + "@test.ma";
+
+            long utilisateurId;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO utilisateur (nom, prenom, email, adresse, tel, sexe, login, mot_de_passe, date_naissance, actif, role_id, cree_par, modifie_par) " +
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?, ?,?)",
+                    Statement.RETURN_GENERATED_KEYS
+            )) {
+                ps.setString(1, "MED");
+                ps.setString(2, "TEST");
+                ps.setString(3, email);
+                ps.setString(4, "Rabat");
+                ps.setString(5, "0600001234");
+                ps.setString(6, "AUTRE");
+                ps.setString(7, login);
+
+                // mot_de_passe : pour test uniquement (si vous stockez bcrypt ailleurs, ce n'est pas grave pour FK)
+                ps.setString(8, "123456");
+                ps.setDate(9, Date.valueOf(LocalDate.of(1990, 1, 1)));
+                ps.setBoolean(10, true);
+                ps.setLong(11, roleId);
+                ps.setString(12, "TEST");
+                ps.setString(13, "TEST");
+
+                ps.executeUpdate();
+                utilisateurId = extractGeneratedId(ps);
+            }
+
+            // 3) créer staff (hérite utilisateur)
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO staff (id, salaire, prime, date_recrutement, solde_conge, cabinet_id, cree_par, modifie_par) " +
+                            "VALUES (?,?,?,?,?,?,?,?)"
+            )) {
+                ps.setLong(1, utilisateurId);
+                ps.setBigDecimal(2, new java.math.BigDecimal("0"));
+                ps.setBigDecimal(3, new java.math.BigDecimal("0"));
+                ps.setDate(4, Date.valueOf(LocalDate.now()));
+                ps.setInt(5, 0);
+                ps.setLong(6, cabinetId);
+                ps.setString(7, "TEST");
+                ps.setString(8, "TEST");
+                ps.executeUpdate();
+            }
+
+            // 4) créer medecin (hérite staff)
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO medecin (id, specialite, cree_par, modifie_par) VALUES (?,?,?,?)"
+            )) {
+                ps.setLong(1, utilisateurId);
+                ps.setString(2, "Généraliste");
+                ps.setString(3, "TEST");
+                ps.setString(4, "TEST");
+                ps.executeUpdate();
+            }
+
+            System.out.println("✅ Médecin créé id=" + utilisateurId + " (login=" + login + ")");
+            return utilisateurId;
+
+        } catch (Exception e) {
+            throw new RuntimeException("ensureMedecinId() failed", e);
+        }
+    }
+
+    // ==========================
+    // TEST ANTECEDENT CRUD
+    // ==========================
     void testAntecedentCrud() {
         System.out.println("\n=== TEST ANTECEDENT CRUD ===");
 
@@ -112,7 +278,6 @@ public class TestRepo {
     // INSERT PATIENT + ANTECEDENT
     // =========================================================
     void insertPatientAntecedent() {
-
         System.out.println("\n=== INSERT PATIENT / ANTECEDENT ===");
 
         Patient p = Patient.builder()
@@ -146,11 +311,12 @@ public class TestRepo {
     // INSERT AGENDA
     // =========================================================
     void insertAgenda() {
-
         System.out.println("\n=== INSERT AGENDA ===");
 
+        Long medecinId = ensureMedecinId();
+
         AgendaMensuel agenda = AgendaMensuel.builder()
-                .medecinId(1L)
+                .medecinId(medecinId)
                 .mois(Mois.JANVIER)
                 .annee(2026)
                 .creePar("TEST")
@@ -204,18 +370,12 @@ public class TestRepo {
         System.out.println("✅ Agenda complet créé");
     }
 
-    // =========================================================
-    // SELECT AGENDA
-    // =========================================================
     void selectAgenda() {
         System.out.println("\n=== SELECT AGENDA ===");
         agendaRepo.findAll().forEach(System.out::println);
         rdvRepo.findAll().forEach(System.out::println);
     }
 
-    // =========================================================
-    // UPDATE AGENDA
-    // =========================================================
     void updateAgenda() {
         System.out.println("\n=== UPDATE AGENDA ===");
 
@@ -232,9 +392,6 @@ public class TestRepo {
         System.out.println("✅ Agenda mis à jour");
     }
 
-    // =========================================================
-    // DELETE AGENDA
-    // =========================================================
     void deleteAgenda() {
         rdvRepo.findAll().forEach(r -> rdvRepo.deleteById(r.getId()));
         plageHoraireRepo.findAll().forEach(p -> plageHoraireRepo.deleteById(p.getId()));
@@ -243,14 +400,17 @@ public class TestRepo {
         listeAttenteRepo.findAll().forEach(l -> listeAttenteRepo.deleteById(l.getId()));
         System.out.println("🧹 Agenda supprimé");
     }
+
     // =========================================================
-// TEST CAISSE - CHARGES CRUD
-// =========================================================
+    // TEST CAISSE - CHARGES CRUD
+    // =========================================================
     void testChargesCrud() {
         System.out.println("\n=== TEST CHARGES CRUD ===");
 
+        Long cabinetId = ensureCabinetId();
+
         Charges c = Charges.builder()
-                .cabinetId(1L)
+                .cabinetId(cabinetId)
                 .titre("Charge TEST")
                 .description("Desc charge test")
                 .montant(123.45)
@@ -275,13 +435,15 @@ public class TestRepo {
     }
 
     // =========================================================
-// TEST CAISSE - REVENUS CRUD
-// =========================================================
+    // TEST CAISSE - REVENUS CRUD
+    // =========================================================
     void testRevenusCrud() {
         System.out.println("\n=== TEST REVENUS CRUD ===");
 
+        Long cabinetId = ensureCabinetId();
+
         Revenues r = Revenues.builder()
-                .cabinetId(1L)
+                .cabinetId(cabinetId)
                 .titre("Revenu TEST")
                 .description("Desc revenu test")
                 .montant(500.0)
@@ -306,8 +468,8 @@ public class TestRepo {
     }
 
     // =========================================================
-// TEST CAISSE - FACTURE (read + paiement) + SITUATION FIN
-// =========================================================
+    // TEST CAISSE - FACTURE (read + paiement) + SITUATION FIN
+    // =========================================================
     void testFactureEtSituation() {
         System.out.println("\n=== TEST FACTURE + SITUATION FINANCIERE ===");
 
@@ -315,7 +477,6 @@ public class TestRepo {
         Facture f = factureRepo.findById(1L);
         System.out.println("✅ Facture seed id=1 : " + f);
 
-        // Test paiement (updatePayment)
         boolean ok = factureRepo.updatePayment(
                 1L,
                 999.0,
@@ -324,7 +485,6 @@ public class TestRepo {
         );
         System.out.println("✅ updatePayment OK ? " + ok);
 
-        // Situation financière (seed)
         SituationFinanciere s = sitRepo.findById(1L);
         System.out.println("✅ Situation seed id=1 : " + s);
 
@@ -335,9 +495,8 @@ public class TestRepo {
         System.out.println("✅ Situation findLast : " + last);
     }
 
-
     // =========================================================
-    // MAIN (ordre PROF)
+    // MAIN
     // =========================================================
     public static void main(String[] args) {
 
