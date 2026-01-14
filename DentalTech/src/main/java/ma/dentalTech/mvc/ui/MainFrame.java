@@ -22,6 +22,30 @@ public class MainFrame extends JFrame {
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cards = new JPanel(cardLayout);
+    //jihane
+    private void openUsersManagement() {
+        // ✅ autoriser seulement ADMIN
+        if (role != LibelleRole.ADMIN) {
+            JOptionPane.showMessageDialog(this,
+                    "Accès refusé : ADMIN uniquement",
+                    "Sécurité",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Object bean = ApplicationContext.getBean("userManagementController");
+        if (!(bean instanceof ma.dentalTech.mvc.controllers.modules.users.api.UserManagementController ctrl)) {
+            JOptionPane.showMessageDialog(this,
+                    "userManagementController introuvable dans ApplicationContext",
+                    "Wiring",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ma.dentalTech.mvc.ui.modules.users.UserManagementFrame f =
+                new ma.dentalTech.mvc.ui.modules.users.UserManagementFrame(ctrl);
+        f.setVisible(true);
+    }
 
     private final Map<String, JComponent> pages = new LinkedHashMap<>();
 
@@ -40,6 +64,7 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame(LibelleRole role, Long userId, String fullName) {
+
         super("DentalTech - Dental Center");
 
         this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
@@ -57,8 +82,14 @@ public class MainFrame extends JFrame {
         // Header (haut)
         header.setUser(this.fullName, RoleMenuConfig.roleLabel(this.role));
         header.logoutButton().addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Déconnexion (à brancher)")
+              JOptionPane.showMessageDialog(this, "Déconnexion (à brancher)")
         );
+
+        JButton btnUsers = new JButton("Utilisateurs");
+        btnUsers.addActionListener(e -> openUsersManagement());
+        shell.header().add(btnUsers, BorderLayout.EAST);
+
+
         shell.header().add(header, BorderLayout.CENTER);
 
         // Sidebar (gauche) + navigation

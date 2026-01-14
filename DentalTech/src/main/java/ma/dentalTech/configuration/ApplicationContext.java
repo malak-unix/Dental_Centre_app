@@ -420,20 +420,28 @@ public final class ApplicationContext {
                 contextByName.put("userManagementService", userManagementService);
                 registerKnown(known, userManagementService);
             }
-            if (hasKey(props, "userManagementController")
-                    && contextByName.containsKey("userManagementService")) {
 
+            // =========================================================
+                // USERS : controller (optionnel)
+                // =========================================================
+            if (hasKey(props, "userManagementController")) {
                 currentBean = "userManagementController";
 
-                Object userCtrl = newFlexibleInstance(
+                Object svc = contextByName.get("userManagementService");
+                if (!(svc instanceof ma.dentalTech.service.modules.users.api.UserManagementService ums)) {
+                    throw new IllegalStateException("userManagementService introuvable pour créer userManagementController");
+                }
+
+                Object ctrl = newFlexibleInstance(
                         props.getProperty("userManagementController"),
                         known,
-                        contextByName.get("userManagementService")
+                        ums
                 );
 
-                contextByName.put("userManagementController", userCtrl);
-                registerKnown(known, userCtrl);
+                contextByName.put("userManagementController", ctrl);
+                registerKnown(known, ctrl);
             }
+
 
             //ajouté par jihane
             // =========================================================

@@ -66,7 +66,7 @@ VALUES
 
 
 --  MEDECIN & SECRETAIRES
-=
+
 INSERT INTO medecin (id, specialite, cree_par)
 VALUES
   (5, 'Chirurgie dentaire', 'admin');
