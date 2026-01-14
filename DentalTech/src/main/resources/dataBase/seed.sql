@@ -14,7 +14,7 @@ VALUES
 --  CABINET MEDICAL
 
 -- Mot de passe commun : 123456
-SET @PWD_BCRYPT = '$2b$10$RJ1gWIa0QI62ROUSEduCG.TqUJOeObk0bNtS7poGMoMagTEW3QfcC';
+SET @PWD_BCRYPT = '$2a$10$NuyM2WsHFr0/LMKxlJiP2.RNTuCULl3x9Eu9LrFP7QeEa/NVRZWLq';
 
 INSERT INTO cabinet_medical (id, nom, nom_medecin, logo, adresse, telephone1, telephone2,
                              site_web, instagram, facebook, email, slogan, description, cree_par)
@@ -52,7 +52,7 @@ VALUES
      'aicha',  @PWD_BCRYPT, '2001-12-05', 1, 3, 'admin'),
 
     (5, 'Ou-tamssout','Jihane','jihane@dentalsoft.ma','Agdal, Rabat','J147258', '+212612345604','FEMME',
-     'drjihane', @PWD_BCRYPT, '1988s 1988-06-10', 1, 2, 'admin'),
+     'drjihane', @PWD_BCRYPT, '1988-06-10', 1, 2, 'admin'),
 
     (6, 'El Idrissi', 'Imane', 'imane@dentalsoft.ma', 'Rabat', 'J999111', '+212612300006', 'FEMME',
      'drimane', @PWD_BCRYPT, '1989-02-10', 1, 2, 'admin'),
@@ -77,8 +77,7 @@ VALUES
 INSERT INTO medecin (id, specialite, cree_par)
 VALUES
     (5, 'Chirurgie dentaire', 'admin'),
-    (6, 'Orthodontie', 'admin'),
-    (7, 'Endodontie',  'admin');
+    (6, 'Orthodontie', 'admin'),    (7, 'Endodontie',  'admin');
 
 INSERT INTO secretaire (id, num_cnss, commission, cree_par)
 VALUES
