@@ -44,3 +44,4 @@ build/
 src/main/resources/config/db.properties
 
 
+dependency-reduced-pom.xml

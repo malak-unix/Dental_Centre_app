@@ -81,10 +81,29 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Utilisateur user = authData.utilisateur();
-        boolean ok = passwordEncoder.matches(password, user.getMotDePasse());
+        String stored = user.getMotDePasse();
+
+        // DEV MODE: accepte clair OU hash
+        boolean ok = false;
+
+        if (stored != null) {
+            // 1) compare en clair (DEV)
+            ok = stored.equals(password);
+
+            // 2) sinon compare via encoder (prod)
+            if (!ok && passwordEncoder != null) {
+                try {
+                    ok = passwordEncoder.matches(password, stored);
+                } catch (Exception ignored) {
+                    // ignore si stored n'est pas un hash compatible
+                }
+            }
+        }
+
         if (!ok) {
             return AuthResultDTO.failure("Mot de passe incorrect");
         }
+
 
         UserPrincipalDTO principal = buildUserPrincipal(user, authData.roles());
         return AuthResultDTO.success(principal);

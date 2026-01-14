@@ -3,6 +3,9 @@ package ma.dentalTech.repository.modules.dossierMedical.api;
 import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.repository.common.CrudRepository;
+import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListItemDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListRequestDTO;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +34,10 @@ public interface ConsultationRepository extends CrudRepository<Consultation, Lon
 
     // Pagination simple
     List<Consultation> findPage(int limit, int offset);
+
+    List<ConsultationListItemDTO> searchForList(ConsultationListRequestDTO req);
+
+    long countForList(ConsultationListRequestDTO req);
 
     //Methodes ajoute par aya berday kan st3mlhom f dashboard
     Integer countTermineesPourMedecin(Long medecinId, LocalDateTime start, LocalDateTime end);

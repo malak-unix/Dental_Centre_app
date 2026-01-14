@@ -19,30 +19,17 @@ public class Staff extends Utilisateur {
     private Object cabinetMedicale;
 
     // Constructeur manuel appelé par Secretaire
-    // Constructeur manuel appelé par Secretaire
     public Staff(String nom, String prenom, String email, String adresse, String cin, String tel,
                  Sexe sexe, String login, String motDePasse, LocalDate lastLoginDate,
                  LocalDate dateNaissance, Double salaire, Double prime,
                  LocalDate dateRecrutement, int soldeConge) {
 
-        super(); // ✅ ne dépend d’aucun constructeur spécifique
-
-        this.setNom(nom);
-        this.setPrenom(prenom);
-        this.setEmail(email);
-        this.setAdresse(adresse);
-        this.setCin(cin);
-        this.setTel(tel);
-        this.setSexe(sexe);
-        this.setLogin(login);
-        this.setMotDePasse(motDePasse);
-        this.setLastLoginDate(lastLoginDate);
-        this.setDateNaissance(dateNaissance);
+        // Appel au constructeur de Utilisateur (11 paramètres) //aya
+        super(nom, prenom, email, adresse, cin, tel, sexe, login, motDePasse, lastLoginDate, dateNaissance, null);
 
         this.salaire = salaire;
         this.prime = prime;
         this.dateRecrutement = dateRecrutement;
         this.soldeConge = soldeConge;
     }
-
 }

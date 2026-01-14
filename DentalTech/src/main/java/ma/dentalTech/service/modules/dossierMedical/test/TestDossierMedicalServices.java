@@ -3,15 +3,22 @@ package ma.dentalTech.service.modules.dossierMedical.test;
 import ma.dentalTech.entities.enums.FormeMedicament;
 import ma.dentalTech.entities.enums.TypeDocument;
 
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.SaveCertificatRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.ActorDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.IdRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.OrdonnanceIdRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.DocumentMedicalDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.document.SaveDocumentMedicalRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.intervention.InterventionMedecinDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.intervention.SaveInterventionRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.medicament.MedicamentDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.medicament.SaveMedicamentRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.SaveOrdonnanceRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.PrescriptionDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.SavePrescriptionRequestDTO;
 import ma.dentalTech.service.modules.dossierMedical.api.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-
-import ma.dentalTech.service.modules.dossierMedical.dto.certificat.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.document.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.intervention.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.medicament.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.ordonnance.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.prescription.*;
 
 import ma.dentalTech.service.modules.dossierMedical.impl.*;
 

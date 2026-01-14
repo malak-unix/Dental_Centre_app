@@ -15,7 +15,18 @@ public class TestModuleDashboardService {
         System.out.println("            TEST MODULE DASHBOARD");
         System.out.println("==================================================");
 
-        Long userId = 1L; // ⚠️ adapte (user existant)
+        // IDs seeds (adapte si besoin)
+        Long userSecretaire = 2L; // Malak
+        Long userMedecin = 5L;    // Dr Jihane
+        Long userAdmin = 1L;      // Admin
+
+        testUser(userSecretaire);
+        testUser(userMedecin);
+        testUser(userAdmin);
+    }
+
+    private void testUser(Long userId) throws ServiceException {
+        System.out.println("\n--- Dashboard for userId=" + userId + " ---");
 
         DashboardDTO dto = dashboardService.getDashboard(userId);
 
@@ -23,26 +34,25 @@ public class TestModuleDashboardService {
         System.out.println("features = " + dto.getFeatures());
 
         if (dto.getSecretaire() != null) {
-            System.out.println("[SECRETAIRE] recette=" + dto.getSecretaire().getRecetteDuJour());
+            System.out.println("[SECRETAIRE] recetteDuJour=" + dto.getSecretaire().getRecetteDuJour());
+            System.out.println("[SECRETAIRE] rdvDuJour=" + dto.getSecretaire().getNbRdvDuJour());
         }
         if (dto.getMedecin() != null) {
-            System.out.println("[MEDECIN] rdv=" + dto.getMedecin().getNbRdvDuJour());
+            System.out.println("[MEDECIN] rdvDuJour=" + dto.getMedecin().getNbRdvDuJour());
+            System.out.println("[MEDECIN] patientCourant=" + dto.getMedecin().getPatientEnCours());
         }
         if (dto.getAdmin() != null) {
-            System.out.println("[ADMIN] users=" + dto.getAdmin().getNbUtilisateurs());
+            System.out.println("[ADMIN] nbUsers=" + dto.getAdmin().getNbUtilisateurs());
+            System.out.println("[ADMIN] nbAdmins=" + dto.getAdmin().getNbAdmins());
         }
-
-        System.out.println("\n✅ FIN TEST MODULE DASHBOARD");
     }
 
     public static void main(String[] args) {
         try {
             new TestModuleDashboardService().process();
-        } catch (ServiceException e) {
-            System.err.println("\n❌ ServiceException: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("\n✅ TestModuleDashboardService OK");
         } catch (Exception e) {
-            System.err.println("\n❌ Unexpected error: " + e.getMessage());
+            System.err.println("\n❌ TestModuleDashboardService FAIL: " + e.getMessage());
             e.printStackTrace();
         }
     }

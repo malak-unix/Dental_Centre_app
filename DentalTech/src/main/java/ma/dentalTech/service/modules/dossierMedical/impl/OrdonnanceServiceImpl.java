@@ -1,11 +1,14 @@
 package ma.dentalTech.service.modules.dossierMedical.impl;
 
+import ma.dentalTech.common.exceptions.NotFoundException;
 import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceBetweenDatesRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.SaveOrdonnanceRequestDTO;
 import ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepository;
 import ma.dentalTech.repository.modules.dossierMedical.impl.OrdonnanceRepositoryImpl;
 import ma.dentalTech.service.modules.dossierMedical.api.OrdonnanceService;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.ordonnance.*;
 import ma.dentalTech.service.modules.dossierMedical.exception.*;
 
 import java.time.LocalDate;

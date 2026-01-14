@@ -1,7 +1,9 @@
 package ma.dentalTech.service.modules.dossierMedical.api;
 
-import ma.dentalTech.service.modules.dossierMedical.dto.acte.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
+import ma.dentalTech.mvc.dto.dossierMedicale.acte.ActeDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.acte.FindActesRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.acte.SaveActeRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
 
 public interface ActeService {
     PageResponseDTO<ActeDTO> find(FindActesRequestDTO in);

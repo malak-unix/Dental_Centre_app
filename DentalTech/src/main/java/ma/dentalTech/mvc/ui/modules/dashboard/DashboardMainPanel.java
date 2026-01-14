@@ -1,81 +1,43 @@
 package ma.dentalTech.mvc.ui.modules.dashboard;
 
-import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
-import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
-import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.modules.dashboard.admin.AdminDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.medecin.MedecinDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.secretaire.SecretaireDashboardPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class DashboardMainPanel extends JPanel {
 
-    private final DashboardController controller;
-    private final Long currentUserId;
     private final LibelleRole role;
+    private final Long userId;
+    private final DashboardController dashboardController;
+    private final Consumer<String> navigate;
 
-    private final CardLayout cardLayout = new CardLayout();
-    private final JPanel cards = new JPanel(cardLayout);
+    public DashboardMainPanel(LibelleRole role,
+                              Long userId,
+                              DashboardController dashboardController,
+                              Consumer<String> navigate) {
 
-    private final SecretaireDashboardPanel secretairePanel = new SecretaireDashboardPanel();
-    private final AdminDashboardPanel adminPanel = new AdminDashboardPanel();
-    private final MedecinDashboardPanel medecinPanel = new MedecinDashboardPanel();
-
-    public DashboardMainPanel(LibelleRole role, Long currentUserId) {
-        this.role = role;
-        this.currentUserId = currentUserId;
-
-        Object bean = ApplicationContext.getBean("dashboardController");
-        if (!(bean instanceof DashboardController c)) {
-            throw new IllegalStateException("dashboardController introuvable dans ApplicationContext");
-        }
-        this.controller = c;
+        this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
+        this.userId = (userId != null) ? userId : 1L;
+        this.dashboardController = dashboardController;
+        this.navigate = (navigate != null) ? navigate : (k -> {});
 
         setLayout(new BorderLayout());
-        setBackground(DentalTheme.BG);
+        setOpaque(false);
 
-        cards.setOpaque(false);
-        cards.add(secretairePanel, "SECRETAIRE");
-        cards.add(adminPanel, "ADMIN");
-        cards.add(medecinPanel, "MEDECIN");
-
-        add(cards, BorderLayout.CENTER);
-
-        refresh();
+        add(buildDashboardByRole(), BorderLayout.CENTER);
     }
 
-    public void refresh() {
-        try {
-            DashboardDTO dto = controller.getDashboardDTO(currentUserId);
-
-            // 1) rôle à utiliser : priorité au param role, sinon dto.role, sinon fallback
-            String r = (role != null) ? role.name() : (dto != null ? dto.getRole() : null);
-            if (r == null || r.isBlank()) r = inferRole(dto);
-
-            // 2) remplir panels si data dispo
-            if (dto != null) {
-                if (dto.getSecretaire() != null) secretairePanel.setData(dto.getSecretaire());
-                if (dto.getAdmin() != null) adminPanel.setData(dto.getAdmin());
-                if (dto.getMedecin() != null) medecinPanel.setData(dto.getMedecin());
-            }
-
-            cardLayout.show(cards, r);
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Erreur Dashboard: " + ex.getMessage(),
-                    "Dashboard", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private String inferRole(DashboardDTO dto) {
-        if (dto == null) return "SECRETAIRE";
-        if (dto.getAdmin() != null) return "ADMIN";
-        if (dto.getMedecin() != null) return "MEDECIN";
-        return "SECRETAIRE";
+    private JComponent buildDashboardByRole() {
+        return switch (role) {
+            case SECRETAIRE -> new SecretaireDashboardPanel(dashboardController, userId, navigate);
+            case MEDECIN    -> new MedecinDashboardPanel(dashboardController, userId, navigate);
+            case ADMIN      -> new AdminDashboardPanel(dashboardController, userId, navigate);
+        };
     }
 }

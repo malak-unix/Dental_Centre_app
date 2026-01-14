@@ -1,11 +1,14 @@
 package ma.dentalTech.service.modules.dossierMedical.impl;
 
+import ma.dentalTech.common.exceptions.NotFoundException;
 import ma.dentalTech.entities.dossierMedical.Certificat;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.FindCertificatsRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.certificat.SaveCertificatRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.*;
 import ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository;
 import ma.dentalTech.repository.modules.dossierMedical.impl.CertificatRepositoryImpl;
 import ma.dentalTech.service.modules.dossierMedical.api.CertificatService;
-import ma.dentalTech.service.modules.dossierMedical.dto.certificat.*;
-import ma.dentalTech.service.modules.dossierMedical.dto.common.*;
 import ma.dentalTech.service.modules.dossierMedical.exception.*;
 
 import java.time.LocalDate;

@@ -3,5 +3,6 @@ package ma.dentalTech.entities.enums;
 public enum StatutConsultation {
     PLANIFIE,
     TERMINE,
-    ANNULE
+    ANNULE,
+    EN_COURS
 }

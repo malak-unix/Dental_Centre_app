@@ -1,7 +1,6 @@
 package ma.dentalTech.mvc.ui.common;
 
 import ma.dentalTech.entities.enums.LibelleRole;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,9 +23,11 @@ public final class RoleMenuConfig {
         items.add(new NavItem("dashboard", "Dashboard"));
         items.add(new NavItem("patients", "Les patients"));
         items.add(new NavItem("rdv", "Rendez-vous"));
+        items.add(new NavItem("dossiers", "Dossiers"));
         items.add(new NavItem("caisse", "La caisse"));
-        items.add(new NavItem("stock", "Stock"));
         items.add(new NavItem("agenda_med", "Agenda med"));
+        items.add(new NavItem("stock", "Stock"));
+        items.add(new NavItem("liste_attente", "File d'attente"));
         return items;
     }
 
@@ -34,9 +35,11 @@ public final class RoleMenuConfig {
         List<NavItem> items = new ArrayList<>();
         items.add(new NavItem("dashboard", "Dashboard"));
         items.add(new NavItem("patients", "Mes patients"));
+        items.add(new NavItem("dossiers", "Dossiers"));
         items.add(new NavItem("consultations", "Mes consultations"));
         items.add(new NavItem("ordonnances", "Ordonnances"));
         items.add(new NavItem("certificats", "Certificats"));
+        items.add(new NavItem("actes","Actes"));
         items.add(new NavItem("situation_fin", "Situation financière"));
         return items;
     }

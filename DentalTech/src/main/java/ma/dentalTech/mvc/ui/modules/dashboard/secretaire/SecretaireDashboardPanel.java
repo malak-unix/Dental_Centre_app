@@ -1,254 +1,112 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.secretaire;
 
-import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
-import ma.dentalTech.mvc.dto.dashboard.common.AlerteDTO;
-import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
+import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
+import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
-import ma.dentalTech.mvc.ui.common.CardPanel;
-import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class SecretaireDashboardPanel extends JPanel {
 
-    private JLabel vNbPatients;
-    private JLabel vRecette;
-    private JLabel vNbRdv;
-    private JLabel vNbAttente;
+    private final DashboardController controller;
+    private final Long userId;
+    private final Consumer<String> navigate;
 
-    private JPanel waitRow; // file d’attente
-    private DefaultListModel<String> activitiesModel;
-    private JTextArea notifArea;
-    private JLabel notifBadge;
+    // UI (minimal : adapte si tu as déjà des composants)
+    private JLabel kpiPatients = new JLabel("-");
+    private JLabel kpiRecette = new JLabel("-");
+    private JLabel kpiRdv = new JLabel("-");
+    private JLabel kpiAttente = new JLabel("-");
 
     public SecretaireDashboardPanel() {
+        this(null, null, k -> {});
+    }
+
+
+    // ✅ ordre (controller, userId, navigate) compatible si ailleurs tu l’utilises dans cet ordre
+    public SecretaireDashboardPanel(DashboardController controller, Long userId, Consumer<String> navigate) {
+        this.controller = controller;
+        this.userId = userId;
+        this.navigate = (navigate != null) ? navigate : (k -> {});
+        buildUi();
+        reload();
+    }
+
+    private void buildUi() {
         setOpaque(false);
-        setLayout(new BorderLayout(18, 18));
+        setLayout(new BorderLayout(16, 16));
 
         JLabel title = new JLabel("Revue du Jour");
-        title.setFont(DentalTheme.H1);
-        title.setForeground(DentalTheme.TEXT);
-        add(title, BorderLayout.NORTH);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
 
-        JPanel main = new JPanel();
-        main.setOpaque(false);
-        main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
-        add(main, BorderLayout.CENTER);
-
-        // KPIs
-        JPanel kpis = new JPanel(new GridLayout(1, 5, 18, 18));
+        JPanel kpis = new JPanel(new GridLayout(1, 4, 12, 12));
         kpis.setOpaque(false);
+        kpis.add(kpiCard("Nb patients", kpiPatients));
+        kpis.add(kpiCard("Recette du jour", kpiRecette));
+        kpis.add(kpiCard("RDV du jour", kpiRdv));
+        kpis.add(kpiCard("Patients en attente", kpiAttente));
 
-        vNbPatients = new JLabel("—");
-        vRecette = new JLabel("—");
-        vNbRdv = new JLabel("—");
-        vNbAttente = new JLabel("—");
+        JButton btnRdv = new JButton("Rendez-vous");
+        btnRdv.addActionListener(e -> this.navigate.accept("rdv"));
 
-        kpis.add(kpi(vNbPatients, "Nb patients"));
-        kpis.add(kpi(vRecette, "Recette du jour"));
-        kpis.add(kpi(vNbRdv, "RDV du jour"));
-        kpis.add(kpi(vNbAttente, "Patients en attente"));
-        kpis.add(actionCard("Voir +statistiques"));
+        JButton btnPatients = new JButton("Patients");
+        btnPatients.addActionListener(e -> this.navigate.accept("patients"));
 
-        main.add(kpis);
-        main.add(Box.createVerticalStrut(18));
+        JButton btnCaisse = new JButton("La caisse");
+        btnCaisse.addActionListener(e -> this.navigate.accept("caisse"));
 
-        // File d’attente
-        CardPanel waitCard = new CardPanel();
-        waitCard.setLayout(new BorderLayout(10, 10));
-        JLabel wt = new JLabel("File d’Attente");
-        wt.setFont(DentalTheme.H2);
-        waitCard.add(wt, BorderLayout.NORTH);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        actions.setOpaque(false);
+        actions.add(btnPatients);
+        actions.add(btnRdv);
+        actions.add(btnCaisse);
 
-        waitRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 8));
-        waitRow.setOpaque(false);
+        JPanel top = new JPanel(new BorderLayout(0, 10));
+        top.setOpaque(false);
+        top.add(title, BorderLayout.NORTH);
+        top.add(kpis, BorderLayout.CENTER);
+        top.add(actions, BorderLayout.SOUTH);
 
-        JScrollPane sp = new JScrollPane(waitRow);
-        sp.setOpaque(false);
-        sp.getViewport().setOpaque(false);
-        sp.setBorder(null);
-        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        waitCard.add(sp, BorderLayout.CENTER);
+        add(top, BorderLayout.NORTH);
+    }
 
-        main.add(waitCard);
-        main.add(Box.createVerticalStrut(18));
-
-        JPanel bottom = new JPanel(new GridLayout(1, 2, 18, 18));
-        bottom.setOpaque(false);
-        bottom.add(activitiesCard());
-        bottom.add(notifCard());
-        main.add(bottom);
-
-        // default (si service pas encore branché)
-        setData(null);
+    private JPanel kpiCard(String label, JLabel value) {
+        JPanel p = new JPanel(new BorderLayout(0, 6));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JLabel l = new JLabel(label);
+        l.setFont(l.getFont().deriveFont(Font.PLAIN, 13f));
+        value.setFont(value.getFont().deriveFont(Font.BOLD, 18f));
+        p.add(l, BorderLayout.NORTH);
+        p.add(value, BorderLayout.CENTER);
+        return p;
     }
 
     public void setData(SecretaireDashboardResponseDTO dto) {
-        int nbPatients = dto != null && dto.getNbPatients() != null ? dto.getNbPatients() : 0;
-        int nbRdv = dto != null && dto.getNbRdvDuJour() != null ? dto.getNbRdvDuJour() : 0;
-        int nbAtt = dto != null && dto.getNbEnAttente() != null ? dto.getNbEnAttente() : 0;
+        if (dto == null) return;
 
-        BigDecimal recette = dto != null ? dto.getRecetteDuJour() : null;
+        kpiPatients.setText(s(dto.getNbPatients()));
+        kpiRdv.setText(s(dto.getNbRdvDuJour()));
+        kpiAttente.setText(s(dto.getNbEnAttente()));
+        kpiRecette.setText(formatDh(dto.getRecetteDuJour()));
+    }
 
-        vNbPatients.setText(String.valueOf(nbPatients));
-        vNbRdv.setText(String.valueOf(nbRdv));
-        vNbAttente.setText(String.valueOf(nbAtt));
-        vRecette.setText(formatDh(recette));
-
-        // file attente
-        waitRow.removeAll();
-        List<ListeAttenteDto> file = dto != null ? dto.getFileAttente() : null;
-        if (file == null || file.isEmpty()) {
-            waitRow.add(patientChip("—"));
-        } else {
-            for (ListeAttenteDto p : file) {
-                String name = (p.getPatientNom() != null && !p.getPatientNom().isBlank())
-                        ? p.getPatientNom()
-                        : (p.getNom() != null ? p.getNom() : "Patient");
-                waitRow.add(patientChip(name));
-            }
+    public void reload() {
+        if (controller == null || userId == null) return;
+        try {
+            DashboardDTO dto = controller.getDashboardDTO(userId);
+            setData(dto != null ? dto.getSecretaire() : null);
+        } catch (Exception ex) {
+            // pas de crash UI
         }
-        waitRow.revalidate();
-        waitRow.repaint();
-
-        // activities = notifications (simple)
-        activitiesModel.clear();
-        List<NotificationDTO> notifs = dto != null ? dto.getNotifications() : null;
-        if (notifs != null && !notifs.isEmpty()) {
-            int limit = Math.min(8, notifs.size());
-            for (int i = 0; i < limit; i++) {
-                NotificationDTO n = notifs.get(i);
-                activitiesModel.addElement(formatNotifLine(n));
-            }
-        } else {
-            activitiesModel.addElement("Aucune activité récente.");
-        }
-
-        // notif/alert area
-        int nbA = dto != null && dto.getNbAlertesNonLues() != null ? dto.getNbAlertesNonLues() : 0;
-        int nbN = dto != null && dto.getNbNotificationsNonLues() != null ? dto.getNbNotificationsNonLues() : 0;
-        notifBadge.setText("  " + (nbA + nbN) + "  ");
-
-        StringBuilder sb = new StringBuilder();
-        List<AlerteDTO> alertes = dto != null ? dto.getAlertes() : null;
-        if (alertes != null && !alertes.isEmpty()) {
-            int limit = Math.min(6, alertes.size());
-            for (int i = 0; i < limit; i++) {
-                AlerteDTO a = alertes.get(i);
-                sb.append("• ").append(a.getTitre() != null ? a.getTitre() : "Alerte")
-                        .append(" : ")
-                        .append(a.getMessage() != null ? a.getMessage() : "")
-                        .append("\n");
-            }
-        } else {
-            sb.append("• Aucune alerte.\n");
-        }
-        notifArea.setText(sb.toString());
     }
 
-    private CardPanel kpi(JLabel valueLabel, String label) {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BoxLayout(c, BoxLayout.Y_AXIS));
-
-        valueLabel.setFont(DentalTheme.H2);
-        valueLabel.setForeground(DentalTheme.TEXT);
-
-        JLabel l = new JLabel(label);
-        l.setFont(DentalTheme.BASE);
-        l.setForeground(DentalTheme.MUTED);
-
-        c.add(valueLabel);
-        c.add(Box.createVerticalStrut(6));
-        c.add(l);
-        return c;
-    }
-
-    private CardPanel actionCard(String text) {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BorderLayout());
-        JButton b = new JButton(text);
-        b.setFocusPainted(false);
-        c.add(b, BorderLayout.CENTER);
-        return c;
-    }
-
-    private JPanel patientChip(String name) {
-        CardPanel chip = new CardPanel();
-        chip.setPreferredSize(new Dimension(170, 70));
-        chip.setLayout(new BorderLayout(8, 0));
-        JLabel n = new JLabel(name);
-        n.setFont(DentalTheme.BASE_BOLD);
-        chip.add(n, BorderLayout.CENTER);
-
-        JButton dossier = new JButton("Dossier");
-        dossier.setFocusPainted(false);
-        chip.add(dossier, BorderLayout.EAST);
-        return chip;
-    }
-
-    private CardPanel activitiesCard() {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BorderLayout(10, 10));
-
-        JLabel t = new JLabel("Activités Récentes");
-        t.setFont(DentalTheme.H2);
-        c.add(t, BorderLayout.NORTH);
-
-        activitiesModel = new DefaultListModel<>();
-        JList<String> list = new JList<>(activitiesModel);
-        list.setFont(DentalTheme.BASE);
-        list.setBorder(null);
-
-        c.add(new JScrollPane(list), BorderLayout.CENTER);
-        return c;
-    }
-
-    private CardPanel notifCard() {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BorderLayout(10, 10));
-
-        JPanel head = new JPanel(new BorderLayout());
-        head.setOpaque(false);
-
-        JLabel t = new JLabel("Notifications / Alertes");
-        t.setFont(DentalTheme.H2);
-
-        notifBadge = new JLabel("  0  ");
-        notifBadge.setOpaque(true);
-        notifBadge.setBackground(new Color(0x1F4C5B));
-        notifBadge.setForeground(Color.WHITE);
-
-        head.add(t, BorderLayout.WEST);
-        head.add(notifBadge, BorderLayout.EAST);
-
-        c.add(head, BorderLayout.NORTH);
-
-        notifArea = new JTextArea();
-        notifArea.setFont(DentalTheme.BASE);
-        notifArea.setOpaque(false);
-        notifArea.setEditable(false);
-        c.add(notifArea, BorderLayout.CENTER);
-
-        return c;
-    }
+    private String s(Integer v) { return v == null ? "-" : String.valueOf(v); }
 
     private String formatDh(BigDecimal v) {
-        if (v == null) return "0 DH";
-        return v.stripTrailingZeros().toPlainString() + " DH";
-    }
-
-    private String formatNotifLine(NotificationDTO n) {
-        String titre = n.getTitre() != null ? n.getTitre() : "Notification";
-        String msg = n.getMessage() != null ? n.getMessage() : "";
-        String d = "";
-        if (n.getDate() != null) {
-            d = " • " + n.getDate().format(DateTimeFormatter.ofPattern("dd/MM HH:mm"));
-        }
-        return titre + " : " + msg + d;
+        if (v == null) return "-";
+        return v.toPlainString() + " DH";
     }
 }

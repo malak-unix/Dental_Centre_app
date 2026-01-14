@@ -1,0 +1,14 @@
+package ma.dentalTech.mvc.ui.pagesNames;
+
+public enum ApplicationPages {
+    DOSSIER_MEDICAUX,
+    CONSULTATIONS,
+    ORDONNANCES,
+    CERTIFICATS,
+    ACTES,
+    FORM_AJOUT_DOSSIER,
+    FORM_AJOUT_CONSULTATION,
+    FORM_AJOUT_ORDONNANCE,
+    FORM_AJOUT_CERTIFICAT,
+    FORM_AJOUT_ACTES,
+}

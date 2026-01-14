@@ -1,5 +1,7 @@
 package ma.dentalTech.configuration;
 
+import ma.dentalTech.mvc.controllers.modules.caisse.api.ChargesControllerV2;
+import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
 import ma.dentalTech.repository.common.RowMappers;
 
 import ma.dentalTech.repository.modules.patient.api.*;
@@ -104,7 +106,25 @@ public final class ApplicationContext {
                     put(AntecedentService.class, antecedentService, "antecedentService");
                     registerKnown(known, antecedentService);
                 }
+
+                // ✅ AJOUT IMPORTANT : antecedentController (bean name EXACT)
+                if (hasKey(props, "antecedentController") && hasBean("antecedentService")) {
+                    currentBean = "antecedentController";
+
+                    AntecedentService antecedentServiceBean = getBean(AntecedentService.class);
+
+                    Object antecedentController = newFlexibleInstance(
+                            props.getProperty("antecedentController"),
+                            known,
+                            antecedentServiceBean
+                    );
+
+                    contextByName.put("antecedentController", antecedentController);
+                    registerKnown(known, antecedentController);
+                }
             }
+
+
 
             if (hasKey(props, "patientController")) {
                 currentBean = "patientController";
@@ -120,6 +140,7 @@ public final class ApplicationContext {
             // =========================================================
             // CAISSE V2
             // =========================================================
+
             currentBean = "factureRepo";
             FactureRepository factureRepo = newRepoInstance(props, "factureRepo", FactureRepository.class, known);
             put(FactureRepository.class, factureRepo, "factureRepo");
@@ -139,6 +160,12 @@ public final class ApplicationContext {
             SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo", SituationFinanciereRepository.class, known);
             put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
             registerKnown(known, sitFinRepo);
+
+            // CaisseValidationService (indispensable)
+            CaisseValidationService validationSvc = new CaisseValidationServiceImpl();
+            put(CaisseValidationService.class, validationSvc, "caisseValidationService");
+            registerKnown(known, validationSvc);
+
 
             FacturePdfService facturePdfService = null;
             if (hasKey(props, "facturePdfService")) {
@@ -210,6 +237,23 @@ public final class ApplicationContext {
                 contextByName.put("caisseDashboardControllerV2", ctrl);
                 registerKnown(known, ctrl);
             }
+
+            // ✅ FactureControllerV2
+            if (hasKey(props, "factureControllerV2") && hasBean("factureServiceV2")) {
+                FactureServiceV2 fs = getBean(FactureServiceV2.class);
+                Object fc = newFlexibleInstance(props.getProperty("factureControllerV2"), known, fs);
+                put(FactureControllerV2.class, fc, "factureControllerV2");
+                registerKnown(known, fc);
+            }
+
+            // ✅ ChargesControllerV2
+            if (hasKey(props, "chargesControllerV2") && hasBean("chargesServiceV2")) {
+                ChargesServiceV2 cs = getBean(ChargesServiceV2.class);
+                Object cc = newFlexibleInstance(props.getProperty("chargesControllerV2"), known, cs);
+                put(ChargesControllerV2.class, cc, "chargesControllerV2");
+                registerKnown(known, cc);
+            }
+
 
             // =========================================================
             // RDV : repo -> service -> controller
@@ -485,10 +529,63 @@ public final class ApplicationContext {
                 contextByName.put("authController", authController);
                 registerKnown(known, authController);
             }
+            // =========================================================
+// DOSSIER MEDICAL : services + controllers (pour UI MainFrame)
+// =========================================================
+            try {
+
+                // --- Services (constructeurs no-arg existent)
+                var acteService =
+                        new ma.dentalTech.service.modules.dossierMedical.impl.ActeServiceImpl();
+
+                var consultationService =
+                        new ma.dentalTech.service.modules.dossierMedical.impl.ConsultationServiceImpl();
+
+                // --- Controllers
+                var dossierCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.DossierMedicalControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController.class,
+                        dossierCtrl, "dossierMedicalController");
+                registerKnown(known, dossierCtrl);
+
+                var acteCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.ActeControllerImpl(acteService);
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController.class,
+                        acteCtrl, "acteController");
+                registerKnown(known, acteCtrl);
+
+                var consultationCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.ConsultationControllerImpl(consultationService);
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController.class,
+                        consultationCtrl, "consultationController");
+                registerKnown(known, consultationCtrl);
+
+                var ordonnanceCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.OrdonnanceControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController.class,
+                        ordonnanceCtrl, "ordonnanceController");
+                registerKnown(known, ordonnanceCtrl);
+
+                var certificatCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.CertificatControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.CertificatController.class,
+                        certificatCtrl, "certificatController");
+                registerKnown(known, certificatCtrl);
+
+                var situationCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.SituationFinanciereControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.SituationFinanciereController.class,
+                        situationCtrl, "situationFinanciereController");
+                registerKnown(known, situationCtrl);
+
+            } catch (Exception e) {
+                // Option: log si tu veux
+                System.err.println("⚠️ Erreur init DOSSIER MEDICAL: " + e.getMessage());
+            }
 
 
             // =========================================================
-            // DASHBOARD : service -> controller (optionnel)
+            // DASHBOARD : service -> controller
             // =========================================================
             if (hasKey(props, "dashboardService") && notificationRepo != null) {
                 currentBean = "dashboardService";
@@ -661,18 +758,34 @@ public final class ApplicationContext {
         String className = props.getProperty("dashboardService");
         Class<?> clazz = Class.forName(className);
 
+        //  On privilégie les constructeurs qui permettent de détecter le rôle
         try {
-            return (DashboardService) clazz.getDeclaredConstructor(NotificationRepository.class)
-                    .newInstance(notificationRepo);
+            return (DashboardService) clazz.getDeclaredConstructor(
+                    NotificationRepository.class,
+                    UtilisateurRepository.class
+            ).newInstance(notificationRepo, utilisateurRepo);
         } catch (NoSuchMethodException ignored) {}
 
-        if (utilisateurRepo != null) {
-            try {
-                return (DashboardService) clazz.getDeclaredConstructor(NotificationRepository.class, UtilisateurRepository.class)
-                        .newInstance(notificationRepo, utilisateurRepo);
-            } catch (NoSuchMethodException ignored) {}
-        }
+        // Constructeur complet si tu veux dashboard riche (si présent)
+        try {
+            return (DashboardService) clazz.getDeclaredConstructor(
+                    NotificationRepository.class,
+                    UtilisateurRepository.class,
+                    PatientRepository.class,
+                    RdvRepository.class,
+                    ListeAttenteRepository.class,
+                    CaisseDashboardServiceV2.class
+            ).newInstance(notificationRepo, utilisateurRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
+        } catch (NoSuchMethodException ignored) {}
 
+        //  Ancien constructeur fallback (sans rôle)
+        try {
+            return (DashboardService) clazz.getDeclaredConstructor(
+                    NotificationRepository.class
+            ).newInstance(notificationRepo);
+        } catch (NoSuchMethodException ignored) {}
+
+        // Constructeur utilisé auparavant dans ton code (si présent)
         try {
             return (DashboardService) clazz.getDeclaredConstructor(
                     NotificationRepository.class,
@@ -685,4 +798,5 @@ public final class ApplicationContext {
 
         throw new IllegalStateException("Aucun constructeur compatible pour dashboardService=" + className);
     }
+
 }

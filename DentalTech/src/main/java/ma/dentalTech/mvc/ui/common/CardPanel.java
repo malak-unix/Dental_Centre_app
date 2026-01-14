@@ -69,6 +69,6 @@ public class CardPanel extends JPanel {
             g2.drawString(title, 24, 34);
         }
 
-        g2.dispose();
+        g2.dispose(); //l'interface est charge dans la ram mais elle n est plus visible pour nous
     }
 }
