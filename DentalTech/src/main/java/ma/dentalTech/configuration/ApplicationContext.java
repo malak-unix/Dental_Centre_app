@@ -8,12 +8,18 @@ import ma.dentalTech.repository.modules.patient.api.*;
 import ma.dentalTech.repository.modules.users.api.*;
 import ma.dentalTech.service.modules.patient.api.*;
 
+import ma.dentalTech.repository.modules.dossierMedical.api.*;
+import ma.dentalTech.service.modules.dossierMedical.api.*;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.*;
+
 import ma.dentalTech.repository.modules.caisse.api.*;
 import ma.dentalTech.service.modules.caisse.api.*;
 import ma.dentalTech.service.modules.caisse.impl.*;
 
 import ma.dentalTech.repository.modules.agenda.api.*;
 import ma.dentalTech.service.modules.agenda.api.*;
+
+
 
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 //ajouté par jihane
@@ -47,7 +53,8 @@ public final class ApplicationContext {
             // =========================================================
             Properties props = new Properties();
             try (InputStream in = ApplicationContext.class.getResourceAsStream("/config/beans.properties")) {
-                if (in == null) throw new IllegalStateException("Impossible de trouver /config/beans.properties");
+                if (in == null)
+                    throw new IllegalStateException("Impossible de trouver /config/beans.properties");
                 props.load(in);
             }
 
@@ -57,14 +64,16 @@ public final class ApplicationContext {
             SessionFactory sf = SessionFactory.getInstance();
             known.put(SessionFactory.class, sf);
 
-            // ✅ IMPORTANT : garder une connexion partagée pour les repos qui ont ctor(Connection)
+            // ✅ IMPORTANT : garder une connexion partagée pour les repos qui ont
+            // ctor(Connection)
             Connection sharedCn = sf.getConnection();
             known.put(Connection.class, sharedCn);
 
             // RowMappers (si utilisé)
             try {
                 known.put(RowMappers.class, RowMappers.class.getDeclaredConstructor().newInstance());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             // =========================================================
             // PATIENT : repo -> service -> appService -> controller
@@ -77,22 +86,22 @@ public final class ApplicationContext {
             currentBean = "patientService";
             PatientService patientService = newServiceInstance(
                     props, "patientService", PatientService.class,
-                    new Class<?>[]{PatientRepository.class},
-                    new Object[]{patientRepo}
-            );
+                    new Class<?>[] { PatientRepository.class },
+                    new Object[] { patientRepo });
             put(PatientService.class, patientService, "patientService");
             registerKnown(known, patientService);
 
             currentBean = "patientAppService";
-            PatientAppService patientAppService =
-                    new ma.dentalTech.service.modules.patient.impl.PatientAppServiceImpl(patientRepo);
+            PatientAppService patientAppService = new ma.dentalTech.service.modules.patient.impl.PatientAppServiceImpl(
+                    patientRepo);
             put(PatientAppService.class, patientAppService, "patientAppService");
             registerKnown(known, patientAppService);
 
             // Antecedent optional
             if (hasKey(props, "antecedentRepo")) {
                 currentBean = "antecedentRepo";
-                AntecedentRepository antecedentRepo = newRepoInstance(props, "antecedentRepo", AntecedentRepository.class, known);
+                AntecedentRepository antecedentRepo = newRepoInstance(props, "antecedentRepo",
+                        AntecedentRepository.class, known);
                 put(AntecedentRepository.class, antecedentRepo, "antecedentRepo");
                 registerKnown(known, antecedentRepo);
 
@@ -100,9 +109,8 @@ public final class ApplicationContext {
                     currentBean = "antecedentService";
                     AntecedentService antecedentService = newServiceInstance(
                             props, "antecedentService", AntecedentService.class,
-                            new Class<?>[]{AntecedentRepository.class},
-                            new Object[]{antecedentRepo}
-                    );
+                            new Class<?>[] { AntecedentRepository.class },
+                            new Object[] { antecedentRepo });
                     put(AntecedentService.class, antecedentService, "antecedentService");
                     registerKnown(known, antecedentService);
                 }
@@ -113,8 +121,7 @@ public final class ApplicationContext {
                 Object patientController = newFlexibleInstance(
                         props.getProperty("patientController"),
                         known,
-                        patientAppService
-                );
+                        patientAppService);
                 contextByName.put("patientController", patientController);
                 registerKnown(known, patientController);
             }
@@ -139,7 +146,8 @@ public final class ApplicationContext {
             registerKnown(known, revenusRepo);
 
             currentBean = "sitFinRepo";
-            SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo", SituationFinanciereRepository.class, known);
+            SituationFinanciereRepository sitFinRepo = newRepoInstance(props, "sitFinRepo",
+                    SituationFinanciereRepository.class, known);
             put(SituationFinanciereRepository.class, sitFinRepo, "sitFinRepo");
             registerKnown(known, sitFinRepo);
 
@@ -147,7 +155,6 @@ public final class ApplicationContext {
             CaisseValidationService validationSvc = new CaisseValidationServiceImpl();
             put(CaisseValidationService.class, validationSvc, "caisseValidationService");
             registerKnown(known, validationSvc);
-
 
             FacturePdfService facturePdfService = null;
             if (hasKey(props, "facturePdfService")) {
@@ -168,9 +175,8 @@ public final class ApplicationContext {
                 currentBean = "chargesServiceV2";
                 ChargesServiceV2 chargesServiceV2 = newServiceInstance(
                         props, "chargesServiceV2", ChargesServiceV2.class,
-                        new Class<?>[]{ChargesRepository.class},
-                        new Object[]{chargesRepo}
-                );
+                        new Class<?>[] { ChargesRepository.class },
+                        new Object[] { chargesRepo });
                 put(ChargesServiceV2.class, chargesServiceV2, "chargesServiceV2");
                 registerKnown(known, chargesServiceV2);
             }
@@ -179,9 +185,8 @@ public final class ApplicationContext {
                 currentBean = "revenusServiceV2";
                 RevenusServiceV2 revenusServiceV2 = newServiceInstance(
                         props, "revenusServiceV2", RevenusServiceV2.class,
-                        new Class<?>[]{RevenuesRepository.class},
-                        new Object[]{revenusRepo}
-                );
+                        new Class<?>[] { RevenuesRepository.class },
+                        new Object[] { revenusRepo });
                 put(RevenusServiceV2.class, revenusServiceV2, "revenusServiceV2");
                 registerKnown(known, revenusServiceV2);
             }
@@ -190,9 +195,8 @@ public final class ApplicationContext {
                 currentBean = "sitFinServiceV2";
                 SituationFinanciereServiceV2 sitFinServiceV2 = newServiceInstance(
                         props, "sitFinServiceV2", SituationFinanciereServiceV2.class,
-                        new Class<?>[]{SituationFinanciereRepository.class},
-                        new Object[]{sitFinRepo}
-                );
+                        new Class<?>[] { SituationFinanciereRepository.class },
+                        new Object[] { sitFinRepo });
                 put(SituationFinanciereServiceV2.class, sitFinServiceV2, "sitFinServiceV2");
                 registerKnown(known, sitFinServiceV2);
             }
@@ -202,9 +206,8 @@ public final class ApplicationContext {
                 currentBean = "caisseDashboardServiceV2";
                 caisseDashboardServiceV2 = newServiceInstance(
                         props, "caisseDashboardServiceV2", CaisseDashboardServiceV2.class,
-                        new Class<?>[]{FactureRepository.class, RevenuesRepository.class, ChargesRepository.class},
-                        new Object[]{factureRepo, revenusRepo, chargesRepo}
-                );
+                        new Class<?>[] { FactureRepository.class, RevenuesRepository.class, ChargesRepository.class },
+                        new Object[] { factureRepo, revenusRepo, chargesRepo });
                 put(CaisseDashboardServiceV2.class, caisseDashboardServiceV2, "caisseDashboardServiceV2");
                 registerKnown(known, caisseDashboardServiceV2);
             }
@@ -214,8 +217,7 @@ public final class ApplicationContext {
                 Object ctrl = newFlexibleInstance(
                         props.getProperty("caisseDashboardControllerV2"),
                         known,
-                        caisseDashboardServiceV2
-                );
+                        caisseDashboardServiceV2);
                 contextByName.put("caisseDashboardControllerV2", ctrl);
                 registerKnown(known, ctrl);
             }
@@ -236,7 +238,6 @@ public final class ApplicationContext {
                 registerKnown(known, cc);
             }
 
-
             // =========================================================
             // RDV : repo -> service -> controller
             // =========================================================
@@ -250,9 +251,8 @@ public final class ApplicationContext {
                 currentBean = "rdv.service";
                 rdvService = newServiceInstance(
                         props, "rdv.service", RdvService.class,
-                        new Class<?>[]{RdvRepository.class},
-                        new Object[]{rdvRepo}
-                );
+                        new Class<?>[] { RdvRepository.class },
+                        new Object[] { rdvRepo });
                 put(RdvService.class, rdvService, "rdv.service");
                 registerKnown(known, rdvService);
             }
@@ -262,8 +262,7 @@ public final class ApplicationContext {
                 Object rdvCtrl = newFlexibleInstance(
                         props.getProperty("rdv.controller"),
                         known,
-                        rdvService, patientRepo
-                );
+                        rdvService, patientRepo);
                 contextByName.put("rdv.controller", rdvCtrl);
                 registerKnown(known, rdvCtrl);
             }
@@ -272,12 +271,14 @@ public final class ApplicationContext {
             // AGENDA
             // =========================================================
             currentBean = "agendaMensuelRepo";
-            AgendaMensuelRepository agendaMensuelRepo = newRepoInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class, known);
+            AgendaMensuelRepository agendaMensuelRepo = newRepoInstance(props, "agendaMensuelRepo",
+                    AgendaMensuelRepository.class, known);
             put(AgendaMensuelRepository.class, agendaMensuelRepo, "agendaMensuelRepo");
             registerKnown(known, agendaMensuelRepo);
 
             currentBean = "detailJourneeRepo";
-            DetailJourneeRepository detailJourneeRepo = newRepoInstance(props, "detailJourneeRepo", DetailJourneeRepository.class, known);
+            DetailJourneeRepository detailJourneeRepo = newRepoInstance(props, "detailJourneeRepo",
+                    DetailJourneeRepository.class, known);
             put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
             registerKnown(known, detailJourneeRepo);
 
@@ -285,9 +286,8 @@ public final class ApplicationContext {
                 currentBean = "agendaService";
                 AgendaService agendaService = newServiceInstance(
                         props, "agendaService", AgendaService.class,
-                        new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class},
-                        new Object[]{agendaMensuelRepo, detailJourneeRepo}
-                );
+                        new Class<?>[] { AgendaMensuelRepository.class, DetailJourneeRepository.class },
+                        new Object[] { agendaMensuelRepo, detailJourneeRepo });
                 put(AgendaService.class, agendaService, "agendaService");
                 registerKnown(known, agendaService);
             }
@@ -297,8 +297,7 @@ public final class ApplicationContext {
                 Object agendaCtrl = newFlexibleInstance(
                         props.getProperty("agenda.controller"),
                         known,
-                        agendaMensuelRepo, detailJourneeRepo
-                );
+                        agendaMensuelRepo, detailJourneeRepo);
                 contextByName.put("agenda.controller", agendaCtrl);
                 registerKnown(known, agendaCtrl);
             }
@@ -307,9 +306,9 @@ public final class ApplicationContext {
                 currentBean = "agendaAppService";
                 AgendaAppService agendaAppService = newServiceInstance(
                         props, "agendaAppService", AgendaAppService.class,
-                        new Class<?>[]{AgendaMensuelRepository.class, DetailJourneeRepository.class, RdvRepository.class},
-                        new Object[]{agendaMensuelRepo, detailJourneeRepo, rdvRepo}
-                );
+                        new Class<?>[] { AgendaMensuelRepository.class, DetailJourneeRepository.class,
+                                RdvRepository.class },
+                        new Object[] { agendaMensuelRepo, detailJourneeRepo, rdvRepo });
                 put(AgendaAppService.class, agendaAppService, "agendaAppService");
                 registerKnown(known, agendaAppService);
             }
@@ -318,7 +317,8 @@ public final class ApplicationContext {
             // LISTE D'ATTENTE
             // =========================================================
             currentBean = "listeAttente.repository";
-            ListeAttenteRepository listeRepo = newRepoInstance(props, "listeAttente.repository", ListeAttenteRepository.class, known);
+            ListeAttenteRepository listeRepo = newRepoInstance(props, "listeAttente.repository",
+                    ListeAttenteRepository.class, known);
             put(ListeAttenteRepository.class, listeRepo, "listeAttente.repository");
             registerKnown(known, listeRepo);
 
@@ -327,9 +327,8 @@ public final class ApplicationContext {
                 currentBean = "listeAttente.service";
                 listeService = newServiceInstance(
                         props, "listeAttente.service", ListeAttenteService.class,
-                        new Class<?>[]{ListeAttenteRepository.class},
-                        new Object[]{listeRepo}
-                );
+                        new Class<?>[] { ListeAttenteRepository.class },
+                        new Object[] { listeRepo });
                 put(ListeAttenteService.class, listeService, "listeAttente.service");
                 registerKnown(known, listeService);
             }
@@ -339,8 +338,7 @@ public final class ApplicationContext {
                 Object listeCtrl = newFlexibleInstance(
                         props.getProperty("listeAttente.controller"),
                         known,
-                        listeService
-                );
+                        listeService);
                 contextByName.put("listeAttente.controller", listeCtrl);
                 registerKnown(known, listeCtrl);
             }
@@ -349,7 +347,8 @@ public final class ApplicationContext {
             // PLAGE HORAIRE
             // =========================================================
             currentBean = "plageHoraire.repository";
-            PlageHoraireRepository plageRepo = newRepoInstance(props, "plageHoraire.repository", PlageHoraireRepository.class, known);
+            PlageHoraireRepository plageRepo = newRepoInstance(props, "plageHoraire.repository",
+                    PlageHoraireRepository.class, known);
             put(PlageHoraireRepository.class, plageRepo, "plageHoraire.repository");
             registerKnown(known, plageRepo);
 
@@ -357,11 +356,226 @@ public final class ApplicationContext {
                 currentBean = "plageHoraire.service";
                 PlageHoraireService plageService = newServiceInstance(
                         props, "plageHoraire.service", PlageHoraireService.class,
-                        new Class<?>[]{PlageHoraireRepository.class},
-                        new Object[]{plageRepo}
-                );
+                        new Class<?>[] { PlageHoraireRepository.class },
+                        new Object[] { plageRepo });
                 put(PlageHoraireService.class, plageService, "plageHoraire.service");
                 registerKnown(known, plageService);
+            }
+
+            // =========================================================
+            // DOSSIER MEDICAL : repos -> services -> controllers (partie malak)
+            // =========================================================
+            currentBean = "dossierMedicalRepo";
+            DossierMedicalRepository dossierMedicalRepo = newRepoInstance(
+                    props, "dossierMedicalRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository.class, dossierMedicalRepo,
+                    "dossierMedicalRepo");
+            registerKnown(known, dossierMedicalRepo);
+
+            currentBean = "consultationRepo";
+            ConsultationRepository consultationRepo = newRepoInstance(
+                    props, "consultationRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class, consultationRepo,
+                    "consultationRepo");
+            registerKnown(known, consultationRepo);
+
+            currentBean = "acteRepo";
+            ActeRepository acteRepo = newRepoInstance(props,
+                    "acteRepo", ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, acteRepo, "acteRepo");
+            registerKnown(known, acteRepo);
+
+            currentBean = "interventionMedecinRepo";
+            InterventionMedecinRepository interventionMedecinRepo = newRepoInstance(
+                    props, "interventionMedecinRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepository.class,
+                    interventionMedecinRepo, "interventionMedecinRepo");
+            registerKnown(known, interventionMedecinRepo);
+
+            currentBean = "ordonnanceRepo";
+            OrdonnanceRepository ordonnanceRepo = newRepoInstance(
+                    props, "ordonnanceRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepository.class, ordonnanceRepo,
+                    "ordonnanceRepo");
+            registerKnown(known, ordonnanceRepo);
+
+            currentBean = "prescriptionRepo";
+            PrescriptionRepository prescriptionRepo = newRepoInstance(
+                    props, "prescriptionRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepository.class, prescriptionRepo,
+                    "prescriptionRepo");
+            registerKnown(known, prescriptionRepo);
+
+            currentBean = "certificatRepo";
+            CertificatRepository certificatRepo = newRepoInstance(
+                    props, "certificatRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.CertificatRepository.class, certificatRepo,
+                    "certificatRepo");
+            registerKnown(known, certificatRepo);
+
+            currentBean = "medicamentRepo";
+            MedicamentRepository medicamentRepo = newRepoInstance(
+                    props, "medicamentRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository.class, medicamentRepo,
+                    "medicamentRepo");
+            registerKnown(known, medicamentRepo);
+
+            currentBean = "documentMedicalRepo";
+            DocumentMedicalRepository documentMedicalRepo = newRepoInstance(
+                    props, "documentMedicalRepo",
+                    ma.dentalTech.repository.modules.dossierMedical.api.DocumentMedicalRepository.class, known);
+            put(ma.dentalTech.repository.modules.dossierMedical.api.DocumentMedicalRepository.class,
+                    documentMedicalRepo, "documentMedicalRepo");
+            registerKnown(known, documentMedicalRepo);
+
+            // Services
+            if (hasKey(props, "dossierMedicalService")) {
+                currentBean = "dossierMedicalService";
+                DossierMedicalService dossierMedicalService = (DossierMedicalService) newFlexibleInstance(
+                        props.getProperty("dossierMedicalService"), known, dossierMedicalRepo, patientRepo);
+                put(DossierMedicalService.class, dossierMedicalService,
+                        "dossierMedicalService");
+                registerKnown(known, dossierMedicalService);
+            }
+
+            if (hasKey(props, "consultationService")) {
+                currentBean = "consultationService";
+                ConsultationService consultationService = (ConsultationService) newFlexibleInstance(
+                        props.getProperty("consultationService"), known, consultationRepo, dossierMedicalRepo);
+                put(ConsultationService.class, consultationService,
+                        "consultationService");
+                registerKnown(known, consultationService);
+            }
+
+            if (hasKey(props, "acteService")) {
+                currentBean = "acteService";
+                ActeService acteService = (ActeService) newFlexibleInstance(
+                        props.getProperty("acteService"), known, acteRepo);
+                put(ActeService.class, acteService, "acteService");
+                registerKnown(known, acteService);
+            }
+
+            if (hasKey(props, "interventionMedecinService")) {
+                currentBean = "interventionMedecinService";
+                InterventionMedecinService interventionMedecinService = (InterventionMedecinService) newFlexibleInstance(
+                        props.getProperty("interventionMedecinService"), known, interventionMedecinRepo);
+                put(InterventionMedecinService.class,
+                        interventionMedecinService, "interventionMedecinService");
+                registerKnown(known, interventionMedecinService);
+            }
+
+            if (hasKey(props, "ordonnanceService")) {
+                currentBean = "ordonnanceService";
+                OrdonnanceService ordonnanceService = (OrdonnanceService) newFlexibleInstance(
+                        props.getProperty("ordonnanceService"), known, ordonnanceRepo, dossierMedicalRepo,
+                        prescriptionRepo);
+                put(OrdonnanceService.class, ordonnanceService,
+                        "ordonnanceService");
+                registerKnown(known, ordonnanceService);
+            }
+
+            if (hasKey(props, "prescriptionService")) {
+                currentBean = "prescriptionService";
+                PrescriptionService prescriptionService = (PrescriptionService) newFlexibleInstance(
+                        props.getProperty("prescriptionService"), known, prescriptionRepo);
+                put(PrescriptionService.class, prescriptionService,
+                        "prescriptionService");
+                registerKnown(known, prescriptionService);
+            }
+
+            if (hasKey(props, "certificatService")) {
+                currentBean = "certificatService";
+                CertificatService certificatService = (CertificatService) newFlexibleInstance(
+                        props.getProperty("certificatService"), known, certificatRepo, dossierMedicalRepo);
+                put(CertificatService.class, certificatService,
+                        "certificatService");
+                registerKnown(known, certificatService);
+            }
+
+            if (hasKey(props, "medicamentService")) {
+                currentBean = "medicamentService";
+                MedicamentService medicamentService = (MedicamentService) newFlexibleInstance(
+                        props.getProperty("medicamentService"), known, medicamentRepo);
+                put(MedicamentService.class, medicamentService,
+                        "medicamentService");
+                registerKnown(known, medicamentService);
+            }
+
+            if (hasKey(props, "documentMedicalService")) {
+                currentBean = "documentMedicalService";
+                DocumentMedicalService documentMedicalService = (DocumentMedicalService) newFlexibleInstance(
+                        props.getProperty("documentMedicalService"), known, documentMedicalRepo);
+                put(DocumentMedicalService.class,
+                        documentMedicalService, "documentMedicalService");
+                registerKnown(known, documentMedicalService);
+            }
+
+            // Controllers
+            if (hasKey(props, "dossierMedicalController") && hasBean("dossierMedicalService")) {
+                currentBean = "dossierMedicalController";
+                Object dossierMedicalController = newFlexibleInstance(
+                        props.getProperty("dossierMedicalController"),
+                        known,
+                        getBean("dossierMedicalService"));
+                contextByName.put("dossierMedicalController", dossierMedicalController);
+                registerKnown(known, dossierMedicalController);
+            }
+
+            if (hasKey(props, "consultationController") && hasBean("consultationService")) {
+                currentBean = "consultationController";
+                Object consultationController = newFlexibleInstance(
+                        props.getProperty("consultationController"),
+                        known,
+                        getBean("consultationService"));
+                contextByName.put("consultationController", consultationController);
+                registerKnown(known, consultationController);
+            }
+
+            if (hasKey(props, "acteController") && hasBean("acteService")) {
+                currentBean = "acteController";
+                Object acteController = newFlexibleInstance(
+                        props.getProperty("acteController"),
+                        known,
+                        getBean("acteService"));
+                contextByName.put("acteController", acteController);
+                registerKnown(known, acteController);
+            }
+
+            if (hasKey(props, "ordonnanceController") && hasBean("ordonnanceService")) {
+                currentBean = "ordonnanceController";
+                Object ordonnanceController = newFlexibleInstance(
+                        props.getProperty("ordonnanceController"),
+                        known,
+                        getBean("ordonnanceService"));
+                contextByName.put("ordonnanceController", ordonnanceController);
+                registerKnown(known, ordonnanceController);
+            }
+
+            if (hasKey(props, "certificatController") && hasBean("certificatService")) {
+                currentBean = "certificatController";
+                Object certificatController = newFlexibleInstance(
+                        props.getProperty("certificatController"),
+                        known,
+                        getBean("certificatService"));
+                contextByName.put("certificatController", certificatController);
+                registerKnown(known, certificatController);
+            }
+
+            if (hasKey(props, "situationFinanciereController") && hasBean("sitFinServiceV2")) {
+                currentBean = "situationFinanciereController";
+                Object situationFinanciereController = newFlexibleInstance(
+                        props.getProperty("situationFinanciereController"),
+                        known,
+                        getBean("sitFinServiceV2"));
+                contextByName.put("situationFinanciereController", situationFinanciereController);
+                registerKnown(known, situationFinanciereController);
             }
 
             // =========================================================
@@ -410,7 +624,7 @@ public final class ApplicationContext {
                 put(UtilisateurRepository.class, utilisateurRepo, "utilisateurRepo");
                 registerKnown(known, utilisateurRepo);
             }
-            //jihane
+            // jihane
             // =========================================================
             // USERS : service (Management)
             // =========================================================
@@ -418,17 +632,13 @@ public final class ApplicationContext {
                 currentBean = "userManagementService";
 
                 // Factories (Connection -> RepoImpl)
-                RepoFactory<UtilisateurRepository> userFactory =
-                        ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
+                RepoFactory<UtilisateurRepository> userFactory = ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
 
-                RepoFactory<MedecinRepository> medecinFactory =
-                        ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl::new;
+                RepoFactory<MedecinRepository> medecinFactory = ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl::new;
 
-                RepoFactory<SecretaireRepository> secretaireFactory =
-                        ma.dentalTech.repository.modules.users.impl.SecretaireRepositoryImpl::new;
+                RepoFactory<SecretaireRepository> secretaireFactory = ma.dentalTech.repository.modules.users.impl.SecretaireRepositoryImpl::new;
 
-                RepoFactory<RoleRepository> roleFactory =
-                        ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
+                RepoFactory<RoleRepository> roleFactory = ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
 
                 PasswordEncoder encoder;
                 Object encObj = contextByName.get("authEncoder");
@@ -438,10 +648,8 @@ public final class ApplicationContext {
                     encoder = new ma.dentalTech.service.modules.auth.impl.PasswordEncoderImpl();
                 }
 
-                ma.dentalTech.service.modules.users.api.UserManagementService userManagementService =
-                        new ma.dentalTech.service.modules.users.impl.UserManagementServiceImpl(
-                                userFactory, medecinFactory, secretaireFactory, roleFactory, encoder
-                        );
+                ma.dentalTech.service.modules.users.api.UserManagementService userManagementService = new ma.dentalTech.service.modules.users.impl.UserManagementServiceImpl(
+                        userFactory, medecinFactory, secretaireFactory, roleFactory, encoder);
 
                 contextByName.put("userManagementService", userManagementService);
                 registerKnown(known, userManagementService);
@@ -454,14 +662,13 @@ public final class ApplicationContext {
                 Object userCtrl = newFlexibleInstance(
                         props.getProperty("userManagementController"),
                         known,
-                        contextByName.get("userManagementService")
-                );
+                        contextByName.get("userManagementService"));
 
                 contextByName.put("userManagementController", userCtrl);
                 registerKnown(known, userCtrl);
             }
 
-            //ajouté par jihane
+            // ajouté par jihane
             // =========================================================
             // AUTH : validator -> encoder -> service -> controller
             // =========================================================
@@ -479,17 +686,14 @@ public final class ApplicationContext {
                 registerKnown(known, authEncoder);
 
                 // Factories repos (Connection -> RepoImpl)
-                RepoFactory<UtilisateurRepository> userFactory =
-                        ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
+                RepoFactory<UtilisateurRepository> userFactory = ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
 
-                RepoFactory<RoleRepository> roleFactory =
-                        ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
+                RepoFactory<RoleRepository> roleFactory = ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
 
                 // AuthService (constructeur compat, donc LoginFrame reste intact)
                 currentBean = "authService";
                 AuthService authService = new ma.dentalTech.service.modules.auth.impl.AuthServiceImpl(
-                        userFactory, roleFactory, authValidator, authEncoder
-                );
+                        userFactory, roleFactory, authValidator, authEncoder);
                 put(AuthService.class, authService, "authService");
                 registerKnown(known, authService);
 
@@ -498,12 +702,10 @@ public final class ApplicationContext {
                 Object authController = newFlexibleInstance(
                         props.getProperty("authController"),
                         known,
-                        authService
-                );
+                        authService);
                 contextByName.put("authController", authController);
                 registerKnown(known, authController);
             }
-
 
             // =========================================================
             // DASHBOARD : service -> controller (optionnel)
@@ -511,8 +713,8 @@ public final class ApplicationContext {
             if (hasKey(props, "dashboardService") && notificationRepo != null) {
                 currentBean = "dashboardService";
                 DashboardService dashboardService = createDashboardServiceFlexible(
-                        props, notificationRepo, utilisateurRepo, rdvRepo, listeRepo, patientRepo, caisseDashboardServiceV2
-                );
+                        props, notificationRepo, utilisateurRepo, rdvRepo, listeRepo, patientRepo,
+                        caisseDashboardServiceV2);
                 put(DashboardService.class, dashboardService, "dashboardService");
                 registerKnown(known, dashboardService);
 
@@ -521,8 +723,7 @@ public final class ApplicationContext {
                     Object dashCtrl = newFlexibleInstance(
                             props.getProperty("dashboardController"),
                             known,
-                            dashboardService
-                    );
+                            dashboardService);
                     contextByName.put("dashboardController", dashCtrl);
                     registerKnown(known, dashCtrl);
                 }
@@ -533,7 +734,8 @@ public final class ApplicationContext {
         }
     }
 
-    private ApplicationContext() {}
+    private ApplicationContext() {
+    }
 
     // ==========================
     // Public API
@@ -566,7 +768,8 @@ public final class ApplicationContext {
 
     /** ✅ Enregistre instance dans known avec classe + interfaces + superclasses */
     private static void registerKnown(Map<Class<?>, Object> known, Object instance) {
-        if (instance == null) return;
+        if (instance == null)
+            return;
 
         Class<?> c = instance.getClass();
         known.putIfAbsent(c, instance);
@@ -584,22 +787,26 @@ public final class ApplicationContext {
 
     private static <T> T newServiceInstance(Properties props, String key, Class<T> expectedType) throws Exception {
         String className = props.getProperty(key);
-        if (className == null || className.isBlank()) throw new IllegalStateException("Bean '" + key + "' introuvable");
+        if (className == null || className.isBlank())
+            throw new IllegalStateException("Bean '" + key + "' introuvable");
         Object obj = Class.forName(className).getDeclaredConstructor().newInstance();
         return expectedType.cast(obj);
     }
 
     private static <T> T newServiceInstance(Properties props, String key, Class<T> expectedType,
-                                            Class<?>[] ctorTypes, Object[] ctorArgs) throws Exception {
+            Class<?>[] ctorTypes, Object[] ctorArgs) throws Exception {
         String className = props.getProperty(key);
-        if (className == null || className.isBlank()) throw new IllegalStateException("Bean '" + key + "' introuvable");
+        if (className == null || className.isBlank())
+            throw new IllegalStateException("Bean '" + key + "' introuvable");
         Object obj = Class.forName(className).getDeclaredConstructor(ctorTypes).newInstance(ctorArgs);
         return expectedType.cast(obj);
     }
 
-    private static <T> T newRepoInstance(Properties props, String key, Class<T> expectedType, Map<Class<?>, Object> known) throws Exception {
+    private static <T> T newRepoInstance(Properties props, String key, Class<T> expectedType,
+            Map<Class<?>, Object> known) throws Exception {
         String className = props.getProperty(key);
-        if (className == null || className.isBlank()) throw new IllegalStateException("Bean '" + key + "' introuvable");
+        if (className == null || className.isBlank())
+            throw new IllegalStateException("Bean '" + key + "' introuvable");
 
         Class<?> clazz = Class.forName(className);
 
@@ -609,24 +816,28 @@ public final class ApplicationContext {
             c.setAccessible(true);
             Object obj = c.newInstance(known.get(Connection.class));
             return expectedType.cast(obj);
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException ignored) {
+        }
 
         // 2) ctor vide
         try {
             Object obj = clazz.getDeclaredConstructor().newInstance();
             return expectedType.cast(obj);
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException ignored) {
+        }
 
         // 3) flex
         Object obj = instantiateWithKnown(clazz, known);
         return expectedType.cast(obj);
     }
 
-    private static Object newFlexibleInstance(String className, Map<Class<?>, Object> known, Object... args) throws Exception {
+    private static Object newFlexibleInstance(String className, Map<Class<?>, Object> known, Object... args)
+            throws Exception {
         Class<?> clazz = Class.forName(className);
 
         Map<Class<?>, Object> merged = new HashMap<>(known);
-        for (Object a : args) registerKnown(merged, a);
+        for (Object a : args)
+            registerKnown(merged, a);
 
         return instantiateWithKnown(clazz, merged);
     }
@@ -639,7 +850,10 @@ public final class ApplicationContext {
             boolean ok = true;
             for (int i = 0; i < paramTypes.length; i++) {
                 Object arg = resolveArg(known, paramTypes[i]);
-                if (arg == null) { ok = false; break; }
+                if (arg == null) {
+                    ok = false;
+                    break;
+                }
                 ctorArgs[i] = arg;
             }
 
@@ -653,15 +867,18 @@ public final class ApplicationContext {
 
     private static Object resolveArg(Map<Class<?>, Object> known, Class<?> paramType) {
         Object direct = known.get(paramType);
-        if (direct != null) return direct;
+        if (direct != null)
+            return direct;
 
         for (Map.Entry<Class<?>, Object> e : known.entrySet()) {
-            if (paramType.isAssignableFrom(e.getKey())) return e.getValue();
+            if (paramType.isAssignableFrom(e.getKey()))
+                return e.getValue();
         }
 
         try {
             return paramType.getDeclaredConstructor().newInstance();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         return null;
     }
@@ -673,19 +890,18 @@ public final class ApplicationContext {
             RdvRepository rdvRepo,
             ListeAttenteRepository listeRepo,
             PatientRepository patientRepo,
-            CaisseDashboardServiceV2 caisseDashboardServiceV2
-    ) throws Exception {
+            CaisseDashboardServiceV2 caisseDashboardServiceV2) throws Exception {
 
         String className = props.getProperty("dashboardService");
         Class<?> clazz = Class.forName(className);
 
-        //  On privilégie les constructeurs qui permettent de détecter le rôle
+        // On privilégie les constructeurs qui permettent de détecter le rôle
         try {
             return (DashboardService) clazz.getDeclaredConstructor(
                     NotificationRepository.class,
-                    UtilisateurRepository.class
-            ).newInstance(notificationRepo, utilisateurRepo);
-        } catch (NoSuchMethodException ignored) {}
+                    UtilisateurRepository.class).newInstance(notificationRepo, utilisateurRepo);
+        } catch (NoSuchMethodException ignored) {
+        }
 
         // Constructeur complet si tu veux dashboard riche (si présent)
         try {
@@ -695,16 +911,17 @@ public final class ApplicationContext {
                     PatientRepository.class,
                     RdvRepository.class,
                     ListeAttenteRepository.class,
-                    CaisseDashboardServiceV2.class
-            ).newInstance(notificationRepo, utilisateurRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
-        } catch (NoSuchMethodException ignored) {}
+                    CaisseDashboardServiceV2.class).newInstance(notificationRepo, utilisateurRepo, patientRepo, rdvRepo,
+                            listeRepo, caisseDashboardServiceV2);
+        } catch (NoSuchMethodException ignored) {
+        }
 
-        //  Ancien constructeur fallback (sans rôle)
+        // Ancien constructeur fallback (sans rôle)
         try {
             return (DashboardService) clazz.getDeclaredConstructor(
-                    NotificationRepository.class
-            ).newInstance(notificationRepo);
-        } catch (NoSuchMethodException ignored) {}
+                    NotificationRepository.class).newInstance(notificationRepo);
+        } catch (NoSuchMethodException ignored) {
+        }
 
         // Constructeur utilisé auparavant dans ton code (si présent)
         try {
@@ -713,9 +930,10 @@ public final class ApplicationContext {
                     PatientRepository.class,
                     RdvRepository.class,
                     ListeAttenteRepository.class,
-                    CaisseDashboardServiceV2.class
-            ).newInstance(notificationRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
-        } catch (NoSuchMethodException ignored) {}
+                    CaisseDashboardServiceV2.class)
+                    .newInstance(notificationRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
+        } catch (NoSuchMethodException ignored) {
+        }
 
         throw new IllegalStateException("Aucun constructeur compatible pour dashboardService=" + className);
     }

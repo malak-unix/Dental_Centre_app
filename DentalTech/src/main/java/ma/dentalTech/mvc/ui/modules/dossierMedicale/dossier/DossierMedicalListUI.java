@@ -45,7 +45,7 @@ public class DossierMedicalListUI extends JPanel {
         this.controller = controller;
         this.medecinId = medecinId;
         this.username = username;
-        
+
         // Récupérer le PatientController depuis ApplicationContext
         Object bean = ApplicationContext.getBean("patientController");
         if (bean instanceof PatientController pc) {
@@ -87,24 +87,23 @@ public class DossierMedicalListUI extends JPanel {
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
         searchPanel.setOpaque(false);
-        
+
         JLabel lblSearch = new JLabel("Rechercher un patient:");
         searchPanel.add(lblSearch);
         txtPatient.setPreferredSize(new Dimension(250, 30));
         searchPanel.add(txtPatient);
-        
+
         searchRow.add(searchPanel, BorderLayout.WEST);
 
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonsPanel.setOpaque(false);
-        
+
         btnSearch.setFont(DentalTheme.textFont(13));
         btnSearch.setBackground(new Color(0x1C, 0x25, 0x41));
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+                new EmptyBorder(8, 16, 8, 16)));
         btnSearch.setFocusPainted(false);
 
         btnAdd.setFont(DentalTheme.textBold(13));
@@ -112,13 +111,12 @@ public class DossierMedicalListUI extends JPanel {
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+                new EmptyBorder(8, 16, 8, 16)));
         btnAdd.setFocusPainted(false);
-        
+
         buttonsPanel.add(btnSearch);
         buttonsPanel.add(btnAdd);
-        
+
         searchRow.add(buttonsPanel, BorderLayout.EAST);
 
         wrap.add(searchRow);
@@ -162,11 +160,15 @@ public class DossierMedicalListUI extends JPanel {
                 (Frame) SwingUtilities.getWindowAncestor(this),
                 controller,
                 patientController,
-                username
-        );
+                username);
         dialog.setVisible(true);
-        if (dialog.isConfirmed()) {
+        boolean confirmed = dialog.isConfirmed();
+        System.out.println("DEBUG (partie malak): Dialog fermé - confirmed=" + confirmed); // partie malak - debug
+        if (confirmed) {
+            System.out.println("DEBUG (partie malak): Appel de refresh()"); // partie malak - debug
             refresh();
+        } else {
+            System.out.println("DEBUG (partie malak): Refresh annulé car non confirmé"); // partie malak - debug
         }
     }
 
@@ -175,11 +177,19 @@ public class DossierMedicalListUI extends JPanel {
             DossierListRequestDTO request = new DossierListRequestDTO(
                     txtPatient.getText().trim().isEmpty() ? null : txtPatient.getText().trim(),
                     medecinId,
-                    new PageRequestDTO(100, 0)
-            );
+                    new PageRequestDTO(100, 0));
+            System.out.println("DEBUG (partie malak): Rafraîchissement - medecinId=" + medecinId + ", searchText="
+                    + txtPatient.getText()); // partie malak - debug
             List<DossierListEnrichedItemDTO> list = controller.searchForList(request);
+            System.out.println("DEBUG (partie malak): Dossiers récupérés: " + (list != null ? list.size() : 0)); // partie
+                                                                                                                 // malak
+                                                                                                                 // -
+                                                                                                                 // debug
             model.setRows(list);
         } catch (Exception ex) {
+            System.out.println("DEBUG (partie malak): ERREUR lors du refresh: " + ex.getMessage()); // partie malak -
+                                                                                                    // debug
+            ex.printStackTrace(); // partie malak - debug
             showError(ex);
         }
     }
@@ -189,15 +199,14 @@ public class DossierMedicalListUI extends JPanel {
                 this,
                 ex.getMessage(),
                 "Erreur",
-                JOptionPane.ERROR_MESSAGE
-        );
+                JOptionPane.ERROR_MESSAGE);
     }
 
     // =========================================================
     // Table model
     // =========================================================
     private class DossierMedicalTableModel extends AbstractTableModel {
-        private final String[] cols = {"Nom", "Téléphone", "Dernière consultation", "Actions"};
+        private final String[] cols = { "Nom", "Téléphone", "Dernière consultation", "Actions" };
         private List<DossierListEnrichedItemDTO> rows = new ArrayList<>();
 
         void setRows(List<DossierListEnrichedItemDTO> data) {
@@ -206,19 +215,36 @@ public class DossierMedicalListUI extends JPanel {
         }
 
         DossierListEnrichedItemDTO getAt(int row) {
-            if (row < 0 || row >= rows.size()) return null;
+            if (row < 0 || row >= rows.size())
+                return null;
             return rows.get(row);
         }
 
-        @Override public int getRowCount() { return rows.size(); }
-        @Override public int getColumnCount() { return cols.length; }
-        @Override public String getColumnName(int col) { return cols[col]; }
-        @Override public boolean isCellEditable(int row, int col) { return col == 3; }
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return cols.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return cols[col];
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int col) {
+            return col == 3;
+        }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             DossierListEnrichedItemDTO r = rows.get(rowIndex);
-            if (r == null) return "";
+            if (r == null)
+                return "";
             return switch (columnIndex) {
                 case 0 -> r.getPatientNomComplet() != null ? r.getPatientNomComplet() : "";
                 case 1 -> r.getPatientTelephone() != null ? r.getPatientTelephone() : "";
@@ -255,7 +281,7 @@ public class DossierMedicalListUI extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                       boolean hasFocus, int row, int column) {
+                boolean hasFocus, int row, int column) {
             panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return panel;
         }
@@ -282,28 +308,26 @@ public class DossierMedicalListUI extends JPanel {
             b1.setForeground(Color.WHITE);
             b1.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
+                    new EmptyBorder(4, 8, 4, 8)));
 
             b2.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré
             b2.setForeground(new Color(0x1C, 0x25, 0x41));
             b2.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
+                    new EmptyBorder(4, 8, 4, 8)));
 
             b3.setBackground(new Color(0xDC, 0x35, 0x45)); // Rouge
             b3.setForeground(Color.WHITE);
             b3.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0xDC, 0x35, 0x45), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
+                    new EmptyBorder(4, 8, 4, 8)));
 
             b1.addActionListener(e -> {
                 stopCellEditing();
                 DossierListEnrichedItemDTO r = model.getAt(currentRow);
-                if (r == null) return;
-                
+                if (r == null)
+                    return;
+
                 JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(DossierMedicalListUI.this),
                         "Détails du dossier médical", true);
                 dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -312,8 +336,7 @@ public class DossierMedicalListUI extends JPanel {
                 DossierMedicalDetailUI detailUI = new DossierMedicalDetailUI(
                         controller,
                         r.getDossierId(),
-                        () -> dialog.dispose()
-                );
+                        () -> dialog.dispose());
                 dialog.add(detailUI, BorderLayout.CENTER);
 
                 dialog.pack();
@@ -325,20 +348,20 @@ public class DossierMedicalListUI extends JPanel {
             b2.addActionListener(e -> {
                 stopCellEditing();
                 DossierListEnrichedItemDTO r = model.getAt(currentRow);
-                if (r == null) return;
-                
+                if (r == null)
+                    return;
+
                 // Récupérer le dossier pour modification
                 try {
-                    ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierDetailEnrichedDTO detail = 
-                            controller.getDetail(r.getDossierId());
-                    
+                    ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierDetailEnrichedDTO detail = controller
+                            .getDetail(r.getDossierId());
+
                     DossierMedicalAddFormUI dialog = new DossierMedicalAddFormUI(
                             (Frame) SwingUtilities.getWindowAncestor(DossierMedicalListUI.this),
                             controller,
                             patientController,
                             username,
-                            detail.dossier()
-                    );
+                            detail.dossier());
                     dialog.setVisible(true);
                     if (dialog.isConfirmed()) {
                         refresh();
@@ -351,14 +374,15 @@ public class DossierMedicalListUI extends JPanel {
             b3.addActionListener(e -> {
                 stopCellEditing();
                 DossierListEnrichedItemDTO r = model.getAt(currentRow);
-                if (r == null) return;
+                if (r == null)
+                    return;
                 int ok = JOptionPane.showConfirmDialog(
                         DossierMedicalListUI.this,
                         "Supprimer le dossier de \"" + r.getPatientNomComplet() + "\" ?",
                         "Confirmation",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (ok != JOptionPane.YES_OPTION) return;
+                        JOptionPane.YES_NO_OPTION);
+                if (ok != JOptionPane.YES_OPTION)
+                    return;
 
                 try {
                     controller.delete(r.getDossierId(), username);
@@ -374,7 +398,8 @@ public class DossierMedicalListUI extends JPanel {
         }
 
         @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+                int column) {
             currentRow = row;
             panel.setBackground(table.getSelectionBackground());
             return panel;

@@ -1,0 +1,619 @@
+﻿Apache Maven 3.9.11 (3e54c93a704957b63ee3494413a2b544fd3d825b)
+Maven home: C:\Program Files\Maven\apache-maven-3.9.11
+Java version: 25.0.1, vendor: Oracle Corporation, runtime: C:\Program Files\Java\jdk-25
+Default locale: en_GB, platform encoding: UTF-8
+OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
+[DEBUG] Created new class realm maven.api
+[DEBUG] Importing foreign packages into class realm maven.api
+[DEBUG]   Imported: javax.annotation.* < plexus.core
+[DEBUG]   Imported: javax.annotation.security.* < plexus.core
+[DEBUG]   Imported: javax.inject.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.artifact < plexus.core
+[DEBUG]   Imported: org.apache.maven.classrealm < plexus.core
+[DEBUG]   Imported: org.apache.maven.cli < plexus.core
+[DEBUG]   Imported: org.apache.maven.configuration < plexus.core
+[DEBUG]   Imported: org.apache.maven.exception < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution.scope < plexus.core
+[DEBUG]   Imported: org.apache.maven.graph < plexus.core
+[DEBUG]   Imported: org.apache.maven.lifecycle < plexus.core
+[DEBUG]   Imported: org.apache.maven.model < plexus.core
+[DEBUG]   Imported: org.apache.maven.monitor < plexus.core
+[DEBUG]   Imported: org.apache.maven.plugin < plexus.core
+[DEBUG]   Imported: org.apache.maven.profiles < plexus.core
+[DEBUG]   Imported: org.apache.maven.project < plexus.core
+[DEBUG]   Imported: org.apache.maven.reporting < plexus.core
+[DEBUG]   Imported: org.apache.maven.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.rtinfo < plexus.core
+[DEBUG]   Imported: org.apache.maven.settings < plexus.core
+[DEBUG]   Imported: org.apache.maven.toolchain < plexus.core
+[DEBUG]   Imported: org.apache.maven.usability < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authentication < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authorization < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.events < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.observers < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.proxy < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.resource < plexus.core
+[DEBUG]   Imported: org.codehaus.classworlds < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.* < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.classworlds < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.component < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.configuration < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.container < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.context < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.lifecycle < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.logging < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.personality < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.Xpp3Dom < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParser < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParserException < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlSerializer < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.* < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.artifact < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.collection < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.deployment < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.graph < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.impl < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.installation < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.internal.impl < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.metadata < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.repository < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.resolution < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.spi < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.transfer < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.util < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.version < plexus.core
+[DEBUG]   Imported: org.fusesource.jansi.* < plexus.core
+[DEBUG]   Imported: org.slf4j.* < plexus.core
+[DEBUG]   Imported: org.slf4j.event.* < plexus.core
+[DEBUG]   Imported: org.slf4j.helpers.* < plexus.core
+[DEBUG]   Imported: org.slf4j.spi.* < plexus.core
+[DEBUG] Populating class realm maven.api
+[DEBUG] Created adapter factory; available factories [file-lock, rwlock-local, semaphore-local, noop]; available name mappers [discriminating, file-gav, file-hgav, file-static, gav, static]
+[INFO] Error stacktraces are turned on.
+[DEBUG] Message scheme: color
+[DEBUG] Message styles: debug info warning error success failure strong mojo project
+[DEBUG] Reading global settings from C:\Program Files\Maven\apache-maven-3.9.11\conf\settings.xml
+[DEBUG] Reading user settings from C:\Users\malak\.m2\settings.xml
+[DEBUG] Reading global toolchains from C:\Program Files\Maven\apache-maven-3.9.11\conf\toolchains.xml
+[DEBUG] Reading user toolchains from C:\Users\malak\.m2\toolchains.xml
+[DEBUG] Using local repository at C:\Users\malak\.m2\repository
+[DEBUG] Using manager EnhancedLocalRepositoryManager with priority 10.0 for C:\Users\malak\.m2\repository
+[INFO] Scanning for projects...
+[DEBUG] Extension realms for project ma.dentalTech:DentalTech:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecycle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for ma.dentalTech:DentalTech:jar:1.0-SNAPSHOT
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.mindrot:jbcrypt:jar -> duplicate declaration of version 0.4 @ line 74, column 21
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[DEBUG] === REACTOR BUILD PLAN ================================================
+[DEBUG] Project: ma.dentalTech:DentalTech:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [compile]
+[DEBUG] Style:   Regular
+[DEBUG] =======================================================================
+[INFO] 
+[INFO] ----------------------< ma.dentalTech:DentalTech >----------------------
+[INFO] Building DentalTech 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Creating adapter using nameMapper 'gav' and factory 'rwlock-local'
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] === PROJECT BUILD PLAN ================================================
+[DEBUG] Project:       ma.dentalTech:DentalTech:1.0-SNAPSHOT
+[DEBUG] Dependencies (collect): [test]
+[DEBUG] Dependencies (resolve): [compile]
+[DEBUG] Repositories (dependencies): [central (https://repo.maven.apache.org/maven2, default, releases)]
+[DEBUG] Repositories (plugins)     : [central (https://repo.maven.apache.org/maven2, default, releases)]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce (enforce-java)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <commandLineRules>${rules}</commandLineRules>
+  <fail default-value="true">true</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <failIfNoRules default-value="true">${enforcer.failIfNoRules}</failIfNoRules>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <mojoExecution default-value="${mojoExecution}"/>
+  <project default-value="${project}"/>
+  <rules>
+    <requireJavaVersion>
+      <version>[17,26)</version>
+      <message>Java 17+ requis.</message>
+    </requireJavaVersion>
+  </rules>
+  <rulesToExecute>${enforcer.rules}</rulesToExecute>
+  <rulesToSkip>${enforcer.skipRules}</rulesToSkip>
+  <session default-value="${session}"/>
+  <skip default-value="false">${enforcer.skip}</skip>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources (default-resources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <addDefaultExcludes default-value="true"/>
+  <buildFilters default-value="${project.build.filters}"/>
+  <encoding default-value="${project.build.sourceEncoding}"/>
+  <escapeWindowsPaths default-value="true"/>
+  <fileNameFiltering default-value="false"/>
+  <includeEmptyDirs default-value="false"/>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <overwrite default-value="false"/>
+  <project default-value="${project}"/>
+  <resources default-value="${project.resources}"/>
+  <session default-value="${session}"/>
+  <skip default-value="false">${maven.resources.skip}</skip>
+  <supportMultiLineFiltering default-value="false"/>
+  <useBuildFilters default-value="true"/>
+  <useDefaultDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <annotationProcessorPaths>
+    <path>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.38</version>
+    </path>
+  </annotationProcessorPaths>
+  <basedir default-value="${basedir}"/>
+  <buildDirectory default-value="${project.build.directory}"/>
+  <compilePath default-value="${project.compileClasspathElements}"/>
+  <compileSourceRoots default-value="${project.compileSourceRoots}"/>
+  <compilerId default-value="javac">${maven.compiler.compilerId}</compilerId>
+  <compilerReuseStrategy default-value="${reuseCreated}">${maven.compiler.compilerReuseStrategy}</compilerReuseStrategy>
+  <compilerVersion>${maven.compiler.compilerVersion}</compilerVersion>
+  <createMissingPackageInfoClass default-value="true">${maven.compiler.createMissingPackageInfoClass}</createMissingPackageInfoClass>
+  <debug default-value="true">${maven.compiler.debug}</debug>
+  <debugFileName default-value="javac"/>
+  <debuglevel>${maven.compiler.debuglevel}</debuglevel>
+  <enablePreview default-value="false">${maven.compiler.enablePreview}</enablePreview>
+  <encoding default-value="${project.build.sourceEncoding}">UTF-8</encoding>
+  <executable>${maven.compiler.executable}</executable>
+  <failOnError default-value="true">${maven.compiler.failOnError}</failOnError>
+  <failOnWarning default-value="false">${maven.compiler.failOnWarning}</failOnWarning>
+  <forceJavacCompilerUse default-value="false">${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
+  <fork default-value="false">${maven.compiler.fork}</fork>
+  <generatedSourcesDirectory default-value="${project.build.directory}/generated-sources/annotations"/>
+  <implicit>${maven.compiler.implicit}</implicit>
+  <maxmem>${maven.compiler.maxmem}</maxmem>
+  <meminitial>${maven.compiler.meminitial}</meminitial>
+  <mojoExecution default-value="${mojoExecution}"/>
+  <optimize default-value="false">${maven.compiler.optimize}</optimize>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <parameters default-value="false">${maven.compiler.parameters}</parameters>
+  <project default-value="${project}"/>
+  <projectArtifact default-value="${project.artifact}"/>
+  <release>17</release>
+  <session default-value="${session}"/>
+  <showCompilationChanges default-value="false">${maven.compiler.showCompilationChanges}</showCompilationChanges>
+  <showDeprecation default-value="false">${maven.compiler.showDeprecation}</showDeprecation>
+  <showWarnings default-value="true">${maven.compiler.showWarnings}</showWarnings>
+  <skipMain>${maven.main.skip}</skipMain>
+  <skipMultiThreadWarning default-value="false">${maven.compiler.skipMultiThreadWarning}</skipMultiThreadWarning>
+  <source default-value="1.8">${maven.compiler.source}</source>
+  <staleMillis default-value="0">${lastModGranularityMs}</staleMillis>
+  <target default-value="1.8">${maven.compiler.target}</target>
+  <useIncrementalCompilation default-value="true">${maven.compiler.useIncrementalCompilation}</useIncrementalCompilation>
+  <verbose default-value="false">${maven.compiler.verbose}</verbose>
+</configuration>
+[DEBUG] =======================================================================
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=353800, ConflictMarker.markTime=49800, ConflictMarker.nodeCount=8, ConflictIdSorter.graphTime=174400, ConflictIdSorter.topsortTime=160100, ConflictIdSorter.conflictIdCount=7, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=1691700, ConflictResolver.conflictItemCount=7, DfDependencyCollector.collectTime=31317300, DfDependencyCollector.transformTime=3500500}
+[WARNING] The artifact mysql:mysql-connector-java:jar:8.0.33 has been relocated to com.mysql:mysql-connector-j:jar:8.0.33: MySQL Connector/J artifacts moved to reverse-DNS compliant Maven 2+ coordinates.
+[DEBUG] ma.dentalTech:DentalTech:jar:1.0-SNAPSHOT
+[DEBUG]    com.mysql:mysql-connector-j:jar:8.0.33:compile
+[DEBUG]       com.google.protobuf:protobuf-java:jar:3.21.9:compile
+[DEBUG]    org.projectlombok:lombok:jar:1.18.38:provided
+[DEBUG]    com.github.librepdf:openpdf:jar:1.3.39:compile
+[DEBUG]    org.jfree:jfreechart:jar:1.5.3:compile
+[DEBUG]    org.mindrot:jbcrypt:jar:0.4:compile
+[DEBUG]    junit:junit:jar:3.8.1:test
+[INFO] 
+[INFO] --- enforcer:3.4.1:enforce (enforce-java) @ DentalTech ---
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=56600, ConflictMarker.markTime=41900, ConflictMarker.nodeCount=11, ConflictIdSorter.graphTime=10600, ConflictIdSorter.topsortTime=11500, ConflictIdSorter.conflictIdCount=10, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=259600, ConflictResolver.conflictItemCount=11, DfDependencyCollector.collectTime=65120700, DfDependencyCollector.transformTime=394000}
+[DEBUG] org.apache.maven.plugins:maven-enforcer-plugin:jar:3.4.1
+[DEBUG]    org.apache.maven.enforcer:enforcer-api:jar:3.4.1:compile
+[DEBUG]    org.apache.maven.enforcer:enforcer-rules:jar:3.4.1:compile
+[DEBUG]       org.eclipse.aether:aether-util:jar:1.0.0.v20140518:compile (version managed from default)
+[DEBUG]          org.eclipse.aether:aether-api:jar:1.0.0.v20140518:provided (scope managed from default) (version managed from default)
+[DEBUG]       org.codehaus.plexus:plexus-utils:jar:3.5.1:compile (version managed from default)
+[DEBUG]       org.apache.commons:commons-lang3:jar:3.13.0:compile (version managed from default)
+[DEBUG]       commons-codec:commons-codec:jar:1.16.0:compile (version managed from default)
+[DEBUG]       commons-io:commons-io:jar:2.13.0:compile (version managed from default)
+[DEBUG]       org.apache-extras.beanshell:bsh:jar:2.0b6:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:3.4.1
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:3.4.1
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:3.4.1
+[DEBUG]   Included: org.apache.maven.plugins:maven-enforcer-plugin:jar:3.4.1
+[DEBUG]   Included: org.apache.maven.enforcer:enforcer-api:jar:3.4.1
+[DEBUG]   Included: org.apache.maven.enforcer:enforcer-rules:jar:3.4.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:3.5.1
+[DEBUG]   Included: org.apache.commons:commons-lang3:jar:3.13.0
+[DEBUG]   Included: commons-codec:commons-codec:jar:1.16.0
+[DEBUG]   Included: commons-io:commons-io:jar:2.13.0
+[DEBUG]   Included: org.apache-extras.beanshell:bsh:jar:2.0b6
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-enforcer-plugin:3.4.1, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@1affbebc]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce:enforce-java' with basic configurator -->
+[DEBUG]   (s) commandLineRules = []
+[DEBUG]   (s) fail = true
+[DEBUG]   (s) failFast = false
+[DEBUG]   (s) failIfNoRules = true
+[DEBUG]   (f) ignoreCache = false
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce {execution: enforce-java}
+[DEBUG]   (f) project = MavenProject: ma.dentalTech:DentalTech:1.0-SNAPSHOT @ C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\pom.xml
+[DEBUG]   (f) rules = <rules><requireJavaVersion><version>[17,26)</version>
+<message>Java 17+ requis.</message>
+</requireJavaVersion>
+</rules>
+
+[DEBUG]   (s) rulesToExecute = []
+[DEBUG]   (s) rulesToSkip = []
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@11a8042c
+[DEBUG]   (f) skip = false
+[DEBUG] -- end configuration --
+[DEBUG] Executing Rule 0: EnforcerRuleDesc[name=requireJavaVersion, rule=RequireJavaVersion[message=Java 17+ requis., version=[17,26), display=false], level=ERROR]
+[DEBUG] Check cache for class org.apache.maven.enforcer.rules.version.RequireJavaVersion with id 613438970
+[DEBUG] Add cache class org.apache.maven.enforcer.rules.version.RequireJavaVersion with id 613438970
+[DEBUG] Detected Java Version: '25.0.1'
+[DEBUG] Normalized Java Version: '25.0.1'
+[DEBUG] Parsed Version: Major: 25 Minor: 0 Incremental: 1 Build: 0 Qualifier: null
+[DEBUG] Detected JDK Version: 25.0.1 is allowed in the range [17,26).
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[DEBUG] Finish Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion takes 8 ms
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ DentalTech ---
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=70600, ConflictMarker.markTime=55700, ConflictMarker.nodeCount=13, ConflictIdSorter.graphTime=25700, ConflictIdSorter.topsortTime=15100, ConflictIdSorter.conflictIdCount=9, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=286700, ConflictResolver.conflictItemCount=13, DfDependencyCollector.collectTime=61633400, DfDependencyCollector.transformTime=472700}
+[DEBUG] org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1
+[DEBUG]    org.codehaus.plexus:plexus-interpolation:jar:1.26:runtime
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:3.5.1:compile
+[DEBUG]    org.apache.maven.shared:maven-filtering:jar:3.3.1:compile
+[DEBUG]       javax.inject:javax.inject:jar:1:compile
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.36:compile
+[DEBUG]       org.sonatype.plexus:plexus-build-api:jar:0.0.7:compile
+[DEBUG]    commons-io:commons-io:jar:2.11.0:compile
+[DEBUG]    org.apache.commons:commons-lang3:jar:3.12.0:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1
+[DEBUG]   Included: org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.26
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:3.5.1
+[DEBUG]   Included: org.apache.maven.shared:maven-filtering:jar:3.3.1
+[DEBUG]   Included: org.sonatype.plexus:plexus-build-api:jar:0.0.7
+[DEBUG]   Included: commons-io:commons-io:jar:2.11.0
+[DEBUG]   Included: org.apache.commons:commons-lang3:jar:3.12.0
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@1affbebc]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources:default-resources' with basic configurator -->
+[DEBUG]   (f) addDefaultExcludes = true
+[DEBUG]   (f) buildFilters = []
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) escapeWindowsPaths = true
+[DEBUG]   (f) fileNameFiltering = false
+[DEBUG]   (s) includeEmptyDirs = false
+[DEBUG]   (s) outputDirectory = C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes
+[DEBUG]   (s) overwrite = false
+[DEBUG]   (f) project = MavenProject: ma.dentalTech:DentalTech:1.0-SNAPSHOT @ C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\pom.xml
+[DEBUG]   (s) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@11a8042c
+[DEBUG]   (f) skip = false
+[DEBUG]   (f) supportMultiLineFiltering = false
+[DEBUG]   (f) useBuildFilters = true
+[DEBUG]   (s) useDefaultDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] properties used:
+[DEBUG] classworlds.conf: C:\Program Files\Maven\apache-maven-3.9.11\bin\m2.conf
+[DEBUG] env.=C:: C:\Users\malak\Desktop\Dental_Centre_app\DentalTech
+[DEBUG] env.=EXITCODE: 00000000
+[DEBUG] env.ALLUSERSPROFILE: C:\ProgramData
+[DEBUG] env.ANTIGRAVITY_AGENT: 1
+[DEBUG] env.ANTIGRAVITY_CLI_ALIAS: agy
+[DEBUG] env.APPDATA: C:\Users\malak\AppData\Roaming
+[DEBUG] env.CHOCOLATEYINSTALL: C:\ProgramData\chocolatey
+[DEBUG] env.CHOCOLATEYLASTPATHUPDATE: 133835548620254801
+[DEBUG] env.CHROME_CRASHPAD_PIPE_NAME: \\.\pipe\crashpad_2496_VTWNXGCQPYHUTTJM
+[DEBUG] env.CLASSWORLDS_JAR: "C:\Program Files\Maven\apache-maven-3.9.11\boot\plexus-classworlds-2.9.0.jar"
+[DEBUG] env.CLASSWORLDS_LAUNCHER: org.codehaus.plexus.classworlds.launcher.Launcher
+[DEBUG] env.COLORTERM: truecolor
+[DEBUG] env.COMMONPROGRAMFILES: C:\Program Files\Common Files
+[DEBUG] env.COMMONPROGRAMFILES(X86): C:\Program Files (x86)\Common Files
+[DEBUG] env.COMMONPROGRAMW6432: C:\Program Files\Common Files
+[DEBUG] env.COMPUTERNAME: SELENOPHILE
+[DEBUG] env.COMSPEC: C:\WINDOWS\system32\cmd.exe
+[DEBUG] env.DOKANLIBRARY1: C:\Program Files\Dokan\Dokan Library-1.5.1\
+[DEBUG] env.DOKANLIBRARY1_LIBRARYPATH_X64: C:\Program Files\Dokan\Dokan Library-1.5.1\lib\
+[DEBUG] env.DOKANLIBRARY1_LIBRARYPATH_X86: C:\Program Files\Dokan\Dokan Library-1.5.1\x86\lib\
+[DEBUG] env.DRIVERDATA: C:\Windows\System32\Drivers\DriverData
+[DEBUG] env.EFC_4676_1262719628: 1
+[DEBUG] env.EFC_4676_1592913036: 1
+[DEBUG] env.EFC_4676_2283032206: 1
+[DEBUG] env.EFC_4676_2775293581: 1
+[DEBUG] env.EFC_4676_3789132940: 1
+[DEBUG] env.ERROR_CODE: 0
+[DEBUG] env.EXEC_DIR: C:\Users\malak\Desktop\Dental_Centre_app\DentalTech
+[DEBUG] env.FPS_BROWSER_APP_PROFILE_STRING: Internet Explorer
+[DEBUG] env.FPS_BROWSER_USER_PROFILE_STRING: Default
+[DEBUG] env.GIT_ASKPASS: c:\Users\malak\AppData\Local\Programs\Antigravity\resources\app\extensions\git\dist\askpass.sh
+[DEBUG] env.HOMEDRIVE: C:
+[DEBUG] env.HOMEPATH: \Users\malak
+[DEBUG] env.JAVACMD: C:\Program Files\Common Files\Oracle\Java\javapath\java.exe
+[DEBUG] env.JVMCONFIG: \.mvn\jvm.config
+[DEBUG] env.LANG: en_US.UTF-8
+[DEBUG] env.LOCALAPPDATA: C:\Users\malak\AppData\Local
+[DEBUG] env.LOGONSERVER: \\SELENOPHILE
+[DEBUG] env.MAVEN_CMD_LINE_ARGS: compile -X
+[DEBUG] env.MAVEN_HOME: C:\Program Files\Maven\apache-maven-3.9.11
+[DEBUG] env.MAVEN_OPTS: --enable-native-access=ALL-UNNAMED 
+[DEBUG] env.MAVEN_PROJECTBASEDIR: C:\Users\malak\Desktop\Dental_Centre_app\DentalTech
+[DEBUG] env.NUMBER_OF_PROCESSORS: 8
+[DEBUG] env.ONEDRIVE: C:\Users\malak\OneDrive - Ecole Marocaine des Sciences de l'IngÚnieur
+[DEBUG] env.ONEDRIVECOMMERCIAL: C:\Users\malak\OneDrive - Ecole Marocaine des Sciences de l'IngÚnieur
+[DEBUG] env.ONEDRIVECONSUMER: C:\Users\malak\OneDrive
+[DEBUG] env.ORIGINAL_XDG_CURRENT_DESKTOP: undefined
+[DEBUG] env.OS: Windows_NT
+[DEBUG] env.PAGER: cat
+[DEBUG] env.PATH: C:\Python313\Scripts\;C:\Python313\;C:\Program Files\Common Files\Oracle\Java\javapath;C:\oraclexe\app\oracle\product\11.2.0\server\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\php-8.3;C:\Program Files\dotnet\;C:\ProgramData\ComposerSetup\bin;C:\Program Files\Git\cmd;C:\Users\malak\Desktop\sqlite-tools-win-x64-3470200;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Program Files (x86)\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160\DTS\Binn\;c:\Users\malak\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\MySQL\MySQL Server 8.0\bin;C:\Users\malak\AppData\Local\Microsoft\WindowsApps;C:\msys64\ucrt64\bin;C:\Users\malak\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\malak\AppData\Roaming\Composer\vendor\bin;C:\Users\malak\AppData\Roaming\npm;C:\Program Files\JetBrains\PyCharm 2025.1.3.1\bin;;C:\Program Files\JetBrains\PyCharm Community Edition 2025.1.3.1\bin;;C:\Users\malak\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\malak\.dotnet\tools;C:\Program Files\Maven\apache-maven-3.9.11\bin;C:\Users\malak\AppData\Local\Programs\Antigravity\bin
+[DEBUG] env.PATHEXT: .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL
+[DEBUG] env.PROCESSOR_ARCHITECTURE: AMD64
+[DEBUG] env.PROCESSOR_IDENTIFIER: Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
+[DEBUG] env.PROCESSOR_LEVEL: 6
+[DEBUG] env.PROCESSOR_REVISION: 8c01
+[DEBUG] env.PROGRAMDATA: C:\ProgramData
+[DEBUG] env.PROGRAMFILES: C:\Program Files
+[DEBUG] env.PROGRAMFILES(X86): C:\Program Files (x86)
+[DEBUG] env.PROGRAMW6432: C:\Program Files
+[DEBUG] env.PROMPT: $P$G
+[DEBUG] env.PSMODULEPATH: C:\Users\malak\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules;C:\Program Files (x86)\Microsoft SQL Server\160\Tools\PowerShell\Modules\
+[DEBUG] env.PT8HOME: C:\Program Files\Cisco Packet Tracer 8.2.2
+[DEBUG] env.PUBLIC: C:\Users\Public
+[DEBUG] env.PYCHARM: C:\Program Files\JetBrains\PyCharm 2025.1.3.1\bin;
+[DEBUG] env.PYCHARM COMMUNITY EDITION: C:\Program Files\JetBrains\PyCharm Community Edition 2025.1.3.1\bin;
+[DEBUG] env.SESSIONNAME: Console
+[DEBUG] env.SQLITE3: C:\Users\malak\OneDrive\Desktop\sqlite3.exe
+[DEBUG] env.SYSTEMDRIVE: C:
+[DEBUG] env.SYSTEMROOT: C:\WINDOWS
+[DEBUG] env.TEMP: C:\Users\malak\AppData\Local\Temp
+[DEBUG] env.TERM_PROGRAM: vscode
+[DEBUG] env.TERM_PROGRAM_VERSION: 1.104.0
+[DEBUG] env.TMP: C:\Users\malak\AppData\Local\Temp
+[DEBUG] env.USERDOMAIN: SELENOPHILE
+[DEBUG] env.USERDOMAIN_ROAMINGPROFILE: SELENOPHILE
+[DEBUG] env.USERNAME: malak
+[DEBUG] env.USERPROFILE: C:\Users\malak
+[DEBUG] env.VBOX_MSI_INSTALL_PATH: C:\Program Files\Oracle\VirtualBox\
+[DEBUG] env.VSCODE_GIT_ASKPASS_EXTRA_ARGS: 
+[DEBUG] env.VSCODE_GIT_ASKPASS_MAIN: c:\Users\malak\AppData\Local\Programs\Antigravity\resources\app\extensions\git\dist\askpass-main.js
+[DEBUG] env.VSCODE_GIT_ASKPASS_NODE: C:\Users\malak\AppData\Local\Programs\Antigravity\Antigravity.exe
+[DEBUG] env.VSCODE_GIT_IPC_HANDLE: \\.\pipe\vscode-git-8500b09c73-sock
+[DEBUG] env.VSCODE_INJECTION: 1
+[DEBUG] env.VSCODE_PYTHON_AUTOACTIVATE_GUARD: 1
+[DEBUG] env.WDIR: C:\
+[DEBUG] env.WINDIR: C:\WINDOWS
+[DEBUG] env.ZES_ENABLE_SYSMAN: 1
+[DEBUG] file.encoding: UTF-8
+[DEBUG] file.separator: \
+[DEBUG] java.class.path: C:\Program Files\Maven\apache-maven-3.9.11\boot\plexus-classworlds-2.9.0.jar
+[DEBUG] java.class.version: 69.0
+[DEBUG] java.home: C:\Program Files\Java\jdk-25
+[DEBUG] java.io.tmpdir: C:\Users\malak\AppData\Local\Temp\
+[DEBUG] java.library.path: C:\Program Files\Java\jdk-25\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Python313\Scripts\;C:\Python313\;C:\Program Files\Common Files\Oracle\Java\javapath;C:\oraclexe\app\oracle\product\11.2.0\server\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\php-8.3;C:\Program Files\dotnet\;C:\ProgramData\ComposerSetup\bin;C:\Program Files\Git\cmd;C:\Users\malak\Desktop\sqlite-tools-win-x64-3470200;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Program Files (x86)\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160\DTS\Binn\;c:\Users\malak\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\MySQL\MySQL Server 8.0\bin;C:\Users\malak\AppData\Local\Microsoft\WindowsApps;C:\msys64\ucrt64\bin;C:\Users\malak\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\malak\AppData\Roaming\Composer\vendor\bin;C:\Users\malak\AppData\Roaming\npm;C:\Program Files\JetBrains\PyCharm 2025.1.3.1\bin;;C:\Program Files\JetBrains\PyCharm Community Edition 2025.1.3.1\bin;;C:\Users\malak\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\malak\.dotnet\tools;C:\Program Files\Maven\apache-maven-3.9.11\bin;C:\Users\malak\AppData\Local\Programs\Antigravity\bin;.
+[DEBUG] java.runtime.name: Java(TM) SE Runtime Environment
+[DEBUG] java.runtime.version: 25.0.1+8-LTS-27
+[DEBUG] java.specification.name: Java Platform API Specification
+[DEBUG] java.specification.vendor: Oracle Corporation
+[DEBUG] java.specification.version: 25
+[DEBUG] java.vendor: Oracle Corporation
+[DEBUG] java.vendor.url: https://java.oracle.com/
+[DEBUG] java.vendor.url.bug: https://bugreport.java.com/bugreport/
+[DEBUG] java.version: 25.0.1
+[DEBUG] java.version.date: 2025-10-21
+[DEBUG] java.vm.compressedOopsMode: Zero based
+[DEBUG] java.vm.info: mixed mode, sharing
+[DEBUG] java.vm.name: Java HotSpot(TM) 64-Bit Server VM
+[DEBUG] java.vm.specification.name: Java Virtual Machine Specification
+[DEBUG] java.vm.specification.vendor: Oracle Corporation
+[DEBUG] java.vm.specification.version: 25
+[DEBUG] java.vm.vendor: Oracle Corporation
+[DEBUG] java.vm.version: 25.0.1+8-LTS-27
+[DEBUG] jdk.debug: release
+[DEBUG] library.jansi.path: C:\Program Files\Maven\apache-maven-3.9.11\lib\jansi-native
+[DEBUG] line.separator: 
+
+[DEBUG] maven.build.timestamp: 2026-01-14T09:59:07Z
+[DEBUG] maven.build.version: Apache Maven 3.9.11 (3e54c93a704957b63ee3494413a2b544fd3d825b)
+[DEBUG] maven.compiler.release: 17
+[DEBUG] maven.compiler.source: 17
+[DEBUG] maven.compiler.target: 17
+[DEBUG] maven.conf: C:\Program Files\Maven\apache-maven-3.9.11/conf
+[DEBUG] maven.home: C:\Program Files\Maven\apache-maven-3.9.11
+[DEBUG] maven.multiModuleProjectDirectory: C:\Users\malak\Desktop\Dental_Centre_app\DentalTech
+[DEBUG] maven.version: 3.9.11
+[DEBUG] mysql.version: 8.0.33
+[DEBUG] native.encoding: Cp1252
+[DEBUG] os.arch: amd64
+[DEBUG] os.name: Windows 11
+[DEBUG] os.version: 10.0
+[DEBUG] path.separator: ;
+[DEBUG] plugin.compiler.version: 3.11.0
+[DEBUG] plugin.enforcer.version: 3.4.1
+[DEBUG] plugin.javadoc.version: 3.6.3
+[DEBUG] plugin.shade.version: 3.5.3
+[DEBUG] plugin.surefire.version: 3.2.5
+[DEBUG] project.baseUri: file:/C:/Users/malak/Desktop/Dental_Centre_app/DentalTech/
+[DEBUG] project.build.sourceEncoding: UTF-8
+[DEBUG] stderr.encoding: cp850
+[DEBUG] stdin.encoding: cp850
+[DEBUG] stdout.encoding: Cp1252
+[DEBUG] sun.arch.data.model: 64
+[DEBUG] sun.boot.library.path: C:\Program Files\Java\jdk-25\bin
+[DEBUG] sun.cpu.endian: little
+[DEBUG] sun.cpu.isalist: amd64
+[DEBUG] sun.io.unicode.encoding: UnicodeLittle
+[DEBUG] sun.java.command: org.codehaus.plexus.classworlds.launcher.Launcher compile -X
+[DEBUG] sun.java.launcher: SUN_STANDARD
+[DEBUG] sun.jnu.encoding: Cp1252
+[DEBUG] sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+[DEBUG] sun.os.patch.level: 
+[DEBUG] user.country: GB
+[DEBUG] user.dir: C:\Users\malak\Desktop\Dental_Centre_app\DentalTech
+[DEBUG] user.home: C:\Users\malak
+[DEBUG] user.language: en
+[DEBUG] user.name: malak
+[DEBUG] user.script: 
+[DEBUG] user.variant: 
+[DEBUG] Using 'UTF-8' encoding to copy filtered resources.
+[DEBUG] Using 'UTF-8' encoding to copy filtered properties files.
+[DEBUG] resource with targetPath null
+directory C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources
+excludes []
+includes []
+[DEBUG] ignoreDelta true
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[DEBUG] Copying file assets\logo.png
+[DEBUG] file logo.png has a non filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'logo.png'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\assets\logo.png to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\assets\logo.png
+[DEBUG] Copying file config\beans.properties
+[DEBUG] file beans.properties has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'beans.properties'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\config\beans.properties to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\config\beans.properties
+[DEBUG] Copying file config\db.properties
+[DEBUG] file db.properties has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'db.properties'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\config\db.properties to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\config\db.properties
+[DEBUG] Copying file config\db.properties.example.properties
+[DEBUG] file db.properties.example.properties has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'db.properties.example.properties'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\config\db.properties.example.properties to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\config\db.properties.example.properties
+[DEBUG] Copying file dataBase\schema.sql
+[DEBUG] file schema.sql has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'schema.sql'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\dataBase\schema.sql to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\dataBase\schema.sql
+[DEBUG] Copying file dataBase\seed.sql
+[DEBUG] file seed.sql has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'seed.sql'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\dataBase\seed.sql to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\dataBase\seed.sql
+[DEBUG] Copying file fileBase\patients.psv
+[DEBUG] file patients.psv has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'patients.psv'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\fileBase\patients.psv to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\fileBase\patients.psv
+[DEBUG] Copying file readMe.md
+[DEBUG] file readMe.md has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'readMe.md'.
+[DEBUG] copy C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\resources\readMe.md to C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes\readMe.md
+[DEBUG] no user filter components
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ DentalTech ---
+[DEBUG] Using mirror maven-default-http-blocker (http://0.0.0.0/) for apache.snapshots (http://repository.apache.org/snapshots).
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=76200, ConflictMarker.markTime=73200, ConflictMarker.nodeCount=17, ConflictIdSorter.graphTime=21900, ConflictIdSorter.topsortTime=19000, ConflictIdSorter.conflictIdCount=12, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=474100, ConflictResolver.conflictItemCount=17, DfDependencyCollector.collectTime=70420900, DfDependencyCollector.transformTime=683600}
+[DEBUG] org.apache.maven.plugins:maven-compiler-plugin:jar:3.11.0
+[DEBUG]    org.apache.maven.shared:maven-shared-utils:jar:3.3.4:compile
+[DEBUG]       commons-io:commons-io:jar:2.6:compile
+[DEBUG]    org.apache.maven.shared:maven-shared-incremental:jar:1.1:compile
+[DEBUG]       org.codehaus.plexus:plexus-component-annotations:jar:1.5.5:compile
+[DEBUG]    org.codehaus.plexus:plexus-java:jar:1.1.2:compile
+[DEBUG]       org.ow2.asm:asm:jar:9.4:compile
+[DEBUG]       com.thoughtworks.qdox:qdox:jar:2.0.3:compile (version managed from default)
+[DEBUG]    org.codehaus.plexus:plexus-compiler-api:jar:2.13.0:compile
+[DEBUG]       org.codehaus.plexus:plexus-utils:jar:3.5.0:compile (version managed from default)
+[DEBUG]    org.codehaus.plexus:plexus-compiler-manager:jar:2.13.0:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-javac:jar:2.13.0:runtime
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.11.0
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.11.0
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.11.0
+[DEBUG]   Included: org.apache.maven.plugins:maven-compiler-plugin:jar:3.11.0
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-utils:jar:3.3.4
+[DEBUG]   Included: commons-io:commons-io:jar:2.6
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-incremental:jar:1.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-component-annotations:jar:1.5.5
+[DEBUG]   Included: org.codehaus.plexus:plexus-java:jar:1.1.2
+[DEBUG]   Included: org.ow2.asm:asm:jar:9.4
+[DEBUG]   Included: com.thoughtworks.qdox:qdox:jar:2.0.3
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-api:jar:2.13.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:3.5.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-manager:jar:2.13.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-javac:jar:2.13.0
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-compiler-plugin:3.11.0, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@1affbebc]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile:default-compile' with basic configurator -->
+[DEBUG]   (s) groupId = org.projectlombok
+[DEBUG]   (s) artifactId = lombok
+[DEBUG]   (s) version = 1.18.38
+[DEBUG]   (f) annotationProcessorPaths = [org.projectlombok:lombok:1.18.38.jar]
+[DEBUG]   (f) basedir = C:\Users\malak\Desktop\Dental_Centre_app\DentalTech
+[DEBUG]   (f) buildDirectory = C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target
+[DEBUG]   (f) compilePath = [C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes, C:\Users\malak\.m2\repository\com\mysql\mysql-connector-j\8.0.33\mysql-connector-j-8.0.33.jar, C:\Users\malak\.m2\repository\com\google\protobuf\protobuf-java\3.21.9\protobuf-java-3.21.9.jar, C:\Users\malak\.m2\repository\org\projectlombok\lombok\1.18.38\lombok-1.18.38.jar, C:\Users\malak\.m2\repository\com\github\librepdf\openpdf\1.3.39\openpdf-1.3.39.jar, C:\Users\malak\.m2\repository\org\jfree\jfreechart\1.5.3\jfreechart-1.5.3.jar, C:\Users\malak\.m2\repository\org\mindrot\jbcrypt\0.4\jbcrypt-0.4.jar]
+[DEBUG]   (f) compileSourceRoots = [C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\java]
+[DEBUG]   (f) compilerId = javac
+[DEBUG]   (f) createMissingPackageInfoClass = true
+[DEBUG]   (f) debug = true
+[DEBUG]   (f) debugFileName = javac
+[DEBUG]   (f) enablePreview = false
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) failOnWarning = false
+[DEBUG]   (f) forceJavacCompilerUse = false
+[DEBUG]   (f) fork = false
+[DEBUG]   (f) generatedSourcesDirectory = C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\generated-sources\annotations
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile {execution: default-compile}
+[DEBUG]   (f) optimize = false
+[DEBUG]   (f) outputDirectory = C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\classes
+[DEBUG]   (f) parameters = false
+[DEBUG]   (f) project = MavenProject: ma.dentalTech:DentalTech:1.0-SNAPSHOT @ C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\pom.xml
+[DEBUG]   (f) projectArtifact = ma.dentalTech:DentalTech:jar:1.0-SNAPSHOT
+[DEBUG]   (s) release = 17
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@11a8042c
+[DEBUG]   (f) showCompilationChanges = false
+[DEBUG]   (f) showDeprecation = false
+[DEBUG]   (f) showWarnings = true
+[DEBUG]   (f) skipMultiThreadWarning = false
+[DEBUG]   (f) source = 17
+[DEBUG]   (f) staleMillis = 0
+[DEBUG]   (s) target = 17
+[DEBUG]   (f) useIncrementalCompilation = true
+[DEBUG]   (f) verbose = false
+[DEBUG] -- end configuration --
+[DEBUG] Using compiler 'javac'.
+[DEBUG] Adding C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\generated-sources\annotations to compile source roots:
+  C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\java
+[DEBUG] New compile source roots:
+  C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\src\main\java
+  C:\Users\malak\Desktop\Dental_Centre_app\DentalTech\target\generated-sources\annotations
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=12300, ConflictMarker.markTime=30100, ConflictMarker.nodeCount=2, ConflictIdSorter.graphTime=2800, ConflictIdSorter.topsortTime=4800, ConflictIdSorter.conflictIdCount=1, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=122800, ConflictResolver.conflictItemCount=1, DfDependencyCollector.collectTime=1860700, DfDependencyCollector.transformTime=183800}
+[DEBUG] CompilerReuseStrategy: reuseCreated
+[DEBUG] useIncrementalCompilation enabled
+[INFO] Nothing to compile - all classes are up to date
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.767 s
+[INFO] Finished at: 2026-01-14T10:59:07+01:00
+[INFO] ------------------------------------------------------------------------
+[DEBUG] Shutting down adapter factory; available factories [file-lock, rwlock-local, semaphore-local, noop]; available name mappers [discriminating, file-gav, file-hgav, file-static, gav, static]
+[DEBUG] Shutting down 'file-lock' factory
+[DEBUG] Shutting down 'rwlock-local' factory
+[DEBUG] Shutting down 'semaphore-local' factory
+[DEBUG] Shutting down 'noop' factory

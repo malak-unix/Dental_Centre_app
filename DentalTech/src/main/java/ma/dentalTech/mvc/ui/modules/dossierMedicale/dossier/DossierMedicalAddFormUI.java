@@ -26,10 +26,8 @@ public class DossierMedicalAddFormUI extends JDialog {
     private final String username;
     private final DossierDTO dossierToEdit; // null si création
 
-    // Champs du formulaire
+    // Champs du formulaire (partie malak - notes supprimées)
     private final JComboBox<PatientComboItem> cbPatient = new JComboBox<>();
-    private final JTextArea txtNotes = new JTextArea(6, 40);
-    private final JLabel lblCharCount = new JLabel("0 / 5000 caractères");
 
     private final JButton btnCancel = new JButton("Annuler");
     private final JButton btnSave = new JButton("Enregistrer");
@@ -60,13 +58,13 @@ public class DossierMedicalAddFormUI extends JDialog {
 
     // Constructeur pour création
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
-                                    PatientController patientController, String username) {
+            PatientController patientController, String username) {
         this(parent, dossierController, patientController, username, null);
     }
 
     // Constructeur pour modification
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
-                                    PatientController patientController, String username, DossierDTO dossierToEdit) {
+            PatientController patientController, String username, DossierDTO dossierToEdit) {
         super(parent, dossierToEdit == null ? "Nouveau dossier médical" : "Modifier le dossier médical", true);
 
         this.dossierController = dossierController;
@@ -86,13 +84,13 @@ public class DossierMedicalAddFormUI extends JDialog {
             // Sélectionner le patient
             for (int i = 0; i < cbPatient.getItemCount(); i++) {
                 PatientComboItem item = cbPatient.getItemAt(i);
-                if (item != null && item.getPatientId() != null && item.getPatientId().equals(dossierToEdit.patientId())) {
+                if (item != null && item.getPatientId() != null
+                        && item.getPatientId().equals(dossierToEdit.patientId())) {
                     cbPatient.setSelectedIndex(i);
                     break;
                 }
             }
-            txtNotes.setText(dossierToEdit.notes() != null ? dossierToEdit.notes() : "");
-            updateCharCount();
+            // partie malak - notes supprimées, plus besoin de remplir le champ
         }
 
         JPanel content = new JPanel();
@@ -118,23 +116,7 @@ public class DossierMedicalAddFormUI extends JDialog {
             }
         });
 
-        // Compteur de caractères pour les notes
-        txtNotes.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateCharCount();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateCharCount();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateCharCount();
-            }
-        });
+        // partie malak - listener notes supprimé
     }
 
     private void loadPatients() {
@@ -142,8 +124,8 @@ public class DossierMedicalAddFormUI extends JDialog {
             List<PatientListDto> patients = patientController.lister();
             cbPatient.addItem(new PatientComboItem(null, "-- Sélectionner un patient --"));
             for (PatientListDto p : patients) {
-                String displayText = p.getNomComplet() != null ? p.getNomComplet() : 
-                        (p.getId() != null ? "Patient #" + p.getId() : "Patient inconnu");
+                String displayText = p.getNomComplet() != null ? p.getNomComplet()
+                        : (p.getId() != null ? "Patient #" + p.getId() : "Patient inconnu");
                 if (p.getTelephone() != null && !p.getTelephone().isEmpty()) {
                     displayText += " (" + p.getTelephone() + ")";
                 }
@@ -157,17 +139,7 @@ public class DossierMedicalAddFormUI extends JDialog {
         }
     }
 
-    private void updateCharCount() {
-        int count = txtNotes.getText().length();
-        lblCharCount.setText(count + " / 5000 caractères");
-        if (count > 5000) {
-            lblCharCount.setForeground(new Color(0xDC, 0x35, 0x45)); // Rouge
-        } else if (count > 4500) {
-            lblCharCount.setForeground(new Color(0xFF, 0xA5, 0x00)); // Orange
-        } else {
-            lblCharCount.setForeground(DentalTheme.MUTED);
-        }
-    }
+    // partie malak - méthode updateCharCount() supprimée (notes supprimées)
 
     private JComponent buildForm() {
         JPanel form = new JPanel();
@@ -193,38 +165,7 @@ public class DossierMedicalAddFormUI extends JDialog {
         cbPatient.setPreferredSize(new Dimension(300, 35));
         form.add(cbPatient, gc);
 
-        // Notes
-        gc.gridx = 0;
-        gc.gridy = 1;
-        gc.weightx = 0;
-        gc.anchor = GridBagConstraints.NORTHWEST;
-        JLabel lblNotes = new JLabel("Notes:");
-        lblNotes.setFont(DentalTheme.textFont(13));
-        lblNotes.setForeground(DentalTheme.TEXT2);
-        form.add(lblNotes, gc);
-        gc.gridx = 1;
-        gc.weightx = 1.0;
-        gc.fill = GridBagConstraints.BOTH;
-        JScrollPane scroll = new JScrollPane(txtNotes);
-        txtNotes.setFont(DentalTheme.textFont(13));
-        txtNotes.setLineWrap(true);
-        txtNotes.setWrapStyleWord(true);
-        txtNotes.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
-        scroll.setPreferredSize(new Dimension(300, 120));
-        form.add(scroll, gc);
-
-        // Compteur de caractères
-        gc.gridx = 1;
-        gc.gridy = 2;
-        gc.weightx = 1.0;
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        gc.anchor = GridBagConstraints.EAST;
-        lblCharCount.setFont(DentalTheme.textFont(11));
-        lblCharCount.setForeground(DentalTheme.MUTED);
-        form.add(lblCharCount, gc);
+        // partie malak - section Notes supprimée
 
         return form;
     }
@@ -238,16 +179,14 @@ public class DossierMedicalAddFormUI extends JDialog {
         btnCancel.setForeground(DentalTheme.TEXT2);
         btnCancel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+                new EmptyBorder(8, 16, 8, 16)));
 
         btnSave.setFont(DentalTheme.textBold(13));
         btnSave.setBackground(DentalTheme.PRIMARY);
         btnSave.setForeground(Color.WHITE);
         btnSave.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.GOLD, 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+                new EmptyBorder(8, 16, 8, 16)));
         btnSave.setFocusPainted(false);
 
         buttons.add(btnCancel);
@@ -265,13 +204,7 @@ public class DossierMedicalAddFormUI extends JDialog {
             return false;
         }
 
-        // Validation : Notes max 5000 caractères
-        String notes = txtNotes.getText().trim();
-        if (notes.length() > 5000) {
-            showError("Les notes ne peuvent pas dépasser 5000 caractères. Actuellement : " + notes.length() + " caractères.");
-            txtNotes.requestFocus();
-            return false;
-        }
+        // partie malak - validation notes supprimée
 
         // Création ou mise à jour
         try {
@@ -279,7 +212,7 @@ public class DossierMedicalAddFormUI extends JDialog {
                     dossierToEdit != null ? dossierToEdit.id() : null,
                     selectedPatient.getPatientId(),
                     dossierToEdit != null && dossierToEdit.medecinId() != null ? dossierToEdit.medecinId() : null,
-                    notes.isEmpty() ? null : notes
+                    null // partie malak - notes toujours null (champ supprimé)
             );
 
             if (dossierToEdit == null) {
@@ -295,6 +228,7 @@ public class DossierMedicalAddFormUI extends JDialog {
                         "Succès",
                         JOptionPane.INFORMATION_MESSAGE);
             }
+            confirmed = true; // partie malak - CORRECTION: permet le rafraîchissement de la liste
             return true;
         } catch (Exception ex) {
             showError("Erreur lors de l'enregistrement: " + ex.getMessage());
@@ -307,8 +241,7 @@ public class DossierMedicalAddFormUI extends JDialog {
                 this,
                 message,
                 "Erreur de validation",
-                JOptionPane.ERROR_MESSAGE
-        );
+                JOptionPane.ERROR_MESSAGE);
     }
 
     public boolean isConfirmed() {
