@@ -52,7 +52,7 @@ VALUES
      'aicha',  @PWD_BCRYPT, '2001-12-05', 1, 3, 'admin'),
 
     (5, 'Ou-tamssout','Jihane','jihane@dentalsoft.ma','Agdal, Rabat','J147258', '+212612345604','FEMME',
-     'drjihane', @PWD_BCRYPT, '1988s 1988-06-10', 1, 2, 'admin'),
+     'drjihane', @PWD_BCRYPT, '1988-06-10', 1, 2, 'admin'),
 
     (6, 'El Idrissi', 'Imane', 'imane@dentalsoft.ma', 'Rabat', 'J999111', '+212612300006', 'FEMME',
      'drimane', @PWD_BCRYPT, '1989-02-10', 1, 2, 'admin'),
@@ -77,8 +77,7 @@ VALUES
 INSERT INTO medecin (id, specialite, cree_par)
 VALUES
     (5, 'Chirurgie dentaire', 'admin'),
-    (6, 'Orthodontie', 'admin'),
-    (7, 'Endodontie',  'admin');
+    (6, 'Orthodontie', 'admin'),    (7, 'Endodontie',  'admin');
 
 INSERT INTO secretaire (id, num_cnss, commission, cree_par)
 VALUES
