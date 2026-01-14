@@ -21,12 +21,17 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
         List<DocumentMedical> out = new ArrayList<>();
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
+            while (rs.next())
+                out.add(RowMappers.mapDocumentMedical(rs));
             return out;
 
+        } catch (SQLSyntaxErrorException e) {
+            // Table document_medical n'existe pas encore - retourner liste vide
+            System.err.println("⚠️ Table document_medical n'existe pas (ignoré dans findAll)");
+            return List.of();
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findAll()", e);
         }
@@ -34,12 +39,13 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public DocumentMedical findById(Long id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
 
         String sql = "SELECT * FROM document_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, id);
 
@@ -54,25 +60,29 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public void create(DocumentMedical d) {
-        if (d == null) throw new IllegalArgumentException("DocumentMedical null dans create()");
-        if (d.getDossierId() == null) throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
+        if (d == null)
+            throw new IllegalArgumentException("DocumentMedical null dans create()");
+        if (d.getDossierId() == null)
+            throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
         if (d.getCheminFichier() == null || d.getCheminFichier().isBlank())
             throw new IllegalArgumentException("cheminFichier obligatoire (NOT NULL)");
 
         String sql = """
-            INSERT INTO document_medical
-            (dossier_id, consultation_id, type_document, titre, nom_fichier, chemin_fichier, taille_octets,
-             date_document, cree_par, modifie_par)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
+                INSERT INTO document_medical
+                (dossier_id, consultation_id, type_document, titre, nom_fichier, chemin_fichier, taille_octets,
+                 date_document, cree_par, modifie_par)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setLong(1, d.getDossierId());
 
-            if (d.getConsultationId() != null) ps.setLong(2, d.getConsultationId());
-            else ps.setNull(2, Types.BIGINT);
+            if (d.getConsultationId() != null)
+                ps.setLong(2, d.getConsultationId());
+            else
+                ps.setNull(2, Types.BIGINT);
 
             ps.setString(3, d.getTypeDocument() == null ? "AUTRE" : d.getTypeDocument().name());
             ps.setString(4, d.getTitre());
@@ -91,7 +101,8 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) d.setId(keys.getLong(1));
+                if (keys.next())
+                    d.setId(keys.getLong(1));
             }
 
         } catch (SQLException e) {
@@ -101,33 +112,38 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public void update(DocumentMedical d) {
-        if (d == null) throw new IllegalArgumentException("DocumentMedical null dans update()");
-        if (d.getId() == null) throw new IllegalArgumentException("id obligatoire dans update()");
-        if (d.getDossierId() == null) throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
+        if (d == null)
+            throw new IllegalArgumentException("DocumentMedical null dans update()");
+        if (d.getId() == null)
+            throw new IllegalArgumentException("id obligatoire dans update()");
+        if (d.getDossierId() == null)
+            throw new IllegalArgumentException("dossierId obligatoire (NOT NULL)");
         if (d.getCheminFichier() == null || d.getCheminFichier().isBlank())
             throw new IllegalArgumentException("cheminFichier obligatoire (NOT NULL)");
 
         String sql = """
-            UPDATE document_medical
-               SET dossier_id = ?,
-                   consultation_id = ?,
-                   type_document = ?,
-                   titre = ?,
-                   nom_fichier = ?,
-                   chemin_fichier = ?,
-                   taille_octets = ?,
-                   date_document = ?,
-                   modifie_par = ?
-             WHERE id = ?
-            """;
+                UPDATE document_medical
+                   SET dossier_id = ?,
+                       consultation_id = ?,
+                       type_document = ?,
+                       titre = ?,
+                       nom_fichier = ?,
+                       chemin_fichier = ?,
+                       taille_octets = ?,
+                       date_document = ?,
+                       modifie_par = ?
+                 WHERE id = ?
+                """;
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, d.getDossierId());
 
-            if (d.getConsultationId() != null) ps.setLong(2, d.getConsultationId());
-            else ps.setNull(2, Types.BIGINT);
+            if (d.getConsultationId() != null)
+                ps.setLong(2, d.getConsultationId());
+            else
+                ps.setNull(2, Types.BIGINT);
 
             ps.setString(3, d.getTypeDocument() == null ? "AUTRE" : d.getTypeDocument().name());
             ps.setString(4, d.getTitre());
@@ -152,17 +168,19 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public void delete(DocumentMedical d) {
-        if (d != null && d.getId() != null) deleteById(d.getId());
+        if (d != null && d.getId() != null)
+            deleteById(d.getId());
     }
 
     @Override
     public void deleteById(Long id) {
-        if (id == null) return;
+        if (id == null)
+            return;
 
         String sql = "DELETE FROM document_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
@@ -177,26 +195,32 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
     // ------------------------------------------------------------
     @Override
     public List<DocumentMedical> findByDossierId(Long dossierId) {
-        if (dossierId == null) return List.of();
+        if (dossierId == null)
+            return List.of();
 
         String sql = """
-            SELECT * FROM document_medical
-             WHERE dossier_id = ?
-             ORDER BY date_document DESC, id DESC
-            """;
+                SELECT * FROM document_medical
+                 WHERE dossier_id = ?
+                 ORDER BY date_document DESC, id DESC
+                """;
         List<DocumentMedical> out = new ArrayList<>();
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, dossierId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
+                while (rs.next())
+                    out.add(RowMappers.mapDocumentMedical(rs));
             }
 
             return out;
 
+        } catch (SQLSyntaxErrorException e) {
+            // Table document_medical n'existe pas encore - retourner liste vide
+            System.err.println("⚠️ Table document_medical n'existe pas (ignoré dans findByDossierId)");
+            return List.of();
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findByDossierId(" + dossierId + ")", e);
         }
@@ -209,26 +233,32 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public List<DocumentMedical> findByConsultationId(Long consultationId) {
-        if (consultationId == null) return List.of();
+        if (consultationId == null)
+            return List.of();
 
         String sql = """
-            SELECT * FROM document_medical
-             WHERE consultation_id = ?
-             ORDER BY date_document DESC, id DESC
-            """;
+                SELECT * FROM document_medical
+                 WHERE consultation_id = ?
+                 ORDER BY date_document DESC, id DESC
+                """;
         List<DocumentMedical> out = new ArrayList<>();
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, consultationId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
+                while (rs.next())
+                    out.add(RowMappers.mapDocumentMedical(rs));
             }
 
             return out;
 
+        } catch (SQLSyntaxErrorException e) {
+            // Table document_medical n'existe pas encore - retourner liste vide
+            System.err.println("⚠️ Table document_medical n'existe pas (ignoré dans findByConsultationId)");
+            return List.of();
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.findByConsultationId(" + consultationId + ")", e);
         }
@@ -237,26 +267,31 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
     @Override
     public List<DocumentMedical> searchByTitreOrNom(String keyword) {
         String sql = """
-            SELECT * FROM document_medical
-             WHERE titre LIKE ?
-                OR nom_fichier LIKE ?
-             ORDER BY date_document DESC, id DESC
-            """;
+                SELECT * FROM document_medical
+                 WHERE titre LIKE ?
+                    OR nom_fichier LIKE ?
+                 ORDER BY date_document DESC, id DESC
+                """;
         List<DocumentMedical> out = new ArrayList<>();
         String like = "%" + (keyword == null ? "" : keyword) + "%";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setString(1, like);
             ps.setString(2, like);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
+                while (rs.next())
+                    out.add(RowMappers.mapDocumentMedical(rs));
             }
 
             return out;
 
+        } catch (SQLSyntaxErrorException e) {
+            // Table document_medical n'existe pas encore - retourner liste vide
+            System.err.println("⚠️ Table document_medical n'existe pas (ignoré dans searchByTitreOrNom)");
+            return List.of();
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.searchByTitreOrNom(" + keyword + ")", e);
         }
@@ -264,12 +299,13 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
 
     @Override
     public boolean existsById(Long id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
 
         String sql = "SELECT 1 FROM document_medical WHERE id = ?";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, id);
 
@@ -287,11 +323,15 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
         String sql = "SELECT COUNT(*) AS total FROM document_medical";
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             return rs.next() ? rs.getLong("total") : 0L;
 
+        } catch (SQLSyntaxErrorException e) {
+            // Table document_medical n'existe pas encore - retourner 0
+            System.err.println("⚠️ Table document_medical n'existe pas (ignoré dans count)");
+            return 0L;
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL: DocumentMedical.count()", e);
         }
@@ -300,26 +340,32 @@ public class DocumentMedicalRepositoryImpl implements DocumentMedicalRepository 
     @Override
     public List<DocumentMedical> findPage(int limit, int offset) {
         String sql = """
-            SELECT * FROM document_medical
-             ORDER BY date_document DESC, id DESC
-             LIMIT ? OFFSET ?
-            """;
+                SELECT * FROM document_medical
+                 ORDER BY date_document DESC, id DESC
+                 LIMIT ? OFFSET ?
+                """;
         List<DocumentMedical> out = new ArrayList<>();
 
         try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+                PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setInt(1, limit);
             ps.setInt(2, offset);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapDocumentMedical(rs));
+                while (rs.next())
+                    out.add(RowMappers.mapDocumentMedical(rs));
             }
 
             return out;
 
+        } catch (SQLSyntaxErrorException e) {
+            // Table document_medical n'existe pas encore - retourner liste vide
+            System.err.println("⚠️ Table document_medical n'existe pas (ignoré dans findPage)");
+            return List.of();
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur SQL: DocumentMedical.findPage(limit=" + limit + ", offset=" + offset + ")", e);
+            throw new RuntimeException(
+                    "Erreur SQL: DocumentMedical.findPage(limit=" + limit + ", offset=" + offset + ")", e);
         }
     }
 }
