@@ -144,7 +144,7 @@ public class RdvPagePanel extends JPanel {
                 refreshCurrentFilter();
 
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+                showRootError(this, ex, "Erreur RDV");
             }
         });
 
@@ -171,7 +171,7 @@ public class RdvPagePanel extends JPanel {
                 refreshCurrentFilter();
 
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+                showRootError(this, ex, "Erreur RDV");
             }
         });
 
@@ -195,7 +195,7 @@ public class RdvPagePanel extends JPanel {
                 refreshCurrentFilter();
 
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+                showRootError(this, ex, "Erreur RDV");
             }
         });
     }
@@ -251,9 +251,21 @@ public class RdvPagePanel extends JPanel {
             ensureController();
             return s.get();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+            showRootError(this, ex, "Erreur RDV");
             return (T) Collections.emptyList();
         }
+    }
+
+    // ✅ affiche la vraie cause (SQLException, FK, parse date, etc.)
+    private static void showRootError(Component parent, Throwable ex, String title) {
+        Throwable root = ex;
+        while (root.getCause() != null) root = root.getCause();
+
+        String msg = root.getMessage();
+        if (msg == null || msg.isBlank()) msg = root.toString();
+
+        JOptionPane.showMessageDialog(parent, msg, title, JOptionPane.ERROR_MESSAGE);
+        root.printStackTrace(); // utile en console/log
     }
 
     // ===== PillButton (sans override setSelected/isSelected)
@@ -435,7 +447,7 @@ public class RdvPagePanel extends JPanel {
                     .motif(motif)
                     .statut(statut)
                     .noteMedecin(note.isBlank() ? null : note)
-                    .typeRdv(null)      // si tu n’as pas encore typeRdv dans l’UI
+                    .typeRdv(null)
                     .patientNom(null)
                     .build();
         }
