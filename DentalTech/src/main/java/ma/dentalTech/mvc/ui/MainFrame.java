@@ -13,6 +13,8 @@ import ma.dentalTech.mvc.ui.modules.dashboard.admin.AdminDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.medecin.MedecinDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.secretaire.SecretaireDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.patient.PatientView;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeListUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -122,6 +124,7 @@ public class MainFrame extends JFrame {
         addPage("ordonnances", buildPlaceholder("Ordonnances (à brancher)"));
         addPage("certificats", buildPlaceholder("Certificats (à brancher)"));
         addPage("situation_fin", buildPlaceholder("Situation financière (à brancher)"));
+        addPage("actes", buildActesPage());
 
 
         // Admin (placeholders)
@@ -138,6 +141,15 @@ public class MainFrame extends JFrame {
         return new DashboardMainPanel(role, userId, dashboardController, this::showPage);
 
     }
+
+    private JComponent buildActesPage() {
+        ActeController controller = ApplicationContext.getBean(ActeController.class);
+        if (controller == null) {
+            return buildPlaceholder("❌ ActeController introuvable (ApplicationContext)");
+        }
+        return new ActeListUI(controller, fullName);
+    }
+
 
 
     private void addPage(String key, JComponent page) {

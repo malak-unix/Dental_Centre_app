@@ -521,10 +521,63 @@ public final class ApplicationContext {
                 contextByName.put("authController", authController);
                 registerKnown(known, authController);
             }
+            // =========================================================
+// DOSSIER MEDICAL : services + controllers (pour UI MainFrame)
+// =========================================================
+            try {
+
+                // --- Services (constructeurs no-arg existent)
+                var acteService =
+                        new ma.dentalTech.service.modules.dossierMedical.impl.ActeServiceImpl();
+
+                var consultationService =
+                        new ma.dentalTech.service.modules.dossierMedical.impl.ConsultationServiceImpl();
+
+                // --- Controllers
+                var dossierCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.DossierMedicalControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController.class,
+                        dossierCtrl, "dossierMedicalController");
+                registerKnown(known, dossierCtrl);
+
+                var acteCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.ActeControllerImpl(acteService);
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController.class,
+                        acteCtrl, "acteController");
+                registerKnown(known, acteCtrl);
+
+                var consultationCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.ConsultationControllerImpl(consultationService);
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController.class,
+                        consultationCtrl, "consultationController");
+                registerKnown(known, consultationCtrl);
+
+                var ordonnanceCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.OrdonnanceControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController.class,
+                        ordonnanceCtrl, "ordonnanceController");
+                registerKnown(known, ordonnanceCtrl);
+
+                var certificatCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.CertificatControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.CertificatController.class,
+                        certificatCtrl, "certificatController");
+                registerKnown(known, certificatCtrl);
+
+                var situationCtrl =
+                        new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.SituationFinanciereControllerImpl();
+                put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.SituationFinanciereController.class,
+                        situationCtrl, "situationFinanciereController");
+                registerKnown(known, situationCtrl);
+
+            } catch (Exception e) {
+                // Option: log si tu veux
+                System.err.println("⚠️ Erreur init DOSSIER MEDICAL: " + e.getMessage());
+            }
 
 
             // =========================================================
-            // DASHBOARD : service -> controller (optionnel)
+            // DASHBOARD : service -> controller
             // =========================================================
             if (hasKey(props, "dashboardService") && notificationRepo != null) {
                 currentBean = "dashboardService";
