@@ -347,14 +347,21 @@ public final class ApplicationContext {
             ListeAttenteService listeService = null;
             if (hasKey(props, "listeAttente.service")) {
                 currentBean = "listeAttente.service";
-                listeService = newServiceInstance(
-                        props, "listeAttente.service", ListeAttenteService.class,
-                        new Class<?>[]{ListeAttenteRepository.class},
-                        new Object[]{listeRepo}
+
+                // ✅ utilise instantiateWithKnown => il trouvera (ListeAttenteRepository, RdvService)
+                Object svc = newFlexibleInstance(
+                        props.getProperty("listeAttente.service"),
+                        known,
+                        listeRepo,
+                        getBean(RdvService.class) // rdvService déjà créé plus haut
                 );
+
+                listeService = (ListeAttenteService) svc;
+
                 put(ListeAttenteService.class, listeService, "listeAttente.service");
                 registerKnown(known, listeService);
             }
+
 
             if (hasKey(props, "listeAttente.controller") && listeService != null) {
                 currentBean = "listeAttente.controller";

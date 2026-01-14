@@ -1,6 +1,7 @@
 package ma.dentalTech.service.modules.agenda.api;
 
 import ma.dentalTech.entities.agenda.ListeAttente;
+import ma.dentalTech.entities.agenda.RDV;
 
 import java.util.List;
 
@@ -13,4 +14,7 @@ public interface ListeAttenteService {
     void deleteById(Long id);
 
     List<ListeAttente> searchByNomListe(String nomListe);
+
+    // ✅ AJOUT
+    void programmer(Long idListeAttente, RDV rdv);
 }
