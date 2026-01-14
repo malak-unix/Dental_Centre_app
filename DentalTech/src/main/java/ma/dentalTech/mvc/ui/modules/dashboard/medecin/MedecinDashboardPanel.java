@@ -1,226 +1,124 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.medecin;
 
-import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
-import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.medecin.MedecinDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.dashboard.medecin.PatientCurrentDTO;
-import ma.dentalTech.mvc.ui.common.CardPanel;
-import ma.dentalTech.mvc.ui.common.DentalTheme;
-import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class MedecinDashboardPanel extends JPanel {
 
+    private final DashboardController controller;
     private final Long userId;
+    private final Consumer<String> navigate;
 
-    private JLabel vPatients, vRdv, vActes, vRecette;
-    private DefaultTableModel rdvModel;
-    private JLabel footer;
-    private JTextArea currentInfo;
+    private JLabel kpiPatients = new JLabel("-");
+    private JLabel kpiRecette = new JLabel("-");
+    private JLabel kpiRdv = new JLabel("-");
+    private JLabel kpiActes = new JLabel("-");
+
+    private JLabel patientCourant = new JLabel("—");
 
     public MedecinDashboardPanel() {
-        this(1L);
+        this(null, null, k -> {});
     }
 
-    public MedecinDashboardPanel(Long userId) {
-        this.userId = (userId != null) ? userId : 1L;
 
+
+    public MedecinDashboardPanel(DashboardController controller, Long userId, Consumer<String> navigate) {
+        this.controller = controller;
+        this.userId = userId;
+        this.navigate = (navigate != null) ? navigate : (k -> {});
+        buildUi();
+        reload();
+    }
+
+    private void buildUi() {
         setOpaque(false);
-        setLayout(new BorderLayout(18, 18));
+        setLayout(new BorderLayout(16, 16));
 
-        JLabel title = new JLabel("Dashboard Médecin");
-        title.setFont(DentalTheme.H1);
-        title.setForeground(DentalTheme.TEXT);
-        add(title, BorderLayout.NORTH);
+        JLabel title = new JLabel("Dashboard");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 22f));
 
-        JPanel wrap = new JPanel();
-        wrap.setOpaque(false);
-        wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
-        add(wrap, BorderLayout.CENTER);
-
-        // KPIs
-        JPanel kpis = new JPanel(new GridLayout(1, 5, 18, 18));
+        JPanel kpis = new JPanel(new GridLayout(1, 4, 12, 12));
         kpis.setOpaque(false);
+        kpis.add(kpiCard("Nb patients (jour)", kpiPatients));
+        kpis.add(kpiCard("Recette du jour", kpiRecette));
+        kpis.add(kpiCard("RDV du jour", kpiRdv));
+        kpis.add(kpiCard("Actes réalisés", kpiActes));
 
-        vPatients = new JLabel("—");
-        vRdv = new JLabel("—");
-        vActes = new JLabel("—");
-        vRecette = new JLabel("—");
+        JButton btnPlanning = new JButton("Planning");
+        btnPlanning.addActionListener(e -> this.navigate.accept("agenda_med"));
 
-        kpis.add(kpi(vPatients, "Patients du jour"));
-        kpis.add(kpi(vRdv, "RDV du jour"));
-        kpis.add(kpi(vActes, "Actes réalisés"));
-        kpis.add(kpi(vRecette, "Recette du jour"));
-        kpis.add(actionCard("Rafraîchir", this::refresh));
+        JButton btnDossiers = new JButton("Dossiers");
+        btnDossiers.addActionListener(e -> this.navigate.accept("dossiers"));
 
-        wrap.add(kpis);
-        wrap.add(Box.createVerticalStrut(18));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        actions.setOpaque(false);
+        actions.add(btnPlanning);
+        actions.add(btnDossiers);
 
-        JPanel main = new JPanel(new GridLayout(1, 2, 18, 18));
-        main.setOpaque(false);
-        main.add(rdvCard());
-        main.add(currentPatientCard());
-        wrap.add(main);
+        JPanel top = new JPanel(new BorderLayout(0, 10));
+        top.setOpaque(false);
+        top.add(title, BorderLayout.NORTH);
+        top.add(kpis, BorderLayout.CENTER);
+        top.add(actions, BorderLayout.SOUTH);
 
-        refresh();
+        JPanel current = new JPanel(new BorderLayout());
+        current.setBorder(BorderFactory.createTitledBorder("Client en cours"));
+        current.add(patientCourant, BorderLayout.CENTER);
+
+        add(top, BorderLayout.NORTH);
+        add(current, BorderLayout.CENTER);
     }
 
-    public final void refresh() {
-        MedecinDashboardResponseDTO medDto = null;
-        try {
-            DashboardDTO dash = fetchDashboardDTO();
-            if (dash != null) medDto = dash.getMedecin();
-        } catch (Exception ignore) {}
-
-        setData(medDto);
-    }
-
-    private DashboardDTO fetchDashboardDTO() {
-        Object bean = ApplicationContext.getBean("dashboardController");
-        if (bean instanceof DashboardController ctrl) {
-            try {
-                return ctrl.getDashboardDTO(userId);
-            } catch (Exception ignore) {}
-        }
-
-        DashboardService service = ApplicationContext.getBean(DashboardService.class);
-        if (service != null) {
-            try {
-                return service.getDashboard(userId);
-            } catch (Exception ignore) {}
-        }
-        return null;
+    private JPanel kpiCard(String label, JLabel value) {
+        JPanel p = new JPanel(new BorderLayout(0, 6));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JLabel l = new JLabel(label);
+        l.setFont(l.getFont().deriveFont(Font.PLAIN, 13f));
+        value.setFont(value.getFont().deriveFont(Font.BOLD, 18f));
+        p.add(l, BorderLayout.NORTH);
+        p.add(value, BorderLayout.CENTER);
+        return p;
     }
 
     public void setData(MedecinDashboardResponseDTO dto) {
-        int nbPatients = dto != null && dto.getNbPatientsDuJour() != null ? dto.getNbPatientsDuJour() : 0;
-        int nbRdv = dto != null && dto.getNbRdvDuJour() != null ? dto.getNbRdvDuJour() : 0;
-        int nbActes = dto != null && dto.getNbActesRealises() != null ? dto.getNbActesRealises() : 0;
-        BigDecimal rec = dto != null ? dto.getRecetteDuJour() : null;
+        if (dto == null) return;
 
-        vPatients.setText(String.valueOf(nbPatients));
-        vRdv.setText(String.valueOf(nbRdv));
-        vActes.setText(String.valueOf(nbActes));
-        vRecette.setText(formatDh(rec));
+        kpiPatients.setText(s(dto.getNbPatientsDuJour()));
+        kpiRdv.setText(s(dto.getNbRdvDuJour()));
+        kpiActes.setText(s(dto.getNbActesRealises()));
+        kpiRecette.setText(formatDh(dto.getRecetteDuJour()));
 
-        // RDV
-        rdvModel.setRowCount(0);
-        List<RdvDto> rdv = dto != null ? dto.getRdvDuJour() : null;
-        if (rdv != null && !rdv.isEmpty()) {
-            for (RdvDto r : rdv) {
-                rdvModel.addRow(new Object[]{
-                        r.getHeure() != null ? r.getHeure().toString() : "",
-                        r.getPatientNom() != null ? r.getPatientNom() : "",
-                        r.getMotif() != null ? r.getMotif() : "",
-                        r.getStatut() != null ? r.getStatut().name() : ""
-                });
-            }
+        // ✅ c’est patientEnCours (pas patientCourant)
+        PatientCurrentDTO pc = dto.getPatientEnCours();
+        if (pc == null) {
+            patientCourant.setText("—");
         } else {
-            rdvModel.addRow(new Object[]{"", "Aucun RDV", "", ""});
-        }
-
-        footer.setText("Aujourd’hui : " + nbRdv + " RDV   |   Actes : " + nbActes + "   |   Recettes : " + formatDh(rec));
-
-        PatientCurrentDTO p = dto != null ? dto.getPatientEnCours() : null;
-        if (p == null) {
-            currentInfo.setText("Aucun client en cours.");
-        } else {
-            String tel = p.getTel() != null ? p.getTel() : "—";
-            String statut = p.getStatutTraitement() != null ? p.getStatutTraitement() : "—";
-            currentInfo.setText(
-                    (p.getNomComplet() != null ? p.getNomComplet() : "Patient") + "\n" +
-                            "Tel: " + tel + "\n" +
-                            "Statut: " + statut + "\n\n" +
-                            "Actions :\n• Dossier\n• Consultation\n• Radio\n• Ordonnance\n"
-            );
+            String name = (pc.getNomComplet() != null) ? pc.getNomComplet() : "Patient";
+            patientCourant.setText(name);
         }
     }
 
-    private CardPanel kpi(JLabel valueLabel, String label) {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BoxLayout(c, BoxLayout.Y_AXIS));
-
-        valueLabel.setFont(DentalTheme.H2);
-        valueLabel.setForeground(DentalTheme.TEXT);
-
-        JLabel l = new JLabel(label);
-        l.setFont(DentalTheme.BASE);
-        l.setForeground(DentalTheme.MUTED);
-
-        c.add(valueLabel);
-        c.add(Box.createVerticalStrut(6));
-        c.add(l);
-        return c;
+    public void reload() {
+        if (controller == null || userId == null) return;
+        try {
+            DashboardDTO dto = controller.getDashboardDTO(userId);
+            setData(dto != null ? dto.getMedecin() : null);
+        } catch (Exception ex) {
+            // silence
+        }
     }
 
-    private CardPanel actionCard(String text, Runnable action) {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BorderLayout());
-        JButton b = new JButton(text);
-        b.setFocusPainted(false);
-        b.addActionListener(e -> action.run());
-        c.add(b, BorderLayout.CENTER);
-        return c;
-    }
-
-    private CardPanel rdvCard() {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BorderLayout(10, 10));
-
-        JLabel t = new JLabel("Rendez-vous du Jour");
-        t.setFont(DentalTheme.H2);
-        c.add(t, BorderLayout.NORTH);
-
-        String[] cols = {"Heure", "Patient", "Motif", "Statut"};
-        rdvModel = new DefaultTableModel(cols, 0);
-        JTable table = new JTable(rdvModel);
-        table.setRowHeight(28);
-
-        c.add(new JScrollPane(table), BorderLayout.CENTER);
-
-        JPanel footerWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        footerWrap.setOpaque(false);
-        footer = new JLabel("");
-        footerWrap.add(footer);
-        c.add(footerWrap, BorderLayout.SOUTH);
-
-        return c;
-    }
-
-    private CardPanel currentPatientCard() {
-        CardPanel c = new CardPanel();
-        c.setLayout(new BorderLayout(10, 10));
-
-        JLabel t = new JLabel("Client En cours");
-        t.setFont(DentalTheme.H2);
-        c.add(t, BorderLayout.NORTH);
-
-        currentInfo = new JTextArea();
-        currentInfo.setOpaque(false);
-        currentInfo.setEditable(false);
-        currentInfo.setFont(DentalTheme.BASE);
-        c.add(currentInfo, BorderLayout.CENTER);
-
-        JPanel actions = new JPanel(new GridLayout(2, 2, 10, 10));
-        actions.setOpaque(false);
-        actions.add(new JButton("+ Dossier"));
-        actions.add(new JButton("+ Consultation"));
-        actions.add(new JButton("+ Radio"));
-        actions.add(new JButton("+ Ordonnance"));
-        c.add(actions, BorderLayout.SOUTH);
-
-        return c;
-    }
+    private String s(Integer v) { return v == null ? "-" : String.valueOf(v); }
 
     private String formatDh(BigDecimal v) {
-        if (v == null) return "0 DH";
-        return v.stripTrailingZeros().toPlainString() + " DH";
+        if (v == null) return "-";
+        return v.toPlainString() + " DH";
     }
 }

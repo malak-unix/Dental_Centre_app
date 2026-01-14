@@ -13,6 +13,9 @@ VALUES
 
 --  CABINET MEDICAL
 
+-- Mot de passe commun : 123456
+SET @PWD_BCRYPT = '$2b$10$RJ1gWIa0QI62ROUSEduCG.TqUJOeObk0bNtS7poGMoMagTEW3QfcC';
+
 INSERT INTO cabinet_medical (id, nom, nom_medecin, logo, adresse, telephone1, telephone2,
                              site_web, instagram, facebook, email, slogan, description, cree_par)
 VALUES
@@ -36,45 +39,45 @@ INSERT INTO utilisateur (id, nom, prenom, email, adresse, cin, tel, sexe,
                          login, mot_de_passe, date_naissance, actif,
                          role_id, cree_par)
 VALUES
-  (1, 'Admin',   'Tech',   'admin@dentalsoft.ma', 'Casablanca', 'X000000', '+212600000000', 'AUTRE',
-   'admin',   '$2b$10$A3a0ymwfAYPc8kXV9ll.0OtokztmxGQ8N.j8v7i6wtKxMnCKcIUgm', '1990-01-01', 1, 1, 'system'),
+    (1, 'Admin',   'Tech',   'admin@dentalsoft.ma', 'Casablanca', 'X000000', '+212600000000', 'AUTRE',
+     'admin',   @PWD_BCRYPT, '1990-01-01', 1, 1, 'system'),
 
-  (2, 'Achari',  'Malak',  'malak@dentalsoft.ma', 'yaacoub mansour, Rabat', 'J123456', '+212612345601', 'FEMME',
-   'malak',  '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '2002-03-14', 1, 3, 'admin'),
+    (2, 'Achari',  'Malak',  'malak@dentalsoft.ma', 'yaacoub mansour, Rabat', 'J123456', '+212612345601', 'FEMME',
+     'malak',  @PWD_BCRYPT, '2002-03-14', 1, 3, 'admin'),
 
-  (3, 'Berday',  'Aya',    'aya@dentalsoft.ma', 'Mehdia, Kenitra', 'J654321', '+212612345602', 'FEMME',
-   'aya',    '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '2002-09-21', 1, 3, 'admin'),
+    (3, 'Berday',  'Aya',    'aya@dentalsoft.ma', 'Mehdia, Kenitra', 'J654321', '+212612345602', 'FEMME',
+     'aya',    @PWD_BCRYPT, '2002-09-21', 1, 3, 'admin'),
 
-  (4, 'El bekali','Aicha', 'aicha@dentalsoft.ma', 'massira, Temara', 'J789456', '+212612345603', 'FEMME',
-   'aicha',  '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '2001-12-05', 1, 3, 'admin'),
+    (4, 'El bekali','Aicha', 'aicha@dentalsoft.ma', 'massira, Temara', 'J789456', '+212612345603', 'FEMME',
+     'aicha',  @PWD_BCRYPT, '2001-12-05', 1, 3, 'admin'),
 
-  (5, 'Ou-tamssout','Jihane','jihane@dentalsoft.ma','Agdal, Rabat','J147258', '+212612345604','FEMME',
-   'drjihane','$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1988-06-10', 1, 2, 'admin');
+    (5, 'Ou-tamssout','Jihane','jihane@dentalsoft.ma','Agdal, Rabat','J147258', '+212612345604','FEMME',
+     'drjihane', @PWD_BCRYPT, '1988s 1988-06-10', 1, 2, 'admin'),
 
     (6, 'El Idrissi', 'Imane', 'imane@dentalsoft.ma', 'Rabat', 'J999111', '+212612300006', 'FEMME',
-      'drimane', '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1989-02-10', 1, 2, 'admin'),
+     'drimane', @PWD_BCRYPT, '1989-02-10', 1, 2, 'admin'),
 
-     (7, 'Berrada', 'Yassine', 'yassine@dentalsoft.ma', 'Rabat', 'J999222', '+212612300007', 'HOMME',
-      'dryassine', '$2b$10$IkKDhgjaJS9WHyU3pu0BEeqOUHlrpyjphklwdWJNAkWzZh.I3Ze4.', '1985-07-22', 1, 2, 'admin');
+    (7, 'Berrada', 'Yassine', 'yassine@dentalsoft.ma', 'Rabat', 'J999222', '+212612300007', 'HOMME',
+     'dryassine', @PWD_BCRYPT, '1985-07-22', 1, 2, 'admin');
+
 --  STAFF
-
 INSERT INTO staff (id, salaire, prime, date_recrutement, solde_conge,
                    cabinet_id, cree_par)
 VALUES
-  (1, 12000.00,  0.00, '2020-01-01', 10, 1, 'admin'),   -- Admin technique
-  (2,  6000.00, 500.00, '2024-01-15', 12, 1, 'admin'),  -- Malak (secrétaire)
-  (3,  5800.00, 300.00, '2024-02-10', 10, 1, 'admin'),  -- Aya (secrétaire)
-  (4,  5800.00, 300.00, '2024-02-10', 10, 1, 'admin'),  -- Aicha (secrétaire)
-  (5, 15000.00,1000.00, '2018-09-01', 15, 1, 'admin');  -- Dr Jihane (médecin)
-  (6, 14000.00, 800.00, '2019-01-01', 12, 1, 'admin'), --DR El idrisse imane (medecin)
-  (7, 16000.00,1000.00, '2017-03-01', 15, 1, 'admin'); --DR Berrada Yassine ( medecin)
+    (1, 12000.00,  0.00, '2020-01-01', 10, 1, 'admin'),
+    (2,  6000.00, 500.00, '2024-01-15', 12, 1, 'admin'),
+    (3,  5800.00, 300.00, '2024-02-10', 10, 1, 'admin'),
+    (4,  5800.00, 300.00, '2024-02-10', 10, 1, 'admin'),
+    (5, 15000.00,1000.00, '2018-09-01', 15, 1, 'admin'),
+    (6, 14000.00, 800.00, '2019-01-01', 12, 1, 'admin'),
+    (7, 16000.00,1000.00, '2017-03-01', 15, 1, 'admin');
 
 --  MEDECIN & SECRETAIRES
 
 INSERT INTO medecin (id, specialite, cree_par)
 VALUES
-  (5, 'Chirurgie dentaire', 'admin');
-   (6, 'Orthodontie', 'admin'),
+    (5, 'Chirurgie dentaire', 'admin'),
+    (6, 'Orthodontie', 'admin'),
     (7, 'Endodontie',  'admin');
 
 INSERT INTO secretaire (id, num_cnss, commission, cree_par)
