@@ -1,5 +1,6 @@
 package ma.dentalTech.repository.modules.users.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.repository.modules.users.api.RoleRepository;
@@ -10,92 +11,115 @@ import java.util.stream.Collectors;
 
 public class RoleRepositoryImpl implements RoleRepository {
 
+    // ✅ Gardé uniquement pour compatibilité injection (ApplicationContext / RepoFactory)
+    @SuppressWarnings("unused")
     private final Connection connection;
 
     public RoleRepositoryImpl(Connection connection) {
-        this.connection = connection;
+        this.connection = connection; // pas utilisé
+    }
+
+    public RoleRepositoryImpl() {
+        this.connection = null;
     }
 
     @Override
     public Role findById(Long id) {
+        if (id == null) return null;
+
         String sql = "SELECT * FROM role WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapResultSetToRole(rs);
+                return rs.next() ? mapResultSetToRole(rs) : null;
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur findById(Role) id=" + id, e);
         }
-        return null;
     }
 
     @Override
     public Optional<Role> findByType(LibelleRole type) {
         if (type == null) return Optional.empty();
+
         String sql = "SELECT * FROM role WHERE libelle = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setString(1, type.name());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapResultSetToRole(rs));
+                return rs.next() ? Optional.of(mapResultSetToRole(rs)) : Optional.empty();
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur findByType(Role) type=" + type, e);
         }
-        return Optional.empty();
     }
 
     @Override
     public Optional<Role> findByLibelle(String libelle) {
         if (libelle == null || libelle.isBlank()) return Optional.empty();
+
         String sql = "SELECT * FROM role WHERE libelle = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setString(1, libelle.trim());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapResultSetToRole(rs));
+                return rs.next() ? Optional.of(mapResultSetToRole(rs)) : Optional.empty();
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur findByLibelle(Role) libelle=" + libelle, e);
         }
-        return Optional.empty();
     }
 
     @Override
     public boolean existsByLibelle(String libelle) {
         if (libelle == null || libelle.isBlank()) return false;
+
         String sql = "SELECT 1 FROM role WHERE libelle = ? LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setString(1, libelle.trim());
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur existsByLibelle(Role) libelle=" + libelle, e);
         }
-        return false;
     }
 
     @Override
     public List<String> getPrivileges(Long roleId) {
         if (roleId == null) return List.of();
+
         String sql = "SELECT privileges FROM role WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, roleId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String csv = rs.getString("privileges");
-                    if (csv == null || csv.isBlank()) return List.of();
-                    return Arrays.stream(csv.split(","))
-                            .map(String::trim)
-                            .filter(s -> !s.isBlank())
-                            .distinct()
-                            .collect(Collectors.toList());
-                }
+                if (!rs.next()) return List.of();
+
+                String csv = rs.getString("privileges");
+                if (csv == null || csv.isBlank()) return List.of();
+
+                return Arrays.stream(csv.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isBlank())
+                        .distinct()
+                        .collect(Collectors.toList());
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur getPrivileges(Role) roleId=" + roleId, e);
         }
-        return List.of();
     }
 
     @Override
@@ -104,7 +128,10 @@ public class RoleRepositoryImpl implements RoleRepository {
 
         List<String> current = new ArrayList<>(getPrivileges(roleId));
         String p = privilege.trim();
-        if (!current.contains(p)) current.add(p);
+
+        if (current.stream().noneMatch(x -> x.equalsIgnoreCase(p))) {
+            current.add(p);
+        }
 
         updatePrivilegesCsv(roleId, current);
     }
@@ -122,16 +149,25 @@ public class RoleRepositoryImpl implements RoleRepository {
     private void updatePrivilegesCsv(Long roleId, List<String> privs) {
         String csv = (privs == null || privs.isEmpty())
                 ? null
-                : privs.stream().map(String::trim).filter(s -> !s.isBlank()).distinct().collect(Collectors.joining(","));
+                : privs.stream()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .collect(Collectors.joining(","));
 
         String sql = "UPDATE role SET privileges = ? WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             if (csv == null) ps.setNull(1, Types.VARCHAR);
             else ps.setString(1, csv);
+
             ps.setLong(2, roleId);
             ps.executeUpdate();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur updatePrivilegesCsv(Role) roleId=" + roleId, e);
         }
     }
 
@@ -139,47 +175,80 @@ public class RoleRepositoryImpl implements RoleRepository {
     public List<Role> findRolesByUtilisateurId(Long utilisateurId) {
         if (utilisateurId == null) return List.of();
 
-        List<Role> roles = new ArrayList<>();
         String sql = """
                 SELECT r.*
                 FROM role r
                 JOIN utilisateur u ON u.role_id = r.id
                 WHERE u.id = ?
                 """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        List<Role> roles = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, utilisateurId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) roles.add(mapResultSetToRole(rs));
             }
+            return roles;
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur findRolesByUtilisateurId(Role) userId=" + utilisateurId, e);
         }
-        return roles;
     }
 
     @Override
     public void assignRoleToUser(Long utilisateurId, Long roleId) {
         if (utilisateurId == null || roleId == null) return;
+
         String sql = "UPDATE utilisateur SET role_id = ? WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, roleId);
             ps.setLong(2, utilisateurId);
             ps.executeUpdate();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur assignRoleToUser userId=" + utilisateurId + " roleId=" + roleId, e);
         }
     }
 
     @Override
     public void removeRoleFromUser(Long utilisateurId, Long roleId) {
         if (utilisateurId == null || roleId == null) return;
+
         String sql = "UPDATE utilisateur SET role_id = NULL WHERE id = ? AND role_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, utilisateurId);
             ps.setLong(2, roleId);
             ps.executeUpdate();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Erreur removeRoleFromUser userId=" + utilisateurId + " roleId=" + roleId, e);
+        }
+    }
+
+    @Override
+    public List<Role> findAll() {
+        String sql = "SELECT * FROM role";
+        List<Role> roles = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) roles.add(mapResultSetToRole(rs));
+            return roles;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findAll(Role)", e);
         }
     }
 
@@ -188,29 +257,13 @@ public class RoleRepositoryImpl implements RoleRepository {
         role.setId(rs.getLong("id"));
 
         String libStr = rs.getString("libelle");
-        if (libStr != null) {
-            role.setLibelle(LibelleRole.valueOf(libStr));
-        } else {
-            role.setLibelle(null);
-        }
+        role.setLibelle(libStr != null ? LibelleRole.valueOf(libStr) : null);
 
         role.setPrivileges(rs.getString("privileges")); // CSV brut
         return role;
     }
 
-    @Override
-    public List<Role> findAll() {
-        List<Role> roles = new ArrayList<>();
-        try (Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery("SELECT * FROM role")) {
-            while (rs.next()) roles.add(mapResultSetToRole(rs));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return roles;
-    }
-
-    // CRUD stubs (si tu veux les compléter plus tard)
+    // CRUD stubs (inchangés)
     @Override public void create(Role role) {}
     @Override public void update(Role role) {}
     @Override public void delete(Role role) {}
