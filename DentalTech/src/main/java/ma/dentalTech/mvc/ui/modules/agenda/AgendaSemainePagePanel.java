@@ -27,10 +27,11 @@ public class AgendaSemainePagePanel extends JPanel {
     private final JTextField dateField = new JTextField();
     private final JLabel weekLabel = new JLabel("Semaine du --/--/---- au --/--/----");
 
-
     private final Map<DayOfWeek, JPanel> dayColumns = new EnumMap<>(DayOfWeek.class);
 
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private Long medecinId = 1L;
 
     public AgendaSemainePagePanel() {
         setLayout(new BorderLayout(12, 12));
@@ -45,8 +46,25 @@ public class AgendaSemainePagePanel extends JPanel {
         card.add(buildTopBar(), BorderLayout.NORTH);
         card.add(buildWeekGrid(), BorderLayout.CENTER);
 
+        // valeurs par défaut
         medecinIdField.setText("1");
         dateField.setText(LocalDate.now().toString());
+
+        loadSemaine();
+    }
+
+    // ✅ appelé depuis AgendaHomePanel
+    public void setMedecinId(Long id) {
+        if (id == null || id <= 0) return;
+        this.medecinId = id;
+        medecinIdField.setText(String.valueOf(id));
+    }
+
+    // ✅ appelé depuis AgendaHomePanel
+    public void reload() {
+        // si dateField vide => today
+        String t = dateField.getText() == null ? "" : dateField.getText().trim();
+        if (t.isBlank()) dateField.setText(LocalDate.now().toString());
 
         loadSemaine();
     }
@@ -60,9 +78,8 @@ public class AgendaSemainePagePanel extends JPanel {
         c.insets = new Insets(8, 10, 8, 10);
         c.anchor = GridBagConstraints.WEST;
 
-        // ===== 1) Gros titre AGENDA (à gauche)
         JLabel agendaTitle = new JLabel("AGENDA");
-        agendaTitle.setFont(new Font("Serif", Font.BOLD, 40)); // ajuste si tu veux
+        agendaTitle.setFont(new Font("Serif", Font.BOLD, 40));
         agendaTitle.setForeground(DentalTheme.TEXT2);
 
         c.gridx = 0;
@@ -70,16 +87,14 @@ public class AgendaSemainePagePanel extends JPanel {
         c.fill = GridBagConstraints.NONE;
         top.add(agendaTitle, c);
 
-        // ===== 2) Semaine du ... (au milieu)
         weekLabel.setFont(DentalTheme.textFont(14));
         weekLabel.setForeground(DentalTheme.TEXT2);
 
         c.gridx = 1;
-        c.weightx = 1;                 // prend l'espace restant
+        c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         top.add(weekLabel, c);
 
-        // ===== 3) Champs + bouton (à droite)
         JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         filters.setOpaque(false);
 
@@ -87,7 +102,7 @@ public class AgendaSemainePagePanel extends JPanel {
         medLbl.setFont(DentalTheme.textBold(12));
         filters.add(medLbl);
 
-        medecinIdField.setColumns(8); // PLUS LARGE (important)
+        medecinIdField.setColumns(8);
         medecinIdField.setPreferredSize(new Dimension(110, 30));
         filters.add(medecinIdField);
 
@@ -95,7 +110,7 @@ public class AgendaSemainePagePanel extends JPanel {
         dateLbl.setFont(DentalTheme.textBold(12));
         filters.add(dateLbl);
 
-        dateField.setColumns(12);     // PLUS LARGE (important)
+        dateField.setColumns(12);
         dateField.setPreferredSize(new Dimension(150, 30));
         filters.add(dateField);
 
@@ -131,10 +146,6 @@ public class AgendaSemainePagePanel extends JPanel {
         JPanel colWrap = new JPanel(new BorderLayout(8, 8));
         colWrap.setOpaque(false);
 
-        // header like maquette
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-
         JLabel dayLabel = new JLabel(label, SwingConstants.CENTER);
         dayLabel.setOpaque(true);
         dayLabel.setBackground(new Color(0xF7, 0xF2, 0xEC));
@@ -145,9 +156,6 @@ public class AgendaSemainePagePanel extends JPanel {
                 BorderFactory.createEmptyBorder(8, 8, 8, 8)
         ));
 
-        header.add(dayLabel, BorderLayout.CENTER);
-
-        // body cards
         JPanel body = new JPanel();
         body.setOpaque(true);
         body.setBackground(new Color(0xF7, 0xF2, 0xEC));
@@ -165,7 +173,7 @@ public class AgendaSemainePagePanel extends JPanel {
 
         dayColumns.put(day, body);
 
-        colWrap.add(header, BorderLayout.NORTH);
+        colWrap.add(dayLabel, BorderLayout.NORTH);
         colWrap.add(sp, BorderLayout.CENTER);
         return colWrap;
     }
@@ -174,8 +182,23 @@ public class AgendaSemainePagePanel extends JPanel {
         try {
             if (agendaApp == null) throw new IllegalStateException("Bean AgendaAppService introuvable");
 
-            Long medecinId = Long.valueOf(medecinIdField.getText().trim());
-            LocalDate date = LocalDate.parse(dateField.getText().trim());
+            // medecinId
+            Long mId;
+            try {
+                mId = Long.valueOf(medecinIdField.getText().trim());
+            } catch (Exception ex) {
+                mId = this.medecinId != null ? this.medecinId : 1L;
+                medecinIdField.setText(String.valueOf(mId));
+            }
+
+            // date
+            LocalDate date;
+            try {
+                date = LocalDate.parse(dateField.getText().trim());
+            } catch (Exception ex) {
+                date = LocalDate.now();
+                dateField.setText(date.toString());
+            }
 
             LocalDate monday = date.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
             LocalDate friday = monday.plusDays(4);
@@ -187,7 +210,7 @@ public class AgendaSemainePagePanel extends JPanel {
                 p.removeAll();
             }
 
-            AgendaMensuelDto dto = agendaApp.consulterAgendaSemaine(medecinId, date);
+            AgendaMensuelDto dto = agendaApp.consulterAgendaSemaine(mId, date);
 
             List<RdvDto> rdvs = dto != null ? dto.getRdvsSemaine() : null;
             if (rdvs == null) rdvs = new ArrayList<>();
@@ -197,7 +220,7 @@ public class AgendaSemainePagePanel extends JPanel {
 
                 DayOfWeek dow = r.getDateRdv().getDayOfWeek();
                 JPanel target = dayColumns.get(dow);
-                if (target == null) continue; // ignore weekend
+                if (target == null) continue;
 
                 String patient = (r.getPatientNom() != null && !r.getPatientNom().isBlank())
                         ? r.getPatientNom()
@@ -213,7 +236,6 @@ public class AgendaSemainePagePanel extends JPanel {
                 target.add(Box.createVerticalStrut(10));
             }
 
-            // refresh
             for (JPanel p : dayColumns.values()) {
                 p.revalidate();
                 p.repaint();

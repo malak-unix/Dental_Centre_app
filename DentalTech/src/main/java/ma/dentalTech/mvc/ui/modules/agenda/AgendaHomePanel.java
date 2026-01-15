@@ -1,15 +1,13 @@
 package ma.dentalTech.mvc.ui.modules.agenda;
 
+import ma.dentalTech.entities.users.Medecin;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-import ma.dentalTech.mvc.ui.common.NavButton;
-import ma.dentalTech.mvc.ui.modules.agenda.AgendaSemainePagePanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class AgendaHomePanel extends JPanel {
 
@@ -17,12 +15,27 @@ public class AgendaHomePanel extends JPanel {
     private final CardLayout card = new CardLayout();
 
     // pages
-    private final JPanel semainePage = new AgendaSemainePagePanel();
-    private final JPanel rdvPage = new RdvPagePanel();
-    private final JPanel agendaMensuelPage = new AgendaMensuelPagePanel();
-    private final JPanel listeAttentePage = new ListeAttentePagePanel();
+    private final AgendaSemainePagePanel semainePage = new AgendaSemainePagePanel();
+    private final RdvPagePanel rdvPage = new RdvPagePanel();
+    private final AgendaMensuelPagePanel agendaMensuelPage = new AgendaMensuelPagePanel();
+    private final ListeAttentePagePanel listeAttentePage = new ListeAttentePagePanel();
 
-    private final Map<String, NavButton> navButtons = new HashMap<>();
+    private Long selectedMedecinId = null;
+
+    // item list
+    private static class MedecinItem {
+        final Long id;
+        final String label;
+
+        MedecinItem(Long id, String label) {
+            this.id = id;
+            this.label = label;
+        }
+
+        @Override public String toString() {
+            return label;
+        }
+    }
 
     public AgendaHomePanel() {
         setLayout(new BorderLayout(12, 12));
@@ -48,7 +61,6 @@ public class AgendaHomePanel extends JPanel {
         sub.setFont(DentalTheme.textFont(12));
         sub.setForeground(DentalTheme.MUTED);
 
-        // ✅ barre boutons
         JPanel tabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
         tabs.setOpaque(false);
 
@@ -57,7 +69,6 @@ public class AgendaHomePanel extends JPanel {
         JButton bAgenda = new JButton("Agenda Mensuel");
         JButton bListe = new JButton("Liste d'attente");
 
-        // style simple (tu peux adapter au thème)
         for (JButton b : new JButton[]{bSemaine, bRdv, bAgenda, bListe}) {
             b.setFont(DentalTheme.textFont(12));
             b.setFocusPainted(false);
@@ -82,46 +93,63 @@ public class AgendaHomePanel extends JPanel {
         return header;
     }
 
-
     private JComponent buildBody() {
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setBackground(DentalTheme.BG);
 
-        // ===== Colonne Médecins (à gauche) =====
+        // ===== Colonne Médecins =====
         CardPanel doctorsCard = new CardPanel("Médecins");
         doctorsCard.setPreferredSize(new Dimension(220, 0));
 
-        DefaultListModel<String> doctorsModel = new DefaultListModel<>();
-        doctorsModel.addElement("TAMARA");
-        doctorsModel.addElement("CIEL");
-        doctorsModel.addElement("PLUIE");
+        DefaultListModel<MedecinItem> doctorsModel = new DefaultListModel<>();
+        loadDoctors(doctorsModel);
 
-        JList<String> doctorsList = new JList<>(doctorsModel);
+        JList<MedecinItem> doctorsList = new JList<>(doctorsModel);
         doctorsList.setFont(DentalTheme.textBold(12));
         doctorsList.setBackground(DentalTheme.BG);
         doctorsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        doctorsList.setSelectedIndex(0);
 
-        // ✅ Renderer style maquette
+        // style
         doctorsList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel lbl = new JLabel(value);
+            JLabel lbl = new JLabel(value == null ? "" : value.toString());
             lbl.setOpaque(true);
             lbl.setFont(DentalTheme.textBold(12));
             lbl.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
             lbl.setForeground(DentalTheme.TEXT2);
-
-            if (isSelected) {
-                lbl.setBackground(new Color(0xE8, 0xD9, 0xCC));
-            } else {
-                lbl.setBackground(DentalTheme.BG);
-            }
+            lbl.setBackground(isSelected ? new Color(0xE8, 0xD9, 0xCC) : DentalTheme.BG);
             return lbl;
+        });
+
+        // sélection initiale
+        if (!doctorsModel.isEmpty()) {
+            doctorsList.setSelectedIndex(0);
+            selectedMedecinId = doctorsModel.getElementAt(0).id;
+        } else {
+            selectedMedecinId = 1L;
+        }
+
+        // 🔥 listener : quand on change médecin => reload pages
+        doctorsList.addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            MedecinItem item = doctorsList.getSelectedValue();
+            if (item == null) return;
+
+            selectedMedecinId = item.id;
+
+            // ✅ passe l'id à semaine (et reload)
+            semainePage.setMedecinId(selectedMedecinId);
+            semainePage.reload();
+
+            // optionnel: si tu veux filtrer RDV par medecin plus tard
+            // rdvPage.setMedecinId(selectedMedecinId); rdvPage.reload();
+
+            // optionnel agenda mensuel
+            // agendaMensuelPage.setMedecinId(selectedMedecinId); agendaMensuelPage.reload();
         });
 
         doctorsCard.add(new JScrollPane(doctorsList), BorderLayout.CENTER);
 
-
-        // ===== Zone centrale (pages agenda) =====
+        // ===== Zone centrale =====
         content.setLayout(card);
         content.setBackground(DentalTheme.BG);
 
@@ -135,20 +163,55 @@ public class AgendaHomePanel extends JPanel {
 
         body.add(doctorsCard, BorderLayout.WEST);
         body.add(centerCard, BorderLayout.CENTER);
+
+        // ✅ set medecinId sur semaine dès le début
+        semainePage.setMedecinId(selectedMedecinId);
+        semainePage.reload();
+
         return body;
-
     }
-
 
     private void showPage(String key) {
         card.show(content, key);
         revalidate();
         repaint();
+
+        // ✅ au changement d’onglet, on recharge semaine si besoin
+        if ("SEMAINE".equals(key)) {
+            semainePage.setMedecinId(selectedMedecinId);
+            semainePage.reload();
+        }
     }
 
     public void open(String key) {
         showPage(key);
     }
 
+    private void loadDoctors(DefaultListModel<MedecinItem> model) {
+        model.clear();
 
+        try {
+            // Repo direct (simple) — tu as déjà MedecinRepositoryImpl
+            ma.dentalTech.repository.modules.users.api.MedecinRepository repo =
+                    new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
+
+            List<Medecin> list = repo.findAll();
+
+            if (list == null || list.isEmpty()) {
+                model.addElement(new MedecinItem(1L, "Médecin #1"));
+                return;
+            }
+
+            for (Medecin m : list) {
+                String label = ((m.getNom() == null ? "" : m.getNom()) + " " +
+                        (m.getPrenom() == null ? "" : m.getPrenom())).trim();
+                if (label.isEmpty()) label = "Médecin #" + m.getId();
+                model.addElement(new MedecinItem(m.getId(), label));
+            }
+
+        } catch (Exception ex) {
+            // fallback
+            model.addElement(new MedecinItem(1L, "Médecin #1"));
+        }
+    }
 }

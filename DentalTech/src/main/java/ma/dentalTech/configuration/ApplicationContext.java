@@ -306,8 +306,8 @@ public final class ApplicationContext {
             }
 
             // =========================================================
-            // AGENDA
-            // =========================================================
+// AGENDA
+// =========================================================
             currentBean = "agendaMensuelRepo";
             AgendaMensuelRepository agendaMensuelRepo = newRepoInstance(props, "agendaMensuelRepo", AgendaMensuelRepository.class, known);
             put(AgendaMensuelRepository.class, agendaMensuelRepo, "agendaMensuelRepo");
@@ -318,6 +318,7 @@ public final class ApplicationContext {
             put(DetailJourneeRepository.class, detailJourneeRepo, "detailJourneeRepo");
             registerKnown(known, detailJourneeRepo);
 
+// Service Agenda (optionnel)
             if (hasKey(props, "agendaService")) {
                 currentBean = "agendaService";
                 AgendaService agendaService = newServiceInstance(
@@ -329,6 +330,7 @@ public final class ApplicationContext {
                 registerKnown(known, agendaService);
             }
 
+// ✅ Controller Agenda (IMPORTANT: enregistrer aussi PAR TYPE + PAR NOM)
             if (hasKey(props, "agenda.controller")) {
                 currentBean = "agenda.controller";
                 Object agendaCtrl = newFlexibleInstance(
@@ -336,10 +338,13 @@ public final class ApplicationContext {
                         known,
                         agendaMensuelRepo, detailJourneeRepo
                 );
-                contextByName.put("agenda.controller", agendaCtrl);
+
+                // ✅ FIX: put() pour type + name
+                put(ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController.class, agendaCtrl, "agenda.controller");
                 registerKnown(known, agendaCtrl);
             }
 
+// ✅ AgendaAppService (utilisé dans AgendaSemainePagePanel)
             if (hasKey(props, "agendaAppService")) {
                 currentBean = "agendaAppService";
                 AgendaAppService agendaAppService = newServiceInstance(
@@ -350,6 +355,7 @@ public final class ApplicationContext {
                 put(AgendaAppService.class, agendaAppService, "agendaAppService");
                 registerKnown(known, agendaAppService);
             }
+
 
             // =========================================================
             // LISTE D'ATTENTE
@@ -886,5 +892,23 @@ public final class ApplicationContext {
 
         throw new IllegalStateException("Aucun constructeur compatible pour dashboardService=" + className);
     }
+    public static <T> T getBeanByName(String name, Class<T> type) {
+        Object bean = contextByName.get(name);
+        if (bean == null) return null;
+        if (!type.isInstance(bean)) return null;
+        return type.cast(bean);
+    }
+
+    public static <T> T getBeanStrict(Class<T> type, String debugName) {
+        T bean = getBean(type);
+        if (bean != null) return bean;
+
+        // fallback : chercher dans contextByName
+        for (Object o : contextByName.values()) {
+            if (type.isInstance(o)) return type.cast(o);
+        }
+        throw new IllegalStateException(debugName + " introuvable (ApplicationContext)");
+    }
+
 
 }

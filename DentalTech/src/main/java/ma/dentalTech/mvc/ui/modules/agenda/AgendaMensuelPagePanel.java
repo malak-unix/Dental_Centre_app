@@ -26,9 +26,8 @@ public class AgendaMensuelPagePanel extends JPanel {
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
 
-        controller = (AgendaController) ApplicationContext.getBean("agenda.controller");
+        controller = ApplicationContext.getBean(AgendaController.class);
 
-        // Top
         CardPanel top = new CardPanel("Agendas mensuels");
         add(top, BorderLayout.NORTH);
 
@@ -38,34 +37,34 @@ public class AgendaMensuelPagePanel extends JPanel {
         actions.add(refresh);
         top.add(actions, BorderLayout.CENTER);
 
-        // Center split
         JPanel center = new JPanel(new GridLayout(1, 2, 12, 12));
         center.setOpaque(false);
         add(center, BorderLayout.CENTER);
 
-        // Left: agendas
         CardPanel agendasCard = new CardPanel("Liste des agendas");
         center.add(agendasCard);
 
-        agendaModel = new DefaultTableModel(new Object[]{"ID", "Medecin", "Mois", "Année"}, 0);
+        agendaModel = new DefaultTableModel(new Object[]{"ID", "Medecin", "Mois", "Année"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
         JTable agendaTable = new JTable(agendaModel);
         agendaTable.setRowHeight(26);
         agendaTable.setFont(DentalTheme.textFont(12));
         agendaTable.getTableHeader().setFont(DentalTheme.textBold(12));
         agendasCard.add(new JScrollPane(agendaTable), BorderLayout.CENTER);
 
-        // Right: jours
         CardPanel joursCard = new CardPanel("Détails journées");
         center.add(joursCard);
 
-        jourModel = new DefaultTableModel(new Object[]{"ID", "Date", "Début", "Fin", "Etat", "Commentaire"}, 0);
+        jourModel = new DefaultTableModel(new Object[]{"ID", "Date", "Début", "Fin", "Etat", "Commentaire"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
         JTable jourTable = new JTable(jourModel);
         jourTable.setRowHeight(26);
         jourTable.setFont(DentalTheme.textFont(12));
         jourTable.getTableHeader().setFont(DentalTheme.textBold(12));
         joursCard.add(new JScrollPane(jourTable), BorderLayout.CENTER);
 
-        // Events
         refresh.addActionListener(e -> loadAgendas());
 
         agendaTable.getSelectionModel().addListSelectionListener(e -> {
@@ -78,21 +77,24 @@ public class AgendaMensuelPagePanel extends JPanel {
             }
         });
 
-        // Initial
         loadAgendas();
     }
 
     private void loadAgendas() {
         try {
-            if (controller == null) throw new IllegalStateException("Bean agenda.controller introuvable (beans.properties)");
+            if (controller == null) throw new IllegalStateException("AgendaController introuvable (ApplicationContext)");
             List<AgendaMensuelDto> list = controller.getAllAgendas();
 
             agendaModel.setRowCount(0);
-            for (AgendaMensuelDto a : list) {
-                agendaModel.addRow(new Object[]{a.getId(), a.getMedecinId(), a.getMois(), a.getAnnee()});
+            if (list != null) {
+                for (AgendaMensuelDto a : list) {
+                    agendaModel.addRow(new Object[]{a.getId(), a.getMedecinId(), a.getMois(), a.getAnnee()});
+                }
             }
+
             jourModel.setRowCount(0);
             selectedAgendaId = null;
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur Agenda", JOptionPane.ERROR_MESSAGE);
         }
@@ -100,22 +102,26 @@ public class AgendaMensuelPagePanel extends JPanel {
 
     private void loadJours(Long agendaId) {
         try {
+            if (controller == null) throw new IllegalStateException("AgendaController introuvable");
             if (agendaId == null) {
                 jourModel.setRowCount(0);
                 return;
             }
+
             List<DetailJourneeDto> jours = controller.getDetailJourneesByAgendaId(agendaId);
 
             jourModel.setRowCount(0);
-            for (DetailJourneeDto d : jours) {
-                jourModel.addRow(new Object[]{
-                        d.getId(),
-                        d.getDateJour(),
-                        d.getHeureDebutTravail(),
-                        d.getHeureFinTravail(),
-                        d.getEtatJour(),
-                        d.getCommentaire()
-                });
+            if (jours != null) {
+                for (DetailJourneeDto d : jours) {
+                    jourModel.addRow(new Object[]{
+                            d.getId(),
+                            d.getDateJour(),
+                            d.getHeureDebutTravail(),
+                            d.getHeureFinTravail(),
+                            d.getEtatJour(),
+                            d.getCommentaire()
+                    });
+                }
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur Détail journée", JOptionPane.ERROR_MESSAGE);
