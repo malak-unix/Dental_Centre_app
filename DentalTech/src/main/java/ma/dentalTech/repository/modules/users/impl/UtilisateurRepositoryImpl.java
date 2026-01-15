@@ -288,6 +288,47 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
             throw new RuntimeException("Erreur getRoleLibellesOfUser(Utilisateur)", e);
         }
     }
+    @Override
+    public long countAll() {
+        String sql = "SELECT COUNT(*) FROM utilisateur";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getLong(1) : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countAll(Utilisateur)", e);
+        }
+    }
+
+    @Override
+    public long countByRole(String roleLibelle) {
+        String sql = """
+        SELECT COUNT(*)
+        FROM utilisateur u
+        JOIN role r ON r.id = u.role_id
+        WHERE r.libelle = ?
+    """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, roleLibelle);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countByRole(Utilisateur)", e);
+        }
+    }
+
+    @Override
+    public long countByRole(ma.dentalTech.entities.enums.LibelleRole role) {
+        if (role == null) return 0;
+        return countByRole(role.name());
+    }
 
     @Override
     public void addRoleToUser(Long utilisateurId, Long roleId) {

@@ -297,45 +297,6 @@ CREATE TABLE intervention_medecin (
     ON DELETE SET NULL
 );
 
--- =========================================================
---  LISTE D'ATTENTE  (BaseEntity, agrège des RDV)
--- =========================================================
-CREATE TABLE liste_attente (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  nom VARCHAR(150),
-  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  cree_par VARCHAR(100),
-  modifie_par VARCHAR(100)
-);
-
--- =========================================================
---  RDV  (BaseEntity, composition avec Dossier, agrégation ListeAttente)
--- =========================================================
-CREATE TABLE rdv (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  patient_id BIGINT,
-  detail_journee_id BIGINT,
-  liste_attente_id BIGINT,
-  date_rdv DATE NOT NULL,
-  heure TIME,
-  motif VARCHAR(255),
-  statut ENUM('PLANIFIE','ANNULE','TERMINE') DEFAULT 'PLANIFIE',
-  note_medecin TEXT,
-  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  cree_par VARCHAR(100),
-  modifie_par VARCHAR(100),
-  CONSTRAINT fk_rdv_patient
-    FOREIGN KEY (patient_id) REFERENCES patient(id)
-    ON DELETE CASCADE,
-  CONSTRAINT fk_rdv_detail_journee
-    FOREIGN KEY (detail_journee_id) REFERENCES detail_journee(id)
-    ON DELETE SET NULL,
-  CONSTRAINT fk_rdv_liste_attente
-    FOREIGN KEY (liste_attente_id) REFERENCES liste_attente(id)
-    ON DELETE SET NULL
-);
 
 -- =========================================================
 --  ORDONNANCE  (BaseEntity)
@@ -414,26 +375,6 @@ CREATE TABLE certificat (
   CONSTRAINT fk_certif_dossier
     FOREIGN KEY (dossier_id) REFERENCES dossier_medical(id)
     ON DELETE CASCADE
-);
-
--- =========================================================
---  FACTURE  (BaseEntity, composition avec Dossier)
--- =========================================================
-CREATE TABLE facture (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  consultation_id BIGINT,
-  date_facture DATE NOT NULL,
-  total_facture DECIMAL(12,2) DEFAULT 0,
-  total_paye DECIMAL(12,2) DEFAULT 0,
-  reste DECIMAL(12,2) AS (total_facture - total_paye) STORED,
-  statut ENUM('NON_PAYEE','PARTIEL','PAYEE') DEFAULT 'NON_PAYEE',
-  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  cree_par VARCHAR(100),
-  modifie_par VARCHAR(100),
-  CONSTRAINT fk_facture_consultation
-    FOREIGN KEY (consultation_id) REFERENCES consultation(id)
-    ON DELETE SET NULL
 );
 
 -- =========================================================

@@ -3,83 +3,65 @@ package ma.dentalTech.mvc.ui.common;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Header commun (logo + recherche + utilisateur).
- *
- * Le but est d'avoir le même rendu sur tous les écrans (maquettes).
- */
 public class AppHeaderPanel extends JPanel {
 
-    private final JLabel logoLabel;
-    private final JTextField searchField;
-    private final JLabel roleLabel;
-    private final JLabel userLabel;
-    private final JButton logoutButton;
+    private final JLabel logoLabel = new JLabel();
+    private final JLabel userLabel = new JLabel();
+    private final JButton logout = new JButton("⎋");
 
     public AppHeaderPanel() {
-        setOpaque(false);
-        setLayout(new BorderLayout(12, 0));
+        setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(0, 70));
+        setOpaque(true);
+        setBackground(DentalTheme.BG_HEADER);
 
-        // LEFT (logo)
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        left.setOpaque(false);
+        // LEFT logo
+        logoLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+        logoLabel.setIcon(loadLogoIcon());
+        add(logoLabel, BorderLayout.WEST);
 
-        logoLabel = new JLabel("DENTAL CENTER");
-        logoLabel.setFont(DentalTheme.H2);
-        logoLabel.setForeground(DentalTheme.TEXT2);
-        left.add(logoLabel);
-
-        add(left, BorderLayout.WEST);
-
-        // CENTER (search)
-        JPanel center = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        center.setOpaque(false);
-
-        searchField = new JTextField();
-        searchField.setPreferredSize(new Dimension(420, 36));
-        searchField.setFont(DentalTheme.textFont(13));
-        searchField.setText("Rechercher ...");
-        center.add(searchField);
-
-        add(center, BorderLayout.CENTER);
-
-        // RIGHT (user)
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        // RIGHT user + logout
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 18));
         right.setOpaque(false);
 
-        roleLabel = new JLabel("—");
-        roleLabel.setFont(DentalTheme.textBold(12));
-        roleLabel.setForeground(DentalTheme.TEXT2);
+        userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        userLabel.setForeground(DentalTheme.TEXT);
 
-        userLabel = new JLabel("Utilisateur");
-        userLabel.setFont(DentalTheme.BASE_BOLD);
-        userLabel.setForeground(DentalTheme.TEXT2);
+        logout.setFocusable(false);
+        logout.setBorderPainted(false);
+        logout.setContentAreaFilled(false);
+        logout.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        logout.setForeground(DentalTheme.TEXT);
 
-        logoutButton = new JButton("⎋");
-        logoutButton.setToolTipText("Déconnexion");
-        logoutButton.setFocusPainted(false);
-
-        right.add(roleLabel);
         right.add(userLabel);
-        right.add(logoutButton);
+        right.add(logout);
 
         add(right, BorderLayout.EAST);
     }
 
-    public void setUser(String displayName, String role) {
-        userLabel.setText(displayName == null || displayName.isBlank() ? "Utilisateur" : displayName);
-        roleLabel.setText(role == null || role.isBlank() ? "" : role);
+    private Icon loadLogoIcon() {
+        // ✅ Le logo doit être dans src/main/resources/assets/logo.png
+        java.net.URL url = getClass().getResource("/assets/logo.png");
+        if (url == null) {
+            // fallback: texte si le logo n'existe pas
+            logoLabel.setText("DENTAL CENTER");
+            logoLabel.setFont(new Font("Serif", Font.BOLD, 22));
+            logoLabel.setForeground(DentalTheme.TEXT);
+            return null;
+        }
+
+        ImageIcon icon = new ImageIcon(url);
+        Image img = icon.getImage().getScaledInstance(140, 50, Image.SCALE_SMOOTH);
+        return new ImageIcon(img);
     }
 
-    public JLabel logoLabel() {
-        return logoLabel;
-    }
-
-    public JTextField searchField() {
-        return searchField;
+    public void setUser(String fullName, String roleLabel) {
+        String n = (fullName == null || fullName.isBlank()) ? "Utilisateur" : fullName.trim();
+        String r = (roleLabel == null || roleLabel.isBlank()) ? "" : roleLabel.trim();
+        userLabel.setText(r.isEmpty() ? n : (n + " • " + r));
     }
 
     public JButton logoutButton() {
-        return logoutButton;
+        return logout;
     }
 }

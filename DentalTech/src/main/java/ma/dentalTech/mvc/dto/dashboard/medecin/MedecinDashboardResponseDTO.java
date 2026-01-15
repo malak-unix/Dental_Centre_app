@@ -26,4 +26,20 @@ public class MedecinDashboardResponseDTO {
 
     // client en cours
     private PatientCurrentDTO patientEnCours;
+
+    public Integer getNbPatients() {
+        return nbPatientsDuJour;
+    }
+
+    public Integer getNbRdvJour() {
+        return nbRdvDuJour;
+    }
+
+    public BigDecimal getRecetteJour() {
+        return recetteDuJour;
+    }
+
+    public List<RdvDto> getRdvJour() {
+        return rdvDuJour;
+    }
 }

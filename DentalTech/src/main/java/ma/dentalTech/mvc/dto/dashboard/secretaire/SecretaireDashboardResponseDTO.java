@@ -19,10 +19,10 @@ import java.util.List;
 public class SecretaireDashboardResponseDTO {
 
     // KPIs
-    private Integer nbPatients;          // optionnel
+    private Integer nbPatients; // optionnel
     private Integer nbRdvDuJour;
     private Integer nbEnAttente;
-    private BigDecimal recetteDuJour;    // DH
+    private BigDecimal recetteDuJour; // DH
 
     // Lists
     private List<RdvDto> rdvDuJour;
@@ -32,6 +32,14 @@ public class SecretaireDashboardResponseDTO {
     private Integer nbAlertesNonLues;
     private Integer nbNotificationsNonLues;
 
-    private List<AlerteDTO> alertes;           // ex: retard RDV, impayés, urgence…
+    private List<AlerteDTO> alertes; // ex: retard RDV, impayés, urgence…
     private List<NotificationDTO> notifications; // ex: rappel, action système, etc.
+
+    public BigDecimal getRecetteJour() {
+        return recetteDuJour;
+    }
+
+    public Integer getNbRdvJour() {
+        return nbRdvDuJour;
+    }
 }

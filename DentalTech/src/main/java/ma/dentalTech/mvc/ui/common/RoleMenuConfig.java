@@ -1,7 +1,6 @@
 package ma.dentalTech.mvc.ui.common;
 
 import ma.dentalTech.entities.enums.LibelleRole;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class RoleMenuConfig {
@@ -12,54 +11,44 @@ public final class RoleMenuConfig {
         if (role == null) role = LibelleRole.SECRETAIRE;
 
         return switch (role) {
-            case SECRETAIRE -> secretaireMenu();
-            case MEDECIN -> medecinMenu();
-            case ADMIN -> adminMenu();
+            case ADMIN -> List.of(
+                    NavItem.of("Dashboard", "dashboard"),
+                    NavItem.of("Utilisateurs", "utilisateurs"),
+                    NavItem.of("Référentiels", "referentiels"),
+                    NavItem.of("Actes", "actes"),
+                    NavItem.of("Médicaments", "medicaments"),
+                    NavItem.of("Antécédents", "antecedents"),
+                    NavItem.of("Sauvegardes", "sauvegardes"),
+                    NavItem.of("Rôles", "roles")
+            );
+
+            case MEDECIN -> List.of(
+                    NavItem.of("Dashboard", "dashboard"),
+                    NavItem.of("Mes patients", "patients"),
+                    NavItem.of("Mes consultations", "consultations"),
+                    NavItem.of("Planning", "agenda_med"),
+                    NavItem.of("Les dossiers", "dossiers"),
+                    NavItem.of("Certificats", "certificats"),
+                    NavItem.of("Les ordonnances", "ordonnances")
+            );
+
+            case SECRETAIRE -> List.of(
+                    NavItem.of("Dashboard", "dashboard"),
+                    NavItem.of("Les patients", "patients"),
+                    NavItem.of("Rendez-vous", "rdv"),
+                    NavItem.of("Caisse", "caisse"),
+                    NavItem.of("Liste d'attente", "liste_attente")
+            );
+
         };
     }
-
-    private static List<NavItem> secretaireMenu() {
-        List<NavItem> items = new ArrayList<>();
-        items.add(new NavItem("dashboard", "Dashboard"));
-        items.add(new NavItem("patients", "Les patients"));
-        items.add(new NavItem("rdv", "Rendez-vous"));
-        items.add(new NavItem("dossiers", "Dossiers"));
-        items.add(new NavItem("caisse", "La caisse"));
-        items.add(new NavItem("agenda_med", "Agenda med"));
-        items.add(new NavItem("stock", "Stock"));
-        items.add(new NavItem("liste_attente", "File d'attente"));
-        return items;
-    }
-
-    private static List<NavItem> medecinMenu() {
-        List<NavItem> items = new ArrayList<>();
-        items.add(new NavItem("dashboard", "Dashboard"));
-        items.add(new NavItem("patients", "Mes patients"));
-        items.add(new NavItem("dossiers", "Dossiers"));
-        items.add(new NavItem("consultations", "Mes consultations"));
-        items.add(new NavItem("ordonnances", "Ordonnances"));
-        items.add(new NavItem("certificats", "Certificats"));
-        items.add(new NavItem("actes","Actes"));
-        items.add(new NavItem("situation_fin", "Situation financière"));
-        return items;
-    }
-
-    private static List<NavItem> adminMenu() {
-        List<NavItem> items = new ArrayList<>();
-        items.add(new NavItem("dashboard", "Dashboard"));
-        items.add(new NavItem("utilisateurs", "Utilisateurs"));
-        items.add(new NavItem("referentiels", "Référentiels"));
-        items.add(new NavItem("sauvegardes", "Sauvegardes"));
-        items.add(new NavItem("roles", "Rôles"));
-        return items;
-    }
-
     public static String roleLabel(LibelleRole role) {
         if (role == null) return "Secrétaire";
         return switch (role) {
-            case SECRETAIRE -> "Secrétaire";
-            case MEDECIN -> "Médecin";
             case ADMIN -> "Admin";
+            case MEDECIN -> "Médecin";
+            case SECRETAIRE -> "Secrétaire";
         };
     }
+
 }

@@ -73,6 +73,8 @@ public class CaisseDashboardPanel extends JPanel {
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
         setBorder(new EmptyBorder(14, 14, 14, 14));
+        // Hauteur contrôlée pour éviter que le graphe soit coupé sur certains écrans
+        chartHolder.setPreferredSize(new Dimension(10, 220));
 
         add(buildTopFilters(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
@@ -250,7 +252,7 @@ public class CaisseDashboardPanel extends JPanel {
         }
     }
 
-    private void renderChart(CaisseDashboardResponseDTO res) {
+    void renderChart(CaisseDashboardResponseDTO res) {
         try {
             DefaultCategoryDataset dataset = new DefaultCategoryDataset();
             CaisseChartDTO chart = res.getChart();
@@ -274,8 +276,15 @@ public class CaisseDashboardPanel extends JPanel {
 
             JFreeChart jchart = ChartFactory.createLineChart("", "Mois", "DH", dataset);
 
+            // ✅ Un seul ChartPanel (pas de double "cp")
+            ChartPanel chartPanel = new ChartPanel(jchart);
+            chartPanel.setPreferredSize(new Dimension(10, 260));
+            chartPanel.setMouseWheelEnabled(true);
+            chartPanel.setDomainZoomable(true);
+            chartPanel.setRangeZoomable(true);
+
             chartHolder.removeAll();
-            chartHolder.add(new ChartPanel(jchart), BorderLayout.CENTER);
+            chartHolder.add(chartPanel, BorderLayout.CENTER);
             chartHolder.revalidate();
             chartHolder.repaint();
 

@@ -284,6 +284,47 @@ public class ActeRepositoryImpl implements ActeRepository {
     }
 
     @Override
+    public long countActesDuJourPourMedecin(Long medecinId) {
+        if (medecinId == null) return 0;
+
+    /*
+      Hypothèse la plus cohérente avec ton schéma:
+      - acte est lié à consultation (acte.consultation_id)
+      - consultation est liée à dossier_medical (consultation.dossier_id)
+      - dossier_medical est lié à patient (dossier_medical.patient_id)
+      - patient -> rdv (rdv.patient_id)
+      - rdv -> detail_journee -> agenda_mensuel (agenda_mensuel.medecin_id)
+      - "du jour" = DATE(consultation.date_consultation) = CURDATE()
+    */
+
+        String sql = """
+        SELECT COUNT(*)
+        FROM acte a
+        JOIN consultation c ON c.id = a.consultation_id
+        JOIN dossier_medical dm ON dm.id = c.dossier_id
+        JOIN rdv r ON r.patient_id = dm.patient_id
+        JOIN detail_journee dj ON dj.id = r.detail_journee_id
+        JOIN agenda_mensuel am ON am.id = dj.agenda_id
+        WHERE DATE(c.date_consultation) = CURDATE()
+          AND am.medecin_id = ?
+    """;
+
+        try (java.sql.Connection cn = ma.dentalTech.configuration.SessionFactory.getInstance().getConnection();
+             java.sql.PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, medecinId);
+
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0;
+            }
+
+        } catch (java.sql.SQLException e) {
+            throw new RuntimeException("Erreur countActesDuJourPourMedecin(Acte)", e);
+        }
+    }
+
+
+    @Override
     public Double sumMontantActesPourMedecinEtDate(Long medecinId, LocalDateTime start, LocalDateTime end) {
         if (medecinId == null || start == null || end == null) return 0.0;
 
@@ -312,4 +353,56 @@ public class ActeRepositoryImpl implements ActeRepository {
             throw new RuntimeException("Erreur sumMontantActesPourMedecinEtDate(medecinId=" + medecinId + ")", e);
         }
     }
+    @Override
+    public long countAll() {
+        // si ta table s'appelle "acte"
+        String sql = "SELECT COUNT(*) FROM acte";
+
+        try (java.sql.Connection cn = ma.dentalTech.configuration.SessionFactory.getInstance().getConnection();
+             java.sql.PreparedStatement ps = cn.prepareStatement(sql);
+             java.sql.ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getLong(1) : 0;
+
+        } catch (java.sql.SQLException e) {
+            throw new RuntimeException("Erreur countAll(Acte)", e);
+        }
+    }
+
+
+    @Override
+    public java.math.BigDecimal totalRecetteDuJourPourMedecin(Long medecinId) {
+        if (medecinId == null) return java.math.BigDecimal.ZERO;
+
+        // Recette = somme des paiements du jour des factures liées aux consultations
+        // Consultation -> Dossier -> Patient, et le médecin est porté par agenda_mensuel (via rdv/detail_journee)
+        // Donc on remonte: facture -> consultation -> (dossier) -> (patient) -> rdv -> detail_journee -> agenda_mensuel.medecin_id
+        String sql = """
+        SELECT COALESCE(SUM(f.total_paye),0)
+        FROM facture f
+        JOIN consultation c ON c.id = f.consultation_id
+        JOIN dossier_medical dm ON dm.id = c.dossier_id
+        JOIN rdv r ON r.patient_id = dm.patient_id
+        JOIN detail_journee dj ON dj.id = r.detail_journee_id
+        JOIN agenda_mensuel am ON am.id = dj.agenda_id
+        WHERE f.date_facture = CURDATE()
+          AND am.medecin_id = ?
+    """;
+
+        try (java.sql.Connection cn = ma.dentalTech.configuration.SessionFactory.getInstance().getConnection();
+             java.sql.PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, medecinId);
+
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return java.math.BigDecimal.ZERO;
+                java.math.BigDecimal v = rs.getBigDecimal(1);
+                return v == null ? java.math.BigDecimal.ZERO : v;
+            }
+
+        } catch (java.sql.SQLException e) {
+            throw new RuntimeException("Erreur totalRecetteDuJourPourMedecin(Acte)", e);
+        }
+    }
+
 }

@@ -31,10 +31,9 @@ public class SidebarCommonPanel extends JPanel {
     }
 
     private void buildUi() {
-        // Logo
-        LogoHeaderPanel logo = new LogoHeaderPanel();
-        logo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        add(logo);
+        // Le logo est affiché dans le header global (AppHeaderPanel) selon la maquette.
+        // On garde juste un petit espace en haut pour l'aération.
+        add(Box.createVerticalStrut(6));
 
         // Menu (dans une card)
         CardPanel navCard = new CardPanel((String) null);

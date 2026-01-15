@@ -55,10 +55,10 @@ public class RdvRepositoryImpl implements RdvRepository {
         if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire (date_rdv NOT NULL)");
 
         String sql = """
-            INSERT INTO rdv
-            (patient_id, detail_journee_id, liste_attente_id, date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
+                INSERT INTO rdv
+                (patient_id, detail_journee_id, liste_attente_id, date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -96,11 +96,11 @@ public class RdvRepositoryImpl implements RdvRepository {
         if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire (date_rdv NOT NULL)");
 
         String sql = """
-            UPDATE rdv
-               SET patient_id = ?, detail_journee_id = ?, liste_attente_id = ?, date_rdv = ?, heure = ?,
-                   motif = ?, statut = ?, note_medecin = ?, modifie_par = ?
-             WHERE id = ?
-            """;
+                UPDATE rdv
+                   SET patient_id = ?, detail_journee_id = ?, liste_attente_id = ?, date_rdv = ?, heure = ?,
+                       motif = ?, statut = ?, note_medecin = ?, modifie_par = ?
+                 WHERE id = ?
+                """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -220,6 +220,41 @@ public class RdvRepositoryImpl implements RdvRepository {
         }
     }
 
+    @Override
+    public List<RDV> findByMedecinAndDate(Long medecinId, LocalDate date) {
+        if (medecinId == null || date == null) return new ArrayList<>();
+
+        String sql = """
+        SELECT r.*
+        FROM rdv r
+        JOIN detail_journee dj ON dj.id = r.detail_journee_id
+        JOIN agenda_mensuel am ON am.id = dj.agenda_id
+        WHERE am.medecin_id = ?
+          AND r.date_rdv = ?
+        ORDER BY r.heure ASC
+    """;
+
+        List<RDV> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, medecinId);
+            ps.setDate(2, java.sql.Date.valueOf(date));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(RowMappers.mapRdv(rs));
+                }
+            }
+
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByMedecinAndDate(RDV)", e);
+        }
+    }
+
     private List<RDV> selectList(String sql, Long id) {
         List<RDV> list = new ArrayList<>();
 
@@ -236,9 +271,95 @@ public class RdvRepositoryImpl implements RdvRepository {
             throw new RuntimeException("Erreur selectList()", e);
         }
     }
+// =======================
+// DASHBOARD COUNTS
+// =======================
 
-    // stubs dashboard
-    @Override public Integer countByDate(LocalDateTime start, LocalDateTime end) { return 0; }
-    @Override public Integer countRdvEnRetard(LocalDate today) { return 0; }
-    @Override public Integer countByMedecinAndDate(Long medecinId, LocalDateTime start, LocalDateTime end) { return 0; }
+    @Override
+    public Integer countByDate(LocalDateTime start, LocalDateTime end) {
+        String sql = "SELECT COUNT(*) FROM rdv WHERE date_rdv >= ? AND date_rdv < ?";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDate(1, java.sql.Date.valueOf(start.toLocalDate()));
+            ps.setDate(2, java.sql.Date.valueOf(end.toLocalDate()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countByDate() RDV", e);
+        }
+    }
+
+    @Override
+    public int countRdvDuJour() {
+        String sql = "SELECT COUNT(*) FROM rdv WHERE date_rdv = CURDATE()";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getInt(1) : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countRdvDuJour() RDV", e);
+        }
+    }
+
+    @Override
+    public int countRdvEnRetard(LocalDate today) {
+        // RDV "en retard" = planifié aujourd'hui + heure passée
+        String sql = """
+                    SELECT COUNT(*)
+                    FROM rdv
+                    WHERE date_rdv = ?
+                      AND statut = 'PLANIFIE'
+                      AND heure IS NOT NULL
+                      AND heure < ?
+                """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setDate(1, java.sql.Date.valueOf(today));
+            ps.setTime(2, java.sql.Time.valueOf(java.time.LocalTime.now()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countRdvEnRetard() RDV", e);
+        }
+    }
+
+    @Override
+    public int countByMedecinAndDate(Long medecinId, LocalDateTime start, LocalDateTime end) {
+        // JOIN: rdv -> detail_journee -> agenda_mensuel (qui porte medecin_id)
+        String sql = """
+                    SELECT COUNT(*)
+                    FROM rdv r
+                    JOIN detail_journee dj ON dj.id = r.detail_journee_id
+                    JOIN agenda_mensuel am ON am.id = dj.agenda_id
+                    WHERE am.medecin_id = ?
+                      AND r.date_rdv >= ?
+                      AND r.date_rdv < ?
+                """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, medecinId);
+            ps.setDate(2, java.sql.Date.valueOf(start.toLocalDate()));
+            ps.setDate(3, java.sql.Date.valueOf(end.toLocalDate()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countByMedecinAndDate() RDV", e);
+        }
+    }
 }

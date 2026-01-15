@@ -9,7 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-public class UserManagementFrame extends JFrame {
+public class UserManagementPanel extends JPanel {
 
     private final UserManagementController controller;
 
@@ -27,22 +27,23 @@ public class UserManagementFrame extends JFrame {
             LibelleRole.ADMIN, LibelleRole.MEDECIN, LibelleRole.SECRETAIRE
     });
 
-    public UserManagementFrame(UserManagementController controller) {
-        super("Gestion des utilisateurs");
+    public UserManagementPanel(UserManagementController controller) {
         this.controller = controller;
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(900, 550);
-        setLocationRelativeTo(null);
-
         setLayout(new BorderLayout(12, 12));
+        setOpaque(false);
+        
         add(buildTopBar(), BorderLayout.NORTH);
         add(buildCenter(), BorderLayout.CENTER);
         add(buildCreatePanel(), BorderLayout.SOUTH);
+        
+        // Auto-load
+        refreshTableSafe();
     }
 
     private JComponent buildTopBar() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        p.setOpaque(false);
 
         JButton refreshBtn = new JButton("Rafraîchir la liste");
         refreshBtn.addActionListener(e -> refreshTableSafe());
@@ -59,12 +60,14 @@ public class UserManagementFrame extends JFrame {
 
     private JComponent buildCreatePanel() {
         JPanel p = new JPanel(new GridBagLayout());
-        p.setBorder(BorderFactory.createTitledBorder("Créer un utilisateur (démo)"));
+        p.setOpaque(false);
+        p.setBorder(BorderFactory.createTitledBorder("Créer un utilisateur (rapide)"));
 
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(4, 6, 4, 6);
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridy = 0;
+        c.weightx = 1.0;
 
         // row 0
         c.gridx = 0; p.add(new JLabel("Nom"), c);
@@ -84,7 +87,7 @@ public class UserManagementFrame extends JFrame {
         c.gridx = 0; p.add(new JLabel("Type"), c);
         c.gridx = 1; p.add(roleCombo, c);
 
-        JButton createBtn = new JButton("Créer");
+        JButton createBtn = new JButton("Ajouter");
         createBtn.addActionListener(e -> createUserSafe());
 
         c.gridx = 3;
@@ -113,7 +116,6 @@ public class UserManagementFrame extends JFrame {
             showError("Impossible de charger les utilisateurs", ex);
         }
     }
-
     private void createUserSafe() {
         try {
             String nom = nomField.getText();
@@ -122,8 +124,6 @@ public class UserManagementFrame extends JFrame {
             String pwd = new String(passwordField.getPassword());
             LibelleRole role = (LibelleRole) roleCombo.getSelectedItem();
 
-            // Pour l'instant : on déclenche selon le role
-            // (on améliorera après avec un vrai écran par type)
             if (role == LibelleRole.ADMIN) {
                 var req = new ma.dentalTech.mvc.dto.users.CreateAdminRequestDTO();
                 req.setNom(nom);
@@ -138,8 +138,7 @@ public class UserManagementFrame extends JFrame {
                 req.setPrenom(prenom);
                 req.setLogin(login);
                 req.setPassword(pwd);
-                // spécialité : on met vide pour l’instant
-                req.setSpecialite("");
+                req.setSpecialite("Généraliste");
                 controller.createMedecin(req);
 
             } else if (role == LibelleRole.SECRETAIRE) {
@@ -148,21 +147,34 @@ public class UserManagementFrame extends JFrame {
                 req.setPrenom(prenom);
                 req.setLogin(login);
                 req.setPassword(pwd);
-                // CNSS : vide pour l’instant
                 req.setNumCNSS("");
                 controller.createSecretaire(req);
             }
 
-            JOptionPane.showMessageDialog(this, "Création déclenchée ✅ (DB requise pour réussir).");
+            JOptionPane.showMessageDialog(this, "Utilisateur créé avec succès");
+
+            // IMPORTANT: recharger la table
+            refreshTableSafe();
+
+            // clear
+            nomField.setText("");
+            prenomField.setText("");
+            loginField.setText("");
+            passwordField.setText("");
+
         } catch (Exception ex) {
-            showError("Création impossible (normal si DB non branchée)", ex);
+            showError("Erreur lors de la création", ex);
         }
     }
+
+
+
+
 
     private void showError(String title, Exception ex) {
         JOptionPane.showMessageDialog(
                 this,
-                title + "\n" + ex.getClass().getSimpleName() + ": " + ex.getMessage(),
+                title + "\n" + ex.getMessage(),
                 "Erreur",
                 JOptionPane.ERROR_MESSAGE
         );

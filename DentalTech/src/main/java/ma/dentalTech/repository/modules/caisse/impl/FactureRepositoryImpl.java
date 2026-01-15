@@ -7,6 +7,7 @@ import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +32,23 @@ public class FactureRepositoryImpl implements FactureRepository {
             throw new RuntimeException("Erreur findAll() Facture", e);
         }
     }
+    @Override
+    public BigDecimal totalRecetteDuJour() {
+        String sql = "SELECT COALESCE(SUM(total_paye),0) FROM facture WHERE date_facture = CURDATE()";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (!rs.next()) return BigDecimal.ZERO;
+            BigDecimal v = rs.getBigDecimal(1);
+            return v == null ? BigDecimal.ZERO : v;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur totalRecetteDuJour() Facture", e);
+        }
+    }
+
 
     @Override
     public Facture findById(Long id) {

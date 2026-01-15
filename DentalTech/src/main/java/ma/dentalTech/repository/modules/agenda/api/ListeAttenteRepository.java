@@ -9,7 +9,9 @@ public interface ListeAttenteRepository extends CrudRepository<ListeAttente, Lon
 
     List<ListeAttente> findByNomListe(String nomListe);
 //Methodes ajoute par AYA BERDAY kan st3mlhom f dashboard
-    Integer countActifs();
-    Integer countPourMedecin(Long medecinId);
+    int countActifs();
+    int countPourMedecin(Long medecinId);
+
+
 
 }

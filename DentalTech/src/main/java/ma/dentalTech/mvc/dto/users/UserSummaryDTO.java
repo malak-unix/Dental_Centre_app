@@ -15,10 +15,14 @@ public class UserSummaryDTO {
     private String prenom;
     private String login;
     private LibelleRole role; // Utilise ton Enum existante
-    private boolean actif;    // Pour savoir si le compte est activé ou non
+    private boolean actif; // Pour savoir si le compte est activé ou non
 
-    //ajouté par aya
-    private String statut;                 // ACTIF / DESACTIVE (ou ENABLED/DISABLED)
+    // ajouté par aya
+    private String statut; // ACTIF / DESACTIVE (ou ENABLED/DISABLED)
     private LocalDateTime derniereActivite; // last login / last action
+
+    public String getNomComplet() {
+        return (nom != null ? nom : "") + " " + (prenom != null ? prenom : "");
+    }
 
 }

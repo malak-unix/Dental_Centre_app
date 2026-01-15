@@ -24,6 +24,14 @@ public class Consultation extends BaseEntity {
     private StatutConsultation status;
     private String observationMedecin;
 
+
+    public StatutConsultation getStatut() {
+        return status;
+    }
+
+    public void setStatut(StatutConsultation statut) {
+        this.status = statut;
+    }
     // Relations (diagramme : DossierMedical 1 -> * Consultations)
     private DossierMedical dossierMedical;
 

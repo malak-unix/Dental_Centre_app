@@ -9,20 +9,18 @@ import ma.dentalTech.mvc.ui.modules.agenda.ListeAttentePagePanel;
 import ma.dentalTech.mvc.ui.modules.agenda.RdvPagePanel;
 import ma.dentalTech.mvc.ui.modules.caisse.CaisseMainPanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.DashboardMainPanel;
-import ma.dentalTech.mvc.ui.modules.dashboard.admin.AdminDashboardPanel;
-import ma.dentalTech.mvc.ui.modules.dashboard.medecin.MedecinDashboardPanel;
-import ma.dentalTech.mvc.ui.modules.dashboard.secretaire.SecretaireDashboardPanel;
 import ma.dentalTech.mvc.ui.modules.patient.PatientView;
+
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
+
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeListUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier.DossierMedicalListUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
-import ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier.DossierMedicalListUI;
 
 public class MainFrame extends JFrame {
 
@@ -63,10 +61,9 @@ public class MainFrame extends JFrame {
         // Header (haut)
         header.setUser(this.fullName, RoleMenuConfig.roleLabel(this.role));
         header.logoutButton().addActionListener(e -> doLogout());
-
         shell.header().add(header, BorderLayout.CENTER);
 
-        // Sidebar (gauche) + navigation
+        // Sidebar (gauche)
         sidebar = new SidebarCommonPanel(this.role, this.fullName, this::showPage);
         shell.sidebar().add(sidebar, BorderLayout.CENTER);
 
@@ -88,13 +85,10 @@ public class MainFrame extends JFrame {
                 "Déconnexion",
                 JOptionPane.YES_NO_OPTION
         );
-
         if (ok != JOptionPane.YES_OPTION) return;
 
-        // Fermer la fenêtre principale
         dispose();
 
-        // Revenir à l’écran de connexion
         SwingUtilities.invokeLater(() -> {
             ma.dentalTech.mvc.ui.modules.auth.LoginFrame lf =
                     new ma.dentalTech.mvc.ui.modules.auth.LoginFrame();
@@ -102,44 +96,49 @@ public class MainFrame extends JFrame {
         });
     }
 
-
     private void buildPages() {
 
-        // Dashboard selon rôle (réel)
+        // Dashboard selon rôle
         addPage("dashboard", buildDashboardByRole());
 
-        // Secrétaire (réel)
+        // Secrétaire
         addPage("patients", buildPatientPage());
         addPage("rdv", new RdvPagePanel());
         addPage("dossiers", buildDossiersPage());
         addPage("caisse", new CaisseMainPanel(role, userId));
         addPage("agenda_med", buildAgendaPage());
+
         addPage("liste_attente", new ListeAttentePagePanel());
 
-        // Placeholders (modules collègues / à brancher plus tard)
-        addPage("stock", buildPlaceholder("Stock (module en cours)"));
-
-        // Médecin (placeholders)
-        addPage("consultations", buildPlaceholder("Mes consultations (à brancher)"));
-        addPage("ordonnances", buildPlaceholder("Ordonnances (à brancher)"));
-        addPage("certificats", buildPlaceholder("Certificats (à brancher)"));
-        addPage("situation_fin", buildPlaceholder("Situation financière (à brancher)"));
+        // Médecin
+        addPage("consultations", buildConsultationsPage());
+        addPage("ordonnances", buildOrdonnancesPage());
+        addPage("certificats", buildCertificatsPage());
+        addPage("situation_fin", buildSituationFinPage());
         addPage("actes", buildActesPage());
 
-
-        // Admin (placeholders)
-        addPage("utilisateurs", buildPlaceholder("Utilisateurs (à brancher)"));
-        addPage("referentiels", buildPlaceholder("Référentiels (à brancher)"));
-        addPage("sauvegardes", buildPlaceholder("Sauvegardes (à brancher)"));
-        addPage("roles", buildPlaceholder("Rôles (à brancher)"));
-
+        // Admin
+        addPage("utilisateurs", buildUsersPage());
+        addPage("referentiels", new ma.dentalTech.mvc.ui.modules.admin.ReferentielsPanel());
+        addPage("sauvegardes", new ma.dentalTech.mvc.ui.modules.admin.SauvegardesPanel());
+        addPage("roles", new ma.dentalTech.mvc.ui.modules.admin.RolesPanel());
     }
+
+    private JComponent buildUsersPage() {
+        var controller = (ma.dentalTech.mvc.controllers.modules.users.api.UserManagementController)
+                ApplicationContext.getBean("userManagementController");
+
+        if (controller == null) {
+            return buildPlaceholder("❌ UserManagementController introuvable");
+        }
+        return new ma.dentalTech.mvc.ui.modules.users.UserManagementPanel(controller);
+    }
+
     private JComponent buildDashboardByRole() {
         var dashboardController =
                 ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class);
 
         return new DashboardMainPanel(role, userId, dashboardController, this::showPage);
-
     }
 
     private JComponent buildActesPage() {
@@ -150,7 +149,47 @@ public class MainFrame extends JFrame {
         return new ActeListUI(controller, fullName);
     }
 
+    private JComponent buildConsultationsPage() {
+        var controller = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController.class);
+        if (controller == null) return buildPlaceholder("❌ ConsultationController introuvable");
+        return new ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation.ConsultationPagePanel(controller, userId, fullName);
+    }
 
+    private JComponent buildOrdonnancesPage() {
+        var controller = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController.class);
+        if (controller == null) return buildPlaceholder("❌ OrdonnanceController introuvable");
+        return new ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance.OrdonnanceListUI(controller, userId);
+    }
+
+    private JComponent buildCertificatsPage() {
+        var controller = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.CertificatController.class);
+        if (controller == null) return buildPlaceholder("❌ CertificatController introuvable");
+        return new ma.dentalTech.mvc.ui.modules.dossierMedicale.certificat.CertificatListUI(controller, userId);
+    }
+
+    /**
+     * ✅ FIX IMPORTANT :
+     * Le constructeur de SituationFinanciereListUI dans ton projet est :
+     * SituationFinanciereListUI(SituationFinanciereController controller, Long medecinId, String username)
+     */
+    private JComponent buildSituationFinPage() {
+        var controller = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.SituationFinanciereController.class);
+        if (controller == null) {
+            return buildPlaceholder("❌ SituationFinanciereController introuvable (ApplicationContext)");
+        }
+        Long medecinId = userId;       // médecin connecté
+        String username = fullName;    // nom affiché
+        return new ma.dentalTech.mvc.ui.modules.dossierMedicale.situationFinanciere.SituationFinanciereListUI(controller, medecinId, username);
+    }
+
+    private JComponent buildListeAttentePage() {
+        var controller = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.agenda.api.ListeAttenteController.class);
+        if (controller == null) {
+            // fallback propre
+            return buildPlaceholder("❌ ListeAttenteController introuvable (ApplicationContext)");
+        }
+        return new ListeAttentePagePanel();
+    }
 
     private void addPage(String key, JComponent page) {
         pages.put(key, page);
@@ -213,13 +252,12 @@ public class MainFrame extends JFrame {
 
     private JComponent buildDossiersPage() {
         DossierMedicalController controller = ApplicationContext.getBean(DossierMedicalController.class);
+        if (controller == null) return buildPlaceholder("❌ DossierMedicalController introuvable");
 
-        // Pour médecin : on filtre par medecinId = userId
-        // Pour secrétaire/admin : on affiche tous les dossiers (medecinId = null)
-        Long medecinId = (role != null && role.name().equals("MEDECIN")) ? userId : null;
+        // Pour médecin : filtre par medecinId = userId
+        // Pour secrétaire/admin : tous dossiers (medecinId = null)
+        Long medecinId = (role == LibelleRole.MEDECIN) ? userId : null;
 
-        // username = ce qui est affiché comme auteur (créé par / modifié par)
         return new DossierMedicalListUI(controller, medecinId, fullName);
     }
-
 }

@@ -4,6 +4,7 @@ import ma.dentalTech.entities.cabinet.Facture;
 import ma.dentalTech.entities.enums.StatutFacture;
 import ma.dentalTech.repository.common.CrudRepository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +17,8 @@ public interface FactureRepository extends CrudRepository<Facture, Long> {
     Double calculateTotalRegle(LocalDateTime start, LocalDateTime end);
 
     Double calculateTotalNonRegle(LocalDateTime start, LocalDateTime end);
+
+    BigDecimal totalRecetteDuJour();
 
     // === AJOUTS dossier médical / consultation ===
     Facture findByConsultationId(Long consultationId);

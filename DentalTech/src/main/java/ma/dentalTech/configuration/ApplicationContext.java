@@ -4,8 +4,11 @@ import ma.dentalTech.mvc.controllers.modules.caisse.api.ChargesControllerV2;
 import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
 import ma.dentalTech.repository.common.RowMappers;
 
+import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
 import ma.dentalTech.repository.modules.patient.api.*;
 import ma.dentalTech.repository.modules.users.api.*;
+import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 import ma.dentalTech.service.modules.patient.api.*;
 
 import ma.dentalTech.repository.modules.caisse.api.*;
@@ -15,8 +18,7 @@ import ma.dentalTech.service.modules.caisse.impl.*;
 import ma.dentalTech.repository.modules.agenda.api.*;
 import ma.dentalTech.service.modules.agenda.api.*;
 
-import ma.dentalTech.service.modules.dashboard.api.DashboardService;
-//ajouté par jihane
+    // added by jihane
 import ma.dentalTech.common.utilitaire.RepoFactory;
 
 import ma.dentalTech.service.modules.auth.api.AuthService;
@@ -392,11 +394,11 @@ public final class ApplicationContext {
             NotificationRepository notificationRepo = null;
             UtilisateurRepository utilisateurRepo = null;
 
-            // ajouté par jihane (3lignes)
+            // added by jihane (3 lines)
             RoleRepository roleRepo = null;
             MedecinRepository medecinRepo = null;
             SecretaireRepository secretaireRepo = null;
-            // ajouté par jihane (safe)
+            // added by jihane (safe)
             if (hasKey(props, "roleRepo")) {
                 currentBean = "roleRepo";
                 roleRepo = newRepoInstance(props, "roleRepo", RoleRepository.class, known);
@@ -443,12 +445,6 @@ public final class ApplicationContext {
                 RepoFactory<UtilisateurRepository> userFactory =
                         ma.dentalTech.repository.modules.users.impl.UtilisateurRepositoryImpl::new;
 
-                RepoFactory<MedecinRepository> medecinFactory =
-                        ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl::new;
-
-                RepoFactory<SecretaireRepository> secretaireFactory =
-                        ma.dentalTech.repository.modules.users.impl.SecretaireRepositoryImpl::new;
-
                 RepoFactory<RoleRepository> roleFactory =
                         ma.dentalTech.repository.modules.users.impl.RoleRepositoryImpl::new;
 
@@ -459,11 +455,11 @@ public final class ApplicationContext {
                 } else {
                     encoder = new ma.dentalTech.service.modules.auth.impl.PasswordEncoderImpl();
                 }
-
                 ma.dentalTech.service.modules.users.api.UserManagementService userManagementService =
                         new ma.dentalTech.service.modules.users.impl.UserManagementServiceImpl(
-                                userFactory, medecinFactory, secretaireFactory, roleFactory, encoder
+                                userFactory, roleFactory, encoder
                         );
+
 
                 contextByName.put("userManagementService", userManagementService);
                 registerKnown(known, userManagementService);
@@ -561,6 +557,17 @@ public final class ApplicationContext {
             try {
 
                 // --- Services (constructeurs no-arg existent)
+                // ✅ AJOUT : Instanciation explicite des Repositories DossierMedical pour qu'ils soient dans le context (et dispo pour DashboardService)
+                ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository consultationRepo =
+                        new ma.dentalTech.repository.modules.dossierMedical.impl.ConsultationRepositoryImpl();
+                put(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository.class, consultationRepo, "consultationRepo");
+                registerKnown(known, consultationRepo);
+
+                ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository acteRepo =
+                        new ma.dentalTech.repository.modules.dossierMedical.impl.ActeRepositoryImpl();
+                put(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, acteRepo, "acteRepo");
+                registerKnown(known, acteRepo);
+
                 var acteService =
                         new ma.dentalTech.service.modules.dossierMedical.impl.ActeServiceImpl();
 
@@ -606,7 +613,7 @@ public final class ApplicationContext {
 
             } catch (Exception e) {
                 // Option: log si tu veux
-                System.err.println("⚠️ Erreur init DOSSIER MEDICAL: " + e.getMessage());
+                System.err.println("Erreur init DOSSIER MEDICAL: " + e.getMessage());
             }
 
 
@@ -623,14 +630,35 @@ public final class ApplicationContext {
 
                 if (hasKey(props, "dashboardController")) {
                     currentBean = "dashboardController";
+
                     Object dashCtrl = newFlexibleInstance(
                             props.getProperty("dashboardController"),
                             known,
                             dashboardService
                     );
-                    contextByName.put("dashboardController", dashCtrl);
+
+                    // IMPORTANT: enregistrer aussi par type (sinon getBean(DashboardController.class)=null)
+                    put(ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController.class, dashCtrl, "dashboardController");
                     registerKnown(known, dashCtrl);
                 }
+
+            }
+
+            // =========================================================
+            // Module Referentiels (Actes/Medicaments)
+            // =========================================================
+            if (hasKey(props, "acteRepo")) {
+                currentBean = "acteRepo";
+                ActeRepository acteRepo = newRepoInstance(props, "acteRepo", ActeRepository.class, known);
+                put(ActeRepository.class, acteRepo, "acteRepo");
+                registerKnown(known, acteRepo);
+            }
+
+            if (hasKey(props, "medicamentRepo")) {
+                currentBean = "medicamentRepo";
+                MedicamentRepository medicamentRepo = newRepoInstance(props, "medicamentRepo", MedicamentRepository.class, known);
+                put(MedicamentRepository.class, medicamentRepo, "medicamentRepo");
+                registerKnown(known, medicamentRepo);
             }
 
         } catch (Exception e) {
@@ -820,6 +848,11 @@ public final class ApplicationContext {
                     ListeAttenteRepository.class,
                     CaisseDashboardServiceV2.class
             ).newInstance(notificationRepo, patientRepo, rdvRepo, listeRepo, caisseDashboardServiceV2);
+        } catch (NoSuchMethodException ignored) {}
+
+        // 4) Fallback : constructeur sans argument (qui résoud ses dépendances lui-même via ApplicationContext)
+        try {
+            return (DashboardService) clazz.getDeclaredConstructor().newInstance();
         } catch (NoSuchMethodException ignored) {}
 
         throw new IllegalStateException("Aucun constructeur compatible pour dashboardService=" + className);

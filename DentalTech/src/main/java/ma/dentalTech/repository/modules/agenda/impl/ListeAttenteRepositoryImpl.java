@@ -131,15 +131,53 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
     }
 
     @Override
-    public Integer countActifs() {
-        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
-        return 0;
+    public int countActifs() {
+        // "actifs" = patients en attente aujourd'hui (rdv rattachés à une liste d'attente)
+        String sql = """
+        SELECT COUNT(*)
+        FROM rdv
+        WHERE date_rdv = CURDATE()
+          AND liste_attente_id IS NOT NULL
+          AND statut = 'PLANIFIE'
+    """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getInt(1) : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countActifs() ListeAttente", e);
+        }
     }
 
     @Override
-    public Integer countPourMedecin(Long medecinId) {
-        // TEMP (Aya): stub pour compilation. À remplacer par vraie requête SQL.
-        return 0;
+    public int countPourMedecin(Long medecinId) {
+        String sql = """
+        SELECT COUNT(*)
+        FROM rdv r
+        JOIN detail_journee dj ON dj.id = r.detail_journee_id
+        JOIN agenda_mensuel am ON am.id = dj.agenda_id
+        WHERE r.date_rdv = CURDATE()
+          AND r.liste_attente_id IS NOT NULL
+          AND r.statut = 'PLANIFIE'
+          AND am.medecin_id = ?
+    """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, medecinId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur countPourMedecin() ListeAttente", e);
+        }
     }
+
 
 }

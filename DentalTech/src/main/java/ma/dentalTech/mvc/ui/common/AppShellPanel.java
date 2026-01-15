@@ -3,46 +3,39 @@ package ma.dentalTech.mvc.ui.common;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Shell commun (Header + Sidebar + Content) pour respecter les maquettes.
- *
- * Objectif : éviter de dupliquer le layout dans chaque module.
- */
 public class AppShellPanel extends JPanel {
 
-    private final JPanel sidebar;
-    private final JPanel header;
-    private final JPanel content;
+    private final JPanel headerHolder = new JPanel(new BorderLayout());
+    private final JPanel sidebarHolder = new JPanel(new BorderLayout());
+    private final JPanel contentHolder = new JPanel(new BorderLayout());
 
     public AppShellPanel() {
         setLayout(new BorderLayout());
+        setOpaque(true);
         setBackground(DentalTheme.BG2);
 
-        sidebar = new JPanel();
-        sidebar.setPreferredSize(new Dimension(240, 0));
-        sidebar.setOpaque(false);
-        sidebar.setLayout(new BorderLayout());
+        headerHolder.setOpaque(false);
+        sidebarHolder.setOpaque(false);
+        contentHolder.setOpaque(false);
 
-        header = new JPanel(new BorderLayout(12, 0));
-        header.setPreferredSize(new Dimension(0, 78));
-        header.setBackground(new Color(0xEAD3BF));
-        header.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
-
-        content = new JPanel(new BorderLayout());
-        content.setOpaque(false);
-        content.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
-
-        add(sidebar, BorderLayout.WEST);
-        add(header, BorderLayout.NORTH);
-        add(content, BorderLayout.CENTER);
+        add(headerHolder, BorderLayout.NORTH);
+        add(sidebarHolder, BorderLayout.WEST);
+        add(contentHolder, BorderLayout.CENTER);
     }
 
-    public JPanel sidebar() { return sidebar; }
-    public JPanel header() { return header; }
+    public JPanel header() {
+        return headerHolder;
+    }
 
-    public void setContent(JComponent panel) {
-        content.removeAll();
-        content.add(panel, BorderLayout.CENTER);
+    public JPanel sidebar() {
+        return sidebarHolder;
+    }
+
+    public void setContent(JComponent content) {
+        contentHolder.removeAll();
+        if (content != null) {
+            contentHolder.add(content, BorderLayout.CENTER);
+        }
         revalidate();
         repaint();
     }

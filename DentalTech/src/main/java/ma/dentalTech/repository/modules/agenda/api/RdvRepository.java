@@ -21,10 +21,13 @@ public interface RdvRepository extends CrudRepository<RDV, Long> {
 
     List<RDV> findUpcomingFromToday();
 
-//methodes ajoute par AYA BERDAY utilisé dans dashboard
-    Integer countByDate(LocalDateTime start, LocalDateTime end);
-    Integer countRdvEnRetard(LocalDate today);
 
-    Integer countByMedecinAndDate(Long medecinId, LocalDateTime start, LocalDateTime end);
+//methodes ajoute par AYA BERDAY utilisé dans dashboard
+    List<RDV> findByMedecinAndDate(Long medecinId, LocalDate date);
+
+    Integer countByDate(LocalDateTime start, LocalDateTime end);
+    int countRdvEnRetard(LocalDate today);
+    int countRdvDuJour();
+    int countByMedecinAndDate(Long medecinId, LocalDateTime start, LocalDateTime end);
 
 }

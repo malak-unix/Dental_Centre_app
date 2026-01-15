@@ -27,4 +27,12 @@ public class AdminDashboardResponseDTO {
     // referentiels + securite
     private ReferentielStatsDTO referentiels;
     private BackupStatusDTO sauvegarde; // optionnel si non utilisé
+
+    public BigDecimal getRecetteJour() {
+        return recetteDuJour;
+    }
+
+    public Integer getNbActes() {
+        return nbActesRealises;
+    }
 }
