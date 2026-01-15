@@ -4,6 +4,7 @@ import ma.dentalTech.entities.enums.LibelleRole;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class SidebarCommonPanel extends JPanel {
         this.fullName = (fullName != null) ? fullName : "";
         this.onNavigate = onNavigate;
 
-        setPreferredSize(new Dimension(240, 780));
+        setPreferredSize(new Dimension(270, 780));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
         setOpaque(false);
@@ -31,11 +32,8 @@ public class SidebarCommonPanel extends JPanel {
     }
 
     private void buildUi() {
-        // Le logo est affiché dans le header global (AppHeaderPanel) selon la maquette.
-        // On garde juste un petit espace en haut pour l'aération.
-        add(Box.createVerticalStrut(6));
+        add(Box.createVerticalStrut(8));
 
-        // Menu (dans une card)
         CardPanel navCard = new CardPanel((String) null);
         navCard.setLayout(new BoxLayout(navCard, BoxLayout.Y_AXIS));
         navCard.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -43,24 +41,27 @@ public class SidebarCommonPanel extends JPanel {
         List<NavItem> items = RoleMenuConfig.menuFor(role);
         for (int i = 0; i < items.size(); i++) {
             NavItem it = items.get(i);
-            navCard.add(makeNav(it.getLabel(), it.getId()));
+
+            Icon icon = loadIcon(iconPathFor(it.getId()), 18, 18);
+            navCard.add(makeNav(it.getLabel(), icon, it.getId()));
+
             if (i < items.size() - 1) navCard.add(Box.createVerticalStrut(8));
         }
 
         add(navCard);
         add(Box.createVerticalGlue());
 
-        // User Card bottom
         String roleText = RoleMenuConfig.roleLabel(role);
         UserCardPanel userCard = new UserCardPanel(roleText, fullName);
         userCard.setAlignmentX(Component.LEFT_ALIGNMENT);
         add(userCard);
     }
 
-    private NavButton makeNav(String text, String pageKey) {
-        NavButton b = new NavButton(text, false);
+    private NavButton makeNav(String text, Icon icon, String pageKey) {
+        NavButton b = new NavButton(text, icon, false);
         b.setAlignmentX(Component.LEFT_ALIGNMENT);
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+
         b.addActionListener(e -> {
             if (onNavigate != null) onNavigate.accept(pageKey);
         });
@@ -75,8 +76,40 @@ public class SidebarCommonPanel extends JPanel {
         }
     }
 
-    public void setEnabledItem(String pageKey, boolean enabled) {
-        NavButton b = navButtons.get(pageKey);
-        if (b != null) b.setEnabled(enabled);
+    private Icon loadIcon(String path, int w, int h) {
+        if (path == null) return null;
+        try {
+            URL url = getClass().getResource(path);
+            if (url == null) return null;
+            Image img = new ImageIcon(url).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String iconPathFor(String pageKey) {
+        // ✅ tu dois créer ces fichiers PNG dans: src/main/resources/assets/icons/
+        return switch (pageKey) {
+            case "dashboard"      -> "/assets/icons/dashboard.png";
+            case "patients"       -> "/assets/icons/patients.png";
+            case "rdv"            -> "/assets/icons/calendar.png";
+            case "liste_attente"  -> "/assets/icons/waiting.png";
+            case "agenda_med"     -> "/assets/icons/planning.png";
+            case "dossiers"       -> "/assets/icons/folder.png";
+            case "consultations"  -> "/assets/icons/consultation.png";
+            case "ordonnances"    -> "/assets/icons/medicine.png";     // ✅ FIX (ancien = medicament.png)
+            case "certificats"    -> "/assets/icons/certificat.png";
+            case "situation_fin"  -> "/assets/icons/money.png";
+            case "actes"          -> "/assets/icons/teeth.png";
+            case "medicaments"    -> "/assets/icons/medicine.png";     // ✅ AJOUT
+            case "antecedents"    -> "/assets/icons/antecedents.png";  // ✅ AJOUT
+            case "caisse"         -> "/assets/icons/caisse.png";
+            case "utilisateurs"   -> "/assets/icons/users.png";
+            case "referentiels"   -> "/assets/icons/referentiels.png";
+            case "sauvegardes"    -> "/assets/icons/backup.png";
+            case "roles"          -> "/assets/icons/lock.png";
+            default -> null;
+        };
     }
 }

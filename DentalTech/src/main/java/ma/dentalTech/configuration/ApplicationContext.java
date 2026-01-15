@@ -68,7 +68,8 @@ public final class ApplicationContext {
             // RowMappers (si utilisé)
             try {
                 known.put(RowMappers.class, RowMappers.class.getDeclaredConstructor().newInstance());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             // =========================================================
             // PATIENT : repo -> service -> appService -> controller
@@ -94,9 +95,10 @@ public final class ApplicationContext {
             registerKnown(known, patientAppService);
 
             // Antecedent optional
+            AntecedentRepository antecedentRepo = null;
             if (hasKey(props, "antecedentRepo")) {
                 currentBean = "antecedentRepo";
-                AntecedentRepository antecedentRepo = newRepoInstance(props, "antecedentRepo", AntecedentRepository.class, known);
+                antecedentRepo = newRepoInstance(props, "antecedentRepo", AntecedentRepository.class, known);
                 put(AntecedentRepository.class, antecedentRepo, "antecedentRepo");
                 registerKnown(known, antecedentRepo);
 
@@ -128,6 +130,19 @@ public final class ApplicationContext {
                 }
             }
 
+
+            // ✅ ADMIN antecedents (liste globale)
+            currentBean = "antecedentAdminService";
+            var antecedentAdminService =
+                    new ma.dentalTech.service.modules.patient.impl.AntecedentAdminServiceImpl(antecedentRepo, patientRepo);
+            put(ma.dentalTech.service.modules.patient.api.AntecedentAdminService.class, antecedentAdminService, "antecedentAdminService");
+            registerKnown(known, antecedentAdminService);
+
+            currentBean = "antecedentAdminController";
+            var antecedentAdminController =
+                    new ma.dentalTech.mvc.controllers.modules.patient.batch_implementation.AntecedentAdminControllerImpl(antecedentAdminService);
+            put(ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentAdminController.class, antecedentAdminController, "antecedentAdminController");
+            registerKnown(known, antecedentAdminController);
 
 
             if (hasKey(props, "patientController")) {
@@ -257,8 +272,6 @@ public final class ApplicationContext {
                 put(ChargesControllerV2.class, cc, "chargesControllerV2");
                 registerKnown(known, cc);
             }
-
-
 
 
             // =========================================================
@@ -508,7 +521,6 @@ public final class ApplicationContext {
             }
 
 
-
             //ajouté par jihane
             // =========================================================
             // AUTH : validator -> encoder -> service -> controller
@@ -660,6 +672,23 @@ public final class ApplicationContext {
                 put(MedicamentRepository.class, medicamentRepo, "medicamentRepo");
                 registerKnown(known, medicamentRepo);
             }
+            // =========================================================
+// MEDICAMENTS : controller (Admin)
+// =========================================================
+            try {
+                MedicamentRepository medicamentRepoBean = getBean(ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository.class);
+                if (medicamentRepoBean != null) {
+                    var medicamentCtrl = new ma.dentalTech.mvc.controllers.modules.dossierMedicale.impl.MedicamentControllerImpl(medicamentRepoBean);
+
+                    put(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.MedicamentController.class,
+                            medicamentCtrl,
+                            "medicamentController");
+                    registerKnown(known, medicamentCtrl);
+                }
+            } catch (Exception ex) {
+                System.err.println("Erreur init MedicamentController: " + ex.getMessage());
+            }
+
 
         } catch (Exception e) {
             throw new RuntimeException("Erreur init ApplicationContext (bean courant = " + currentBean + ")", e);

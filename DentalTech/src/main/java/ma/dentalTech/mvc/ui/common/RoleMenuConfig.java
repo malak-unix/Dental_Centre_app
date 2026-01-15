@@ -36,9 +36,11 @@ public final class RoleMenuConfig {
                     NavItem.of("Dashboard", "dashboard"),
                     NavItem.of("Les patients", "patients"),
                     NavItem.of("Rendez-vous", "rdv"),
+                    NavItem.of("Planning", "agenda_med"),        // ✅ AJOUT
                     NavItem.of("Caisse", "caisse"),
                     NavItem.of("Liste d'attente", "liste_attente")
             );
+
 
         };
     }

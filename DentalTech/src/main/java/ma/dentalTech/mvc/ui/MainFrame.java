@@ -39,6 +39,7 @@ public class MainFrame extends JFrame {
     private SidebarCommonPanel sidebar;
     private final AppHeaderPanel header = new AppHeaderPanel();
 
+
     public MainFrame() {
         this(LibelleRole.SECRETAIRE, 1L, "Utilisateur");
     }
@@ -121,9 +122,25 @@ public class MainFrame extends JFrame {
         // Admin
         addPage("utilisateurs", buildUsersPage());
         addPage("referentiels", new ma.dentalTech.mvc.ui.modules.admin.ReferentielsPanel());
+        addPage("medicaments", buildMedicamentsPage());
+        addPage("antecedents", buildAntecedentsAdminPage());
         addPage("sauvegardes", new ma.dentalTech.mvc.ui.modules.admin.SauvegardesPanel());
         addPage("roles", new ma.dentalTech.mvc.ui.modules.admin.RolesPanel());
     }
+
+    private JComponent buildMedicamentsPage() {
+        var controller = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.MedicamentController.class);
+        if (controller == null) return buildPlaceholder("❌ MedicamentController introuvable (ApplicationContext)");
+        return new ma.dentalTech.mvc.ui.modules.admin.MedicamentsPanel(controller);
+    }
+
+
+    private JComponent buildAntecedentsAdminPage() {
+        var ctrl = ApplicationContext.getBean(ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentAdminController.class);
+        if (ctrl == null) return buildPlaceholder("❌ AntecedentAdminController introuvable");
+        return new ma.dentalTech.mvc.ui.modules.admin.AntecedentsAdminPanel(ctrl);
+    }
+
 
     private JComponent buildUsersPage() {
         var controller = (ma.dentalTech.mvc.controllers.modules.users.api.UserManagementController)

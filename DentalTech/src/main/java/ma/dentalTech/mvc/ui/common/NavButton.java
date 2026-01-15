@@ -10,26 +10,35 @@ public class NavButton extends JButton {
     private boolean active = false;
     private boolean hover = false;
 
-    // ✅ Constructeur utilisé par DashboardView / autres
     public NavButton(String text) {
-        this(text, false);
+        this(text, (Icon) null, false);
     }
 
-    // ✅ Constructeur utilisé par AgendaHomePanel : new NavButton("..", true/false)
     public NavButton(String text, boolean active) {
+        this(text, (Icon) null, active);
+    }
+
+    public NavButton(String text, Icon icon, boolean active) {
         super(text);
         this.active = active;
 
-        setFont(DentalTheme.BASE_BOLD);
-        setForeground(Color.WHITE);
+        setFont(DentalTheme.textBold(13));
+        setForeground(DentalTheme.TEXT2);
+
         setFocusPainted(false);
         setBorderPainted(false);
         setContentAreaFilled(false);
         setOpaque(false);
 
-        // Sidebar style : texte aligné à gauche
         setHorizontalAlignment(SwingConstants.LEFT);
-        setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        setIcon(icon);
+        setIconTextGap(10);
+
+        // ✅ Très important: on réserve de la place pour l’icône
+        int left = (icon != null) ? 18 : 14;
+        setBorder(BorderFactory.createEmptyBorder(10, left, 10, 14));
+
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         addMouseListener(new MouseAdapter() {
             @Override public void mouseEntered(MouseEvent e) { hover = true; repaint(); }
@@ -37,7 +46,6 @@ public class NavButton extends JButton {
         });
     }
 
-    // ✅ Méthode attendue par ton code AgendaHomePanel
     public void setActive(boolean value) {
         this.active = value;
         repaint();
@@ -47,7 +55,6 @@ public class NavButton extends JButton {
         return active;
     }
 
-    // ✅ Compat avec mon code précédent (Dashboard)
     public void setSelectedStyle(boolean value) {
         setActive(value);
     }
@@ -61,23 +68,28 @@ public class NavButton extends JButton {
         int w = getWidth();
         int h = getHeight();
 
-        Color bg = DentalTheme.PRIMARY;
+        boolean drawBg = hover || active;
 
-        if (hover) bg = DentalTheme.PRIMARY_2;
-        if (active) bg = DentalTheme.PRIMARY_2;
+        if (drawBg) {
+            Color bg = active ? DentalTheme.PRIMARY : new Color(0xEAD9CB);
+            if (active && hover) bg = DentalTheme.PRIMARY_2;
 
-        // shadow
-        g2.setColor(new Color(0, 0, 0, 35));
-        g2.fillRoundRect(3, 3, w - 6, h - 6, arc, arc);
+            // shadow
+            g2.setColor(new Color(0, 0, 0, 22));
+            g2.fillRoundRect(3, 3, w - 6, h - 6, arc, arc);
 
-        // fill
-        g2.setColor(bg);
-        g2.fillRoundRect(0, 0, w - 6, h - 6, arc, arc);
+            // fill
+            g2.setColor(bg);
+            g2.fillRoundRect(0, 0, w - 6, h - 6, arc, arc);
 
-        // gold stroke
-        g2.setStroke(new BasicStroke(2f));
-        g2.setColor(DentalTheme.STROKE);
-        g2.drawRoundRect(0, 0, w - 6, h - 6, arc, arc);
+            // stroke
+            g2.setStroke(new BasicStroke(2f));
+            g2.setColor(DentalTheme.STROKE);
+            g2.drawRoundRect(0, 0, w - 6, h - 6, arc, arc);
+        }
+
+        // Couleur texte selon active
+        setForeground(active ? Color.WHITE : DentalTheme.TEXT2);
 
         g2.dispose();
         super.paintComponent(g);
