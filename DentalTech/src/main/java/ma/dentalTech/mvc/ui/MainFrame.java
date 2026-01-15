@@ -117,6 +117,7 @@ public class MainFrame extends JFrame {
         addPage("situation_fin", buildSituationFinPage());
         addPage("actes", buildActesPage());
 
+
         // Admin
         addPage("utilisateurs", buildUsersPage());
         addPage("referentiels", new ma.dentalTech.mvc.ui.modules.admin.ReferentielsPanel());
