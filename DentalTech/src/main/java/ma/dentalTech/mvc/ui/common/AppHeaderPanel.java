@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
 public class AppHeaderPanel extends JPanel {
@@ -15,7 +17,9 @@ public class AppHeaderPanel extends JPanel {
 
     private final JLabel userLabel = new JLabel();
     private final JLabel avatarLabel = new JLabel();
-    private final JButton logout = new JButton("⎋");
+
+    // ✅ Déconnexion visible
+    private final JButton logout = new JButton("Déconnexion");
 
     public AppHeaderPanel() {
         setLayout(new BorderLayout());
@@ -67,12 +71,7 @@ public class AppHeaderPanel extends JPanel {
         userLabel.setFont(DentalTheme.textBold(12));
         userLabel.setForeground(DentalTheme.TEXT2);
 
-        logout.setFocusable(false);
-        logout.setBorderPainted(false);
-        logout.setContentAreaFilled(false);
-        logout.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        logout.setForeground(DentalTheme.TEXT2);
-        logout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        styleLogoutButton();
 
         right.add(avatarLabel);
         right.add(userLabel);
@@ -91,6 +90,59 @@ public class AppHeaderPanel extends JPanel {
         });
     }
 
+    // =========================
+    // ✅ STYLE logout button
+    // =========================
+    private void styleLogoutButton() {
+        logout.setFocusable(false);
+        logout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        logout.setFont(DentalTheme.textBold(12));
+        logout.setForeground(DentalTheme.TEXT2);
+
+        // Icône optionnelle
+        Icon icon = loadIcon("/assets/icons/logout.png", 16, 16);
+        if (icon != null) {
+            logout.setIcon(icon);
+            logout.setIconTextGap(8);
+        }
+
+        // Fond + bordure (style projet)
+        logout.setOpaque(true);
+        logout.setBackground(Color.WHITE);
+        logout.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2),
+                BorderFactory.createEmptyBorder(7, 12, 7, 12)
+        ));
+
+        // Hover effect léger
+        Color normalBg = Color.WHITE;
+        Color hoverBg = new Color(0xF3ECE6);
+
+        logout.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                logout.setBackground(hoverBg);
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                logout.setBackground(normalBg);
+            }
+        });
+    }
+
+    private Icon loadIcon(String path, int w, int h) {
+        try {
+            java.net.URL url = getClass().getResource(path);
+            if (url == null) return null;
+            Image img = new ImageIcon(url).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // =========================
+    // Logo + avatar fallback
+    // =========================
     private Icon loadLogoIcon() {
         java.net.URL url = getClass().getResource("/assets/logo.png");
         if (url == null) {
@@ -122,6 +174,9 @@ public class AppHeaderPanel extends JPanel {
         };
     }
 
+    // =========================
+    // Public API
+    // =========================
     public void setUser(String fullName, String roleLabel) {
         String n = (fullName == null || fullName.isBlank()) ? "Utilisateur" : fullName.trim();
         String r = (roleLabel == null || roleLabel.isBlank()) ? "" : roleLabel.trim();
@@ -132,12 +187,10 @@ public class AppHeaderPanel extends JPanel {
         return logout;
     }
 
-    /** Permet de brancher la recherche globale (optionnel) */
     public void onSearchChanged(Consumer<String> listener) {
         this.onSearchChanged = listener;
     }
 
-    /** Si une page veut vider la recherche */
     public void clearSearch() {
         searchField.setText("");
     }
