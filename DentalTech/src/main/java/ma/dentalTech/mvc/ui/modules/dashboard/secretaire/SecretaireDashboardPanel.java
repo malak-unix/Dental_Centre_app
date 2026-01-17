@@ -23,7 +23,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +46,7 @@ public class SecretaireDashboardPanel extends JPanel {
     private final JLabel vRdv      = valueLabel("0");
     private final JLabel vAttente  = valueLabel("0");
 
-    // File d'attente
+        // File d'attente
     private final JPanel fileAttentePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
     private final JLabel fileAttenteEmptyLabel = new JLabel("Aucun patient en attente aujourd'hui");
 
@@ -56,7 +55,7 @@ public class SecretaireDashboardPanel extends JPanel {
     private  JScrollPane notificationsScroll;
     private final TitledBorder notifBorder = BorderFactory.createTitledBorder("NOTIFICATIONS");
 
-    // Activités récentes (bas gauche + bas droite)
+        // Activites recentes
     private final JPanel activitiesLeft = new JPanel();
 
     // RDV du jour
@@ -75,9 +74,9 @@ public class SecretaireDashboardPanel extends JPanel {
                 : ApplicationContext.getBean(DashboardController.class);
         this.userId = userId;
         this.navigate = (navigate != null) ? navigate : (k -> {});
-        this.listeAttenteController = getBeanOrNull(ListeAttenteController.class);
-        this.notificationController = getBeanOrNull(NotificationController.class);
-        this.patientController = getBeanOrNull(PatientController.class);
+        this.listeAttenteController = getBeanOrNull(ListeAttenteController.class, "listeAttente.controller");
+        this.notificationController = getBeanOrNull(NotificationController.class, "notificationController");
+        this.patientController = getBeanOrNull(PatientController.class, "patientController");
 
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
@@ -193,7 +192,7 @@ public class SecretaireDashboardPanel extends JPanel {
         root.add(buildRdvDuJourSection());
         root.add(Box.createVerticalStrut(14));
 
-        // File d’attente
+        // File d'attente
         root.add(buildFileAttenteSection());
         root.add(Box.createVerticalStrut(14));
 
@@ -201,7 +200,7 @@ public class SecretaireDashboardPanel extends JPanel {
         root.add(notificationsScroll);
         root.add(Box.createVerticalStrut(14));
 
-        // Activités récentes (deux colonnes)
+        // Activites recentes
         root.add(buildActivitiesSection());
 
         return root;
@@ -288,26 +287,282 @@ public class SecretaireDashboardPanel extends JPanel {
         return container;
     }
 
-    private JComponent buildActivitiesSection() {
-        JPanel row = new JPanel(new GridLayout(1, 2, 14, 14));
-        row.setOpaque(false);
+    private void openAddFileAttenteDialog() {
+        if (listeAttenteController == null) {
+            JOptionPane.showMessageDialog(this, "Module file d'attente indisponible.", "Information",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
-        // Left big
-        JPanel leftWrap = cardContainer();
-        leftWrap.setLayout(new BorderLayout(10, 10));
-        JLabel t1 = new JLabel("Activités Récentes");
-        t1.setFont(DentalTheme.titleFont(18));
-        t1.setForeground(DentalTheme.PRIMARY_DARK);
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(owner, "Ajouter a la file d'attente", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(620, 380);
+        dialog.setLocationRelativeTo(owner);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(DentalTheme.BG);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.add("Patient existant", buildExistingPatientTab(dialog));
+        tabs.add("Nouveau patient", buildNewPatientTab(dialog));
+
+        dialog.add(tabs, BorderLayout.CENTER);
+        dialog.setVisible(true);
+    }
+
+    private JPanel buildExistingPatientTab(JDialog dialog) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(8, 8, 8, 8);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField tfSearch = new JTextField();
+        DefaultComboBoxModel<PatientListDto> model = new DefaultComboBoxModel<>();
+        JComboBox<PatientListDto> combo = new JComboBox<>(model);
+        combo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                PatientListDto p = (PatientListDto) value;
+                setText(p == null ? "" : patientLabel(p));
+                return this;
+            }
+        });
+
+        DentalButton btnSearch = new DentalButton("Rechercher");
+        btnSearch.addActionListener(e -> loadPatients(model, tfSearch.getText()));
+
+        loadPatients(model, "");
+
+        JTextField tfMotif = new JTextField();
+        JComboBox<String> cbPriorite = buildPrioriteCombo("NORMALE");
+
+        c.gridx = 0; c.gridy = 0; c.weightx = 0;
+        panel.add(label("Nom / Recherche"), c);
+        c.gridx = 1; c.weightx = 1;
+        panel.add(tfSearch, c);
+        c.gridx = 2; c.weightx = 0;
+        panel.add(btnSearch, c);
+
+        c.gridx = 0; c.gridy = 1; c.weightx = 0;
+        panel.add(label("Patient"), c);
+        c.gridx = 1; c.gridwidth = 2; c.weightx = 1;
+        panel.add(combo, c);
+        c.gridwidth = 1;
+
+        c.gridx = 0; c.gridy = 2; c.weightx = 0;
+        panel.add(label("Motif"), c);
+        c.gridx = 1; c.gridwidth = 2; c.weightx = 1;
+        panel.add(tfMotif, c);
+        c.gridwidth = 1;
+
+        c.gridx = 0; c.gridy = 3; c.weightx = 0;
+        panel.add(label("Priorite"), c);
+        c.gridx = 1; c.gridwidth = 2; c.weightx = 1;
+        panel.add(cbPriorite, c);
+        c.gridwidth = 1;
+
+        DentalButton add = new DentalButton("Ajouter a la file");
+        add.addActionListener(e -> {
+            PatientListDto selected = (PatientListDto) combo.getSelectedItem();
+            if (selected == null || selected.getId() == null) {
+                JOptionPane.showMessageDialog(panel, "Selectionnez un patient.", "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            addToFileAttente(selected.getId(), tfMotif.getText().trim(),
+                    (String) cbPriorite.getSelectedItem());
+            dialog.dispose();
+        });
+
+        c.gridx = 0; c.gridy = 4; c.gridwidth = 3;
+        c.anchor = GridBagConstraints.EAST;
+        panel.add(add, c);
+
+        return panel;
+    }
+
+    private JPanel buildNewPatientTab(JDialog dialog) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(8, 8, 8, 8);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField tfMotif = new JTextField();
+        JComboBox<String> cbPriorite = buildPrioriteCombo("NORMALE");
+
+        c.gridx = 0; c.gridy = 0; c.weightx = 0;
+        panel.add(label("Motif"), c);
+        c.gridx = 1; c.weightx = 1;
+        panel.add(tfMotif, c);
+
+        c.gridx = 0; c.gridy = 1; c.weightx = 0;
+        panel.add(label("Priorite"), c);
+        c.gridx = 1; c.weightx = 1;
+        panel.add(cbPriorite, c);
+
+        DentalButton create = new DentalButton("Creer patient");
+        create.addActionListener(e -> {
+            if (patientController == null) {
+                JOptionPane.showMessageDialog(panel, "Module patient indisponible.", "Information",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            PatientFormDialog form = new PatientFormDialog(dialog, "Nouveau patient", null);
+            form.setVisible(true);
+            if (!form.isConfirmed()) return;
+
+            PatientFormDto created = patientController.creer(form.getDto());
+            if (created == null || created.getId() == null) {
+                JOptionPane.showMessageDialog(panel, "Creation patient echouee.", "Erreur",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int res = JOptionPane.showConfirmDialog(panel,
+                    "Ajouter a la file d'attente maintenant ?", "Confirmation",
+                    JOptionPane.YES_NO_OPTION);
+            if (res == JOptionPane.YES_OPTION) {
+                addToFileAttente(created.getId(), tfMotif.getText().trim(),
+                        (String) cbPriorite.getSelectedItem());
+            }
+            dialog.dispose();
+        });
+
+        c.gridx = 0; c.gridy = 2; c.gridwidth = 2;
+        c.anchor = GridBagConstraints.EAST;
+        panel.add(create, c);
+
+        return panel;
+    }
+
+    private void openEditFileAttenteDialog(ListeAttenteDto item) {
+        if (listeAttenteController == null || item == null || item.getId() == null) return;
+
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(owner, "Modifier file d'attente", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(480, 260);
+        dialog.setLocationRelativeTo(owner);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(DentalTheme.BG);
+
+        JPanel body = new JPanel(new GridBagLayout());
+        body.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(8, 8, 8, 8);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField tfMotif = new JTextField(safe(item.getMotif()));
+        JComboBox<String> cbPriorite = buildPrioriteCombo(firstNonBlank(item.getPriorite(), "NORMALE"));
+
+        c.gridx = 0; c.gridy = 0; c.weightx = 0;
+        body.add(label("Motif"), c);
+        c.gridx = 1; c.weightx = 1;
+        body.add(tfMotif, c);
+
+        c.gridx = 0; c.gridy = 1; c.weightx = 0;
+        body.add(label("Priorite"), c);
+        c.gridx = 1; c.weightx = 1;
+        body.add(cbPriorite, c);
+
+        dialog.add(body, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        footer.setOpaque(false);
+        DentalButton cancel = new DentalButton("Annuler");
+        DentalButton save = new DentalButton("Enregistrer");
+
+        cancel.addActionListener(e -> dialog.dispose());
+        save.addActionListener(e -> {
+            ListeAttenteDto updated = ListeAttenteDto.builder()
+                    .id(item.getId())
+                    .patientId(item.getPatientId())
+                    .nom(item.getNom())
+                    .motif(tfMotif.getText().trim())
+                    .priorite((String) cbPriorite.getSelectedItem())
+                    .dateAjout(item.getDateAjout())
+                    .build();
+            listeAttenteController.update(updated);
+            JOptionPane.showMessageDialog(this, "File d'attente mise a jour.", "Confirmation",
+                    JOptionPane.INFORMATION_MESSAGE);
+            reload();
+            dialog.dispose();
+        });
+
+        footer.add(cancel);
+        footer.add(save);
+        dialog.add(footer, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    private void addToFileAttente(Long patientId, String motif, String priorite) {
+        if (listeAttenteController == null || patientId == null) return;
+
+        ListeAttenteDto dto = ListeAttenteDto.builder()
+                .patientId(patientId)
+                .nom("File d'attente")
+                .motif(motif == null || motif.isBlank() ? null : motif)
+                .priorite(firstNonBlank(priorite, "NORMALE"))
+                .dateAjout(LocalDateTime.now())
+                .build();
+        listeAttenteController.create(dto);
+        JOptionPane.showMessageDialog(this, "Patient ajoute a la file d'attente.", "Confirmation",
+                JOptionPane.INFORMATION_MESSAGE);
+        reload();
+    }
+
+    private void loadPatients(DefaultComboBoxModel<PatientListDto> model, String query) {
+        model.removeAllElements();
+        if (patientController == null) return;
+        try {
+            List<PatientListDto> patients = (query == null || query.isBlank())
+                    ? patientController.lister()
+                    : patientController.rechercherParNom(query);
+            for (PatientListDto p : patients) {
+                model.addElement(p);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erreur chargement patients.", "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private JComboBox<String> buildPrioriteCombo(String selected) {
+        JComboBox<String> cb = new JComboBox<>(new String[]{"BASSE", "NORMALE", "HAUTE"});
+        cb.setSelectedItem(firstNonBlank(selected, "NORMALE"));
+        return cb;
+    }
+
+    private JLabel label(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(DentalTheme.textBold(12));
+        l.setForeground(DentalTheme.TEXT2);
+        return l;
+    }
+
+    private JComponent buildActivitiesSection() {
+        JPanel wrap = cardContainer();
+        wrap.setLayout(new BorderLayout(10, 10));
+
+        JLabel title = new JLabel("Activites recentes");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
 
         activitiesLeft.setOpaque(false);
         activitiesLeft.setLayout(new BoxLayout(activitiesLeft, BoxLayout.Y_AXIS));
 
-        JScrollPane sp1 = new JScrollPane(activitiesLeft);
-        sp1.setBorder(BorderFactory.createEmptyBorder());
-        sp1.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        sp1.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        sp1.getVerticalScrollBar().setUnitIncrement(16);
-        sp1.setPreferredSize(new Dimension(10, 220));
+        JScrollPane sp = new JScrollPane(activitiesLeft);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        sp.setPreferredSize(new Dimension(10, 220));
 
         DentalButton more = new DentalButton("Voir +Activites");
         more.addActionListener(e -> navigate.accept("rdv"));
@@ -316,33 +571,10 @@ public class SecretaireDashboardPanel extends JPanel {
         bottom.setOpaque(false);
         bottom.add(more);
 
-        leftWrap.add(t1, BorderLayout.NORTH);
-        leftWrap.add(sp1, BorderLayout.CENTER);
-        leftWrap.add(bottom, BorderLayout.SOUTH);
-
-        // Right compact
-        JPanel rightWrap = cardContainer();
-        rightWrap.setLayout(new BorderLayout(10, 10));
-        JLabel t2 = new JLabel("Activités Récentes");
-        t2.setFont(DentalTheme.titleFont(18));
-        t2.setForeground(DentalTheme.PRIMARY_DARK);
-
-        activitiesRight.setOpaque(false);
-        activitiesRight.setLayout(new BoxLayout(activitiesRight, BoxLayout.Y_AXIS));
-
-        JScrollPane sp2 = new JScrollPane(activitiesRight);
-        sp2.setBorder(BorderFactory.createEmptyBorder());
-        sp2.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        sp2.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        sp2.getVerticalScrollBar().setUnitIncrement(16);
-        sp2.setPreferredSize(new Dimension(10, 220));
-
-        rightWrap.add(t2, BorderLayout.NORTH);
-        rightWrap.add(sp2, BorderLayout.CENTER);
-
-        row.add(leftWrap);
-        row.add(rightWrap);
-        return row;
+        wrap.add(title, BorderLayout.NORTH);
+        wrap.add(sp, BorderLayout.CENTER);
+        wrap.add(bottom, BorderLayout.SOUTH);
+        return wrap;
     }
 
     private JComponent buildSectionTitle(String text) {
@@ -370,12 +602,34 @@ public class SecretaireDashboardPanel extends JPanel {
             vRdv.setText(String.valueOf(nvl(dto.getNbRdvDuJour())));
             vAttente.setText(String.valueOf(nvl(dto.getNbEnAttente())));
 
-            // File d'attente
+            // RDV du jour
+            rdvDuJourCache.clear();
+            rdvModel.setRowCount(0);
+            List<RdvDto> rdvDuJour = dto.getRdvDuJour();
+            if (rdvDuJour != null) {
+                for (RdvDto r : rdvDuJour) {
+                    rdvDuJourCache.add(r);
+                    rdvModel.addRow(new Object[]{
+                            formatHeure(r.getHeure()),
+                            firstNonBlank(r.getPatientNom(), "Patient"),
+                            r.getStatut() != null ? r.getStatut().name() : ""
+                    });
+                }
+            }
+            CardLayout rdvLayout = (CardLayout) rdvCardPanel.getLayout();
+            rdvLayout.show(rdvCardPanel, rdvDuJourCache.isEmpty() ? "EMPTY" : "TABLE");
+            rdvCardPanel.revalidate();
+            rdvCardPanel.repaint();
+
+        // File d'attente
             fileAttentePanel.removeAll();
-            if (dto.getFileAttente() != null) {
-                for (ListeAttenteDto p : dto.getFileAttente()) {
+            List<ListeAttenteDto> fileAttente = dto.getFileAttente();
+            if (fileAttente != null && !fileAttente.isEmpty()) {
+                for (ListeAttenteDto p : fileAttente) {
                     fileAttentePanel.add(buildPatientCard(p));
                 }
+            } else {
+                fileAttentePanel.add(fileAttenteEmptyLabel);
             }
             fileAttentePanel.revalidate();
             fileAttentePanel.repaint();
@@ -399,33 +653,20 @@ public class SecretaireDashboardPanel extends JPanel {
             notificationsPanel.revalidate();
             notificationsPanel.repaint();
 
-            // Activités récentes (bas) = notifications
+        // Activites recentes
             activitiesLeft.removeAll();
-            activitiesRight.removeAll();
             if (notif != null && !notif.isEmpty()) {
-                // left: jusqu'à 6
-                for (int i = 0; i < Math.min(6, notif.size()); i++) {
+                for (int i = 0; i < Math.min(8, notif.size()); i++) {
                     activitiesLeft.add(buildActivityRow(notif.get(i), true));
                     activitiesLeft.add(Box.createVerticalStrut(8));
                 }
-                // right: jusqu'à 4
-                for (int i = 0; i < Math.min(4, notif.size()); i++) {
-                    activitiesRight.add(buildActivityRow(notif.get(i), false));
-                    activitiesRight.add(Box.createVerticalStrut(8));
-                }
             } else {
-                JLabel e1 = new JLabel("Aucune activité récente");
+                JLabel e1 = new JLabel("Aucune activite recente");
                 e1.setForeground(DentalTheme.MUTED_TEXT);
                 activitiesLeft.add(e1);
-
-                JLabel e2 = new JLabel("Aucune activité récente");
-                e2.setForeground(DentalTheme.MUTED_TEXT);
-                activitiesRight.add(e2);
             }
             activitiesLeft.revalidate();
             activitiesLeft.repaint();
-            activitiesRight.revalidate();
-            activitiesRight.repaint();
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -479,8 +720,8 @@ public class SecretaireDashboardPanel extends JPanel {
     }
 
     private JComponent buildPatientCard(ListeAttenteDto p) {
-        JPanel card = new JPanel(new BorderLayout(10, 10));
-        card.setPreferredSize(new Dimension(190, 120));
+        JPanel card = new JPanel(new BorderLayout(10, 8));
+        card.setPreferredSize(new Dimension(210, 130));
         card.setBackground(DentalTheme.CARD);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER),
@@ -497,11 +738,45 @@ public class SecretaireDashboardPanel extends JPanel {
         name.setFont(DentalTheme.textBold(14));
         name.setForeground(DentalTheme.PRIMARY_DARK);
 
-        DentalButton dossier = new DentalButton("Dossier");
-        dossier.addActionListener(e -> navigate.accept("dossiers"));
+        JLabel motif = new JLabel("Motif: " + firstNonBlank(safe(p.getMotif()), "-"));
+        motif.setFont(DentalTheme.textFont(11));
+        motif.setForeground(DentalTheme.MUTED_TEXT);
 
-        card.add(name, BorderLayout.CENTER);
-        card.add(dossier, BorderLayout.SOUTH);
+        JLabel priorite = new JLabel("Priorite: " + firstNonBlank(safe(p.getPriorite()), "-"));
+        priorite.setFont(DentalTheme.textFont(11));
+        priorite.setForeground(DentalTheme.MUTED_TEXT);
+
+        JPanel center = new JPanel();
+        center.setOpaque(false);
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.add(name);
+        center.add(Box.createVerticalStrut(4));
+        center.add(motif);
+        center.add(priorite);
+
+        DentalButton dossier = new DentalButton("Dossier");
+        dossier.addActionListener(e -> navigate.accept("patients"));
+
+        DentalButton modifier = new DentalButton("Modifier");
+        modifier.setEnabled(listeAttenteController != null && p.getId() != null);
+        modifier.addActionListener(e -> openEditFileAttenteDialog(p));
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        actions.setOpaque(false);
+        actions.add(dossier);
+        actions.add(modifier);
+
+        card.add(center, BorderLayout.CENTER);
+        card.add(actions, BorderLayout.SOUTH);
+
+        card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    navigate.accept("patients");
+                }
+            }
+        });
         return card;
     }
 
@@ -513,9 +788,13 @@ public class SecretaireDashboardPanel extends JPanel {
                 BorderFactory.createEmptyBorder(10, 12, 10, 12)
         ));
 
-        JLabel ic = new JLabel(iconFor(n.getSource()));
-        ic.setFont(ic.getFont().deriveFont(18f));
-        ic.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+        JLabel ic = null;
+        String icon = iconFor(n.getSource());
+        if (icon != null && !icon.isBlank()) {
+            ic = new JLabel(icon);
+            ic.setFont(ic.getFont().deriveFont(18f));
+            ic.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+        }
 
         JPanel center = new JPanel();
         center.setOpaque(false);
@@ -547,7 +826,20 @@ public class SecretaireDashboardPanel extends JPanel {
         right.add(Box.createVerticalStrut(6));
         right.add(status);
 
-        card.add(ic, BorderLayout.WEST);
+        if (!n.isLue() && notificationController != null && n.getId() != null) {
+            DentalButton mark = new DentalButton("Marquer lue");
+            mark.setFont(DentalTheme.textFont(11));
+            mark.addActionListener(e -> {
+                notificationController.markAsRead(n.getId());
+                reload();
+            });
+            right.add(Box.createVerticalStrut(6));
+            right.add(mark);
+        }
+
+        if (ic != null) {
+            card.add(ic, BorderLayout.WEST);
+        }
         card.add(center, BorderLayout.CENTER);
         card.add(right, BorderLayout.EAST);
         return card;
@@ -557,14 +849,14 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel row = new JPanel(new BorderLayout(10, 0));
         row.setOpaque(false);
 
-        JLabel dot = new JLabel(big ? "✅" : "📌");
+        JLabel dot = new JLabel(big ? "*" : "-");
         dot.setFont(dot.getFont().deriveFont(16f));
 
         JPanel center = new JPanel();
         center.setOpaque(false);
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 
-        String line = firstNonBlank(safe(n.getTitre()), safe(n.getMessage()), "Activité");
+        String line = firstNonBlank(safe(n.getTitre()), safe(n.getMessage()), "Activite");
         JLabel txt = new JLabel("<html><div style='width:" + (big ? "520" : "360") + "px;'>" + escapeHtml(line) + "</div></html>");
         txt.setForeground(DentalTheme.TEXT);
         txt.setFont(DentalTheme.textFont(big ? 13 : 12));
@@ -598,9 +890,15 @@ public class SecretaireDashboardPanel extends JPanel {
         b.setBackground(DentalTheme.CARD);
     }
 
-    private static <T> T getBeanOrNull(Class<T> type) {
+    private static <T> T getBeanOrNull(Class<T> type, String name) {
         try {
-            return ApplicationContext.getBean(type);
+            T v = ApplicationContext.getBean(type);
+            if (v != null) return v;
+            if (name != null && !name.isBlank()) {
+                T byName = ApplicationContext.getBeanByName(name, type);
+                if (byName != null) return byName;
+            }
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -609,14 +907,7 @@ public class SecretaireDashboardPanel extends JPanel {
     // ---------------- HELPERS ----------------
 
     private String iconFor(String src) {
-        if (src == null) return "🔔";
-        switch (src.toUpperCase()) {
-            case "AGENDA": return "📅";
-            case "CAISSE": return "💰";
-            case "DOSSIER": return "📁";
-            case "SYSTEM": return "⚙️";
-            default: return "🔔";
-        }
+        return "";
     }
 
     private String timeAgo(LocalDateTime dt) {
@@ -632,6 +923,18 @@ public class SecretaireDashboardPanel extends JPanel {
 
     private String escapeHtml(String s) {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private String patientLabel(PatientListDto p) {
+        if (p == null) return "";
+        String nom = safe(p.getNomComplet());
+        String tel = safe(p.getTelephone());
+        if (!tel.isBlank()) return nom + " (" + tel + ")";
+        return nom;
+    }
+
+    private String formatHeure(java.time.LocalTime t) {
+        return t == null ? "" : t.toString();
     }
 
     private static String safe(String s) { return (s == null) ? "" : s; }
