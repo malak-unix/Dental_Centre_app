@@ -29,6 +29,8 @@ public class ListeAttenteServiceImpl implements ListeAttenteService {
         if (l == null) throw new IllegalArgumentException("ListeAttente null");
         if (l.getNom() == null || l.getNom().isBlank())
             throw new IllegalArgumentException("nom obligatoire");
+        if (l.getDateAjout() == null) l.setDateAjout(java.time.LocalDateTime.now());
+        if (l.getPriorite() == null || l.getPriorite().isBlank()) l.setPriorite("NORMALE");
         listeRepo.create(l); // ou insert(l) si votre repo utilise insert
     }
 

@@ -221,6 +221,29 @@ public class RdvRepositoryImpl implements RdvRepository {
     }
 
     @Override
+    public boolean updateStatus(Long rdvId, EtatRendezVous statut, String modifiePar) {
+        if (rdvId == null || statut == null) return false;
+
+        String sql = """
+            UPDATE rdv
+               SET statut = ?, modifie_par = ?
+             WHERE id = ?
+            """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, statut.name());
+            ps.setString(2, modifiePar);
+            ps.setLong(3, rdvId);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur updateStatus() RDV, id=" + rdvId, e);
+        }
+    }
+
+    @Override
     public List<RDV> findByMedecinAndDate(Long medecinId, LocalDate date) {
         if (medecinId == null || date == null) return new ArrayList<>();
 
@@ -252,6 +275,97 @@ public class RdvRepositoryImpl implements RdvRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findByMedecinAndDate(RDV)", e);
+        }
+    }
+
+    @Override
+    public void createAndLockPlage(RDV r, Long plageId) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
+        if (plageId == null) throw new IllegalArgumentException("plageId obligatoire");
+
+        String insertSql = """
+                INSERT INTO rdv
+                (patient_id, detail_journee_id, liste_attente_id, date_rdv, heure, motif, statut, note_medecin, cree_par, modifie_par)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+        String lockSql = "UPDATE plage_horaire SET disponible = 0 WHERE id = ? AND disponible = 1";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection()) {
+            cn.setAutoCommit(false);
+
+            try (PreparedStatement ps = cn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setObject(1, r.getPatientId(), Types.BIGINT);
+                ps.setObject(2, r.getDetailJourneeId(), Types.BIGINT);
+                ps.setObject(3, r.getListeAttenteId(), Types.BIGINT);
+                ps.setDate(4, Date.valueOf(r.getDateRdv()));
+                ps.setTime(5, r.getHeure() != null ? Time.valueOf(r.getHeure()) : null);
+                ps.setString(6, r.getMotif());
+                ps.setString(7, r.getStatut() == null ? EtatRendezVous.PLANIFIE.name() : r.getStatut().name());
+                ps.setString(8, r.getNoteMedecin());
+                ps.setString(9, r.getCreePar());
+                ps.setString(10, r.getModifiePar());
+
+                ps.executeUpdate();
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) r.setId(keys.getLong(1));
+                }
+            }
+
+            try (PreparedStatement ps = cn.prepareStatement(lockSql)) {
+                ps.setLong(1, plageId);
+                int updated = ps.executeUpdate();
+                if (updated == 0) {
+                    cn.rollback();
+                    throw new RuntimeException("Plage deja occupee");
+                }
+            }
+
+            cn.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur createAndLockPlage() RDV", e);
+        }
+    }
+
+    @Override
+    public void deleteAndFreePlage(Long rdvId) {
+        if (rdvId == null) throw new IllegalArgumentException("rdvId obligatoire");
+
+        String selectSql = "SELECT detail_journee_id, heure FROM rdv WHERE id = ?";
+        String deleteSql = "DELETE FROM rdv WHERE id = ?";
+        String freeSql = "UPDATE plage_horaire SET disponible = 1 WHERE detail_journee_id = ? AND heure_debut = ?";
+
+        try (Connection cn = SessionFactory.getInstance().getConnection()) {
+            cn.setAutoCommit(false);
+
+            Long detailId;
+            Time heure;
+
+            try (PreparedStatement ps = cn.prepareStatement(selectSql)) {
+                ps.setLong(1, rdvId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        cn.rollback();
+                        throw new RuntimeException("RDV introuvable");
+                    }
+                    detailId = rs.getLong(1);
+                    heure = rs.getTime(2);
+                }
+            }
+
+            try (PreparedStatement ps = cn.prepareStatement(deleteSql)) {
+                ps.setLong(1, rdvId);
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = cn.prepareStatement(freeSql)) {
+                ps.setLong(1, detailId);
+                ps.setTime(2, heure);
+                ps.executeUpdate();
+            }
+
+            cn.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur deleteAndFreePlage() RDV", e);
         }
     }
 

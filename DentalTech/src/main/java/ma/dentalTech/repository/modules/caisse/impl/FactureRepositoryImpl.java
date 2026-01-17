@@ -71,8 +71,8 @@ public class FactureRepositoryImpl implements FactureRepository {
     @Override
     public void create(Facture f) {
         String sql = """
-            INSERT INTO facture (consultation_id, date_facture, total_facture, total_paye, statut, cree_par, modifie_par)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO facture (consultation_id, date_facture, total_facture, total_paye, reste, statut, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
@@ -82,9 +82,14 @@ public class FactureRepositoryImpl implements FactureRepository {
             ps.setDate(2, f.getDateFacture() != null ? Date.valueOf(f.getDateFacture()) : null);
             ps.setDouble(3, f.getTotalFacture() == null ? 0.0 : f.getTotalFacture());
             ps.setDouble(4, f.getTotalPaye() == null ? 0.0 : f.getTotalPaye());
-            ps.setString(5, f.getStatut() != null ? f.getStatut().name() : StatutFacture.NON_PAYEE.name());
-            ps.setString(6, f.getCreePar());
-            ps.setString(7, f.getModifiePar());
+            double totalFacture = f.getTotalFacture() == null ? 0.0 : f.getTotalFacture();
+            double totalPaye = f.getTotalPaye() == null ? 0.0 : f.getTotalPaye();
+            double reste = totalFacture - totalPaye;
+
+            ps.setDouble(5, reste);
+            ps.setString(6, f.getStatut() != null ? f.getStatut().name() : StatutFacture.NON_PAYEE.name());
+            ps.setString(7, f.getCreePar());
+            ps.setString(8, f.getModifiePar());
 
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -102,7 +107,7 @@ public class FactureRepositoryImpl implements FactureRepository {
 
         String sql = """
             UPDATE facture
-               SET consultation_id = ?, date_facture = ?, total_facture = ?, total_paye = ?, statut = ?, modifie_par = ?
+               SET consultation_id = ?, date_facture = ?, total_facture = ?, total_paye = ?, reste = ?, statut = ?, modifie_par = ?
              WHERE id = ?
             """;
 
@@ -111,11 +116,16 @@ public class FactureRepositoryImpl implements FactureRepository {
 
             ps.setObject(1, f.getConsultationId(), Types.BIGINT);
             ps.setDate(2, f.getDateFacture() != null ? Date.valueOf(f.getDateFacture()) : null);
-            ps.setDouble(3, f.getTotalFacture() == null ? 0.0 : f.getTotalFacture());
-            ps.setDouble(4, f.getTotalPaye() == null ? 0.0 : f.getTotalPaye());
-            ps.setString(5, f.getStatut() != null ? f.getStatut().name() : null);
-            ps.setString(6, f.getModifiePar());
-            ps.setLong(7, f.getId());
+            double totalFacture = f.getTotalFacture() == null ? 0.0 : f.getTotalFacture();
+            double totalPaye = f.getTotalPaye() == null ? 0.0 : f.getTotalPaye();
+            double reste = totalFacture - totalPaye;
+
+            ps.setDouble(3, totalFacture);
+            ps.setDouble(4, totalPaye);
+            ps.setDouble(5, reste);
+            ps.setString(6, f.getStatut() != null ? f.getStatut().name() : null);
+            ps.setString(7, f.getModifiePar());
+            ps.setLong(8, f.getId());
 
             ps.executeUpdate();
 
@@ -365,6 +375,7 @@ public class FactureRepositoryImpl implements FactureRepository {
         String sql = """
         UPDATE facture
            SET total_paye = ?,
+               reste = (total_facture - ?),
                statut = ?,
                modifie_par = ?
          WHERE id = ?
@@ -374,9 +385,10 @@ public class FactureRepositoryImpl implements FactureRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setDouble(1, totalPaye);
-            ps.setString(2, (statut == null ? StatutFacture.NON_PAYEE.name() : statut.name()));
-            ps.setString(3, modifiePar);
-            ps.setLong(4, factureId);
+            ps.setDouble(2, totalPaye);
+            ps.setString(3, (statut == null ? StatutFacture.NON_PAYEE.name() : statut.name()));
+            ps.setString(4, modifiePar);
+            ps.setLong(5, factureId);
 
             return ps.executeUpdate() > 0;
 

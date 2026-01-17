@@ -11,6 +11,10 @@ public final class ListeAttenteMapper {
         return ListeAttenteDto.builder()
                 .id(e.getId())
                 .nom(e.getNom())
+                .patientId(e.getPatientId())
+                .motif(e.getMotif())
+                .dateAjout(e.getDateAjout())
+                .priorite(e.getPriorite())
                 .build();
     }
 
@@ -19,6 +23,10 @@ public final class ListeAttenteMapper {
         return ListeAttente.builder()
                 .id(d.getId())
                 .nom(d.getNom())
+                .patientId(d.getPatientId())
+                .motif(d.getMotif())
+                .dateAjout(d.getDateAjout())
+                .priorite(d.getPriorite())
                 .build();
     }
 }

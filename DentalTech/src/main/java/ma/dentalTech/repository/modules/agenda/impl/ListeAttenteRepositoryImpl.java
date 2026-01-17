@@ -48,15 +48,21 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
 
     @Override
     public void create(ListeAttente l) {
-        String sql = "INSERT INTO liste_attente (nom, cree_par, modifie_par) VALUES (?, ?, ?)";
+        String sql = """
+            INSERT INTO liste_attente (patient_id, nom, motif, date_ajout, priorite, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, l.getNom()
-            );
-            ps.setString(2, l.getCreePar());
-            ps.setString(3, l.getModifiePar());
+            ps.setObject(1, l.getPatientId(), Types.BIGINT);
+            ps.setString(2, l.getNom());
+            ps.setString(3, l.getMotif());
+            ps.setTimestamp(4, l.getDateAjout() != null ? Timestamp.valueOf(l.getDateAjout()) : null);
+            ps.setString(5, l.getPriorite());
+            ps.setString(6, l.getCreePar());
+            ps.setString(7, l.getModifiePar());
 
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -72,15 +78,22 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
     public void update(ListeAttente l) {
         if (l.getId() == null) throw new IllegalArgumentException("id obligatoire");
 
-        String sql = "UPDATE liste_attente SET nom = ?, modifie_par = ? WHERE id = ?";
+        String sql = """
+            UPDATE liste_attente
+               SET patient_id = ?, nom = ?, motif = ?, date_ajout = ?, priorite = ?, modifie_par = ?
+             WHERE id = ?
+            """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, l.getNom()
-            );
-            ps.setString(2, l.getModifiePar());
-            ps.setLong(3, l.getId());
+            ps.setObject(1, l.getPatientId(), Types.BIGINT);
+            ps.setString(2, l.getNom());
+            ps.setString(3, l.getMotif());
+            ps.setTimestamp(4, l.getDateAjout() != null ? Timestamp.valueOf(l.getDateAjout()) : null);
+            ps.setString(5, l.getPriorite());
+            ps.setString(6, l.getModifiePar());
+            ps.setLong(7, l.getId());
 
             ps.executeUpdate();
 
@@ -135,10 +148,8 @@ public class ListeAttenteRepositoryImpl implements ListeAttenteRepository {
         // "actifs" = patients en attente aujourd'hui (rdv rattachés à une liste d'attente)
         String sql = """
         SELECT COUNT(*)
-        FROM rdv
-        WHERE date_rdv = CURDATE()
-          AND liste_attente_id IS NOT NULL
-          AND statut = 'PLANIFIE'
+        FROM liste_attente
+        WHERE DATE(date_ajout) = CURDATE()
     """;
 
         try (Connection cn = SessionFactory.getInstance().getConnection();

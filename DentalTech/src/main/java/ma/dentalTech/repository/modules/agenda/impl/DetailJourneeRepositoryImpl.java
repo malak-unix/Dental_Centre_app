@@ -187,6 +187,30 @@ public class DetailJourneeRepositoryImpl implements DetailJourneeRepository {
         }
     }
 
+    @Override
+    public List<DetailJournee> findByAgendaIdAndDateBetween(Long agendaId, LocalDate start, LocalDate end) {
+        if (agendaId == null || start == null || end == null) return List.of();
+
+        String sql = "SELECT * FROM detail_journee WHERE agenda_id = ? AND date_jour BETWEEN ? AND ? ORDER BY date_jour";
+        List<DetailJournee> list = new ArrayList<>();
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, agendaId);
+            ps.setDate(2, Date.valueOf(start));
+            ps.setDate(3, Date.valueOf(end));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(RowMappers.mapDetailJournee(rs));
+            }
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByAgendaIdAndDateBetween()", e);
+        }
+    }
+
     private String toSqlEtatJour(StatutJournee etat) {
         // DB ENUM: ('OUVERT','FERME','FERIE','VACANCES')
         return (etat == null) ? "OUVERT" : etat.name();

@@ -11,4 +11,6 @@ public interface DetailJourneeRepository extends CrudRepository<DetailJournee, L
     List<DetailJournee> findByAgendaId(Long agendaId);
 
     DetailJournee findByAgendaIdAndDateJour(Long agendaId, LocalDate dateJour);
+
+    List<DetailJournee> findByAgendaIdAndDateBetween(Long agendaId, LocalDate start, LocalDate end);
 }

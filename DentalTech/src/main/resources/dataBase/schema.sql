@@ -492,6 +492,76 @@ CREATE TABLE IF NOT EXISTS plage_horaire (
       ON DELETE CASCADE
 );
 
+-- =========================================================
+--  LISTE D'ATTENTE (BaseEntity)
+-- =========================================================
+CREATE TABLE liste_attente (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  patient_id BIGINT,
+  nom VARCHAR(200) NOT NULL,
+  motif VARCHAR(255),
+  date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
+  priorite VARCHAR(20) DEFAULT 'NORMALE',
+  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  cree_par VARCHAR(100),
+  modifie_par VARCHAR(100),
+  CONSTRAINT fk_liste_attente_patient
+    FOREIGN KEY (patient_id) REFERENCES patient(id)
+    ON DELETE SET NULL
+);
+
+-- =========================================================
+--  RDV (BaseEntity)
+-- =========================================================
+CREATE TABLE rdv (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  patient_id BIGINT NOT NULL,
+  detail_journee_id BIGINT NOT NULL,
+  liste_attente_id BIGINT,
+  date_rdv DATE NOT NULL,
+  heure TIME NOT NULL,
+  motif VARCHAR(255),
+  statut ENUM('PLANIFIE','CONFIRME','TERMINE','ANNULE') DEFAULT 'PLANIFIE',
+  note_medecin TEXT,
+  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  cree_par VARCHAR(100),
+  modifie_par VARCHAR(100),
+  CONSTRAINT fk_rdv_patient
+    FOREIGN KEY (patient_id) REFERENCES patient(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_rdv_detail_journee
+    FOREIGN KEY (detail_journee_id) REFERENCES detail_journee(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_rdv_liste_attente
+    FOREIGN KEY (liste_attente_id) REFERENCES liste_attente(id)
+    ON DELETE SET NULL
+);
+
+CREATE INDEX idx_rdv_date ON rdv(date_rdv);
+CREATE INDEX idx_rdv_patient ON rdv(patient_id);
+
+-- =========================================================
+--  FACTURE (BaseEntity)
+-- =========================================================
+CREATE TABLE facture (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  consultation_id BIGINT,
+  date_facture DATE NOT NULL,
+  total_facture DECIMAL(12,2) DEFAULT 0,
+  total_paye DECIMAL(12,2) DEFAULT 0,
+  reste DECIMAL(12,2) DEFAULT 0,
+  statut ENUM('PAYEE','PARTIEL','NON_PAYEE') DEFAULT 'NON_PAYEE',
+  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  cree_par VARCHAR(100),
+  modifie_par VARCHAR(100),
+  CONSTRAINT fk_facture_consultation
+    FOREIGN KEY (consultation_id) REFERENCES consultation(id)
+    ON DELETE SET NULL
+);
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =========================================================

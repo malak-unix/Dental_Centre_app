@@ -10,22 +10,25 @@ import ma.dentalTech.mvc.ui.common.DentalTheme;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.lang.reflect.Method;
 import java.util.List;
 
 public class ListeAttentePagePanel extends JPanel {
 
     private final ListeAttenteController controller;
 
-    private final DefaultTableModel model = new DefaultTableModel(new Object[]{"ID", "Nom"}, 0) {
+    private final DefaultTableModel model = new DefaultTableModel(
+            new Object[]{"ID", "Patient", "Motif", "Priorite", "Date ajout"}, 0
+    ) {
         @Override public boolean isCellEditable(int row, int column) { return false; }
     };
 
     private final JTable table = new JTable(model);
+    private final JLabel emptyLabel = new JLabel("Aucune entree en liste d'attente.");
 
     private final JTextField tfSearch = new JTextField();
     private final DentalButton btnSearch = new DentalButton("Rechercher");
-    private final DentalButton btnRefresh = new DentalButton("Rafraîchir");
+    private final DentalButton btnRefresh = new DentalButton("Rafraichir");
+    private final DentalButton btnAdd = new DentalButton("Ajouter");
 
     private final DentalButton btnProgrammer = new DentalButton("Programmer");
     private final DentalButton btnSupprimer = new DentalButton("Supprimer");
@@ -62,25 +65,21 @@ public class ListeAttentePagePanel extends JPanel {
         bar.setOpaque(false);
         bar.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // gauche : recherche
         JPanel left = new JPanel(new BorderLayout(10, 0));
         left.setOpaque(false);
-
         JLabel lNom = new JLabel("Nom:");
         lNom.setFont(DentalTheme.textBold(12));
         lNom.setForeground(DentalTheme.TEXT2);
-
         tfSearch.setPreferredSize(new Dimension(360, 34));
         tfSearch.setFont(DentalTheme.textFont(12));
-
         left.add(lNom, BorderLayout.WEST);
         left.add(tfSearch, BorderLayout.CENTER);
 
-        // droite : boutons
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setOpaque(false);
         right.add(btnSearch);
         right.add(btnRefresh);
+        right.add(btnAdd);
 
         bar.add(left, BorderLayout.CENTER);
         bar.add(right, BorderLayout.EAST);
@@ -93,7 +92,7 @@ public class ListeAttentePagePanel extends JPanel {
     }
 
     private JComponent buildCenter() {
-        CardPanel results = new CardPanel("Résultats");
+        CardPanel results = new CardPanel("Resultats");
         results.setLayout(new BorderLayout());
 
         table.setRowHeight(28);
@@ -104,16 +103,19 @@ public class ListeAttentePagePanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
 
         results.add(sp, BorderLayout.CENTER);
+        emptyLabel.setFont(DentalTheme.textFont(12));
+        emptyLabel.setForeground(DentalTheme.MUTED);
+        emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        emptyLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        results.add(emptyLabel, BorderLayout.SOUTH);
         return results;
     }
 
     private JComponent buildBottom() {
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         bottom.setOpaque(false);
-
         bottom.add(btnProgrammer);
         bottom.add(btnSupprimer);
-
         return bottom;
     }
 
@@ -129,6 +131,22 @@ public class ListeAttentePagePanel extends JPanel {
             }
         });
 
+        btnAdd.addActionListener(e -> {
+            AddDialog.Result res = AddDialog.open(this);
+            if (res == null) return;
+
+            ListeAttenteDto dto = ListeAttenteDto.builder()
+                    .patientId(res.patientId)
+                    .nom(res.nom)
+                    .motif(res.motif)
+                    .priorite(res.priorite)
+                    .build();
+
+            controller.create(dto);
+            loadAll();
+            JOptionPane.showMessageDialog(this, "Patient ajoute a la liste d'attente.", "OK", JOptionPane.INFORMATION_MESSAGE);
+        });
+
         btnSupprimer.addActionListener(e -> {
             Long id = selectedId();
             if (id == null) return;
@@ -141,36 +159,21 @@ public class ListeAttentePagePanel extends JPanel {
             );
             if (ok != JOptionPane.YES_OPTION) return;
 
-            // ✅ Appel dynamique: supprimer(Long) si tu l’ajoutes plus tard
-            if (!invokeIfExists(controller, new String[]{"supprimer", "delete", "remove"}, new Class[]{Long.class}, new Object[]{id})) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Action non disponible.\nAjoute une méthode supprimer(Long id) dans ListeAttenteController + Service.",
-                        "Info",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                return;
-            }
-
+            controller.deleteById(id);
             loadAll();
+            JOptionPane.showMessageDialog(this, "Entree supprimee.", "OK", JOptionPane.INFORMATION_MESSAGE);
         });
 
         btnProgrammer.addActionListener(e -> {
             Long id = selectedId();
             if (id == null) return;
 
-            // ✅ Appel dynamique: programmer(Long) si tu l’ajoutes plus tard
-            if (!invokeIfExists(controller, new String[]{"programmer", "planifier", "proposerRdv"}, new Class[]{Long.class}, new Object[]{id})) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Action non disponible.\nAjoute une méthode programmer(Long idListeAttente) dans ListeAttenteController + Service.",
-                        "Info",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                return;
-            }
+            ProgramDialog.Result res = ProgramDialog.open(this);
+            if (res == null) return;
 
+            controller.programmer(id, res.patientId, res.medecinId, res.date, res.heure, res.motif);
             loadAll();
+            JOptionPane.showMessageDialog(this, "RDV programme et entree retiree.", "OK", JOptionPane.INFORMATION_MESSAGE);
         });
     }
 
@@ -196,16 +199,29 @@ public class ListeAttentePagePanel extends JPanel {
 
     private void fill(List<ListeAttenteDto> list) {
         model.setRowCount(0);
-        if (list == null) return;
+        if (list == null || list.isEmpty()) {
+            emptyLabel.setVisible(true);
+            return;
+        }
+        emptyLabel.setVisible(false);
         for (ListeAttenteDto l : list) {
-            model.addRow(new Object[]{l.getId(), l.getNom()});
+            String label = (l.getPatientNom() != null && !l.getPatientNom().isBlank())
+                    ? l.getPatientNom()
+                    : l.getNom();
+            model.addRow(new Object[]{
+                    l.getId(),
+                    label,
+                    l.getMotif(),
+                    l.getPriorite(),
+                    l.getDateAjout()
+            });
         }
     }
 
     private Long selectedId() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Sélectionne une ligne d’abord.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Selectionne une ligne d'abord.", "Info", JOptionPane.INFORMATION_MESSAGE);
             return null;
         }
         Object v = model.getValueAt(row, 0);
@@ -213,18 +229,192 @@ public class ListeAttentePagePanel extends JPanel {
         return Long.valueOf(v.toString());
     }
 
-    private static boolean invokeIfExists(Object target, String[] names, Class<?>[] types, Object[] args) {
-        if (target == null) return false;
-        for (String n : names) {
-            try {
-                Method m = target.getClass().getMethod(n, types);
-                m.invoke(target, args);
-                return true;
-            } catch (NoSuchMethodException ignored) {
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
+    private static class AddDialog extends JDialog {
+        static class Result {
+            Long patientId;
+            String nom;
+            String motif;
+            String priorite;
         }
-        return false;
+
+        private Result result;
+
+        static Result open(Component parent) {
+            AddDialog d = new AddDialog(SwingUtilities.getWindowAncestor(parent));
+            d.setVisible(true);
+            return d.result;
+        }
+
+        AddDialog(Window owner) {
+            super(owner, "Ajouter a la liste d'attente", ModalityType.APPLICATION_MODAL);
+            setLayout(new BorderLayout(10, 10));
+
+            JComboBox<PatientItem> cbPatient = new JComboBox<>(loadPatients());
+            JTextField tfNom = new JTextField();
+            JTextField tfMotif = new JTextField();
+            JComboBox<String> cbPriorite = new JComboBox<>(new String[]{"NORMALE", "HAUTE", "BASSE"});
+
+            JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+            form.add(new JLabel("Patient"));
+            form.add(cbPatient);
+            form.add(new JLabel("Libelle"));
+            form.add(tfNom);
+            form.add(new JLabel("Motif"));
+            form.add(tfMotif);
+            form.add(new JLabel("Priorite"));
+            form.add(cbPriorite);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton cancel = new JButton("Annuler");
+            JButton save = new JButton("Ajouter");
+            actions.add(cancel);
+            actions.add(save);
+
+            cancel.addActionListener(e -> {
+                result = null;
+                dispose();
+            });
+            save.addActionListener(e -> {
+                PatientItem p = (PatientItem) cbPatient.getSelectedItem();
+                String nom = tfNom.getText() == null ? "" : tfNom.getText().trim();
+                if (nom.isBlank() && p != null) nom = p.label;
+                if (p == null && nom.isBlank()) {
+                    JOptionPane.showMessageDialog(this, "Patient ou libelle obligatoire.");
+                    return;
+                }
+                result = new Result();
+                result.patientId = p != null ? p.id : null;
+                result.nom = nom;
+                result.motif = tfMotif.getText() == null ? null : tfMotif.getText().trim();
+                result.priorite = String.valueOf(cbPriorite.getSelectedItem());
+                dispose();
+            });
+
+            add(form, BorderLayout.CENTER);
+            add(actions, BorderLayout.SOUTH);
+            pack();
+            setSize(460, 240);
+            setLocationRelativeTo(owner);
+        }
+    }
+
+    private static class ProgramDialog extends JDialog {
+        static class Result {
+            Long patientId;
+            Long medecinId;
+            java.time.LocalDate date;
+            java.time.LocalTime heure;
+            String motif;
+        }
+
+        private Result result;
+
+        static Result open(Component parent) {
+            ProgramDialog d = new ProgramDialog(SwingUtilities.getWindowAncestor(parent));
+            d.setVisible(true);
+            return d.result;
+        }
+
+        ProgramDialog(Window owner) {
+            super(owner, "Programmer un rendez-vous", ModalityType.APPLICATION_MODAL);
+            setLayout(new BorderLayout(10, 10));
+
+            JComboBox<PatientItem> cbPatient = new JComboBox<>(loadPatients());
+            JComboBox<MedecinItem> cbMedecin = new JComboBox<>(loadMedecins());
+            JTextField tfDate = new JTextField(java.time.LocalDate.now().toString());
+            JComboBox<String> cbHeure = new JComboBox<>(new String[]{
+                    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
+            });
+            JTextField tfMotif = new JTextField("RDV");
+
+            JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+            form.add(new JLabel("Patient"));
+            form.add(cbPatient);
+            form.add(new JLabel("Medecin"));
+            form.add(cbMedecin);
+            form.add(new JLabel("Date (yyyy-MM-dd)"));
+            form.add(tfDate);
+            form.add(new JLabel("Heure"));
+            form.add(cbHeure);
+            form.add(new JLabel("Motif"));
+            form.add(tfMotif);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton cancel = new JButton("Annuler");
+            JButton save = new JButton("Programmer");
+            actions.add(cancel);
+            actions.add(save);
+
+            cancel.addActionListener(e -> {
+                result = null;
+                dispose();
+            });
+            save.addActionListener(e -> {
+                PatientItem p = (PatientItem) cbPatient.getSelectedItem();
+                MedecinItem m = (MedecinItem) cbMedecin.getSelectedItem();
+                if (p == null || m == null) {
+                    JOptionPane.showMessageDialog(this, "Patient et medecin obligatoires.");
+                    return;
+                }
+                result = new Result();
+                result.patientId = p.id;
+                result.medecinId = m.id;
+                result.date = java.time.LocalDate.parse(tfDate.getText().trim());
+                result.heure = java.time.LocalTime.parse(String.valueOf(cbHeure.getSelectedItem()));
+                result.motif = tfMotif.getText();
+                dispose();
+            });
+
+            add(form, BorderLayout.CENTER);
+            add(actions, BorderLayout.SOUTH);
+            pack();
+            setSize(520, 260);
+            setLocationRelativeTo(owner);
+        }
+    }
+
+    private static class PatientItem {
+        final Long id;
+        final String label;
+        PatientItem(Long id, String label) { this.id = id; this.label = label; }
+        @Override public String toString() { return label; }
+    }
+
+    private static class MedecinItem {
+        final Long id;
+        final String label;
+        MedecinItem(Long id, String label) { this.id = id; this.label = label; }
+        @Override public String toString() { return label; }
+    }
+
+    private static DefaultComboBoxModel<PatientItem> loadPatients() {
+        DefaultComboBoxModel<PatientItem> model = new DefaultComboBoxModel<>();
+        try {
+            var repo = new ma.dentalTech.repository.modules.patient.impl.PatientRepositoryImpl();
+            var list = repo.findAll();
+            if (list != null) {
+                for (var p : list) {
+                    String label = (p.getNom() + " " + p.getPrenom()).trim();
+                    model.addElement(new PatientItem(p.getId(), label));
+                }
+            }
+        } catch (Exception ignored) {}
+        return model;
+    }
+
+    private static DefaultComboBoxModel<MedecinItem> loadMedecins() {
+        DefaultComboBoxModel<MedecinItem> model = new DefaultComboBoxModel<>();
+        try {
+            var repo = new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
+            var list = repo.findAll();
+            if (list != null) {
+                for (var m : list) {
+                    String label = (m.getNom() + " " + m.getPrenom()).trim();
+                    model.addElement(new MedecinItem(m.getId(), label));
+                }
+            }
+        } catch (Exception ignored) {}
+        return model;
     }
 }

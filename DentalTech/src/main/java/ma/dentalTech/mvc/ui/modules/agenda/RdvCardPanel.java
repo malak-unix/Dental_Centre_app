@@ -8,11 +8,14 @@ import java.awt.*;
 
 public class RdvCardPanel extends JPanel {
 
+    private final Long rdvId;
     private final String title;
     private final String time;
     private final String status;
+    private boolean selected = false;
 
-    public RdvCardPanel(String title, String time, String status) {
+    public RdvCardPanel(Long rdvId, String title, String time, String status) {
+        this.rdvId = rdvId;
         this.title = title;
         this.time = time;
         this.status = status;
@@ -32,7 +35,7 @@ public class RdvCardPanel extends JPanel {
 
         JLabel s = new JLabel(status);
         s.setFont(DentalTheme.textFont(11));
-        s.setForeground(DentalTheme.MUTED);
+        s.setForeground(colorForStatus(status));
 
         JPanel box = new JPanel();
         box.setOpaque(false);
@@ -44,6 +47,15 @@ public class RdvCardPanel extends JPanel {
         box.add(s);
 
         add(box, BorderLayout.CENTER);
+    }
+
+    public Long getRdvId() {
+        return rdvId;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+        repaint();
     }
 
     @Override
@@ -62,7 +74,10 @@ public class RdvCardPanel extends JPanel {
         g2.fillRoundRect(3, 3, w - 6, h - 6, arc, arc);
 
         // card fill
-        g2.setColor(new Color(0xF7, 0xF2, 0xEC));
+        Color fill = colorForStatus(status);
+        if (fill == null) fill = new Color(0xF7, 0xF2, 0xEC);
+        if (selected) fill = fill.darker();
+        g2.setColor(fill);
         g2.fillRoundRect(0, 0, w - 6, h - 6, arc, arc);
 
         // gold stroke
@@ -71,5 +86,17 @@ public class RdvCardPanel extends JPanel {
         g2.drawRoundRect(0, 0, w - 6, h - 6, arc, arc);
 
         g2.dispose();
+    }
+
+    private Color colorForStatus(String s) {
+        if (s == null) return null;
+        String v = s.trim().toUpperCase();
+        return switch (v) {
+            case "PLANIFIE" -> new Color(0xF8, 0xE6, 0xCC);
+            case "CONFIRME" -> new Color(0xD6, 0xF0, 0xE0);
+            case "TERMINE" -> new Color(0xD8, 0xE6, 0xF8);
+            case "ANNULE" -> new Color(0xF1, 0xD6, 0xD6);
+            default -> null;
+        };
     }
 }

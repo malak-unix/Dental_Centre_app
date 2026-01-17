@@ -30,6 +30,7 @@ public class CaisseFacturesPanel extends JPanel {
 
     private final CaisseFacturesTableModel model = new CaisseFacturesTableModel();
     private final JTable table = new JTable(model);
+    private final JLabel emptyLabel = new JLabel("Aucune facture.");
 
     private final JLabel vTotalFactures = kpiValue();
     private final JLabel vTotalPaye = kpiValue();
@@ -98,6 +99,11 @@ public class CaisseFacturesPanel extends JPanel {
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
         card.add(sp, BorderLayout.CENTER);
+        emptyLabel.setFont(DentalTheme.textFont(12));
+        emptyLabel.setForeground(DentalTheme.MUTED);
+        emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        emptyLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        card.add(emptyLabel, BorderLayout.SOUTH);
 
         FactureActionsColumn.install(
                 table,
@@ -161,6 +167,7 @@ public class CaisseFacturesPanel extends JPanel {
     private void refreshData() {
         if (controller == null) {
             model.setRows(List.of());
+            emptyLabel.setVisible(true);
             vTotalFactures.setText("0");
             vTotalPaye.setText("—");
             vTotalImpaye.setText("—");
@@ -181,6 +188,7 @@ public class CaisseFacturesPanel extends JPanel {
 
             List<CaisseFactureRowDTO> list = controller.listBetween(start, end);
             model.setRows(list);
+            emptyLabel.setVisible(list == null || list.isEmpty());
 
             double total = (list == null) ? 0.0 : list.stream().mapToDouble(x -> n(x.getTotalFacture())).sum();
             double paye  = (list == null) ? 0.0 : list.stream().mapToDouble(x -> n(x.getTotalPaye())).sum();
@@ -283,3 +291,5 @@ public class CaisseFacturesPanel extends JPanel {
         cb.setBackground(Color.WHITE);
     }
 }
+
+

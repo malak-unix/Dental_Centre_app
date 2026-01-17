@@ -11,12 +11,11 @@ import java.util.stream.Collectors;
 
 public class RoleRepositoryImpl implements RoleRepository {
 
-    // ✅ Gardé uniquement pour compatibilité injection (ApplicationContext / RepoFactory)
     @SuppressWarnings("unused")
     private final Connection connection;
 
     public RoleRepositoryImpl(Connection connection) {
-        this.connection = connection; // pas utilisé
+        this.connection = connection; // not used
     }
 
     public RoleRepositoryImpl() {
@@ -35,7 +34,6 @@ public class RoleRepositoryImpl implements RoleRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapResultSetToRole(rs) : null;
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findById(Role) id=" + id, e);
         }
@@ -53,7 +51,6 @@ public class RoleRepositoryImpl implements RoleRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? Optional.of(mapResultSetToRole(rs)) : Optional.empty();
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findByType(Role) type=" + type, e);
         }
@@ -71,7 +68,6 @@ public class RoleRepositoryImpl implements RoleRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? Optional.of(mapResultSetToRole(rs)) : Optional.empty();
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findByLibelle(Role) libelle=" + libelle, e);
         }
@@ -89,7 +85,6 @@ public class RoleRepositoryImpl implements RoleRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur existsByLibelle(Role) libelle=" + libelle, e);
         }
@@ -116,7 +111,6 @@ public class RoleRepositoryImpl implements RoleRepository {
                         .distinct()
                         .collect(Collectors.toList());
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur getPrivileges(Role) roleId=" + roleId, e);
         }
@@ -165,7 +159,6 @@ public class RoleRepositoryImpl implements RoleRepository {
 
             ps.setLong(2, roleId);
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur updatePrivilegesCsv(Role) roleId=" + roleId, e);
         }
@@ -193,7 +186,6 @@ public class RoleRepositoryImpl implements RoleRepository {
                 while (rs.next()) roles.add(mapResultSetToRole(rs));
             }
             return roles;
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findRolesByUtilisateurId(Role) userId=" + utilisateurId, e);
         }
@@ -204,14 +196,12 @@ public class RoleRepositoryImpl implements RoleRepository {
         if (utilisateurId == null || roleId == null) return;
 
         String sql = "UPDATE utilisateur SET role_id = ? WHERE id = ?";
-
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, roleId);
             ps.setLong(2, utilisateurId);
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur assignRoleToUser userId=" + utilisateurId + " roleId=" + roleId, e);
         }
@@ -222,14 +212,12 @@ public class RoleRepositoryImpl implements RoleRepository {
         if (utilisateurId == null || roleId == null) return;
 
         String sql = "UPDATE utilisateur SET role_id = NULL WHERE id = ? AND role_id = ?";
-
         try (Connection cn = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, utilisateurId);
             ps.setLong(2, roleId);
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur removeRoleFromUser userId=" + utilisateurId + " roleId=" + roleId, e);
         }
@@ -246,7 +234,6 @@ public class RoleRepositoryImpl implements RoleRepository {
 
             while (rs.next()) roles.add(mapResultSetToRole(rs));
             return roles;
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findAll(Role)", e);
         }
@@ -259,13 +246,68 @@ public class RoleRepositoryImpl implements RoleRepository {
         String libStr = rs.getString("libelle");
         role.setLibelle(libStr != null ? LibelleRole.valueOf(libStr) : null);
 
-        role.setPrivileges(rs.getString("privileges")); // CSV brut
+        role.setPrivileges(rs.getString("privileges"));
         return role;
     }
 
-    // CRUD stubs (inchangés)
-    @Override public void create(Role role) {}
-    @Override public void update(Role role) {}
-    @Override public void delete(Role role) {}
-    @Override public void deleteById(Long id) {}
+    @Override
+    public void create(Role role) {
+        if (role == null || role.getLibelle() == null) return;
+
+        String sql = "INSERT INTO role (libelle, privileges, cree_par, modifie_par) VALUES (?, ?, ?, ?)";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, role.getLibelle().name());
+            ps.setString(2, role.getPrivileges());
+            ps.setString(3, role.getCreePar());
+            ps.setString(4, role.getModifiePar());
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) role.setId(keys.getLong(1));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur create(Role)", e);
+        }
+    }
+
+    @Override
+    public void update(Role role) {
+        if (role == null || role.getId() == null) return;
+
+        String sql = "UPDATE role SET libelle = ?, privileges = ?, modifie_par = ? WHERE id = ?";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, role.getLibelle() != null ? role.getLibelle().name() : null);
+            ps.setString(2, role.getPrivileges());
+            ps.setString(3, role.getModifiePar());
+            ps.setLong(4, role.getId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur update(Role) id=" + role.getId(), e);
+        }
+    }
+
+    @Override
+    public void delete(Role role) {
+        if (role == null || role.getId() == null) return;
+        deleteById(role.getId());
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        if (id == null) return;
+
+        String sql = "DELETE FROM role WHERE id = ?";
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur deleteById(Role) id=" + id, e);
+        }
+    }
 }

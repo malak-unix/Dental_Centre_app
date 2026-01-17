@@ -10,5 +10,9 @@ import ma.dentalTech.entities.base.BaseEntity;
 @SuperBuilder
 public class ListeAttente extends BaseEntity {
 
+    private Long patientId;
     private String nom;
+    private String motif;
+    private java.time.LocalDateTime dateAjout;
+    private String priorite;
 }

@@ -1,19 +1,31 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.secretaire;
 
 import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.mvc.controllers.modules.agenda.api.ListeAttenteController;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
+import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.mvc.controllers.modules.users.api.NotificationController;
 import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
+import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
 import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.patient.PatientFormDto;
+import ma.dentalTech.mvc.dto.patient.PatientListDto;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.modules.patient.PatientFormDialog;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -22,6 +34,9 @@ public class SecretaireDashboardPanel extends JPanel {
     private final DashboardController controller;
     private final Long userId;
     private final Consumer<String> navigate;
+    private final ListeAttenteController listeAttenteController;
+    private final NotificationController notificationController;
+    private final PatientController patientController;
 
     // Header
     private final JTextField searchField = new JTextField();
@@ -34,6 +49,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
     // File d'attente
     private final JPanel fileAttentePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
+    private final JLabel fileAttenteEmptyLabel = new JLabel("Aucun patient en attente aujourd'hui");
 
     // Notifications (après file d’attente)
     private final JPanel notificationsPanel = new JPanel();
@@ -42,7 +58,16 @@ public class SecretaireDashboardPanel extends JPanel {
 
     // Activités récentes (bas gauche + bas droite)
     private final JPanel activitiesLeft = new JPanel();
-    private final JPanel activitiesRight = new JPanel();
+
+    // RDV du jour
+    private final DefaultTableModel rdvModel = new DefaultTableModel(
+            new Object[]{"Heure", "Patient", "Statut"}, 0) {
+        @Override public boolean isCellEditable(int row, int column) { return false; }
+    };
+    private final JTable rdvTable = new JTable(rdvModel);
+    private final JPanel rdvCardPanel = new JPanel(new CardLayout());
+    private final JLabel rdvEmptyLabel = new JLabel("Aucun rendez-vous aujourd'hui");
+    private final List<RdvDto> rdvDuJourCache = new ArrayList<>();
 
     public SecretaireDashboardPanel(DashboardController controller, Long userId, Consumer<String> navigate) {
         this.controller = (controller != null)
@@ -50,6 +75,9 @@ public class SecretaireDashboardPanel extends JPanel {
                 : ApplicationContext.getBean(DashboardController.class);
         this.userId = userId;
         this.navigate = (navigate != null) ? navigate : (k -> {});
+        this.listeAttenteController = getBeanOrNull(ListeAttenteController.class);
+        this.notificationController = getBeanOrNull(NotificationController.class);
+        this.patientController = getBeanOrNull(PatientController.class);
 
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
@@ -65,6 +93,25 @@ public class SecretaireDashboardPanel extends JPanel {
         notificationsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         notificationsScroll.getVerticalScrollBar().setUnitIncrement(16);
         notificationsScroll.setPreferredSize(new Dimension(10, 220));
+
+        fileAttenteEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
+        rdvEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
+        rdvEmptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        rdvTable.setRowHeight(28);
+        rdvTable.setFillsViewportHeight(true);
+        rdvTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        rdvTable.getTableHeader().setReorderingAllowed(false);
+        rdvTable.setFont(DentalTheme.textFont(12));
+        rdvTable.getTableHeader().setFont(DentalTheme.textBold(12));
+        rdvTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && rdvTable.getSelectedRow() >= 0) {
+                    navigate.accept("rdv");
+                }
+            }
+        });
 
 
         add(buildMain(), BorderLayout.CENTER);
@@ -95,7 +142,7 @@ public class SecretaireDashboardPanel extends JPanel {
         ));
         searchField.setText("Rechercher un patient, ...");
 
-        JButton searchBtn = new JButton("🔎");
+        JButton searchBtn = new JButton("Rechercher");
         styleHeaderButton(searchBtn);
         searchBtn.addActionListener(e -> navigate.accept("patients"));
 
@@ -105,7 +152,7 @@ public class SecretaireDashboardPanel extends JPanel {
         // right profile (simple)
         JPanel profile = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         profile.setOpaque(false);
-        JLabel role = new JLabel("Secrétaire");
+        JLabel role = new JLabel("Secretaire");
         role.setFont(DentalTheme.textBold(13));
         role.setForeground(DentalTheme.PRIMARY_DARK);
 
@@ -119,7 +166,7 @@ public class SecretaireDashboardPanel extends JPanel {
         t.add(role);
         t.add(name);
 
-        JButton logout = new JButton("⤴");
+        JButton logout = new JButton("Deconnexion");
         styleHeaderButton(logout);
         logout.addActionListener(e -> navigate.accept("logout"));
 
@@ -143,6 +190,8 @@ public class SecretaireDashboardPanel extends JPanel {
         root.add(Box.createVerticalStrut(8));
         root.add(buildRevueDuJour());
         root.add(Box.createVerticalStrut(14));
+        root.add(buildRdvDuJourSection());
+        root.add(Box.createVerticalStrut(14));
 
         // File d’attente
         root.add(buildFileAttenteSection());
@@ -165,10 +214,10 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel cards = new JPanel(new GridLayout(1, 5, 12, 12));
         cards.setOpaque(false);
 
-        cards.add(statCard("Nb patients", vPatients, "📊"));
-        cards.add(statCard("Recette du jour", vRecette, "💰"));
-        cards.add(statCard("RDV du jour", vRdv, "📅"));
-        cards.add(statCard("Patients en attente", vAttente, "⏳"));
+        cards.add(statCard("Nb patients", vPatients, ""));
+        cards.add(statCard("Recette du jour", vRecette, ""));
+        cards.add(statCard("RDV du jour", vRdv, ""));
+        cards.add(statCard("Patients en attente", vAttente, ""));
 
         DentalButton stats = new DentalButton("Voir +statistiques");
         stats.addActionListener(e -> navigate.accept("caisse"));
@@ -181,6 +230,34 @@ public class SecretaireDashboardPanel extends JPanel {
         return container;
     }
 
+    private JComponent buildRdvDuJourSection() {
+        JPanel container = cardContainer();
+        container.setLayout(new BorderLayout(10, 10));
+
+        JLabel title = new JLabel("RDV du jour");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        rdvCardPanel.setOpaque(false);
+        rdvCardPanel.removeAll();
+
+        JScrollPane sp = new JScrollPane(rdvTable);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        JPanel emptyWrap = new JPanel(new GridBagLayout());
+        emptyWrap.setOpaque(false);
+        emptyWrap.add(rdvEmptyLabel);
+
+        rdvCardPanel.add(sp, "TABLE");
+        rdvCardPanel.add(emptyWrap, "EMPTY");
+
+        container.add(title, BorderLayout.NORTH);
+        container.add(rdvCardPanel, BorderLayout.CENTER);
+        return container;
+    }
+
     private JComponent buildFileAttenteSection() {
         JPanel container = cardContainer();
         container.setLayout(new BorderLayout(10, 10));
@@ -188,12 +265,12 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
 
-        JLabel title = new JLabel("FILE D’ATTENTE");
+        JLabel title = new JLabel("FILE D'ATTENTE");
         title.setFont(DentalTheme.titleFont(18));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         DentalButton addPatient = new DentalButton("+ Nouveau Patient");
-        addPatient.addActionListener(e -> navigate.accept("patients"));
+        addPatient.addActionListener(e -> openAddFileAttenteDialog());
 
         top.add(title, BorderLayout.WEST);
         top.add(addPatient, BorderLayout.EAST);
@@ -377,8 +454,11 @@ public class SecretaireDashboardPanel extends JPanel {
                 BorderFactory.createEmptyBorder(12, 12, 12, 12)
         ));
 
-        JLabel ic = new JLabel(icon);
-        ic.setFont(ic.getFont().deriveFont(22f));
+        JLabel ic = null;
+        if (icon != null && !icon.isBlank()) {
+            ic = new JLabel(icon);
+            ic.setFont(ic.getFont().deriveFont(22f));
+        }
 
         JLabel t = new JLabel(title);
         t.setFont(DentalTheme.textFont(12));
@@ -391,7 +471,9 @@ public class SecretaireDashboardPanel extends JPanel {
         center.add(Box.createVerticalStrut(6));
         center.add(value);
 
-        card.add(ic, BorderLayout.WEST);
+        if (ic != null) {
+            card.add(ic, BorderLayout.WEST);
+        }
         card.add(center, BorderLayout.CENTER);
         return card;
     }
@@ -514,6 +596,14 @@ public class SecretaireDashboardPanel extends JPanel {
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         b.setBackground(DentalTheme.CARD);
+    }
+
+    private static <T> T getBeanOrNull(Class<T> type) {
+        try {
+            return ApplicationContext.getBean(type);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ---------------- HELPERS ----------------

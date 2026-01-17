@@ -333,10 +333,12 @@ public final class ApplicationContext {
 // ✅ Controller Agenda (IMPORTANT: enregistrer aussi PAR TYPE + PAR NOM)
             if (hasKey(props, "agenda.controller")) {
                 currentBean = "agenda.controller";
+                AgendaService agendaServiceBean = getBean(AgendaService.class);
+
                 Object agendaCtrl = newFlexibleInstance(
                         props.getProperty("agenda.controller"),
                         known,
-                        agendaMensuelRepo, detailJourneeRepo
+                        agendaServiceBean
                 );
 
                 // ✅ FIX: put() pour type + name
@@ -379,10 +381,13 @@ public final class ApplicationContext {
 
             if (hasKey(props, "listeAttente.controller") && listeService != null) {
                 currentBean = "listeAttente.controller";
+                RdvService rdvServiceBean = getBean(RdvService.class);
+                AgendaService agendaServiceBean = getBean(AgendaService.class);
+
                 Object listeCtrl = newFlexibleInstance(
                         props.getProperty("listeAttente.controller"),
                         known,
-                        listeService
+                        listeService, rdvServiceBean, agendaServiceBean, patientRepo
                 );
                 contextByName.put("listeAttente.controller", listeCtrl);
                 registerKnown(known, listeCtrl);

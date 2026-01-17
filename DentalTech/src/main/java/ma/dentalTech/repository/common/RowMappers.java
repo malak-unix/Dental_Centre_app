@@ -142,7 +142,11 @@ public final class RowMappers {
     public static ListeAttente mapListeAttente(ResultSet rs) throws SQLException {
         return ListeAttente.builder()
                 .id(getLong(rs, "id"))
+                .patientId(getLong(rs, "patient_id"))
                 .nom(rs.getString("nom"))
+                .motif(rs.getString("motif"))
+                .dateAjout(getLdt(rs, "date_ajout"))
+                .priorite(rs.getString("priorite"))
                 .dateCreation(getLdt(rs, "date_creation"))
                 .dateDerniereModification(getLdt(rs, "date_modification"))
                 .creePar(rs.getString("cree_par"))

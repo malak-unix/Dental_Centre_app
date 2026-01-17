@@ -108,4 +108,39 @@ public class RdvServiceImpl implements RdvService {
     public List<RDV> getUpcomingFromToday() {
         return rdvRepository.findUpcomingFromToday();
     }
+
+    @Override
+    public void confirmer(Long rdvId) {
+        if (rdvId == null || rdvId <= 0) throw new IllegalArgumentException("id obligatoire");
+        rdvRepository.updateStatus(rdvId, EtatRendezVous.CONFIRME, "system");
+    }
+
+    @Override
+    public void annuler(Long rdvId) {
+        if (rdvId == null || rdvId <= 0) throw new IllegalArgumentException("id obligatoire");
+        rdvRepository.updateStatus(rdvId, EtatRendezVous.ANNULE, "system");
+    }
+
+    @Override
+    public void terminer(Long rdvId) {
+        if (rdvId == null || rdvId <= 0) throw new IllegalArgumentException("id obligatoire");
+        rdvRepository.updateStatus(rdvId, EtatRendezVous.TERMINE, "system");
+    }
+
+    @Override
+    public void createAndLockPlage(RDV r, Long plageId) {
+        if (r == null) throw new IllegalArgumentException("RDV null");
+        if (r.getDetailJourneeId() == null) throw new IllegalArgumentException("detailJourneeId obligatoire");
+        if (r.getDateRdv() == null) throw new IllegalArgumentException("dateRdv obligatoire");
+        if (r.getHeure() == null) throw new IllegalArgumentException("heure obligatoire");
+        if (r.getMotif() == null || r.getMotif().isBlank()) throw new IllegalArgumentException("motif obligatoire");
+        if (r.getStatut() == null) r.setStatut(EtatRendezVous.PLANIFIE);
+        rdvRepository.createAndLockPlage(r, plageId);
+    }
+
+    @Override
+    public void deleteAndFreePlage(Long rdvId) {
+        if (rdvId == null || rdvId <= 0) throw new IllegalArgumentException("id obligatoire");
+        rdvRepository.deleteAndFreePlage(rdvId);
+    }
 }

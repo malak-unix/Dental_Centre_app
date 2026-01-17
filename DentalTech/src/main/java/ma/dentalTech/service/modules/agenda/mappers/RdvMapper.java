@@ -11,6 +11,7 @@ public final class RdvMapper {
     public static RdvDto toDto(RDV e) {
         if (e == null) return null;
 
+
         return RdvDto.builder()
                 .id(e.getId())
                 .patientId(e.getPatientId())

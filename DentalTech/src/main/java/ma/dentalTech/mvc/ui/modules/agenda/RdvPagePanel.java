@@ -27,16 +27,17 @@ public class RdvPagePanel extends JPanel {
     };
 
     private final JTable table = new JTable(model);
+    private final JLabel emptyLabel = new JLabel("Aucun rendez-vous.");
 
-    // filtres style maquette
     private final PillButton bAll = new PillButton("Tous");
     private final PillButton bToday = new PillButton("Aujourd'hui");
-    private final PillButton bUpcoming = new PillButton("À venir");
+    private final PillButton bUpcoming = new PillButton("A venir");
 
-    // actions
     private final DentalButton btnAdd = new DentalButton("Ajouter");
     private final DentalButton btnEdit = new DentalButton("Modifier");
     private final DentalButton btnDelete = new DentalButton("Supprimer");
+    private final DentalButton btnConfirm = new DentalButton("Confirmer");
+    private final DentalButton btnCancel = new DentalButton("Annuler");
 
     public RdvPagePanel() {
         setLayout(new BorderLayout(12, 12));
@@ -54,7 +55,6 @@ public class RdvPagePanel extends JPanel {
 
         wireActions();
 
-        // initial
         setFilterSelected(bAll);
         refresh(safe(() -> controller.getAll()));
     }
@@ -96,6 +96,12 @@ public class RdvPagePanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         results.add(sp, BorderLayout.CENTER);
 
+        emptyLabel.setFont(DentalTheme.textFont(12));
+        emptyLabel.setForeground(DentalTheme.MUTED);
+        emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        emptyLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        results.add(emptyLabel, BorderLayout.SOUTH);
+
         return results;
     }
 
@@ -106,6 +112,8 @@ public class RdvPagePanel extends JPanel {
         bottom.add(btnAdd);
         bottom.add(btnEdit);
         bottom.add(btnDelete);
+        bottom.add(btnConfirm);
+        bottom.add(btnCancel);
 
         return bottom;
     }
@@ -126,7 +134,6 @@ public class RdvPagePanel extends JPanel {
             refresh(safe(() -> controller.getUpcomingFromToday()));
         });
 
-        // ✅ AJOUTER
         btnAdd.addActionListener(e -> {
             try {
                 ensureController();
@@ -148,7 +155,6 @@ public class RdvPagePanel extends JPanel {
             }
         });
 
-        // ✅ MODIFIER
         btnEdit.addActionListener(e -> {
             try {
                 ensureController();
@@ -175,7 +181,6 @@ public class RdvPagePanel extends JPanel {
             }
         });
 
-        // ✅ SUPPRIMER
         btnDelete.addActionListener(e -> {
             try {
                 ensureController();
@@ -198,6 +203,46 @@ public class RdvPagePanel extends JPanel {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
             }
         });
+
+        btnConfirm.addActionListener(e -> {
+            try {
+                ensureController();
+                Long id = selectedId();
+                if (id == null) return;
+
+                EtatRendezVous st = selectedStatus();
+                if (st == EtatRendezVous.PLANIFIE) {
+                    controller.confirmer(id);
+                } else if (st == EtatRendezVous.CONFIRME) {
+                    controller.terminer(id);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Action non disponible pour ce statut.");
+                    return;
+                }
+
+                refreshCurrentFilter();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnCancel.addActionListener(e -> {
+            try {
+                ensureController();
+                Long id = selectedId();
+                if (id == null) return;
+                controller.annuler(id);
+                refreshCurrentFilter();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            updateActionButtons();
+        });
     }
 
     private void refreshCurrentFilter() {
@@ -208,7 +253,12 @@ public class RdvPagePanel extends JPanel {
 
     private void refresh(List<RdvDto> list) {
         model.setRowCount(0);
-        if (list == null) return;
+        if (list == null || list.isEmpty()) {
+            emptyLabel.setVisible(true);
+            updateActionButtons();
+            return;
+        }
+        emptyLabel.setVisible(false);
 
         for (RdvDto r : list) {
             String patientAff = (r.getPatientNom() != null && !r.getPatientNom().isBlank())
@@ -224,17 +274,37 @@ public class RdvPagePanel extends JPanel {
                     r.getStatut()
             });
         }
+        updateActionButtons();
     }
 
     private Long selectedId() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Sélectionne une ligne d’abord.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Selectionne une ligne d'abord.", "Info", JOptionPane.INFORMATION_MESSAGE);
             return null;
         }
         Object v = model.getValueAt(row, 0);
         if (v == null) return null;
         return Long.valueOf(v.toString());
+    }
+
+    private EtatRendezVous selectedStatus() {
+        int row = table.getSelectedRow();
+        if (row < 0) return null;
+        Object v = model.getValueAt(row, 5);
+        if (v == null) return null;
+        try {
+            return EtatRendezVous.valueOf(v.toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void updateActionButtons() {
+        EtatRendezVous st = selectedStatus();
+        boolean has = st != null;
+        btnConfirm.setEnabled(has && (st == EtatRendezVous.PLANIFIE || st == EtatRendezVous.CONFIRME));
+        btnCancel.setEnabled(has && (st == EtatRendezVous.PLANIFIE || st == EtatRendezVous.CONFIRME));
     }
 
     private void ensureController() {
@@ -256,7 +326,6 @@ public class RdvPagePanel extends JPanel {
         }
     }
 
-    // ===== PillButton (sans override setSelected/isSelected)
     private static class PillButton extends JButton {
         private boolean pillSelected = false;
 
@@ -297,17 +366,14 @@ public class RdvPagePanel extends JPanel {
         bUpcoming.setPillSelected(selected == bUpcoming);
     }
 
-    // =========================================================
-    // ✅ Dialog Ajouter / Modifier RDV
-    // =========================================================
     private static class RdvFormDialog extends JDialog {
 
         private final JTextField tfId = new JTextField();
         private final JTextField tfPatientId = new JTextField();
         private final JTextField tfDetailJourneeId = new JTextField();
         private final JTextField tfListeAttenteId = new JTextField();
-        private final JTextField tfDate = new JTextField();   // yyyy-MM-dd
-        private final JTextField tfHeure = new JTextField();  // HH:mm
+        private final JTextField tfDate = new JTextField();
+        private final JTextField tfHeure = new JTextField();
         private final JTextField tfMotif = new JTextField();
         private final JTextField tfNote = new JTextField();
         private final JComboBox<EtatRendezVous> cbStatut = new JComboBox<>(EtatRendezVous.values());
@@ -361,7 +427,7 @@ public class RdvPagePanel extends JPanel {
             p.add(new JLabel("Statut"));
             p.add(cbStatut);
 
-            p.add(new JLabel("Note médecin (optionnel)"));
+            p.add(new JLabel("Note medecin (optionnel)"));
             p.add(tfNote);
 
             return p;
@@ -435,7 +501,7 @@ public class RdvPagePanel extends JPanel {
                     .motif(motif)
                     .statut(statut)
                     .noteMedecin(note.isBlank() ? null : note)
-                    .typeRdv(null)      // si tu n’as pas encore typeRdv dans l’UI
+                    .typeRdv(null)
                     .patientNom(null)
                     .build();
         }
@@ -454,3 +520,4 @@ public class RdvPagePanel extends JPanel {
         }
     }
 }
+

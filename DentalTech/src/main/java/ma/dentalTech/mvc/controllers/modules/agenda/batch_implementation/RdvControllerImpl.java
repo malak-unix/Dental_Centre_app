@@ -67,6 +67,34 @@ public class RdvControllerImpl implements RdvController {
         service.deleteById(id);
     }
 
+    @Override
+    public void confirmer(Long id) {
+        service.confirmer(id);
+    }
+
+    @Override
+    public void annuler(Long id) {
+        service.annuler(id);
+    }
+
+    @Override
+    public void terminer(Long id) {
+        service.terminer(id);
+    }
+
+    @Override
+    public RdvDto createAndLockPlage(RdvDto dto, Long plageId) {
+        RDV r = toEntity(dto);
+        r.setId(null);
+        service.createAndLockPlage(r, plageId);
+        return toDto(r);
+    }
+
+    @Override
+    public void deleteAndFreePlage(Long id) {
+        service.deleteAndFreePlage(id);
+    }
+
     private RDV toEntity(RdvDto dto) {
         if (dto == null) throw new IllegalArgumentException("dto null");
 

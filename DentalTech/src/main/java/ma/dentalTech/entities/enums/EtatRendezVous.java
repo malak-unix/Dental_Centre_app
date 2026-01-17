@@ -1,7 +1,8 @@
 package ma.dentalTech.entities.enums;
 
 public enum EtatRendezVous {
-    PLANIFIE,   // équivalent PREVU
+    PLANIFIE,   // equivalent PREVU
+    CONFIRME,
     ANNULE,
     TERMINE
 }

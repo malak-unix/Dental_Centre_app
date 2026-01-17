@@ -133,6 +133,7 @@ public class FactureServiceV2Impl implements FactureServiceV2 {
                 .totalFacture(BigDecimal.valueOf(total))
                 .totalPaye(BigDecimal.valueOf(paye))
                 .reste(BigDecimal.valueOf(reste))
+                .montant(total)
                 .statut(f.getStatut() == null ? null : f.getStatut().name())
                 .canView(true)
                 .canPrint(true)

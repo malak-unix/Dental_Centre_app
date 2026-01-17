@@ -71,7 +71,7 @@ public class RdvAppServiceImpl implements RdvAppService {
         for (RDV r : sameDay) {
             if (r.getId() != null && r.getId().equals(dto.getId())) continue;
             if (dto.getHeure() != null && dto.getHeure().equals(r.getHeure())) {
-                throw new IllegalArgumentException("Conflit: un RDV existe déjà à " + dto.getHeure());
+                throw new IllegalArgumentException("Conflit: un RDV existe deja a " + dto.getHeure());
             }
         }
 
@@ -97,10 +97,10 @@ public class RdvAppServiceImpl implements RdvAppService {
         if (r == null) throw new IllegalArgumentException("RDV introuvable");
 
         if (r.getStatut() != EtatRendezVous.PLANIFIE) {
-            throw new IllegalArgumentException("Seuls les RDV PREVU peuvent être confirmés");
+            throw new IllegalArgumentException("Seuls les RDV PLANIFIE peuvent etre confirmes");
         }
 
-        r.setStatut(EtatRendezVous.TERMINE);
+        r.setStatut(EtatRendezVous.CONFIRME);
         rdvRepo.update(r);
         return RdvMapper.toDto(r);
     }
@@ -135,11 +135,9 @@ public class RdvAppServiceImpl implements RdvAppService {
         return rdvRepo.findByStatus(status).stream().map(RdvMapper::toDto).toList();
     }
 
-    // =========================
-
     private void validateCreate(RdvDto dto) {
         if (dto == null) throw new IllegalArgumentException("dto null");
-        if (dto.getId() != null) throw new IllegalArgumentException("Création: id doit être null");
+        if (dto.getId() != null) throw new IllegalArgumentException("Creation: id doit etre null");
         validateCommon(dto);
     }
 
@@ -165,7 +163,7 @@ public class RdvAppServiceImpl implements RdvAppService {
         StatutJournee etat = (dj.getEtatJour() != null) ? dj.getEtatJour() : StatutJournee.OUVERT;
 
         if (etat == StatutJournee.FERME || etat == StatutJournee.FERIE || etat == StatutJournee.VACANCES) {
-            throw new IllegalArgumentException("Journée non ouverte: impossible de planifier");
+            throw new IllegalArgumentException("Journee non ouverte: impossible de planifier");
         }
     }
 
@@ -173,10 +171,10 @@ public class RdvAppServiceImpl implements RdvAppService {
         LocalTime debut = dj.getHeureDebutTravail();
         LocalTime fin = dj.getHeureFinTravail();
         if (debut != null && heure.isBefore(debut)) {
-            throw new IllegalArgumentException("Heure en dehors de la plage (avant début travail)");
+            throw new IllegalArgumentException("Heure en dehors de la plage (avant debut travail)");
         }
         if (fin != null && heure.isAfter(fin)) {
-            throw new IllegalArgumentException("Heure en dehors de la plage (après fin travail)");
+            throw new IllegalArgumentException("Heure en dehors de la plage (apres fin travail)");
         }
     }
 
@@ -184,7 +182,7 @@ public class RdvAppServiceImpl implements RdvAppService {
         List<RDV> rdvs = rdvRepo.findByDetailJourneeId(detailJourneeId);
         for (RDV r : rdvs) {
             if (heure.equals(r.getHeure())) {
-                throw new IllegalArgumentException("Conflit: un RDV existe déjà à " + heure);
+                throw new IllegalArgumentException("Conflit: un RDV existe deja a " + heure);
             }
         }
     }

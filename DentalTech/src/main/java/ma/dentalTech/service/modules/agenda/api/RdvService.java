@@ -20,4 +20,13 @@ public interface RdvService {
     List<RDV> getByDate(LocalDate date);
     List<RDV> getByStatus(EtatRendezVous status);
     List<RDV> getUpcomingFromToday();
+
+    void confirmer(Long rdvId);
+    void annuler(Long rdvId);
+
+    void terminer(Long rdvId);
+
+    void createAndLockPlage(RDV r, Long plageId);
+
+    void deleteAndFreePlage(Long rdvId);
 }

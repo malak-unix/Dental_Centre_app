@@ -19,4 +19,13 @@ public interface RdvController {
     RdvDto create(RdvDto dto);
     RdvDto update(RdvDto dto);
     void deleteById(Long id);
+
+    void confirmer(Long id);
+    void annuler(Long id);
+
+    void terminer(Long id);
+
+    RdvDto createAndLockPlage(RdvDto dto, Long plageId);
+
+    void deleteAndFreePlage(Long id);
 }

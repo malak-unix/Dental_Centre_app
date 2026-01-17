@@ -21,6 +21,11 @@ public interface RdvRepository extends CrudRepository<RDV, Long> {
 
     List<RDV> findUpcomingFromToday();
 
+    boolean updateStatus(Long rdvId, EtatRendezVous statut, String modifiePar);
+
+    void createAndLockPlage(RDV r, Long plageId);
+
+    void deleteAndFreePlage(Long rdvId);
 
 //methodes ajoute par AYA BERDAY utilisé dans dashboard
     List<RDV> findByMedecinAndDate(Long medecinId, LocalDate date);

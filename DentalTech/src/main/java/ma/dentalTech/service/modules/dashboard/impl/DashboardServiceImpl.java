@@ -3,6 +3,7 @@ package ma.dentalTech.service.modules.dashboard.impl;
 import ma.dentalTech.common.exceptions.ServiceException;
 import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.entities.dossierMedical.Consultation;
+import ma.dentalTech.entities.agenda.ListeAttente;
 import ma.dentalTech.entities.enums.EtatRendezVous;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.enums.PrioriteNotification;
@@ -224,11 +225,12 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(this::toRdvDtoWithPatientNom)
                 .toList();
 
-        List<ListeAttenteDto> fileAttente = rdvEntities.stream()
-                .filter(r -> r.getListeAttenteId() != null)
-                .filter(r -> r.getStatut() == EtatRendezVous.PLANIFIE)
-                .sorted(Comparator.comparing(RDV::getHeure, Comparator.nullsLast(Comparator.naturalOrder())))
-                .map(this::toListeAttenteItemFromRdv)
+        List<ListeAttente> listeAttenteEntities = safeList(listeAttenteRepo.findAll());
+        List<ListeAttenteDto> fileAttente = listeAttenteEntities.stream()
+                .filter(l -> isSameDay(l.getDateAjout(), today))
+                .sorted(Comparator.comparing(ListeAttente::getDateAjout,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(this::toListeAttenteDto)
                 .toList();
 
         List<AlerteDTO> alertes = buildAlertesRetardFromRdv(rdvEntities);
@@ -442,17 +444,18 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
-    private ListeAttenteDto toListeAttenteItemFromRdv(RDV r) {
-        String patientNom = resolvePatientNom(r.getPatientId());
+    private ListeAttenteDto toListeAttenteDto(ListeAttente l) {
+        if (l == null) return null;
+        String patientNom = resolvePatientNom(l.getPatientId());
 
         return ListeAttenteDto.builder()
-                .id(r.getId())
-                .nom("File d'attente")
-                .patientid(r.getPatientId())
+                .id(l.getId())
+                .nom(l.getNom())
+                .patientId(l.getPatientId())
                 .patientNom(patientNom)
-                .priorite("NORMAL")
-                .statut("EN_ATTENTE")
-                .arrive(Boolean.FALSE)
+                .motif(l.getMotif())
+                .dateAjout(l.getDateAjout())
+                .priorite(l.getPriorite())
                 .build();
     }
 
@@ -539,6 +542,12 @@ public class DashboardServiceImpl implements DashboardService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean isSameDay(LocalDateTime dt, LocalDate day) {
+        if (day == null) return true;
+        if (dt == null) return true;
+        return day.equals(dt.toLocalDate());
     }
 
     private LocalDateTime safeNotifDate(Notification n) {
