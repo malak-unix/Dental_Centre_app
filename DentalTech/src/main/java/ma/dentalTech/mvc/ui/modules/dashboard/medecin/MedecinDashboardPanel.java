@@ -21,10 +21,10 @@ public class MedecinDashboardPanel extends JPanel {
     private final Long userId;
     private final Consumer<String> navigate;
 
-    private final StatCard statPatients = new StatCard("Patients du jour", "0", "👤");
-    private final StatCard statRdv      = new StatCard("RDV du jour", "0", "📅");
-    private final StatCard statActes    = new StatCard("Actes réalisés", "0", "✅");
-    private final StatCard statRecette  = new StatCard("Recette du jour", "0 DH", "💰");
+    private final StatCard statPatients = new StatCard("Patients du jour", "0", "");
+    private final StatCard statRdv      = new StatCard("RDV du jour", "0", "");
+    private final StatCard statActes    = new StatCard("Actes realises", "0", "");
+    private final StatCard statRecette  = new StatCard("Recette du jour", "0 DH", "");
 
     private final DefaultTableModel model = new DefaultTableModel(
             new Object[]{"Heure", "Patient", "Motif", "Statut"}, 0
@@ -33,7 +33,7 @@ public class MedecinDashboardPanel extends JPanel {
     };
 
     // Client en cours (infos)
-    private final JLabel lblCurrentName = new JLabel("—");
+    private final JLabel lblCurrentName = new JLabel("--");
     private final JLabel lblCurrentTel = new JLabel("");
     private final JLabel lblCurrentStatus = new JLabel("");
 
@@ -71,25 +71,46 @@ public class MedecinDashboardPanel extends JPanel {
 
         JTable table = new JTable(model);
         table.setRowHeight(34);
+        table.setFont(DentalTheme.textFont(12));
+        table.getTableHeader().setFont(DentalTheme.textBold(12));
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && table.getSelectedRow() >= 0) {
+                    navigate.accept("dossiers");
+                }
+            }
+        });
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createTitledBorder("Rendez-vous du Jour"));
+        javax.swing.border.TitledBorder t = BorderFactory.createTitledBorder("Rendez-vous du Jour");
+        t.setTitleFont(DentalTheme.textBold(13));
+        sp.setBorder(t);
         root.add(sp, BorderLayout.CENTER);
 
         JPanel right = new JPanel(new BorderLayout(10, 10));
         right.setOpaque(false);
         right.setPreferredSize(new Dimension(360, 10));
-        right.setBorder(BorderFactory.createTitledBorder("Client en cours"));
+        javax.swing.border.TitledBorder t2 = BorderFactory.createTitledBorder("Client en cours");
+        t2.setTitleFont(DentalTheme.textBold(13));
+        right.setBorder(t2);
 
         JPanel info = new JPanel();
         info.setOpaque(false);
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
 
-        lblCurrentName.setFont(DentalTheme.textBold(14));
+        lblCurrentName.setFont(DentalTheme.textBold(15));
         lblCurrentName.setForeground(DentalTheme.TEXT2);
         lblCurrentTel.setFont(DentalTheme.textFont(12));
         lblCurrentTel.setForeground(DentalTheme.TEXT2);
         lblCurrentStatus.setFont(DentalTheme.textFont(12));
         lblCurrentStatus.setForeground(DentalTheme.TEXT2);
+        lblCurrentName.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblCurrentName.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                navigate.accept("dossiers");
+            }
+        });
 
         info.add(lblCurrentName);
         info.add(Box.createVerticalStrut(2));
@@ -104,18 +125,17 @@ public class MedecinDashboardPanel extends JPanel {
         JPanel btns = new JPanel(new GridLayout(3, 1, 8, 8));
         btns.setOpaque(false);
 
-        DentalButton bDossier = new DentalButton("+ Dossier");
-        bDossier.addActionListener(e -> navigate.accept("dossiers"));
-
         DentalButton bConsult = new DentalButton("+ Consultation");
         bConsult.addActionListener(e -> navigate.accept("consultations"));
 
         DentalButton bOrdo = new DentalButton("+ Ordonnance");
         bOrdo.addActionListener(e -> navigate.accept("ordonnances"));
 
-        btns.add(bDossier);
         btns.add(bConsult);
         btns.add(bOrdo);
+        DentalButton bCertif = new DentalButton("+ Certificat");
+        bCertif.addActionListener(e -> navigate.accept("certificats"));
+        btns.add(bCertif);
 
         right.add(btns, BorderLayout.SOUTH);
 
@@ -137,11 +157,11 @@ public class MedecinDashboardPanel extends JPanel {
 
             // client en cours
             if (dto.getPatientEnCours() != null) {
-                lblCurrentName.setText(dto.getPatientEnCours().getNomComplet() != null ? dto.getPatientEnCours().getNomComplet() : "—");
-                lblCurrentTel.setText(dto.getPatientEnCours().getTel() != null ? ("Tél: " + dto.getPatientEnCours().getTel()) : "");
+                lblCurrentName.setText(dto.getPatientEnCours().getNomComplet() != null ? dto.getPatientEnCours().getNomComplet() : "--");
+                lblCurrentTel.setText(dto.getPatientEnCours().getTel() != null ? ("Tel: " + dto.getPatientEnCours().getTel()) : "");
                 lblCurrentStatus.setText(dto.getPatientEnCours().getStatutTraitement() != null ? ("Statut: " + dto.getPatientEnCours().getStatutTraitement()) : "");
             } else {
-                lblCurrentName.setText("—");
+                lblCurrentName.setText("--");
                 lblCurrentTel.setText("");
                 lblCurrentStatus.setText("");
             }

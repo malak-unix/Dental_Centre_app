@@ -6,7 +6,6 @@ import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.components.StatCard;
-import ma.dentalTech.mvc.ui.common.components.TeethChartPanel;
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 
@@ -23,10 +22,12 @@ public class AdminDashboardPanel extends JPanel {
     private final Long userId;
     private final Consumer<String> navigate;
 
-    private final StatCard statUsers   = new StatCard("Utilisateurs", "0", "👥");
-    private final StatCard statAdmins  = new StatCard("Administrateurs", "0", "🛡");
-    private final StatCard statRecette = new StatCard("Recette du jour", "0 DH", "💰");
-    private final StatCard statActes   = new StatCard("Actes réalisés", "0", "✅");
+    private final StatCard statUsers       = new StatCard("Utilisateurs", "0", "");
+    private final StatCard statMedecins    = new StatCard("Medecins", "0", "");
+    private final StatCard statSecretaires = new StatCard("Secretaires", "0", "");
+    private final StatCard statRecette     = new StatCard("Recette du jour", "0 DH", "");
+    private final StatCard statAdmins   = new StatCard("Administrateurs", "0", "");
+    private final StatCard statActes    = new StatCard("Actes réalisés", "0", "");
 
     private final DefaultTableModel model = new DefaultTableModel(
             new Object[]{"Nom", "Rôle", "Statut", "Dernière activité"}, 0
@@ -119,21 +120,6 @@ public class AdminDashboardPanel extends JPanel {
         header.add(refMedecinName);
 
         right.add(header, BorderLayout.NORTH);
-
-        // Centre : schéma dents + légende
-        JPanel center = new JPanel(new BorderLayout(8, 8));
-        center.setOpaque(false);
-
-        center.add(new TeethChartPanel(), BorderLayout.CENTER);
-
-        JPanel legend = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        legend.setOpaque(false);
-        legend.add(dot("Sain", new Color(0x1FAF47)));
-        legend.add(dot("En traitement", new Color(0x2A5BD7)));
-        legend.add(dot("Problème", new Color(0xB98900)));
-
-        center.add(legend, BorderLayout.SOUTH);
-        right.add(center, BorderLayout.CENTER);
 
         // Actions (boutons style caisse)
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 4));

@@ -7,9 +7,24 @@ import java.awt.*;
 
 public class TeethChartPanel extends JPanel {
 
+    private static final int TOOTH_COUNT = 32;
+    private final int[] states = new int[TOOTH_COUNT]; // 0 = sain, 1 = traitement, 2 = probleme
+    private final Rectangle[] bounds = new Rectangle[TOOTH_COUNT];
+
     public TeethChartPanel() {
         setOpaque(false);
         setPreferredSize(new Dimension(300, 150));
+
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int idx = findToothIndex(e.getPoint());
+                if (idx >= 0) {
+                    states[idx] = (states[idx] + 1) % 3;
+                    repaint();
+                }
+            }
+        });
     }
 
     @Override
@@ -26,13 +41,19 @@ public class TeethChartPanel extends JPanel {
         int startX = 10;
         int startY = 20;
         for (int i = 0; i < 16; i++) {
-            drawTooth(g2, startX + (i * (toothWidth + gap)), startY, toothWidth, toothHeight, (i == 4 || i == 12));
+            int x = startX + (i * (toothWidth + gap));
+            Rectangle r = new Rectangle(x, startY, toothWidth, toothHeight);
+            bounds[i] = r;
+            drawTooth(g2, r, states[i]);
         }
 
         // Lower Jaw (16 teeth)
         startY = 60;
         for (int i = 0; i < 16; i++) {
-            drawTooth(g2, startX + (i * (toothWidth + gap)), startY, toothWidth, toothHeight, (i == 3 || i == 10));
+            int x = startX + (i * (toothWidth + gap));
+            Rectangle r = new Rectangle(x, startY, toothWidth, toothHeight);
+            bounds[16 + i] = r;
+            drawTooth(g2, r, states[16 + i]);
         }
 
         // Legend
@@ -56,19 +77,31 @@ public class TeethChartPanel extends JPanel {
         g2.drawString("Probleme", 195, ly+9);
     }
 
-    private void drawTooth(Graphics2D g2, int x, int y, int w, int h, boolean highlight) {
-        if (highlight) {
-            g2.setColor(Color.ORANGE.darker());
-        } else {
-            g2.setColor(Color.WHITE);
-        }
+    private void drawTooth(Graphics2D g2, Rectangle r, int state) {
+        g2.setColor(colorForState(state));
         // Crown
-        g2.fillRoundRect(x, y, w, h - 5, 8, 8);
+        g2.fillRoundRect(r.x, r.y, r.width, r.height - 5, 8, 8);
         // Root (simple lines)
-        g2.drawLine(x + 4, y + h - 5, x + 6, y + h);
-        g2.drawLine(x + w - 4, y + h - 5, x + w - 6, y + h);
+        g2.drawLine(r.x + 4, r.y + r.height - 5, r.x + 6, r.y + r.height);
+        g2.drawLine(r.x + r.width - 4, r.y + r.height - 5, r.x + r.width - 6, r.y + r.height);
         
         g2.setColor(DentalTheme.STROKE);
-        g2.drawRoundRect(x, y, w, h - 5, 8, 8);
+        g2.drawRoundRect(r.x, r.y, r.width, r.height - 5, 8, 8);
+    }
+
+    private Color colorForState(int state) {
+        return switch (state) {
+            case 1 -> Color.BLUE.darker();
+            case 2 -> Color.ORANGE.darker();
+            default -> Color.GREEN.darker();
+        };
+    }
+
+    private int findToothIndex(Point p) {
+        for (int i = 0; i < bounds.length; i++) {
+            Rectangle r = bounds[i];
+            if (r != null && r.contains(p)) return i;
+        }
+        return -1;
     }
 }

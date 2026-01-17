@@ -91,7 +91,8 @@ public class SecretaireDashboardPanel extends JPanel {
         notificationsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         notificationsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         notificationsScroll.getVerticalScrollBar().setUnitIncrement(16);
-        notificationsScroll.setPreferredSize(new Dimension(10, 220));
+        notificationsScroll.setPreferredSize(new Dimension(10, 240));
+        notificationsScroll.setMinimumSize(new Dimension(10, 240));
 
         fileAttenteEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
         rdvEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
@@ -180,30 +181,57 @@ public class SecretaireDashboardPanel extends JPanel {
     }
 
     private JComponent buildMain() {
-        JPanel root = new JPanel();
+        JPanel root = new JPanel(new BorderLayout());
         root.setOpaque(false);
-        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
 
-        // Revue du Jour
-        root.add(buildSectionTitle("Revue du Jour"));
-        root.add(Box.createVerticalStrut(8));
-        root.add(buildRevueDuJour());
-        root.add(Box.createVerticalStrut(14));
-        root.add(buildRdvDuJourSection());
-        root.add(Box.createVerticalStrut(14));
+        JPanel columns = new JPanel(new GridBagLayout());
+        columns.setOpaque(false);
 
-        // File d'attente
-        root.add(buildFileAttenteSection());
-        root.add(Box.createVerticalStrut(14));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;
+        c.weighty = 1;
+        c.insets = new Insets(0, 0, 0, 0);
 
-        // Notifications (après file)
-        root.add(notificationsScroll);
-        root.add(Box.createVerticalStrut(14));
+        c.gridx = 0;
+        c.weightx = 0.68;
+        columns.add(buildLeftColumn(), c);
 
-        // Activites recentes
-        root.add(buildActivitiesSection());
+        c.gridx = 1;
+        c.weightx = 0.32;
+        c.insets = new Insets(0, 14, 0, 0);
+        columns.add(buildRightColumn(), c);
 
+        root.add(columns, BorderLayout.CENTER);
         return root;
+    }
+
+    private JComponent buildLeftColumn() {
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        left.add(buildSectionTitle("Revue du Jour"));
+        left.add(Box.createVerticalStrut(8));
+        left.add(buildRevueDuJour());
+        left.add(Box.createVerticalStrut(12));
+        left.add(buildRdvDuJourSection());
+        left.add(Box.createVerticalStrut(12));
+        left.add(buildFileAttenteSection());
+
+        return left;
+    }
+
+    private JComponent buildRightColumn() {
+        JPanel right = new JPanel();
+        right.setOpaque(false);
+        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
+
+        right.add(notificationsScroll);
+        right.add(Box.createVerticalStrut(12));
+        right.add(buildActivitiesSection());
+
+        return right;
     }
 
     private JComponent buildRevueDuJour() {
@@ -244,6 +272,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sp.setPreferredSize(new Dimension(10, 200));
+        sp.setMinimumSize(new Dimension(10, 200));
 
         JPanel emptyWrap = new JPanel(new GridBagLayout());
         emptyWrap.setOpaque(false);
@@ -279,7 +309,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        sp.setPreferredSize(new Dimension(10, 170));
+        sp.setPreferredSize(new Dimension(10, 200));
+        sp.setMinimumSize(new Dimension(10, 200));
 
         container.add(top, BorderLayout.NORTH);
         container.add(sp, BorderLayout.CENTER);
@@ -562,7 +593,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         sp.getVerticalScrollBar().setUnitIncrement(16);
-        sp.setPreferredSize(new Dimension(10, 220));
+        sp.setPreferredSize(new Dimension(10, 240));
+        sp.setMinimumSize(new Dimension(10, 240));
 
         DentalButton more = new DentalButton("Voir +Activites");
         more.addActionListener(e -> navigate.accept("rdv"));

@@ -43,6 +43,8 @@ public class AgendaSemainePagePanel extends JPanel {
 
     private final DefaultListModel<RdvDto> rdvDayModel = new DefaultListModel<>();
     private final DefaultListModel<PlageHoraire> plageModel = new DefaultListModel<>();
+    private final JList<RdvDto> rdvList = new JList<>(rdvDayModel);
+    private final JList<PlageHoraire> plageList = new JList<>(plageModel);
 
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -65,8 +67,7 @@ public class AgendaSemainePagePanel extends JPanel {
         add(card, BorderLayout.CENTER);
 
         card.add(buildTopBar(), BorderLayout.NORTH);
-        card.add(buildWeekGrid(), BorderLayout.CENTER);
-        card.add(buildBottomBar(), BorderLayout.SOUTH);
+        card.add(buildCenterArea(), BorderLayout.CENTER);
 
         medecinIdField.setText("1");
         dateField.setText(LocalDate.now().toString());
@@ -170,18 +171,31 @@ public class AgendaSemainePagePanel extends JPanel {
         return grid;
     }
 
-    private JComponent buildBottomBar() {
-        JPanel bottom = new JPanel(new BorderLayout(10, 10));
-        bottom.setOpaque(false);
+    private JComponent buildCenterArea() {
+        JPanel center = new JPanel(new BorderLayout(12, 12));
+        center.setOpaque(false);
+        center.add(buildWeekGrid(), BorderLayout.CENTER);
+        center.add(buildDayDetailsPanel(), BorderLayout.EAST);
+        return center;
+    }
 
-        JList<RdvDto> rdvList = new JList<>(rdvDayModel);
+    private JComponent buildDayDetailsPanel() {
+        JPanel right = new JPanel(new BorderLayout(10, 10));
+        right.setOpaque(false);
+        right.setPreferredSize(new Dimension(320, 10));
+
+        JLabel title = new JLabel("Details du jour");
+        title.setFont(DentalTheme.textBold(13));
+        title.setForeground(DentalTheme.TEXT2);
+        right.add(title, BorderLayout.NORTH);
+
         rdvList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
             String txt = value == null ? "" :
                     (value.getHeure() + " - " + (value.getMotif() == null ? "" : value.getMotif()) +
                      " [" + (value.getStatut() == null ? "" : value.getStatut()) + "]");
             JLabel l = new JLabel(txt);
             l.setOpaque(true);
-            l.setBackground(isSelected ? new Color(0xE8, 0xD9, 0xCC) : Color.WHITE);
+            l.setBackground(isSelected ? new Color(0xE8, 0xD9, 0xCC) : DentalTheme.CARD);
             l.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
             return l;
         });
@@ -190,38 +204,42 @@ public class AgendaSemainePagePanel extends JPanel {
             selectedRdvId = r == null ? null : r.getId();
         });
 
-        JList<PlageHoraire> plages = new JList<>(plageModel);
-        plages.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+        plageList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
             String txt = value == null ? "" :
                     (value.getHeureDebut() + " - " + value.getHeureFin() +
                      (Boolean.TRUE.equals(value.getDisponible()) ? " (libre)" : " (occupee)"));
             JLabel l = new JLabel(txt);
             l.setOpaque(true);
-            l.setBackground(isSelected ? new Color(0xE8, 0xD9, 0xCC) : Color.WHITE);
+            l.setBackground(isSelected ? new Color(0xE8, 0xD9, 0xCC) : DentalTheme.CARD);
             l.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
             return l;
         });
 
-        JPanel lists = new JPanel(new GridLayout(1, 2, 10, 0));
+        JScrollPane spRdv = new JScrollPane(rdvList);
+        spRdv.setBorder(BorderFactory.createTitledBorder("RDV du jour"));
+        spRdv.getViewport().setBackground(DentalTheme.CARD);
+
+        JScrollPane spPlage = new JScrollPane(plageList);
+        spPlage.setBorder(BorderFactory.createTitledBorder("Plages horaires"));
+        spPlage.getViewport().setBackground(DentalTheme.CARD);
+
+        JPanel lists = new JPanel(new GridLayout(2, 1, 8, 8));
         lists.setOpaque(false);
-        lists.add(new JScrollPane(rdvList));
-        lists.add(new JScrollPane(plages));
+        lists.add(spRdv);
+        lists.add(spPlage);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
-
         DentalButton btnProgram = new DentalButton("Programmer");
         DentalButton btnDelete = new DentalButton("Supprimer");
-
         btnProgram.addActionListener(e -> onProgrammer());
         btnDelete.addActionListener(e -> onDelete());
-
         actions.add(btnProgram);
         actions.add(btnDelete);
 
-        bottom.add(lists, BorderLayout.CENTER);
-        bottom.add(actions, BorderLayout.SOUTH);
-        return bottom;
+        right.add(lists, BorderLayout.CENTER);
+        right.add(actions, BorderLayout.SOUTH);
+        return right;
     }
 
     private JComponent makeDayColumn(DayOfWeek day, String label) {
