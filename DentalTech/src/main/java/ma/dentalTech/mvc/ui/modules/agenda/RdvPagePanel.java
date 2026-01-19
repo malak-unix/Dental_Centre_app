@@ -19,6 +19,7 @@ import java.util.List;
 public class RdvPagePanel extends JPanel {
 
     private final RdvController controller;
+    private Long selectedMedecinId = null;
 
     private final DefaultTableModel model = new DefaultTableModel(
             new Object[]{"ID", "Patient", "Date", "Heure", "Motif", "Statut"}, 0
@@ -57,6 +58,10 @@ public class RdvPagePanel extends JPanel {
 
         setFilterSelected(bAll);
         refresh(safe(() -> controller.getAll()));
+    }
+
+    public void setMedecinId(Long medecinId) {
+        this.selectedMedecinId = medecinId;
     }
 
     private JComponent buildTop() {
@@ -134,26 +139,7 @@ public class RdvPagePanel extends JPanel {
             refresh(safe(() -> controller.getUpcomingFromToday()));
         });
 
-        btnAdd.addActionListener(e -> {
-            try {
-                ensureController();
-
-                RdvFormDialog dlg = new RdvFormDialog(
-                        SwingUtilities.getWindowAncestor(this),
-                        null
-                );
-                dlg.setVisible(true);
-
-                RdvDto dto = dlg.getResult();
-                if (dto == null) return;
-
-                controller.create(dto);
-                refreshCurrentFilter();
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
-            }
-        });
+        btnAdd.addActionListener(e -> openNewRdvDialog());
 
         btnEdit.addActionListener(e -> {
             try {
@@ -166,7 +152,8 @@ public class RdvPagePanel extends JPanel {
 
                 RdvFormDialog dlg = new RdvFormDialog(
                         SwingUtilities.getWindowAncestor(this),
-                        current
+                        current,
+                        selectedMedecinId
                 );
                 dlg.setVisible(true);
 
@@ -249,6 +236,28 @@ public class RdvPagePanel extends JPanel {
         if (bToday.isPillSelected()) refresh(safe(() -> controller.getByDate(LocalDate.now())));
         else if (bUpcoming.isPillSelected()) refresh(safe(() -> controller.getUpcomingFromToday()));
         else refresh(safe(() -> controller.getAll()));
+    }
+
+    public void openNewRdvDialog() {
+        try {
+            ensureController();
+
+            RdvFormDialog dlg = new RdvFormDialog(
+                    SwingUtilities.getWindowAncestor(this),
+                    null,
+                    selectedMedecinId
+            );
+            dlg.setVisible(true);
+
+            RdvDto dto = dlg.getResult();
+            if (dto == null) return;
+
+            controller.create(dto);
+            refreshCurrentFilter();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur RDV", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void refresh(List<RdvDto> list) {
@@ -370,6 +379,8 @@ public class RdvPagePanel extends JPanel {
 
         private final JTextField tfId = new JTextField();
         private final JTextField tfPatientId = new JTextField();
+        private final JComboBox<PatientItem> cbPatient = new JComboBox<>(loadPatients());
+        private final JComboBox<MedecinItem> cbMedecin = new JComboBox<>(loadMedecins());
         private final JTextField tfDetailJourneeId = new JTextField();
         private final JTextField tfListeAttenteId = new JTextField();
         private final JTextField tfDate = new JTextField();
@@ -379,20 +390,29 @@ public class RdvPagePanel extends JPanel {
         private final JComboBox<EtatRendezVous> cbStatut = new JComboBox<>(EtatRendezVous.values());
 
         private RdvDto result;
+        private final Long defaultMedecinId;
 
-        RdvFormDialog(Window owner, RdvDto initial) {
+        RdvFormDialog(Window owner, RdvDto initial, Long defaultMedecinId) {
             super(owner, (initial == null ? "Ajouter RDV" : "Modifier RDV"), ModalityType.APPLICATION_MODAL);
+            this.defaultMedecinId = defaultMedecinId;
 
             setSize(520, 420);
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout(12, 12));
 
             tfId.setEnabled(false);
+            tfDetailJourneeId.setEditable(false);
 
             add(buildForm(), BorderLayout.CENTER);
             add(buildActions(), BorderLayout.SOUTH);
 
+            if (defaultMedecinId != null) selectMedecinById(defaultMedecinId);
             if (initial != null) fill(initial);
+            if (initial == null) {
+                tfDate.setText(LocalDate.now().toString());
+                tfHeure.setText("09:00");
+                tfMotif.setText("Consultation");
+            }
         }
 
         RdvDto getResult() {
@@ -406,10 +426,13 @@ public class RdvPagePanel extends JPanel {
             p.add(new JLabel("ID (auto)"));
             p.add(tfId);
 
-            p.add(new JLabel("Patient ID *"));
-            p.add(tfPatientId);
+            p.add(new JLabel("Patient *"));
+            p.add(cbPatient);
 
-            p.add(new JLabel("DetailJournee ID *"));
+            p.add(new JLabel("Medecin *"));
+            p.add(cbMedecin);
+
+            p.add(new JLabel("DetailJournee (auto)"));
             p.add(tfDetailJourneeId);
 
             p.add(new JLabel("ListeAttente ID (optionnel)"));
@@ -436,8 +459,8 @@ public class RdvPagePanel extends JPanel {
         private JComponent buildActions() {
             JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-            JButton btnCancel = new JButton("Annuler");
-            JButton btnOk = new JButton("Enregistrer");
+            JButton btnCancel = new DentalButton("Annuler");
+            JButton btnOk = new DentalButton("Enregistrer");
 
             btnCancel.addActionListener(e -> {
                 result = null;
@@ -458,9 +481,34 @@ public class RdvPagePanel extends JPanel {
             return p;
         }
 
+        private void selectPatientById(Long patientId) {
+            if (patientId == null) return;
+            for (int i = 0; i < cbPatient.getItemCount(); i++) {
+                PatientItem item = cbPatient.getItemAt(i);
+                if (item != null && patientId.equals(item.id)) {
+                    cbPatient.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+
+        private void selectMedecinById(Long medecinId) {
+            if (medecinId == null) return;
+            for (int i = 0; i < cbMedecin.getItemCount(); i++) {
+                MedecinItem item = cbMedecin.getItemAt(i);
+                if (item != null && medecinId.equals(item.id)) {
+                    cbMedecin.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+
         private void fill(RdvDto d) {
             if (d.getId() != null) tfId.setText(String.valueOf(d.getId()));
-            if (d.getPatientId() != null) tfPatientId.setText(String.valueOf(d.getPatientId()));
+            if (d.getPatientId() != null) {
+                tfPatientId.setText(String.valueOf(d.getPatientId()));
+                selectPatientById(d.getPatientId());
+            }
             if (d.getDetailJourneeId() != null) tfDetailJourneeId.setText(String.valueOf(d.getDetailJourneeId()));
             if (d.getListeAttenteId() != null) tfListeAttenteId.setText(String.valueOf(d.getListeAttenteId()));
             if (d.getDateRdv() != null) tfDate.setText(d.getDateRdv().toString());
@@ -472,9 +520,14 @@ public class RdvPagePanel extends JPanel {
 
         private RdvDto readDto() {
             Long id = parseLongOrNull(tfId.getText());
-            Long patientId = parseLongRequired(tfPatientId.getText(), "patientId obligatoire");
-            Long detailJourneeId = parseLongRequired(tfDetailJourneeId.getText(), "detailJourneeId obligatoire");
-            Long listeAttenteId = parseLongOrNull(tfListeAttenteId.getText());
+            PatientItem p = (PatientItem) cbPatient.getSelectedItem();
+            Long patientId = (p == null ? null : p.id);
+            if (patientId == null) {
+                patientId = parseLongOrNull(tfPatientId.getText());
+            }
+            if (patientId == null) {
+                throw new IllegalArgumentException("patient obligatoire");
+            }
 
             String dateStr = tfDate.getText() == null ? "" : tfDate.getText().trim();
             String heureStr = tfHeure.getText() == null ? "" : tfHeure.getText().trim();
@@ -487,6 +540,25 @@ public class RdvPagePanel extends JPanel {
 
             LocalDate date = LocalDate.parse(dateStr);
             LocalTime heure = LocalTime.parse(heureStr);
+
+            Long detailJourneeId = parseLongOrNull(tfDetailJourneeId.getText());
+            if (detailJourneeId != null && !detailJourneeExists(detailJourneeId)) {
+                detailJourneeId = null;
+            }
+            if (detailJourneeId == null) {
+                MedecinItem m = (MedecinItem) cbMedecin.getSelectedItem();
+                Long medecinId = (m == null ? null : m.id);
+                if (medecinId == null) medecinId = defaultMedecinId;
+                if (medecinId == null) {
+                    throw new IllegalArgumentException("medecin obligatoire");
+                }
+                detailJourneeId = resolveDetailJourneeId(medecinId, date);
+            }
+            if (detailJourneeId == null) {
+                throw new IllegalArgumentException("Aucune journee definie pour cette date");
+            }
+
+            Long listeAttenteId = parseLongOrNull(tfListeAttenteId.getText());
 
             EtatRendezVous statut = (EtatRendezVous) cbStatut.getSelectedItem();
             if (statut == null) statut = EtatRendezVous.PLANIFIE;
@@ -506,6 +578,118 @@ public class RdvPagePanel extends JPanel {
                     .build();
         }
 
+        private Long resolveDetailJourneeId(Long medecinId, LocalDate date) {
+            if (medecinId == null || date == null) return null;
+            try {
+                var agendaController = ma.dentalTech.configuration.ApplicationContext.getBean(
+                        ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController.class);
+                if (agendaController == null) return null;
+
+                ma.dentalTech.mvc.dto.agenda.DetailJourneeDto dj =
+                        agendaController.getDetailJourneeByMedecinAndDate(medecinId, date);
+                if (dj != null && dj.getId() != null) return dj.getId();
+
+                ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto agenda =
+                        findOrCreateAgenda(agendaController, medecinId, date);
+                if (agenda == null || agenda.getId() == null) return null;
+
+                ma.dentalTech.mvc.dto.agenda.DetailJourneeDto created = ma.dentalTech.mvc.dto.agenda.DetailJourneeDto.builder()
+                        .agendaId(agenda.getId())
+                        .dateJour(date)
+                        .heureDebutTravail(java.time.LocalTime.of(9, 0))
+                        .heureFinTravail(java.time.LocalTime.of(17, 0))
+                        .etatJour("OUVERT")
+                        .commentaire("Auto-cree")
+                        .build();
+
+                created = agendaController.createDetailJournee(created);
+                if (created == null || created.getId() == null) return null;
+
+                ensureDefaultPlages(agendaController, created.getId(), java.time.LocalTime.of(9, 0), java.time.LocalTime.of(17, 0));
+                return created.getId();
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+
+        private boolean detailJourneeExists(Long detailId) {
+            if (detailId == null) return false;
+            try {
+                var agendaController = ma.dentalTech.configuration.ApplicationContext.getBean(
+                        ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController.class);
+                if (agendaController == null) return false;
+                return agendaController.getDetailJourneeById(detailId) != null;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+
+        private ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto findOrCreateAgenda(
+                ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController agendaController,
+                Long medecinId, LocalDate date) {
+            try {
+                java.util.List<ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto> list = agendaController.getAllAgendas();
+                if (list != null) {
+                    for (var a : list) {
+                        if (a != null && medecinId.equals(a.getMedecinId()) &&
+                                a.getAnnee() == date.getYear() &&
+                                a.getMois() == toMois(date.getMonthValue())) {
+                            return a;
+                        }
+                    }
+                }
+
+                var dto = ma.dentalTech.mvc.dto.agenda.AgendaMensuelDto.builder()
+                        .medecinId(medecinId)
+                        .mois(toMois(date.getMonthValue()))
+                        .annee(date.getYear())
+                        .build();
+
+                return agendaController.createAgenda(dto);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+
+        private ma.dentalTech.entities.enums.Mois toMois(int month) {
+            return switch (month) {
+                case 1 -> ma.dentalTech.entities.enums.Mois.JANVIER;
+                case 2 -> ma.dentalTech.entities.enums.Mois.FEVRIER;
+                case 3 -> ma.dentalTech.entities.enums.Mois.MARS;
+                case 4 -> ma.dentalTech.entities.enums.Mois.AVRIL;
+                case 5 -> ma.dentalTech.entities.enums.Mois.MAI;
+                case 6 -> ma.dentalTech.entities.enums.Mois.JUIN;
+                case 7 -> ma.dentalTech.entities.enums.Mois.JUILLET;
+                case 8 -> ma.dentalTech.entities.enums.Mois.AOUT;
+                case 9 -> ma.dentalTech.entities.enums.Mois.SEPTEMBRE;
+                case 10 -> ma.dentalTech.entities.enums.Mois.OCTOBRE;
+                case 11 -> ma.dentalTech.entities.enums.Mois.NOVEMBRE;
+                default -> ma.dentalTech.entities.enums.Mois.DECEMBRE;
+            };
+        }
+
+        private void ensureDefaultPlages(
+                ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaController agendaController,
+                Long detailId, java.time.LocalTime start, java.time.LocalTime end) {
+            try {
+                java.util.List<ma.dentalTech.entities.agenda.PlageHoraire> exist = agendaController.getPlagesByDetailJournee(detailId);
+                if (exist != null && !exist.isEmpty()) return;
+
+                java.time.LocalTime t = start;
+                while (t.isBefore(end)) {
+                    java.time.LocalTime t2 = t.plusMinutes(30);
+                    if (t2.isAfter(end)) break;
+                    ma.dentalTech.entities.agenda.PlageHoraire p = new ma.dentalTech.entities.agenda.PlageHoraire();
+                    p.setDetailJourneeId(detailId);
+                    p.setHeureDebut(t);
+                    p.setHeureFin(t2);
+                    p.setDisponible(true);
+                    agendaController.createPlage(p);
+                    t = t2;
+                }
+            } catch (Exception ignored) {}
+        }
+
         private Long parseLongRequired(String s, String msg) {
             Long v = parseLongOrNull(s);
             if (v == null || v <= 0) throw new IllegalArgumentException(msg);
@@ -518,6 +702,55 @@ public class RdvPagePanel extends JPanel {
             if (t.isBlank()) return null;
             return Long.parseLong(t);
         }
-    }
+    
+        private static class MedecinItem {
+            final Long id;
+            final String label;
+            MedecinItem(Long id, String label) { this.id = id; this.label = label; }
+            @Override public String toString() { return label; }
+        }
+
+        private static DefaultComboBoxModel<MedecinItem> loadMedecins() {
+            DefaultComboBoxModel<MedecinItem> model = new DefaultComboBoxModel<>();
+            model.addElement(new MedecinItem(null, "-- Selectionner un medecin --"));
+            try {
+                var repo = new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
+                var list = repo.findAll();
+                if (list != null) {
+                    for (var m : list) {
+                        String label = ((m.getNom() == null ? "" : m.getNom()) + " " +
+                                (m.getPrenom() == null ? "" : m.getPrenom())).trim();
+                        if (label.isBlank()) label = "Medecin #" + m.getId();
+                        model.addElement(new MedecinItem(m.getId(), label));
+                    }
+                }
+            } catch (Exception ignored) {}
+            return model;
+        }
+
+        private static class PatientItem {
+            final Long id;
+            final String label;
+            PatientItem(Long id, String label) { this.id = id; this.label = label; }
+            @Override public String toString() { return label; }
+        }
+
+        private static DefaultComboBoxModel<PatientItem> loadPatients() {
+            DefaultComboBoxModel<PatientItem> model = new DefaultComboBoxModel<>();
+            model.addElement(new PatientItem(null, "-- Selectionner un patient --"));
+            try {
+                var repo = new ma.dentalTech.repository.modules.patient.impl.PatientRepositoryImpl();
+                var list = repo.findAll();
+                if (list != null) {
+                    for (var p : list) {
+                        String label = (p.getNom() + " " + p.getPrenom()).trim();
+                        if (label.isBlank()) label = "Patient #" + p.getId();
+                        model.addElement(new PatientItem(p.getId(), label));
+                    }
+                }
+            } catch (Exception ignored) {}
+            return model;
+        }
+}
 }
 

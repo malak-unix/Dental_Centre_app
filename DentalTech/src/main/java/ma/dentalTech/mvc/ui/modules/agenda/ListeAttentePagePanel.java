@@ -265,8 +265,8 @@ public class ListeAttentePagePanel extends JPanel {
             form.add(cbPriorite);
 
             JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton cancel = new JButton("Annuler");
-            JButton save = new JButton("Ajouter");
+            JButton cancel = new DentalButton("Annuler");
+            JButton save = new DentalButton("Ajouter");
             actions.add(cancel);
             actions.add(save);
 
@@ -341,8 +341,8 @@ public class ListeAttentePagePanel extends JPanel {
             form.add(tfMotif);
 
             JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton cancel = new JButton("Annuler");
-            JButton save = new JButton("Programmer");
+            JButton cancel = new DentalButton("Annuler");
+            JButton save = new DentalButton("Programmer");
             actions.add(cancel);
             actions.add(save);
 

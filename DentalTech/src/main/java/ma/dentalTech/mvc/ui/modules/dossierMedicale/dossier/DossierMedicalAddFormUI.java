@@ -4,43 +4,35 @@ import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalC
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierDTO;
 import ma.dentalTech.mvc.dto.patient.PatientListDto;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.Frame;
 import java.util.List;
 
-/**
- * Dialog modal pour ajouter/modifier un dossier médical.
- * Avec validations : patient obligatoire, notes max 5000 caractères.
- */
 public class DossierMedicalAddFormUI extends JDialog {
 
     private final DossierMedicalController dossierController;
     private final PatientController patientController;
     private final String username;
-    private final DossierDTO dossierToEdit; // null si creation
-    
+    private final DossierDTO dossierToEdit;
+
     private final Long defaultMedecinId;
 
-    // Champs du formulaire
     private final JComboBox<PatientComboItem> cbPatient = new JComboBox<>();
+    private final JComboBox<MedecinComboItem> cbMedecin = new JComboBox<>();
     private final JTextArea txtNotes = new JTextArea(6, 40);
-    private final JLabel lblCharCount = new JLabel("0 / 5000 caractères");
+    private final JLabel lblCharCount = new JLabel("0 / 5000 caracteres");
 
-    private final JButton btnCancel = new JButton("Annuler");
-    private final JButton btnSave = new JButton("Enregistrer");
+    private final JButton btnCancel = new DentalButton("Annuler");
+    private final JButton btnSave = new DentalButton("Enregistrer");
 
     private boolean confirmed = false;
 
-    /**
-     * Item pour le combobox des patients
-     */
     public static class PatientComboItem {
         private final Long patientId;
         private final String displayText;
@@ -60,26 +52,43 @@ public class DossierMedicalAddFormUI extends JDialog {
         }
     }
 
-    // Constructeur pour creation
+    private static class MedecinComboItem {
+        private final Long medecinId;
+        private final String displayText;
+
+        MedecinComboItem(Long medecinId, String displayText) {
+            this.medecinId = medecinId;
+            this.displayText = displayText;
+        }
+
+        Long getMedecinId() {
+            return medecinId;
+        }
+
+        @Override
+        public String toString() {
+            return displayText;
+        }
+    }
+
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
-                                    PatientController patientController, String username) {
+                                  PatientController patientController, String username) {
         this(parent, dossierController, patientController, username, null, null);
     }
 
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
-                                    PatientController patientController, String username, Long defaultMedecinId) {
+                                  PatientController patientController, String username, Long defaultMedecinId) {
         this(parent, dossierController, patientController, username, null, defaultMedecinId);
     }
 
-    // Constructeur pour modification
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
-                                    PatientController patientController, String username, DossierDTO dossierToEdit) {
+                                  PatientController patientController, String username, DossierDTO dossierToEdit) {
         this(parent, dossierController, patientController, username, dossierToEdit, null);
     }
 
     private DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
-                                    PatientController patientController, String username,
-                                    DossierDTO dossierToEdit, Long defaultMedecinId) {
+                                  PatientController patientController, String username,
+                                  DossierDTO dossierToEdit, Long defaultMedecinId) {
         super(parent, dossierToEdit == null ? "Nouveau dossier medical" : "Modifier le dossier medical", true);
 
         this.dossierController = dossierController;
@@ -88,16 +97,15 @@ public class DossierMedicalAddFormUI extends JDialog {
         this.dossierToEdit = dossierToEdit;
         this.defaultMedecinId = defaultMedecinId;
 
-        setSize(600, 500);
+        setSize(640, 520);
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        // Charger la liste des patients
         loadPatients();
+        loadMedecins();
 
-        // Remplir les champs si modification
         if (dossierToEdit != null) {
-            // Selectionner le patient
+            selectMedecinById(dossierToEdit.medecinId());
             for (int i = 0; i < cbPatient.getItemCount(); i++) {
                 PatientComboItem item = cbPatient.getItemAt(i);
                 if (item != null && item.getPatientId() != null && item.getPatientId().equals(dossierToEdit.patientId())) {
@@ -109,8 +117,7 @@ public class DossierMedicalAddFormUI extends JDialog {
             updateCharCount();
         }
 
-        JPanel content = new JPanel();
-        content.setLayout(new BorderLayout(20, 20));
+        JPanel content = new JPanel(new BorderLayout(20, 20));
         content.setBorder(new EmptyBorder(20, 20, 20, 20));
         content.setBackground(DentalTheme.BG);
 
@@ -119,7 +126,6 @@ public class DossierMedicalAddFormUI extends JDialog {
 
         setContentPane(content);
 
-        // Actions
         btnCancel.addActionListener(e -> {
             confirmed = false;
             dispose();
@@ -132,31 +138,22 @@ public class DossierMedicalAddFormUI extends JDialog {
             }
         });
 
-        // Compteur de caracteres pour les notes
         txtNotes.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateCharCount();
-            }
-
+            public void insertUpdate(DocumentEvent e) { updateCharCount(); }
             @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateCharCount();
-            }
-
+            public void removeUpdate(DocumentEvent e) { updateCharCount(); }
             @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateCharCount();
-            }
+            public void changedUpdate(DocumentEvent e) { updateCharCount(); }
         });
     }
 
     private void loadPatients() {
         try {
             List<PatientListDto> patients = patientController.lister();
-            cbPatient.addItem(new PatientComboItem(null, "-- Sélectionner un patient --"));
+            cbPatient.addItem(new PatientComboItem(null, "-- Selectionner un patient --"));
             for (PatientListDto p : patients) {
-                String displayText = p.getNomComplet() != null ? p.getNomComplet() : 
+                String displayText = p.getNomComplet() != null ? p.getNomComplet() :
                         (p.getId() != null ? "Patient #" + p.getId() : "Patient inconnu");
                 if (p.getTelephone() != null && !p.getTelephone().isEmpty()) {
                     displayText += " (" + p.getTelephone() + ")";
@@ -165,34 +162,80 @@ public class DossierMedicalAddFormUI extends JDialog {
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                    "Erreur lors du chargement des patients: " + e.getMessage(),
+                    "Erreur chargement patients: " + e.getMessage(),
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    private void loadMedecins() {
+        DefaultComboBoxModel<MedecinComboItem> model = new DefaultComboBoxModel<>();
+        model.addElement(new MedecinComboItem(null, "-- Selectionner un medecin --"));
+
+        try {
+            var repo = new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
+            List<ma.dentalTech.entities.users.Medecin> list;
+
+            if (defaultMedecinId != null) {
+                var m = repo.findById(defaultMedecinId);
+                list = (m == null) ? List.of() : List.of(m);
+            } else {
+                list = repo.findAll();
+            }
+
+            if (list != null) {
+                for (var m : list) {
+                    String label = ((m.getNom() == null ? "" : m.getNom()) + " " +
+                            (m.getPrenom() == null ? "" : m.getPrenom())).trim();
+                    if (label.isBlank()) label = "Medecin #" + m.getId();
+                    model.addElement(new MedecinComboItem(m.getId(), label));
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur chargement medecins: " + e.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        cbMedecin.setModel(model);
+        if (defaultMedecinId != null) {
+            selectMedecinById(defaultMedecinId);
+            cbMedecin.setEnabled(false);
+        }
+    }
+
+    private void selectMedecinById(Long medecinId) {
+        if (medecinId == null) return;
+        for (int i = 0; i < cbMedecin.getItemCount(); i++) {
+            MedecinComboItem item = cbMedecin.getItemAt(i);
+            if (item != null && medecinId.equals(item.getMedecinId())) {
+                cbMedecin.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
     private void updateCharCount() {
         int count = txtNotes.getText().length();
-        lblCharCount.setText(count + " / 5000 caractères");
+        lblCharCount.setText(count + " / 5000 caracteres");
         if (count > 5000) {
-            lblCharCount.setForeground(new Color(0xDC, 0x35, 0x45)); // Rouge
+            lblCharCount.setForeground(new Color(0xDC, 0x35, 0x45));
         } else if (count > 4500) {
-            lblCharCount.setForeground(new Color(0xFF, 0xA5, 0x00)); // Orange
+            lblCharCount.setForeground(new Color(0xFF, 0xA5, 0x00));
         } else {
             lblCharCount.setForeground(DentalTheme.MUTED);
         }
     }
 
     private JComponent buildForm() {
-        JPanel form = new JPanel();
-        form.setLayout(new GridBagLayout());
+        JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
 
         GridBagConstraints gc = new GridBagConstraints();
         gc.insets = new Insets(10, 0, 10, 10);
         gc.anchor = GridBagConstraints.WEST;
 
-        // Patient (obligatoire)
         gc.gridx = 0;
         gc.gridy = 0;
         gc.weightx = 0;
@@ -207,9 +250,23 @@ public class DossierMedicalAddFormUI extends JDialog {
         cbPatient.setPreferredSize(new Dimension(300, 35));
         form.add(cbPatient, gc);
 
-        // Notes
         gc.gridx = 0;
         gc.gridy = 1;
+        gc.weightx = 0;
+        gc.anchor = GridBagConstraints.WEST;
+        JLabel lblMedecin = new JLabel("Medecin *:");
+        lblMedecin.setFont(DentalTheme.textBold(13));
+        lblMedecin.setForeground(DentalTheme.TEXT2);
+        form.add(lblMedecin, gc);
+        gc.gridx = 1;
+        gc.weightx = 1.0;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        cbMedecin.setFont(DentalTheme.textFont(13));
+        cbMedecin.setPreferredSize(new Dimension(300, 35));
+        form.add(cbMedecin, gc);
+
+        gc.gridx = 0;
+        gc.gridy = 2;
         gc.weightx = 0;
         gc.anchor = GridBagConstraints.NORTHWEST;
         JLabel lblNotes = new JLabel("Notes:");
@@ -230,9 +287,8 @@ public class DossierMedicalAddFormUI extends JDialog {
         scroll.setPreferredSize(new Dimension(300, 120));
         form.add(scroll, gc);
 
-        // Compteur de caractères
         gc.gridx = 1;
-        gc.gridy = 2;
+        gc.gridy = 3;
         gc.weightx = 1.0;
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.anchor = GridBagConstraints.EAST;
@@ -246,53 +302,38 @@ public class DossierMedicalAddFormUI extends JDialog {
     private JComponent buildButtons() {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);
-
-        btnCancel.setFont(DentalTheme.textFont(13));
-        btnCancel.setBackground(DentalTheme.BEIGE);
-        btnCancel.setForeground(DentalTheme.TEXT2);
-        btnCancel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-
-        btnSave.setFont(DentalTheme.textBold(13));
-        btnSave.setBackground(DentalTheme.PRIMARY);
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.GOLD, 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-        btnSave.setFocusPainted(false);
-
         buttons.add(btnCancel);
         buttons.add(btnSave);
-
         return buttons;
     }
 
     private boolean validateAndSave() {
-        // Validation : Patient obligatoire
         PatientComboItem selectedPatient = (PatientComboItem) cbPatient.getSelectedItem();
         if (selectedPatient == null || selectedPatient.getPatientId() == null) {
-            showError("Veuillez sélectionner un patient.");
+            showError("Veuillez selectionner un patient.");
             cbPatient.requestFocus();
             return false;
         }
 
-        // Validation : Notes max 5000 caractères
+        MedecinComboItem selectedMedecin = (MedecinComboItem) cbMedecin.getSelectedItem();
+        Long medecinId = selectedMedecin == null ? null : selectedMedecin.getMedecinId();
+        if (medecinId == null) {
+            medecinId = (dossierToEdit != null ? dossierToEdit.medecinId() : defaultMedecinId);
+        }
+        if (medecinId == null) {
+            showError("Veuillez selectionner un medecin.");
+            cbMedecin.requestFocus();
+            return false;
+        }
+
         String notes = txtNotes.getText().trim();
         if (notes.length() > 5000) {
-            showError("Les notes ne peuvent pas dépasser 5000 caractères. Actuellement : " + notes.length() + " caractères.");
+            showError("Les notes ne peuvent pas depasser 5000 caracteres. Actuellement : " + notes.length());
             txtNotes.requestFocus();
             return false;
         }
 
-        // Création ou mise à jour
         try {
-            Long medecinId = (dossierToEdit != null && dossierToEdit.medecinId() != null)
-                    ? dossierToEdit.medecinId()
-                    : defaultMedecinId;
-
             DossierDTO dossier = new DossierDTO(
                     dossierToEdit != null ? dossierToEdit.id() : null,
                     selectedPatient.getPatientId(),
@@ -303,14 +344,14 @@ public class DossierMedicalAddFormUI extends JDialog {
             if (dossierToEdit == null) {
                 Long dossierId = dossierController.create(dossier, username);
                 JOptionPane.showMessageDialog(this,
-                        "Dossier médical créé avec succès (ID: " + dossierId + ")",
-                        "Succès",
+                        "Dossier medical cree (ID: " + dossierId + ")",
+                        "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
                 dossierController.update(dossier, username);
                 JOptionPane.showMessageDialog(this,
-                        "Dossier médical modifié avec succès",
-                        "Succès",
+                        "Dossier medical modifie",
+                        "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
             }
             return true;
@@ -324,7 +365,7 @@ public class DossierMedicalAddFormUI extends JDialog {
         JOptionPane.showMessageDialog(
                 this,
                 message,
-                "Erreur de validation",
+                "Erreur",
                 JOptionPane.ERROR_MESSAGE
         );
     }

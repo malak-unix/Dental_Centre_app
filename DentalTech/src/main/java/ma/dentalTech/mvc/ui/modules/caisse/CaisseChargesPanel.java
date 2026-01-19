@@ -10,6 +10,7 @@ import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.modules.caisse.dialogs.ChargeEditDialog;
+import ma.dentalTech.mvc.ui.modules.caisse.table.ChargesActionsColumn;
 import ma.dentalTech.mvc.ui.modules.caisse.table.ChargesTableModel;
 
 import org.jfree.chart.ChartFactory;
@@ -116,6 +117,7 @@ public class CaisseChargesPanel extends JPanel {
         CardPanel left = new CardPanel("Liste des charges");
         table.setRowHeight(30);
         table.setFillsViewportHeight(true);
+        ChargesActionsColumn.install(table, this::onEditRow, this::onDeleteRow);
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
         left.add(sp, BorderLayout.CENTER);
@@ -166,20 +168,10 @@ public class CaisseChargesPanel extends JPanel {
 
             Long id = getSelectedChargeId();
             if (id == null) {
-                JOptionPane.showMessageDialog(this, "Sélectionne une charge dans le tableau.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selectionne une charge dans le tableau.", "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-
-            try {
-                ChargeItemDTO existing = controller.findById(id);
-                Optional<ChargeUpdateDTO> dtoOpt = ChargeEditDialog.showEdit(this, existing);
-                if (dtoOpt.isEmpty()) return;
-
-                controller.update(id, dtoOpt.get());
-                refreshData();
-            } catch (Exception ex) {
-                showError("Erreur modification charge", ex);
-            }
+            editCharge(id);
         });
 
         btnDelete.addActionListener(e -> {
@@ -187,19 +179,10 @@ public class CaisseChargesPanel extends JPanel {
 
             Long id = getSelectedChargeId();
             if (id == null) {
-                JOptionPane.showMessageDialog(this, "Sélectionne une charge dans le tableau.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selectionne une charge dans le tableau.", "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-
-            int ok = JOptionPane.showConfirmDialog(this, "Supprimer cette charge ?", "Confirmation", JOptionPane.YES_NO_OPTION);
-            if (ok != JOptionPane.YES_OPTION) return;
-
-            try {
-                controller.delete(id);
-                refreshData();
-            } catch (Exception ex) {
-                showError("Erreur suppression charge", ex);
-            }
+            deleteCharge(id);
         });
     }
 
@@ -292,6 +275,44 @@ public class CaisseChargesPanel extends JPanel {
         int modelRow = table.convertRowIndexToModel(viewRow);
         ChargeItemDTO row = model.getRowAt(modelRow);
         return row == null ? null : row.getId();
+    }
+
+    private void onEditRow(ChargeItemDTO row) {
+        if (row == null) return;
+        editCharge(row.getId());
+    }
+
+    private void onDeleteRow(ChargeItemDTO row) {
+        if (row == null) return;
+        deleteCharge(row.getId());
+    }
+
+    private void editCharge(Long id) {
+        if (id == null) return;
+        if (!ensureController()) return;
+        try {
+            ChargeItemDTO existing = controller.findById(id);
+            Optional<ChargeUpdateDTO> dtoOpt = ChargeEditDialog.showEdit(this, existing);
+            if (dtoOpt.isEmpty()) return;
+
+            controller.update(id, dtoOpt.get());
+            refreshData();
+        } catch (Exception ex) {
+            showError("Erreur modification charge", ex);
+        }
+    }
+
+    private void deleteCharge(Long id) {
+        if (id == null) return;
+        if (!ensureController()) return;
+        int ok = JOptionPane.showConfirmDialog(this, "Supprimer cette charge ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+        if (ok != JOptionPane.YES_OPTION) return;
+        try {
+            controller.delete(id);
+            refreshData();
+        } catch (Exception ex) {
+            showError("Erreur suppression charge", ex);
+        }
     }
 
 

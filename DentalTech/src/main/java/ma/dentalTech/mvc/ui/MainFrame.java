@@ -215,6 +215,15 @@ public class MainFrame extends JFrame {
     }
 
     private void showPage(String key) {
+        if ("rdv:new".equals(key)) {
+            showPage("rdv");
+            JComponent page = pages.get("rdv");
+            if (page instanceof RdvPagePanel r) {
+                SwingUtilities.invokeLater(r::openNewRdvDialog);
+            }
+            return;
+        }
+
         if (!pages.containsKey(key)) {
             JOptionPane.showMessageDialog(this, "Page non disponible: " + key);
             return;

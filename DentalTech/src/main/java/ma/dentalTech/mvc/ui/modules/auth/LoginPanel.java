@@ -1,6 +1,7 @@
 package ma.dentalTech.mvc.ui.modules.auth;
 
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,21 +13,20 @@ public class LoginPanel extends JPanel {
 
     private final JTextField tfLogin = new JTextField();
     private final JPasswordField tfPassword = new JPasswordField();
-    private final JButton btnLogin = new JButton("Connexion");
+    private final DentalButton btnLogin = new DentalButton("Connexion");
     private final JButton btnCancel = new JButton("Annuler");
 
     private final JLabel title = new JLabel("Connexion", SwingConstants.CENTER);
 
     public LoginPanel() {
-        setOpaque(true);
-        setBackground(new Color(0xF8, 0xF5, 0xF0)); // fond beige clair
+        setOpaque(false);
         setLayout(new GridBagLayout());
 
         RoundedPanel card = new RoundedPanel(22);
         card.setLayout(new BorderLayout());
         card.setBackground(new Color(0xF6, 0xF0, 0xE8));
         card.setBorder(new EmptyBorder(16, 22, 18, 22));
-        card.setPreferredSize(new Dimension(720, 380));
+        card.setPreferredSize(new Dimension(620, 340));
 
         // Top: logo + separator
         JPanel top = new JPanel(new BorderLayout());
@@ -51,9 +51,9 @@ public class LoginPanel extends JPanel {
         center.add(title);
         center.add(Box.createVerticalStrut(18));
 
-        center.add(buildRow("Login:", "👤", tfLogin));
+        center.add(buildRow("Login:", "@", tfLogin));
         center.add(Box.createVerticalStrut(12));
-        center.add(buildRow("Mot de passe:", "🔒", tfPassword));
+        center.add(buildRow("Mot de passe:", "*", tfPassword));
 
         // Bottom: buttons
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 10));
@@ -62,6 +62,8 @@ public class LoginPanel extends JPanel {
 
         stylePrimary(btnLogin);
         styleSecondary(btnCancel);
+        btnLogin.setFont(DentalTheme.textBold(16));
+        btnLogin.setForeground(Color.WHITE);
 
         bottom.add(btnLogin);
         bottom.add(btnCancel);
@@ -116,32 +118,37 @@ public class LoginPanel extends JPanel {
         return row;
     }
 
-    private void stylePrimary(JButton b) {
+    private void stylePrimary(AbstractButton b) {
         b.setPreferredSize(new Dimension(240, 44));
         b.setFont(DentalTheme.textBold(16));
-        b.setBackground(new Color(0x12, 0x2B, 0x3B)); // bleu foncé
-        b.setForeground(Color.WHITE);
         b.setFocusPainted(false);
+        if (b instanceof DentalButton) return;
+        b.setBackground(new Color(0x12, 0x2B, 0x3B));
+        b.setForeground(Color.WHITE);
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
         b.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0x0C, 0x1D, 0x29), 1),
                 new EmptyBorder(8, 14, 8, 14)
         ));
     }
 
-    private void styleSecondary(JButton b) {
+    private void styleSecondary(AbstractButton b) {
         b.setPreferredSize(new Dimension(240, 44));
-        b.setFont(DentalTheme.textFont(16));
-        b.setBackground(new Color(0xD6, 0xD6, 0xD6));
-        b.setForeground(new Color(0x222222));
+        b.setFont(DentalTheme.textBold(15));
         b.setFocusPainted(false);
+        b.setBackground(new Color(0xF1, 0xE7, 0xDB));
+        b.setForeground(DentalTheme.PRIMARY_DARK);
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
         b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xB7, 0xB7, 0xB7), 1),
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 1),
                 new EmptyBorder(8, 14, 8, 14)
         ));
     }
 
     private Icon loadLogoIcon(int w, int h) {
-        // ✅ logo: src/main/resources/assets/logo.png
+        // logo: src/main/resources/assets/logo.png
         URL url = getClass().getResource("/assets/logo.png");
         if (url == null) {
             // fallback text
@@ -155,6 +162,17 @@ public class LoginPanel extends JPanel {
         return new ImageIcon(img);
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        Color c1 = new Color(0xF7, 0xF2, 0xEB);
+        Color c2 = new Color(0xEC, 0xE1, 0xD1);
+        g2.setPaint(new GradientPaint(0, 0, c1, getWidth(), getHeight(), c2));
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.dispose();
+        super.paintComponent(g);
+    }
     // Getters
     public JTextField loginField() { return tfLogin; }
     public JPasswordField passwordField() { return tfPassword; }
@@ -170,6 +188,9 @@ public class LoginPanel extends JPanel {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(getBackground());
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
+            g2.setColor(DentalTheme.STROKE);
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
             g2.dispose();
             super.paintComponent(g);
         }
@@ -196,6 +217,9 @@ public class LoginPanel extends JPanel {
             g2.fill(s);
 
             g2.dispose();
+
         }
     }
 }
+
+

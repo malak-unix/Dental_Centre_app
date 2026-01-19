@@ -38,9 +38,14 @@ public class ChargesTableModel extends AbstractTableModel {
             case 0 -> formatDate(c.getDateCharge());
             case 1 -> safe(c.getTitre());
             case 2 -> money(c.getMontant());
-            case 3 -> "⋯";
+            case 3 -> c;
             default -> "";
         };
+    }
+
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        return columnIndex == 3 ? Object.class : String.class;
     }
 
     @Override

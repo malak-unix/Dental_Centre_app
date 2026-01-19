@@ -272,7 +272,7 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         DentalButton addRdv = new DentalButton("+ Nouveau RDV");
-        addRdv.addActionListener(e -> navigate.accept("rdv"));
+        addRdv.addActionListener(e -> navigate.accept("rdv:new"));
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);

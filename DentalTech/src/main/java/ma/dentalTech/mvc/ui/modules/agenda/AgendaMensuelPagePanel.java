@@ -42,10 +42,15 @@ public class AgendaMensuelPagePanel extends JPanel {
         actions.setOpaque(false);
 
         DentalButton refresh = new DentalButton("Rafraichir");
-        DentalButton addAgenda = new DentalButton("Creer agenda");
-        DentalButton addJour = new DentalButton("Ajouter jour");
-        DentalButton markIndispo = new DentalButton("Indisponible");
-        DentalButton plages = new DentalButton("Plages horaires");
+        DentalButton addAgenda = new DentalButton("Creer mois");
+        DentalButton addJour = new DentalButton("Ajouter journee");
+        DentalButton markIndispo = new DentalButton("Marquer indispo");
+        DentalButton plages = new DentalButton("Gerer plages");
+        refresh.setToolTipText("Recharger les agendas");
+        addAgenda.setToolTipText("Creer un agenda mensuel pour un medecin");
+        addJour.setToolTipText("Ajouter une journee de travail");
+        markIndispo.setToolTipText("Marquer la journee selectionnee indisponible");
+        plages.setToolTipText("Gerer les plages horaires de la journee");
         addJour.setEnabled(false);
         markIndispo.setEnabled(false);
         plages.setEnabled(false);
@@ -208,8 +213,8 @@ public class AgendaMensuelPagePanel extends JPanel {
         form.add(tfAnnee);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton cancel = new JButton("Annuler");
-        JButton save = new JButton("Creer");
+        JButton cancel = new DentalButton("Annuler");
+        JButton save = new DentalButton("Creer");
         actions.add(cancel);
         actions.add(save);
 
@@ -266,8 +271,8 @@ public class AgendaMensuelPagePanel extends JPanel {
         form.add(tfComment);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton cancel = new JButton("Annuler");
-        JButton save = new JButton("Ajouter");
+        JButton cancel = new DentalButton("Annuler");
+        JButton save = new DentalButton("Ajouter");
         actions.add(cancel);
         actions.add(save);
 
@@ -322,8 +327,8 @@ public class AgendaMensuelPagePanel extends JPanel {
         JTable plageTable = new JTable(plageModel);
         plageTable.setRowHeight(24);
 
-        JButton add = new JButton("Ajouter");
-        JButton del = new JButton("Supprimer");
+        JButton add = new DentalButton("Ajouter");
+        JButton del = new DentalButton("Supprimer");
 
         Runnable reload = () -> {
             plageModel.setRowCount(0);
