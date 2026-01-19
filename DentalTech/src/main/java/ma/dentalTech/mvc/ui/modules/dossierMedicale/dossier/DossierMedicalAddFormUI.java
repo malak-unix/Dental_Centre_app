@@ -24,7 +24,9 @@ public class DossierMedicalAddFormUI extends JDialog {
     private final DossierMedicalController dossierController;
     private final PatientController patientController;
     private final String username;
-    private final DossierDTO dossierToEdit; // null si création
+    private final DossierDTO dossierToEdit; // null si creation
+    
+    private final Long defaultMedecinId;
 
     // Champs du formulaire
     private final JComboBox<PatientComboItem> cbPatient = new JComboBox<>();
@@ -58,21 +60,33 @@ public class DossierMedicalAddFormUI extends JDialog {
         }
     }
 
-    // Constructeur pour création
+    // Constructeur pour creation
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
                                     PatientController patientController, String username) {
-        this(parent, dossierController, patientController, username, null);
+        this(parent, dossierController, patientController, username, null, null);
+    }
+
+    public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
+                                    PatientController patientController, String username, Long defaultMedecinId) {
+        this(parent, dossierController, patientController, username, null, defaultMedecinId);
     }
 
     // Constructeur pour modification
     public DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
                                     PatientController patientController, String username, DossierDTO dossierToEdit) {
-        super(parent, dossierToEdit == null ? "Nouveau dossier médical" : "Modifier le dossier médical", true);
+        this(parent, dossierController, patientController, username, dossierToEdit, null);
+    }
+
+    private DossierMedicalAddFormUI(Frame parent, DossierMedicalController dossierController,
+                                    PatientController patientController, String username,
+                                    DossierDTO dossierToEdit, Long defaultMedecinId) {
+        super(parent, dossierToEdit == null ? "Nouveau dossier medical" : "Modifier le dossier medical", true);
 
         this.dossierController = dossierController;
         this.patientController = patientController;
         this.username = username;
         this.dossierToEdit = dossierToEdit;
+        this.defaultMedecinId = defaultMedecinId;
 
         setSize(600, 500);
         setLocationRelativeTo(parent);
@@ -83,7 +97,7 @@ public class DossierMedicalAddFormUI extends JDialog {
 
         // Remplir les champs si modification
         if (dossierToEdit != null) {
-            // Sélectionner le patient
+            // Selectionner le patient
             for (int i = 0; i < cbPatient.getItemCount(); i++) {
                 PatientComboItem item = cbPatient.getItemAt(i);
                 if (item != null && item.getPatientId() != null && item.getPatientId().equals(dossierToEdit.patientId())) {
@@ -118,7 +132,7 @@ public class DossierMedicalAddFormUI extends JDialog {
             }
         });
 
-        // Compteur de caractères pour les notes
+        // Compteur de caracteres pour les notes
         txtNotes.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -275,10 +289,14 @@ public class DossierMedicalAddFormUI extends JDialog {
 
         // Création ou mise à jour
         try {
+            Long medecinId = (dossierToEdit != null && dossierToEdit.medecinId() != null)
+                    ? dossierToEdit.medecinId()
+                    : defaultMedecinId;
+
             DossierDTO dossier = new DossierDTO(
                     dossierToEdit != null ? dossierToEdit.id() : null,
                     selectedPatient.getPatientId(),
-                    dossierToEdit != null && dossierToEdit.medecinId() != null ? dossierToEdit.medecinId() : null,
+                    medecinId,
                     notes.isEmpty() ? null : notes
             );
 

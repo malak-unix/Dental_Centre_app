@@ -162,7 +162,8 @@ public class DossierMedicalListUI extends JPanel {
                 (Frame) SwingUtilities.getWindowAncestor(this),
                 controller,
                 patientController,
-                username
+                username,
+                medecinId
         );
         dialog.setVisible(true);
         if (dialog.isConfirmed()) {

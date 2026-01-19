@@ -102,7 +102,7 @@ public class AgendaSemainePagePanel extends JPanel {
         c.anchor = GridBagConstraints.WEST;
 
         JLabel agendaTitle = new JLabel("AGENDA");
-        agendaTitle.setFont(new Font("Serif", Font.BOLD, 40));
+        agendaTitle.setFont(DentalTheme.titleFont(32));
         agendaTitle.setForeground(DentalTheme.TEXT2);
 
         c.gridx = 0;
@@ -167,11 +167,11 @@ public class AgendaSemainePagePanel extends JPanel {
         grid.setOpaque(false);
         grid.setBorder(new EmptyBorder(10, 14, 14, 14));
 
-        grid.add(makeDayColumn(DayOfWeek.MONDAY, "LUNDI"));
-        grid.add(makeDayColumn(DayOfWeek.TUESDAY, "MARDI"));
-        grid.add(makeDayColumn(DayOfWeek.WEDNESDAY, "MERCREDI"));
-        grid.add(makeDayColumn(DayOfWeek.THURSDAY, "JEUDI"));
-        grid.add(makeDayColumn(DayOfWeek.FRIDAY, "VENDREDI"));
+        grid.add(makeDayColumn(DayOfWeek.MONDAY, "LU"));
+        grid.add(makeDayColumn(DayOfWeek.TUESDAY, "MA"));
+        grid.add(makeDayColumn(DayOfWeek.WEDNESDAY, "ME"));
+        grid.add(makeDayColumn(DayOfWeek.THURSDAY, "JE"));
+        grid.add(makeDayColumn(DayOfWeek.FRIDAY, "VE"));
 
         return grid;
     }
@@ -274,27 +274,27 @@ public class AgendaSemainePagePanel extends JPanel {
 
         JLabel dayLabel = new JLabel(label, SwingConstants.CENTER);
         dayLabel.setOpaque(true);
-        dayLabel.setBackground(new Color(0xF7, 0xF2, 0xEC));
+        dayLabel.setBackground(DentalTheme.CARD);
         dayLabel.setForeground(DentalTheme.TEXT2);
         dayLabel.setFont(DentalTheme.textBold(12));
         dayLabel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+                BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
         ));
 
         JPanel body = new JPanel();
         body.setOpaque(true);
-        body.setBackground(new Color(0xF7, 0xF2, 0xEC));
+        body.setBackground(DentalTheme.CARD);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
         JScrollPane sp = new JScrollPane(body);
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.getViewport().setOpaque(true);
-        sp.getViewport().setBackground(new Color(0xF7, 0xF2, 0xEC));
+        sp.getViewport().setBackground(DentalTheme.CARD);
         sp.setOpaque(false);
 
         dayColumns.put(day, body);

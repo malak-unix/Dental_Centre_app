@@ -3,6 +3,7 @@ package ma.dentalTech.mvc.ui.modules.dashboard.secretaire;
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.ListeAttenteController;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.controllers.modules.users.api.NotificationController;
 import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
@@ -12,6 +13,9 @@ import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
 import ma.dentalTech.mvc.dto.dashboard.secretaire.SecretaireDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.patient.PatientFormDto;
 import ma.dentalTech.mvc.dto.patient.PatientListDto;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier.DossierMedicalDetailUI;
+import ma.dentalTech.repository.modules.dossierMedical.impl.DossierMedicalRepositoryImpl;
+import ma.dentalTech.entities.dossierMedical.DossierMedical;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.modules.patient.PatientFormDialog;
@@ -36,6 +40,7 @@ public class SecretaireDashboardPanel extends JPanel {
     private final ListeAttenteController listeAttenteController;
     private final NotificationController notificationController;
     private final PatientController patientController;
+    private final DossierMedicalController dossierController;
 
     // Header
     private final JTextField searchField = new JTextField();
@@ -77,6 +82,7 @@ public class SecretaireDashboardPanel extends JPanel {
         this.listeAttenteController = getBeanOrNull(ListeAttenteController.class, "listeAttente.controller");
         this.notificationController = getBeanOrNull(NotificationController.class, "notificationController");
         this.patientController = getBeanOrNull(PatientController.class, "patientController");
+        this.dossierController = getBeanOrNull(DossierMedicalController.class, "dossierMedicalController");
 
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
@@ -265,6 +271,14 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setFont(DentalTheme.titleFont(18));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
+        DentalButton addRdv = new DentalButton("+ Nouveau RDV");
+        addRdv.addActionListener(e -> navigate.accept("rdv"));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+        header.add(addRdv, BorderLayout.EAST);
+
         rdvCardPanel.setOpaque(false);
         rdvCardPanel.removeAll();
 
@@ -282,7 +296,7 @@ public class SecretaireDashboardPanel extends JPanel {
         rdvCardPanel.add(sp, "TABLE");
         rdvCardPanel.add(emptyWrap, "EMPTY");
 
-        container.add(title, BorderLayout.NORTH);
+        container.add(header, BorderLayout.NORTH);
         container.add(rdvCardPanel, BorderLayout.CENTER);
         return container;
     }
@@ -811,7 +825,7 @@ public class SecretaireDashboardPanel extends JPanel {
         center.add(priorite);
 
         DentalButton dossier = new DentalButton("Dossier");
-        dossier.addActionListener(e -> navigate.accept("patients"));
+        dossier.addActionListener(e -> openDossierForPatient(p));
 
         DentalButton modifier = new DentalButton("Modifier");
         modifier.setEnabled(listeAttenteController != null && p.getId() != null);
@@ -945,6 +959,38 @@ public class SecretaireDashboardPanel extends JPanel {
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         b.setBackground(DentalTheme.CARD);
+    }
+
+    private void openDossierForPatient(ListeAttenteDto item) {
+        if (item == null || item.getPatientId() == null) {
+            JOptionPane.showMessageDialog(this, "Patient introuvable.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        if (dossierController == null) {
+            JOptionPane.showMessageDialog(this, "Module dossier medical indisponible.", "Info",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        DossierMedicalRepositoryImpl repo = new DossierMedicalRepositoryImpl();
+        java.util.Optional<DossierMedical> dossier = repo.findByPatientId(item.getPatientId());
+        if (dossier.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Aucun dossier pour ce patient.", "Info",
+                    JOptionPane.INFORMATION_MESSAGE);
+            navigate.accept("dossiers");
+            return;
+        }
+
+        Long dossierId = dossier.get().getId();
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Dossier medical",
+                Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(new DossierMedicalDetailUI(dossierController, dossierId, dialog::dispose), BorderLayout.CENTER);
+        dialog.pack();
+        dialog.setSize(1200, 800);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private static <T> T getBeanOrNull(Class<T> type, String name) {

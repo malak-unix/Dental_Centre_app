@@ -46,7 +46,18 @@ public class DossierMedicalControllerImpl implements DossierMedicalController {
             // Récupérer les dossiers
             List<DossierMedical> dossiers;
             if (request.keyword() != null && !request.keyword().trim().isEmpty()) {
-                dossiers = dossierRepo.searchByNotes(request.keyword());
+                String kw = request.keyword().trim();
+                List<Patient> patients = patientRepo.searchByNomPrenom(kw);
+                dossiers = new ArrayList<>();
+                if (patients != null) {
+                    for (Patient p : patients) {
+                        dossierRepo.findByPatientId(p.getId()).ifPresent(d -> {
+                            if (request.medecinId() == null || request.medecinId().equals(d.getMedecinId())) {
+                                dossiers.add(d);
+                            }
+                        });
+                    }
+                }
             } else if (request.medecinId() != null) {
                 dossiers = dossierRepo.findByMedecinId(request.medecinId());
             } else {
