@@ -45,6 +45,10 @@ public class AgendaSemainePagePanel extends JPanel {
     private final DefaultListModel<PlageHoraire> plageModel = new DefaultListModel<>();
     private final JList<RdvDto> rdvList = new JList<>(rdvDayModel);
     private final JList<PlageHoraire> plageList = new JList<>(plageModel);
+    private final JPanel rdvCard = new JPanel(new CardLayout());
+    private final JPanel plageCard = new JPanel(new CardLayout());
+    private final JLabel rdvEmptyLabel = new JLabel("Aucun RDV");
+    private final JLabel plageEmptyLabel = new JLabel("Aucune plage");
 
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -218,18 +222,39 @@ public class AgendaSemainePagePanel extends JPanel {
         JScrollPane spRdv = new JScrollPane(rdvList);
         spRdv.setBorder(BorderFactory.createTitledBorder("RDV du jour"));
         spRdv.getViewport().setBackground(DentalTheme.CARD);
+        spRdv.setPreferredSize(new Dimension(10, 160));
+        spRdv.setMinimumSize(new Dimension(10, 160));
+
+        JPanel rdvEmpty = new JPanel(new GridBagLayout());
+        rdvEmpty.setOpaque(false);
+        rdvEmptyLabel.setForeground(DentalTheme.MUTED);
+        rdvEmpty.add(rdvEmptyLabel);
+        rdvCard.removeAll();
+        rdvCard.add(spRdv, "LIST");
+        rdvCard.add(rdvEmpty, "EMPTY");
 
         JScrollPane spPlage = new JScrollPane(plageList);
         spPlage.setBorder(BorderFactory.createTitledBorder("Plages horaires"));
         spPlage.getViewport().setBackground(DentalTheme.CARD);
+        spPlage.setPreferredSize(new Dimension(10, 160));
+        spPlage.setMinimumSize(new Dimension(10, 160));
+
+        JPanel plageEmpty = new JPanel(new GridBagLayout());
+        plageEmpty.setOpaque(false);
+        plageEmptyLabel.setForeground(DentalTheme.MUTED);
+        plageEmpty.add(plageEmptyLabel);
+        plageCard.removeAll();
+        plageCard.add(spPlage, "LIST");
+        plageCard.add(plageEmpty, "EMPTY");
 
         JPanel lists = new JPanel(new GridLayout(2, 1, 8, 8));
         lists.setOpaque(false);
-        lists.add(spRdv);
-        lists.add(spPlage);
+        lists.add(rdvCard);
+        lists.add(plageCard);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
+        actions.setPreferredSize(new Dimension(10, 44));
         DentalButton btnProgram = new DentalButton("Programmer");
         DentalButton btnDelete = new DentalButton("Supprimer");
         btnProgram.addActionListener(e -> onProgrammer());
@@ -397,6 +422,15 @@ public class AgendaSemainePagePanel extends JPanel {
         }
     }
 
+
+    private void showCard(JPanel panel, String name) {
+        if (panel == null) return;
+        LayoutManager lm = panel.getLayout();
+        if (lm instanceof CardLayout) {
+            ((CardLayout) lm).show(panel, name);
+        }
+    }
+
     private void selectDay(DayOfWeek day) {
         DetailJourneeDto dj = currentDetailsByDay.get(day);
         if (dj == null) {
@@ -404,6 +438,8 @@ public class AgendaSemainePagePanel extends JPanel {
             selectedDate = null;
             rdvDayModel.clear();
             plageModel.clear();
+            showCard(rdvCard, "EMPTY");
+            showCard(plageCard, "EMPTY");
             return;
         }
         selectedDetailId = dj.getId();
@@ -413,10 +449,12 @@ public class AgendaSemainePagePanel extends JPanel {
         for (RdvDto r : currentRdvsByDay.getOrDefault(day, List.of())) {
             rdvDayModel.addElement(r);
         }
+        showCard(rdvCard, rdvDayModel.isEmpty() ? "EMPTY" : "LIST");
 
         plageModel.clear();
         List<PlageHoraire> list = agendaController.getPlagesByDetailJournee(selectedDetailId);
         if (list != null) list.forEach(plageModel::addElement);
+        showCard(plageCard, plageModel.isEmpty() ? "EMPTY" : "LIST");
     }
 
     private void onProgrammer() {
@@ -616,3 +654,4 @@ public class AgendaSemainePagePanel extends JPanel {
         return model;
     }
 }
+

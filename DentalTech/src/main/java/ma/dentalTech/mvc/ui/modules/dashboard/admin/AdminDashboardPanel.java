@@ -1,19 +1,20 @@
 package ma.dentalTech.mvc.ui.modules.dashboard.admin;
 
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.components.StatCard;
-import ma.dentalTech.configuration.ApplicationContext;
-import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
-
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class AdminDashboardPanel extends JPanel {
@@ -26,19 +27,14 @@ public class AdminDashboardPanel extends JPanel {
     private final StatCard statMedecins    = new StatCard("Medecins", "0", "");
     private final StatCard statSecretaires = new StatCard("Secretaires", "0", "");
     private final StatCard statRecette     = new StatCard("Recette du jour", "0 DH", "");
-    private final StatCard statAdmins   = new StatCard("Administrateurs", "0", "");
-    private final StatCard statActes    = new StatCard("Actes réalisés", "0", "");
 
     private final DefaultTableModel model = new DefaultTableModel(
-            new Object[]{"Nom", "Rôle", "Statut", "Dernière activité"}, 0
+            new Object[]{"Nom", "Role", "Statut", "Derniere activite"}, 0
     ) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
 
-    // --- Référentiels (UI) : alimenté dans reload() ---
-    private final JLabel refMedecinName = new JLabel("—");
-    private final DentalButton btnDossier = new DentalButton("+ Dossier");
-    private final DentalButton btnSupprimer = new DentalButton("Supprimer");
+    private final JPanel activitiesPanel = new JPanel();
 
     public AdminDashboardPanel(DashboardController controller, Long userId, Consumer<String> navigate) {
         this.controller = (controller != null)
@@ -53,6 +49,9 @@ public class AdminDashboardPanel extends JPanel {
         setOpaque(true);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        activitiesPanel.setOpaque(false);
+        activitiesPanel.setLayout(new BoxLayout(activitiesPanel, BoxLayout.Y_AXIS));
+
         add(buildTopStats(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
 
@@ -63,9 +62,9 @@ public class AdminDashboardPanel extends JPanel {
         JPanel p = new JPanel(new GridLayout(1, 4, 15, 15));
         p.setOpaque(false);
         p.add(statUsers);
-        p.add(statAdmins);
+        p.add(statMedecins);
+        p.add(statSecretaires);
         p.add(statRecette);
-        p.add(statActes);
         return p;
     }
 
@@ -73,17 +72,19 @@ public class AdminDashboardPanel extends JPanel {
         JPanel root = new JPanel(new BorderLayout(15, 15));
         root.setOpaque(false);
 
-        // ====== Centre: table users ======
         JTable table = new JTable(model);
         table.setRowHeight(34);
+        table.setFont(DentalTheme.textFont(12));
+        table.getTableHeader().setFont(DentalTheme.textBold(12));
+
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createTitledBorder("Utilisateurs"));
+        TitledBorder t = BorderFactory.createTitledBorder("Utilisateurs");
+        t.setTitleFont(DentalTheme.textBold(13));
+        sp.setBorder(t);
         root.add(sp, BorderLayout.CENTER);
 
-        // ====== Droite: Données référentielles (comme maquette) ======
-        root.add(buildReferentielsCard(), BorderLayout.EAST);
+        root.add(buildActivitiesCard(), BorderLayout.EAST);
 
-        // ====== Bas: actions ======
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         actions.setOpaque(false);
 
@@ -95,75 +96,28 @@ public class AdminDashboardPanel extends JPanel {
 
         actions.add(bUsers);
         actions.add(bBackups);
-
         root.add(actions, BorderLayout.SOUTH);
 
         return root;
     }
 
-    private JComponent buildReferentielsCard() {
+    private JComponent buildActivitiesCard() {
         JPanel right = new JPanel(new BorderLayout(10, 10));
         right.setOpaque(false);
-        right.setPreferredSize(new Dimension(360, 10));
-        right.setBorder(BorderFactory.createTitledBorder("Données Référentielles"));
+        right.setPreferredSize(new Dimension(320, 10));
 
-        // Header : avatar + nom médecin
-        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
-        header.setOpaque(false);
-        JLabel avatar = new JLabel("👨‍⚕️");
-        avatar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 26));
+        TitledBorder t = BorderFactory.createTitledBorder("Activites recentes");
+        t.setTitleFont(DentalTheme.textBold(13));
+        right.setBorder(t);
 
-        refMedecinName.setFont(DentalTheme.textBold(14));
-        refMedecinName.setForeground(DentalTheme.TEXT2);
+        JScrollPane sp = new JScrollPane(activitiesPanel);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
 
-        header.add(avatar);
-        header.add(refMedecinName);
-
-        right.add(header, BorderLayout.NORTH);
-
-        // Actions (boutons style caisse)
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 4));
-        actions.setOpaque(false);
-
-        btnDossier.addActionListener(e -> navigate.accept("dossiers"));
-        btnSupprimer.addActionListener(e -> JOptionPane.showMessageDialog(
-                this,
-                "Action Supprimer (à brancher)",
-                "Info",
-                JOptionPane.INFORMATION_MESSAGE
-        ));
-
-        actions.add(btnDossier);
-        actions.add(btnSupprimer);
-
-        DentalButton btnRef = new DentalButton("Voir Référentiels");
-        btnRef.addActionListener(e -> navigate.accept("referentiels"));
-
-        JPanel south = new JPanel(new BorderLayout());
-        south.setOpaque(false);
-        south.add(actions, BorderLayout.NORTH);
-        south.add(btnRef, BorderLayout.SOUTH);
-
-        right.add(south, BorderLayout.SOUTH);
-
+        right.add(sp, BorderLayout.CENTER);
         return right;
-    }
-
-    private static JComponent dot(String text, Color c) {
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        p.setOpaque(false);
-
-        JLabel dot = new JLabel("●");
-        dot.setForeground(c);
-        dot.setFont(new Font("Segoe UI", Font.BOLD, 14));
-
-        JLabel label = new JLabel(text);
-        label.setFont(DentalTheme.textFont(12));
-        label.setForeground(DentalTheme.TEXT2);
-
-        p.add(dot);
-        p.add(label);
-        return p;
     }
 
     private void reload() {
@@ -173,38 +127,57 @@ public class AdminDashboardPanel extends JPanel {
             if (dto == null) return;
 
             statUsers.setValue(String.valueOf(nvl(dto.getNbUtilisateurs())));
-            statAdmins.setValue(String.valueOf(nvl(dto.getNbAdmins())));
-            statActes.setValue(String.valueOf(nvl(dto.getNbActesRealises())));
             statRecette.setValue(nvl(dto.getRecetteDuJour()) + " DH");
 
-            // table
+            int nbMedecins = 0;
+            int nbSecretaires = 0;
+
             model.setRowCount(0);
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-            // Référentiels : choisir un médecin à afficher (premier utilisateur MEDECIN)
-            String medName = "—";
-
-            if (dto.getUtilisateurs() != null) {
-                for (UserSummaryDTO u : dto.getUtilisateurs()) {
+            List<UserSummaryDTO> users = dto.getUtilisateurs();
+            if (users != null) {
+                for (UserSummaryDTO u : users) {
                     String nomComplet = safe(u.getPrenom()) + " " + safe(u.getNom());
+                    String role = (u.getRole() != null) ? u.getRole().name() : "-";
                     String last = (u.getDerniereActivite() != null) ? u.getDerniereActivite().format(fmt) : "-";
                     model.addRow(new Object[]{
                             nomComplet.trim(),
-                            (u.getRole() != null) ? u.getRole().name() : "-",
+                            role,
                             safe(u.getStatut()),
                             last
                     });
-
-                    if ("—".equals(medName) && u.getRole() != null && "MEDECIN".equals(u.getRole().name())) {
-                        medName = ("Dr. " + nomComplet).trim();
-                    }
+                    if ("MEDECIN".equals(role)) nbMedecins++;
+                    if ("SECRETAIRE".equals(role)) nbSecretaires++;
                 }
             }
 
-            refMedecinName.setText(medName);
+            statMedecins.setValue(String.valueOf(nbMedecins));
+            statSecretaires.setValue(String.valueOf(nbSecretaires));
+
+            activitiesPanel.removeAll();
+            if (users != null && !users.isEmpty()) {
+                int limit = Math.min(6, users.size());
+                for (int i = 0; i < limit; i++) {
+                    UserSummaryDTO u = users.get(i);
+                    String line = safe(u.getPrenom()) + " " + safe(u.getNom());
+                    String last = (u.getDerniereActivite() != null) ? u.getDerniereActivite().format(fmt) : "-";
+                    JLabel row = new JLabel(line.trim() + " - " + last);
+                    row.setFont(DentalTheme.textFont(12));
+                    row.setForeground(DentalTheme.TEXT2);
+                    row.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+                    activitiesPanel.add(row);
+                }
+            } else {
+                JLabel empty = new JLabel("Aucune activite recente");
+                empty.setFont(DentalTheme.textFont(12));
+                empty.setForeground(DentalTheme.MUTED);
+                activitiesPanel.add(empty);
+            }
+            activitiesPanel.revalidate();
+            activitiesPanel.repaint();
 
         } catch (Exception ex) {
-            // au lieu de planter l'UI
             ex.printStackTrace();
         }
     }
