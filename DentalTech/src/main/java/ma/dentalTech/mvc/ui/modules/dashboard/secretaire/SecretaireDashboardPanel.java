@@ -293,7 +293,7 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         DentalButton addRdv = new DentalButton("+ Nouveau RDV");
-        styleActionButton(addRdv);
+        stylePrimaryButton(addRdv);
         addRdv.addActionListener(e -> navigate.accept("rdv:new"));
 
         JPanel header = new JPanel(new BorderLayout());
@@ -335,7 +335,7 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         DentalButton addPatient = new DentalButton("+ Nouveau Patient");
-        styleActionButton(addPatient);
+        stylePrimaryButton(addPatient);
         addPatient.addActionListener(e -> openAddFileAttenteDialog());
 
         top.add(title, BorderLayout.WEST);
@@ -620,12 +620,13 @@ public class SecretaireDashboardPanel extends JPanel {
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
+        header.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
 
-        notifTitle.setFont(DentalTheme.titleFont(16));
+        notifTitle.setFont(DentalTheme.titleFont(14));
         notifTitle.setForeground(DentalTheme.PRIMARY_DARK);
 
-        DentalButton markAll = new DentalButton("Tout marquer lue");
-        styleActionButton(markAll);
+        DentalButton markAll = new DentalButton("Tout marquer lu");
+        styleHeaderRightButton(markAll);
         markAll.addActionListener(e -> markAllNotificationsRead());
 
         header.add(notifTitle, BorderLayout.WEST);
@@ -640,8 +641,8 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel wrap = cardContainer();
         wrap.setLayout(new BorderLayout(10, 10));
 
-        JLabel title = new JLabel("Activites recentes");
-        title.setFont(DentalTheme.titleFont(18));
+        JLabel title = new JLabel("<html>Activit&eacute;s r&eacute;centes</html>");
+        title.setFont(DentalTheme.titleFont(15));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         activitiesLeft.setOpaque(false);
@@ -656,11 +657,12 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setMinimumSize(new Dimension(10, 200));
 
         DentalButton more = new DentalButton("Voir +Activites");
-        styleActionButton(more);
+        styleHeaderRightButton(more);
         more.addActionListener(e -> navigate.accept("rdv"));
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
+        header.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
         header.add(title, BorderLayout.WEST);
         header.add(more, BorderLayout.EAST);
 
@@ -743,7 +745,12 @@ public class SecretaireDashboardPanel extends JPanel {
                 notificationsPanel.add(empty);
             }
             Integer unread = nvl(dto.getNbNotificationsNonLues());
-            notifTitle.setText("NOTIFICATIONS" + (unread > 0 ? " (" + unread + " non lues)" : ""));
+            if (unread > 0) {
+                String suffix = (unread == 1) ? " non lue" : " non lues";
+                notifTitle.setText("<html>NOTIFICATIONS<br>(" + unread + suffix + ")</html>");
+            } else {
+                notifTitle.setText("NOTIFICATIONS");
+            }
             notificationsScroll.repaint();
             notificationsPanel.revalidate();
             notificationsPanel.repaint();
@@ -1116,7 +1123,16 @@ public class SecretaireDashboardPanel extends JPanel {
 
     private void styleActionButton(AbstractButton b) {
         b.setFont(DentalTheme.textBold(12));
+    }
+
+    private void stylePrimaryButton(AbstractButton b) {
+        styleActionButton(b);
         b.setPreferredSize(new Dimension(170, 36));
+    }
+
+    private void styleHeaderRightButton(AbstractButton b) {
+        styleActionButton(b);
+        b.setPreferredSize(new Dimension(135, 32));
     }
 
     private void styleMiniButton(AbstractButton b) {

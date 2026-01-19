@@ -194,11 +194,12 @@ public class AgendaSemainePagePanel extends JPanel {
         grid.add(makeDayColumn(DayOfWeek.THURSDAY, "JE"));
         grid.add(makeDayColumn(DayOfWeek.FRIDAY, "VE"));
 
-        JScrollPane sp = new JScrollPane(grid);
+        JScrollPane sp = new JScrollPane(grid,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         sp.getVerticalScrollBar().setUnitIncrement(16);
+        sp.getHorizontalScrollBar().setUnitIncrement(16);
         sp.getViewport().setOpaque(false);
         sp.setOpaque(false);
         return sp;
@@ -210,6 +211,7 @@ public class AgendaSemainePagePanel extends JPanel {
         center.add(buildWeekGrid(), BorderLayout.CENTER);
         JComponent details = buildDayDetailsPanel();
         details.setPreferredSize(new Dimension(320, 10));
+        details.setMinimumSize(new Dimension(320, 10));
         center.add(details, BorderLayout.EAST);
         return center;
     }
@@ -331,13 +333,16 @@ public class AgendaSemainePagePanel extends JPanel {
         JPanel colWrap = new JPanel(new BorderLayout(8, 8));
         colWrap.setOpaque(false);
         colWrap.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        colWrap.setMinimumSize(new Dimension(170, 10));
+        colWrap.setPreferredSize(new Dimension(190, 10));
 
         JLabel dayLabel = new JLabel(label, SwingConstants.CENTER);
         dayLabel.setOpaque(true);
         dayLabel.setBackground(DentalTheme.CARD);
         dayLabel.setForeground(DentalTheme.TEXT2);
         dayLabel.setFont(DentalTheme.textBold(13));
-        dayLabel.setPreferredSize(new Dimension(10, 54));
+        dayLabel.setMinimumSize(new Dimension(170, 54));
+        dayLabel.setPreferredSize(new Dimension(190, 54));
         dayLabel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true),
                 BorderFactory.createEmptyBorder(6, 8, 6, 8)
@@ -350,7 +355,8 @@ public class AgendaSemainePagePanel extends JPanel {
                 BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true),
                 BorderFactory.createEmptyBorder(4, 4, 4, 4)
         ));
-        body.setPreferredSize(new Dimension(200, dayHeight()));
+        body.setMinimumSize(new Dimension(170, dayHeight()));
+        body.setPreferredSize(new Dimension(190, dayHeight()));
 
         dayColumns.put(day, body);
         dayHeaders.put(day, dayLabel);
