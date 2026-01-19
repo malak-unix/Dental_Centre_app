@@ -50,54 +50,9 @@ public class AgendaHomePanel extends JPanel {
 
         this.fixedMedecinId = (role == LibelleRole.MEDECIN && userId != null) ? userId : null;
 
-        add(buildHeader(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
 
         showPage("SEMAINE");
-    }
-
-    private JComponent buildHeader() {
-        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        header.setOpaque(false);
-
-        JPanel tabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        tabs.setOpaque(false);
-
-        JButton bSemaine = new JButton("Semaine");
-        JButton bRdv = new JButton("RDV");
-        JButton bAgenda = new JButton("Agenda Mensuel");
-        JButton bListe = new JButton("Liste d'attente");
-
-        for (JButton b : new JButton[]{bSemaine, bRdv, bAgenda, bListe}) {
-            styleTabButton(b);
-        }
-
-        bSemaine.addActionListener(e -> showPage("SEMAINE"));
-        bRdv.addActionListener(e -> showPage("RDV"));
-        bAgenda.addActionListener(e -> showPage("AGENDA"));
-        bListe.addActionListener(e -> showPage("LISTE"));
-
-        tabs.add(bSemaine);
-        tabs.add(bRdv);
-        tabs.add(bAgenda);
-        tabs.add(bListe);
-
-        header.add(tabs);
-
-        return header;
-    }
-
-    private void styleTabButton(JButton b) {
-        b.setFont(DentalTheme.textBold(12));
-        b.setFocusPainted(false);
-        b.setBackground(DentalTheme.PRIMARY_DARK);
-        b.setForeground(Color.WHITE);
-        b.setContentAreaFilled(true);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                BorderFactory.createEmptyBorder(6, 14, 6, 14)
-        ));
-        b.setOpaque(true);
     }
 
     private JComponent buildBody() {

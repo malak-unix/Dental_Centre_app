@@ -4,6 +4,7 @@ import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.ListeAttenteController;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
+import ma.dentalTech.mvc.controllers.modules.agenda.api.RdvController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.controllers.modules.users.api.NotificationController;
 import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
@@ -21,7 +22,7 @@ import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.modules.patient.PatientFormDialog;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -41,6 +42,7 @@ public class SecretaireDashboardPanel extends JPanel {
     private final NotificationController notificationController;
     private final PatientController patientController;
     private final DossierMedicalController dossierController;
+    private final RdvController rdvController;
 
     // Header
     private final JTextField searchField = new JTextField();
@@ -55,22 +57,22 @@ public class SecretaireDashboardPanel extends JPanel {
     private final JPanel fileAttentePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
     private final JLabel fileAttenteEmptyLabel = new JLabel("Aucun patient en attente aujourd'hui");
 
-    // Notifications (après file d’attente)
+    // Notifications (apres file d'attente)
     private final JPanel notificationsPanel = new JPanel();
     private  JScrollPane notificationsScroll;
-    private final TitledBorder notifBorder = BorderFactory.createTitledBorder("NOTIFICATIONS");
+    private final JLabel notifTitle = new JLabel("NOTIFICATIONS");
 
         // Activites recentes
     private final JPanel activitiesLeft = new JPanel();
 
     // RDV du jour
     private final DefaultTableModel rdvModel = new DefaultTableModel(
-            new Object[]{"Heure", "Patient", "Statut"}, 0) {
-        @Override public boolean isCellEditable(int row, int column) { return false; }
+            new Object[]{"Heure", "Patient", "Medecin", "Statut", "Actions"}, 0) {
+        @Override public boolean isCellEditable(int row, int column) { return column == 4; }
     };
     private final JTable rdvTable = new JTable(rdvModel);
     private final JPanel rdvCardPanel = new JPanel(new CardLayout());
-    private final JLabel rdvEmptyLabel = new JLabel("Aucun rendez-vous aujourd'hui");
+    private final JLabel rdvEmptyLabel = new JLabel("<html><div style='text-align:center;'>Aucun rendez-vous aujourd'hui<br><span style='font-size:11px;'>Cliquez sur + Nouveau RDV pour en planifier un.</span></div></html>");
     private final List<RdvDto> rdvDuJourCache = new ArrayList<>();
 
     public SecretaireDashboardPanel(DashboardController controller, Long userId, Consumer<String> navigate) {
@@ -83,33 +85,42 @@ public class SecretaireDashboardPanel extends JPanel {
         this.notificationController = getBeanOrNull(NotificationController.class, "notificationController");
         this.patientController = getBeanOrNull(PatientController.class, "patientController");
         this.dossierController = getBeanOrNull(DossierMedicalController.class, "dossierMedicalController");
+        this.rdvController = getBeanOrNull(RdvController.class, "rdv.controller");
 
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
         setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        vRecette.setFont(DentalTheme.titleFont(22));
 
         // IMPORTANT : init notifications AVANT buildMain()
         notificationsPanel.setOpaque(false);
         notificationsPanel.setLayout(new BoxLayout(notificationsPanel, BoxLayout.Y_AXIS));
 
         notificationsScroll = new JScrollPane(notificationsPanel);
-        notificationsScroll.setBorder(notifBorder);
+        notificationsScroll.setBorder(BorderFactory.createEmptyBorder());
         notificationsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         notificationsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         notificationsScroll.getVerticalScrollBar().setUnitIncrement(16);
-        notificationsScroll.setPreferredSize(new Dimension(10, 240));
-        notificationsScroll.setMinimumSize(new Dimension(10, 240));
+        notificationsScroll.setPreferredSize(new Dimension(10, 220));
+        notificationsScroll.setMinimumSize(new Dimension(10, 220));
 
         fileAttenteEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
         rdvEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
         rdvEmptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        rdvTable.setRowHeight(28);
+        rdvTable.setRowHeight(34);
         rdvTable.setFillsViewportHeight(true);
         rdvTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         rdvTable.getTableHeader().setReorderingAllowed(false);
         rdvTable.setFont(DentalTheme.textFont(12));
         rdvTable.getTableHeader().setFont(DentalTheme.textBold(12));
+        rdvTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        rdvTable.getColumnModel().getColumn(1).setPreferredWidth(160);
+        rdvTable.getColumnModel().getColumn(2).setPreferredWidth(120);
+        rdvTable.getColumnModel().getColumn(3).setPreferredWidth(90);
+        rdvTable.getColumnModel().getColumn(4).setPreferredWidth(170);
+        rdvTable.getColumnModel().getColumn(4).setCellRenderer(new RdvActionsRenderer());
+        rdvTable.getColumnModel().getColumn(4).setCellEditor(new RdvActionsEditor());
         rdvTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -140,13 +151,14 @@ public class SecretaireDashboardPanel extends JPanel {
         // search bar
         JPanel searchBox = new JPanel(new BorderLayout(10, 0));
         searchBox.setOpaque(false);
-        searchField.setPreferredSize(new Dimension(520, 36));
+        searchField.setPreferredSize(new Dimension(420, 36));
         searchField.setFont(DentalTheme.textFont(13));
         searchField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
-        searchField.setText("Rechercher un patient, ...");
+        searchField.setText("Rechercher patient, RDV, facture...");
+        searchField.addActionListener(e -> navigate.accept("patients"));
 
         JButton searchBtn = new JButton("Rechercher");
         styleHeaderButton(searchBtn);
@@ -166,6 +178,13 @@ public class SecretaireDashboardPanel extends JPanel {
         name.setFont(DentalTheme.textFont(12));
         name.setForeground(DentalTheme.MUTED_TEXT);
 
+        JLabel avatar = new JLabel(initials(name.getText()), SwingConstants.CENTER);
+        avatar.setOpaque(true);
+        avatar.setPreferredSize(new Dimension(36, 36));
+        avatar.setBackground(new Color(0xE8, 0xD9, 0xCC));
+        avatar.setForeground(DentalTheme.PRIMARY_DARK);
+        avatar.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true));
+
         JPanel t = new JPanel();
         t.setOpaque(false);
         t.setLayout(new BoxLayout(t, BoxLayout.Y_AXIS));
@@ -176,6 +195,7 @@ public class SecretaireDashboardPanel extends JPanel {
         styleHeaderButton(logout);
         logout.addActionListener(e -> navigate.accept("logout"));
 
+        profile.add(avatar);
         profile.add(t);
         profile.add(logout);
 
@@ -233,7 +253,7 @@ public class SecretaireDashboardPanel extends JPanel {
         right.setOpaque(false);
         right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
 
-        right.add(notificationsScroll);
+        right.add(buildNotificationsSection());
         right.add(Box.createVerticalStrut(12));
         right.add(buildActivitiesSection());
 
@@ -244,22 +264,23 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel container = cardContainer();
         container.setLayout(new BorderLayout(12, 12));
 
-        JPanel cards = new JPanel(new GridLayout(1, 5, 12, 12));
-        cards.setOpaque(false);
-
-        cards.add(statCard("Nb patients", vPatients, ""));
-        cards.add(statCard("Recette du jour", vRecette, ""));
-        cards.add(statCard("RDV du jour", vRdv, ""));
-        cards.add(statCard("Patients en attente", vAttente, ""));
+        JPanel kpiGrid = new JPanel(new GridLayout(1, 4, 12, 12));
+        kpiGrid.setOpaque(false);
+        kpiGrid.add(statCard("Nb patients", vPatients, ""));
+        kpiGrid.add(statCard("Recette du jour", vRecette, ""));
+        kpiGrid.add(statCard("RDV du jour", vRdv, ""));
+        kpiGrid.add(statCard("Patients en attente", vAttente, ""));
 
         DentalButton stats = new DentalButton("Voir +statistiques");
+        stylePrimaryButton(stats);
         stats.addActionListener(e -> navigate.accept("caisse"));
+
         JPanel btnWrap = new JPanel(new GridBagLayout());
         btnWrap.setOpaque(false);
         btnWrap.add(stats);
-        cards.add(btnWrap);
 
-        container.add(cards, BorderLayout.CENTER);
+        container.add(kpiGrid, BorderLayout.CENTER);
+        container.add(btnWrap, BorderLayout.EAST);
         return container;
     }
 
@@ -272,6 +293,7 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         DentalButton addRdv = new DentalButton("+ Nouveau RDV");
+        styleActionButton(addRdv);
         addRdv.addActionListener(e -> navigate.accept("rdv:new"));
 
         JPanel header = new JPanel(new BorderLayout());
@@ -286,8 +308,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        sp.setPreferredSize(new Dimension(10, 160));
-        sp.setMinimumSize(new Dimension(10, 160));
+        sp.setPreferredSize(new Dimension(10, 150));
+        sp.setMinimumSize(new Dimension(10, 150));
 
         JPanel emptyWrap = new JPanel(new GridBagLayout());
         emptyWrap.setOpaque(false);
@@ -313,6 +335,7 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
         DentalButton addPatient = new DentalButton("+ Nouveau Patient");
+        styleActionButton(addPatient);
         addPatient.addActionListener(e -> openAddFileAttenteDialog());
 
         top.add(title, BorderLayout.WEST);
@@ -321,10 +344,10 @@ public class SecretaireDashboardPanel extends JPanel {
         fileAttentePanel.setOpaque(false);
         JScrollPane sp = new JScrollPane(fileAttentePanel);
         sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        sp.setPreferredSize(new Dimension(10, 220));
-        sp.setMinimumSize(new Dimension(10, 220));
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sp.setPreferredSize(new Dimension(10, 240));
+        sp.setMinimumSize(new Dimension(10, 240));
 
         container.add(top, BorderLayout.NORTH);
         container.add(sp, BorderLayout.CENTER);
@@ -591,6 +614,28 @@ public class SecretaireDashboardPanel extends JPanel {
         return l;
     }
 
+    private JComponent buildNotificationsSection() {
+        JPanel wrap = cardContainer();
+        wrap.setLayout(new BorderLayout(10, 10));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
+        notifTitle.setFont(DentalTheme.titleFont(16));
+        notifTitle.setForeground(DentalTheme.PRIMARY_DARK);
+
+        DentalButton markAll = new DentalButton("Tout marquer lue");
+        styleActionButton(markAll);
+        markAll.addActionListener(e -> markAllNotificationsRead());
+
+        header.add(notifTitle, BorderLayout.WEST);
+        header.add(markAll, BorderLayout.EAST);
+
+        wrap.add(header, BorderLayout.NORTH);
+        wrap.add(notificationsScroll, BorderLayout.CENTER);
+        return wrap;
+    }
+
     private JComponent buildActivitiesSection() {
         JPanel wrap = cardContainer();
         wrap.setLayout(new BorderLayout(10, 10));
@@ -607,19 +652,20 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         sp.getVerticalScrollBar().setUnitIncrement(16);
-        sp.setPreferredSize(new Dimension(10, 240));
-        sp.setMinimumSize(new Dimension(10, 240));
+        sp.setPreferredSize(new Dimension(10, 200));
+        sp.setMinimumSize(new Dimension(10, 200));
 
         DentalButton more = new DentalButton("Voir +Activites");
+        styleActionButton(more);
         more.addActionListener(e -> navigate.accept("rdv"));
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottom.setOpaque(false);
-        bottom.add(more);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+        header.add(more, BorderLayout.EAST);
 
-        wrap.add(title, BorderLayout.NORTH);
+        wrap.add(header, BorderLayout.NORTH);
         wrap.add(sp, BorderLayout.CENTER);
-        wrap.add(bottom, BorderLayout.SOUTH);
         return wrap;
     }
 
@@ -644,7 +690,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
             // Stats
             vPatients.setText(String.valueOf(nvl(dto.getNbPatients())));
-            vRecette.setText(nvl(dto.getRecetteDuJour()) + " DH");
+        vRecette.setText(formatMoney(dto.getRecetteDuJour()));
             vRdv.setText(String.valueOf(nvl(dto.getNbRdvDuJour())));
             vAttente.setText(String.valueOf(nvl(dto.getNbEnAttente())));
 
@@ -658,7 +704,9 @@ public class SecretaireDashboardPanel extends JPanel {
                     rdvModel.addRow(new Object[]{
                             formatHeure(r.getHeure()),
                             firstNonBlank(r.getPatientNom(), "Patient"),
-                            r.getStatut() != null ? r.getStatut().name() : ""
+                            "-",
+                            r.getStatut() != null ? r.getStatut().name() : "",
+                            "Actions"
                     });
                 }
             }
@@ -671,8 +719,9 @@ public class SecretaireDashboardPanel extends JPanel {
             fileAttentePanel.removeAll();
             List<ListeAttenteDto> fileAttente = dto.getFileAttente();
             if (fileAttente != null && !fileAttente.isEmpty()) {
+                int pos = 1;
                 for (ListeAttenteDto p : fileAttente) {
-                    fileAttentePanel.add(buildPatientCard(p));
+                    fileAttentePanel.add(buildPatientCard(p, pos++));
                 }
             } else {
                 fileAttentePanel.add(fileAttenteEmptyLabel);
@@ -680,7 +729,7 @@ public class SecretaireDashboardPanel extends JPanel {
             fileAttentePanel.revalidate();
             fileAttentePanel.repaint();
 
-            // Notifications (après file)
+            // Notifications (apres file)
             notificationsPanel.removeAll();
             List<NotificationDTO> notif = dto.getNotifications();
             if (notif != null && !notif.isEmpty()) {
@@ -694,7 +743,7 @@ public class SecretaireDashboardPanel extends JPanel {
                 notificationsPanel.add(empty);
             }
             Integer unread = nvl(dto.getNbNotificationsNonLues());
-            notifBorder.setTitle("NOTIFICATIONS" + (unread > 0 ? " (" + unread + " non lues)" : ""));
+            notifTitle.setText("NOTIFICATIONS" + (unread > 0 ? " (" + unread + " non lues)" : ""));
             notificationsScroll.repaint();
             notificationsPanel.revalidate();
             notificationsPanel.repaint();
@@ -725,8 +774,8 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel c = new JPanel();
         c.setBackground(DentalTheme.CARD);
         c.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER),
-                BorderFactory.createEmptyBorder(14, 14, 14, 14)
+                uniformCardBorder(),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)
         ));
         c.setOpaque(true);
         return c;
@@ -737,7 +786,7 @@ public class SecretaireDashboardPanel extends JPanel {
         card.setOpaque(true);
         card.setBackground(DentalTheme.CARD);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER),
+                uniformCardBorder(),
                 BorderFactory.createEmptyBorder(12, 12, 12, 12)
         ));
 
@@ -765,9 +814,9 @@ public class SecretaireDashboardPanel extends JPanel {
         return card;
     }
 
-    private JComponent buildPatientCard(ListeAttenteDto p) {
+    private JComponent buildPatientCard(ListeAttenteDto p, int position) {
         JPanel card = new JPanel(new BorderLayout(10, 8));
-        card.setPreferredSize(new Dimension(210, 130));
+        card.setPreferredSize(new Dimension(220, 150));
         card.setBackground(DentalTheme.CARD);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER),
@@ -784,12 +833,53 @@ public class SecretaireDashboardPanel extends JPanel {
         name.setFont(DentalTheme.textBold(14));
         name.setForeground(DentalTheme.PRIMARY_DARK);
 
-        JCheckBox passed = new JCheckBox();
-        passed.setOpaque(false);
-        passed.setToolTipText("Marquer comme passe");
-        passed.setEnabled(listeAttenteController != null && p.getId() != null);
-        passed.addActionListener(e -> {
-            if (!passed.isSelected()) return;
+        JLabel pos = new JLabel("#" + position);
+        pos.setFont(DentalTheme.textBold(12));
+        pos.setForeground(DentalTheme.MUTED);
+        pos.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
+
+        JLabel motif = new JLabel("Motif: " + firstNonBlank(safe(p.getMotif()), "-"));
+        motif.setFont(DentalTheme.textFont(11));
+        motif.setForeground(DentalTheme.MUTED_TEXT);
+
+        JLabel priorite = new JLabel(firstNonBlank(safe(p.getPriorite()), "NORMALE"));
+        priorite.setFont(DentalTheme.textBold(11));
+        priorite.setForeground(Color.WHITE);
+        priorite.setOpaque(true);
+        priorite.setBackground(colorForPriorite(priorite.getText()));
+        priorite.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+
+        JPanel top = new JPanel(new BorderLayout(6, 0));
+        top.setOpaque(false);
+        top.add(pos, BorderLayout.WEST);
+        top.add(name, BorderLayout.CENTER);
+
+        JPanel center = new JPanel();
+        center.setOpaque(false);
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+        center.add(Box.createVerticalStrut(4));
+        center.add(motif);
+        center.add(Box.createVerticalStrut(4));
+        center.add(priorite);
+
+        DentalButton dossier = new DentalButton("Dossier");
+        styleMiniButton(dossier);
+        dossier.addActionListener(e -> openDossierForPatient(p));
+
+        DentalButton modifier = new DentalButton("Modifier");
+        styleMiniButton(modifier);
+        modifier.setEnabled(listeAttenteController != null && p.getId() != null);
+        modifier.addActionListener(e -> openEditFileAttenteDialog(p));
+
+        DentalButton appeler = new DentalButton("Appeler");
+        styleMiniButton(appeler);
+        appeler.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                "Patient appele: " + label, "Info", JOptionPane.INFORMATION_MESSAGE));
+
+        DentalButton retirer = new DentalButton("Retirer");
+        styleMiniButton(retirer);
+        retirer.setEnabled(listeAttenteController != null && p.getId() != null);
+        retirer.addActionListener(e -> {
             int ok = JOptionPane.showConfirmDialog(
                     this,
                     "Retirer ce patient de la file d'attente ?",
@@ -799,40 +889,13 @@ public class SecretaireDashboardPanel extends JPanel {
             if (ok == JOptionPane.YES_OPTION && listeAttenteController != null && p.getId() != null) {
                 listeAttenteController.deleteById(p.getId());
                 reload();
-            } else {
-                passed.setSelected(false);
             }
         });
 
-        JLabel motif = new JLabel("Motif: " + firstNonBlank(safe(p.getMotif()), "-"));
-        motif.setFont(DentalTheme.textFont(11));
-        motif.setForeground(DentalTheme.MUTED_TEXT);
-
-        JLabel priorite = new JLabel("Priorite: " + firstNonBlank(safe(p.getPriorite()), "-"));
-        priorite.setFont(DentalTheme.textFont(11));
-        priorite.setForeground(DentalTheme.MUTED_TEXT);
-
-        JPanel top = new JPanel(new BorderLayout(6, 0));
-        top.setOpaque(false);
-        top.add(passed, BorderLayout.WEST);
-        top.add(name, BorderLayout.CENTER);
-
-        JPanel center = new JPanel();
-        center.setOpaque(false);
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.add(Box.createVerticalStrut(4));
-        center.add(motif);
-        center.add(priorite);
-
-        DentalButton dossier = new DentalButton("Dossier");
-        dossier.addActionListener(e -> openDossierForPatient(p));
-
-        DentalButton modifier = new DentalButton("Modifier");
-        modifier.setEnabled(listeAttenteController != null && p.getId() != null);
-        modifier.addActionListener(e -> openEditFileAttenteDialog(p));
-
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        JPanel actions = new JPanel(new GridLayout(2, 2, 6, 4));
         actions.setOpaque(false);
+        actions.add(appeler);
+        actions.add(retirer);
         actions.add(dossier);
         actions.add(modifier);
 
@@ -875,8 +938,13 @@ public class SecretaireDashboardPanel extends JPanel {
         title.setFont(DentalTheme.textBold(14));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
-        JLabel msg = new JLabel("<html><div style='width:520px;'>" + escapeHtml(safe(n.getMessage())) + "</div></html>");
+        JTextArea msg = new JTextArea(safe(n.getMessage()));
+        msg.setLineWrap(true);
+        msg.setWrapStyleWord(true);
+        msg.setEditable(false);
+        msg.setOpaque(false);
         msg.setForeground(DentalTheme.TEXT);
+        msg.setFont(DentalTheme.textFont(12));
 
         center.add(title);
         center.add(Box.createVerticalStrut(4));
@@ -899,6 +967,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
         if (!n.isLue() && notificationController != null && n.getId() != null) {
             DentalButton mark = new DentalButton("Marquer lue");
+            styleMiniButton(mark);
             mark.setFont(DentalTheme.textFont(11));
             mark.addActionListener(e -> {
                 notificationController.markAsRead(n.getId());
@@ -928,7 +997,11 @@ public class SecretaireDashboardPanel extends JPanel {
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 
         String line = firstNonBlank(safe(n.getTitre()), safe(n.getMessage()), "Activite");
-        JLabel txt = new JLabel("<html><div style='width:" + (big ? "520" : "360") + "px;'>" + escapeHtml(line) + "</div></html>");
+        JTextArea txt = new JTextArea(line);
+        txt.setLineWrap(true);
+        txt.setWrapStyleWord(true);
+        txt.setEditable(false);
+        txt.setOpaque(false);
         txt.setForeground(DentalTheme.TEXT);
         txt.setFont(DentalTheme.textFont(big ? 13 : 12));
 
@@ -945,9 +1018,85 @@ public class SecretaireDashboardPanel extends JPanel {
         return row;
     }
 
+    private class RdvActionsRenderer implements javax.swing.table.TableCellRenderer {
+        private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+        private final DentalButton btnConfirm = new DentalButton("Confirmer");
+        private final DentalButton btnCancel = new DentalButton("Annuler");
+
+        RdvActionsRenderer() {
+            panel.setOpaque(true);
+            styleMiniButton(btnConfirm);
+            styleMiniButton(btnCancel);
+            panel.add(btnConfirm);
+            panel.add(btnCancel);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+            RdvDto r = getRdvAtRow(row);
+            boolean planifie = r != null && r.getStatut() == ma.dentalTech.entities.enums.EtatRendezVous.PLANIFIE;
+            btnConfirm.setEnabled(planifie);
+            btnCancel.setEnabled(planifie);
+            return panel;
+        }
+    }
+
+    private class RdvActionsEditor extends javax.swing.AbstractCellEditor implements javax.swing.table.TableCellEditor {
+        private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+        private final DentalButton btnConfirm = new DentalButton("Confirmer");
+        private final DentalButton btnCancel = new DentalButton("Annuler");
+        private int currentRow = -1;
+
+        RdvActionsEditor() {
+            panel.setOpaque(true);
+            styleMiniButton(btnConfirm);
+            styleMiniButton(btnCancel);
+            panel.add(btnConfirm);
+            panel.add(btnCancel);
+
+            btnConfirm.addActionListener(e -> {
+                stopCellEditing();
+                if (rdvController == null) return;
+                RdvDto r = getRdvAtRow(currentRow);
+                if (r == null || r.getId() == null) return;
+                if (r.getStatut() != ma.dentalTech.entities.enums.EtatRendezVous.PLANIFIE) return;
+                rdvController.confirmer(r.getId());
+                reload();
+            });
+
+            btnCancel.addActionListener(e -> {
+                stopCellEditing();
+                if (rdvController == null) return;
+                RdvDto r = getRdvAtRow(currentRow);
+                if (r == null || r.getId() == null) return;
+                if (r.getStatut() != ma.dentalTech.entities.enums.EtatRendezVous.PLANIFIE) return;
+                rdvController.annuler(r.getId());
+                reload();
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row;
+            panel.setBackground(table.getSelectionBackground());
+            RdvDto r = getRdvAtRow(row);
+            boolean planifie = r != null && r.getStatut() == ma.dentalTech.entities.enums.EtatRendezVous.PLANIFIE;
+            btnConfirm.setEnabled(planifie);
+            btnCancel.setEnabled(planifie);
+            return panel;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
+        }
+    }
+
     private static JLabel valueLabel(String s) {
         JLabel l = new JLabel(s);
-        l.setFont(DentalTheme.titleFont(18));
+        l.setFont(DentalTheme.titleFont(26));
         l.setForeground(DentalTheme.PRIMARY_DARK);
         return l;
     }
@@ -955,10 +1104,39 @@ public class SecretaireDashboardPanel extends JPanel {
     private void styleHeaderButton(AbstractButton b) {
         b.setFocusPainted(false);
         b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER),
+                uniformCardBorder(),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         b.setBackground(DentalTheme.CARD);
+    }
+
+    private Border uniformCardBorder() {
+        return BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true);
+    }
+
+    private void styleActionButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(12));
+        b.setPreferredSize(new Dimension(170, 36));
+    }
+
+    private void styleMiniButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(11));
+        b.setPreferredSize(new Dimension(78, 26));
+    }
+
+    private void markAllNotificationsRead() {
+        if (notificationController == null) return;
+        try {
+            SecretaireDashboardResponseDTO dto = controller.getDashboardDTO(userId).getSecretaire();
+            if (dto != null && dto.getNotifications() != null) {
+                for (NotificationDTO n : dto.getNotifications()) {
+                    if (n != null && !n.isLue() && n.getId() != null) {
+                        notificationController.markAsRead(n.getId());
+                    }
+                }
+            }
+            reload();
+        } catch (Exception ignored) {}
     }
 
     private void openDossierForPatient(ListeAttenteDto item) {
@@ -1038,6 +1216,40 @@ public class SecretaireDashboardPanel extends JPanel {
 
     private String formatHeure(java.time.LocalTime t) {
         return t == null ? "" : t.toString();
+    }
+
+    private String formatMoney(Object v) {
+        if (v == null) return "0 DH";
+        try {
+            double d = Double.parseDouble(String.valueOf(v));
+            java.text.DecimalFormatSymbols sym = new java.text.DecimalFormatSymbols();
+            sym.setDecimalSeparator(',');
+            java.text.DecimalFormat df = new java.text.DecimalFormat("0.00", sym);
+            return df.format(d) + " DH";
+        } catch (Exception ignored) {
+            return String.valueOf(v) + " DH";
+        }
+    }
+
+    private Color colorForPriorite(String priorite) {
+        String p = priorite == null ? "" : priorite.trim().toUpperCase();
+        return switch (p) {
+            case "HAUTE" -> new Color(0xC9, 0x43, 0x43);
+            case "BASSE" -> new Color(0x7A, 0xA6, 0x6B);
+            default -> new Color(0xC7, 0xA2, 0x6A);
+        };
+    }
+
+    private String initials(String name) {
+        if (name == null || name.isBlank()) return "U";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
+        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+    }
+
+    private RdvDto getRdvAtRow(int row) {
+        if (row < 0 || row >= rdvDuJourCache.size()) return null;
+        return rdvDuJourCache.get(row);
     }
 
     private static String safe(String s) { return (s == null) ? "" : s; }

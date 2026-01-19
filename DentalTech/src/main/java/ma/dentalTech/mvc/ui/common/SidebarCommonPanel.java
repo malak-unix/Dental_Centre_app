@@ -16,11 +16,9 @@ public class SidebarCommonPanel extends JPanel {
     private final Consumer<String> onNavigate;
 
     private final LibelleRole role;
-    private final String fullName;
 
     public SidebarCommonPanel(LibelleRole role, String fullName, Consumer<String> onNavigate) {
         this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
-        this.fullName = (fullName != null) ? fullName : "";
         this.onNavigate = onNavigate;
 
         setPreferredSize(new Dimension(270, 780));
@@ -50,11 +48,6 @@ public class SidebarCommonPanel extends JPanel {
 
         add(navCard);
         add(Box.createVerticalGlue());
-
-        String roleText = RoleMenuConfig.roleLabel(role);
-        UserCardPanel userCard = new UserCardPanel(roleText, fullName);
-        userCard.setAlignmentX(Component.LEFT_ALIGNMENT);
-        add(userCard);
     }
 
     private NavButton makeNav(String text, Icon icon, String pageKey) {
@@ -89,7 +82,6 @@ public class SidebarCommonPanel extends JPanel {
     }
 
     private String iconPathFor(String pageKey) {
-        // ✅ tu dois créer ces fichiers PNG dans: src/main/resources/assets/icons/
         return switch (pageKey) {
             case "dashboard"      -> "/assets/icons/dashboard.png";
             case "patients"       -> "/assets/icons/patients.png";
@@ -98,12 +90,12 @@ public class SidebarCommonPanel extends JPanel {
             case "agenda_med"     -> "/assets/icons/planning.png";
             case "dossiers"       -> "/assets/icons/folder.png";
             case "consultations"  -> "/assets/icons/consultation.png";
-            case "ordonnances"    -> "/assets/icons/medicine.png";     // ✅ FIX (ancien = medicament.png)
+            case "ordonnances"    -> "/assets/icons/medicine.png";
             case "certificats"    -> "/assets/icons/certificat.png";
             case "situation_fin"  -> "/assets/icons/money.png";
             case "actes"          -> "/assets/icons/teeth.png";
-            case "medicaments"    -> "/assets/icons/medicine.png";     // ✅ AJOUT
-            case "antecedents"    -> "/assets/icons/antecedents.png";  // ✅ AJOUT
+            case "medicaments"    -> "/assets/icons/medicine.png";
+            case "antecedents"    -> "/assets/icons/antecedents.png";
             case "caisse"         -> "/assets/icons/caisse.png";
             case "utilisateurs"   -> "/assets/icons/users.png";
             case "referentiels"   -> "/assets/icons/referentiels.png";

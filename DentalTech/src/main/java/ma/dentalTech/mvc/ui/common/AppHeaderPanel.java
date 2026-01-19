@@ -14,12 +14,15 @@ public class AppHeaderPanel extends JPanel {
 
     private final JTextField searchField = new JTextField();
     private Consumer<String> onSearchChanged;
+    private Consumer<String> onSearchSubmit;
 
     private final JLabel userLabel = new JLabel();
     private final JLabel avatarLabel = new JLabel();
 
-    // ✅ Déconnexion visible
-    private final JButton logout = new JButton("Déconnexion");
+    private final JButton logout = new JButton("Deconnexion");
+    private final JButton searchBtn = new JButton();
+
+    private static final String SEARCH_PLACEHOLDER = "Rechercher patient, RDV, facture...";
 
     public AppHeaderPanel() {
         setLayout(new BorderLayout());
@@ -44,18 +47,25 @@ public class AppHeaderPanel extends JPanel {
                 BorderFactory.createLineBorder(DentalTheme.STROKE, 2),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
-
-        JLabel searchIcon = new JLabel("🔎");
-        searchIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
-        searchWrap.add(searchIcon, BorderLayout.WEST);
+        searchWrap.setPreferredSize(new Dimension(380, 40));
+        Icon searchIcon = loadIcon("/assets/icons/search.png", 16, 16);
+        if (searchIcon != null) {
+            JLabel iconLabel = new JLabel(searchIcon);
+            iconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
+            searchWrap.add(iconLabel, BorderLayout.WEST);
+        }
 
         searchField.setBorder(BorderFactory.createEmptyBorder());
         searchField.setFont(DentalTheme.textFont(13));
         searchField.setOpaque(false);
         searchField.setForeground(DentalTheme.TEXT2);
         searchField.setCaretColor(DentalTheme.TEXT2);
-        searchField.setToolTipText("Rechercher...");
+        searchField.setToolTipText(SEARCH_PLACEHOLDER);
+        installSearchPlaceholder();
         searchWrap.add(searchField, BorderLayout.CENTER);
+
+        styleSearchButton();
+        searchWrap.add(searchBtn, BorderLayout.EAST);
 
         center.add(searchWrap, BorderLayout.CENTER);
         add(center, BorderLayout.CENTER);
@@ -66,7 +76,12 @@ public class AppHeaderPanel extends JPanel {
         right.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 18));
 
         avatarLabel.setPreferredSize(new Dimension(38, 38));
-        avatarLabel.setIcon(loadAvatarFallback(38, 38));
+        avatarLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarLabel.setVerticalAlignment(SwingConstants.CENTER);
+        avatarLabel.setOpaque(true);
+        avatarLabel.setBackground(new Color(0xD9, 0xC6, 0xB5));
+        avatarLabel.setForeground(DentalTheme.TEXT2);
+        avatarLabel.setBorder(BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true));
 
         userLabel.setFont(DentalTheme.textBold(12));
         userLabel.setForeground(DentalTheme.TEXT2);
@@ -79,20 +94,19 @@ public class AppHeaderPanel extends JPanel {
 
         add(right, BorderLayout.EAST);
 
-        // Search listener (non bloquant)
+        // Search listener
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void fire() {
-                if (onSearchChanged != null) onSearchChanged.accept(searchField.getText());
+                if (onSearchChanged != null) onSearchChanged.accept(getSearchText());
             }
             @Override public void insertUpdate(DocumentEvent e) { fire(); }
             @Override public void removeUpdate(DocumentEvent e) { fire(); }
             @Override public void changedUpdate(DocumentEvent e) { fire(); }
         });
+        searchField.addActionListener(e -> fireSearchSubmit());
+        searchBtn.addActionListener(e -> fireSearchSubmit());
     }
 
-    // =========================
-    // ✅ STYLE logout button
-    // =========================
     private void styleLogoutButton() {
         logout.setFocusable(false);
         logout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -100,14 +114,12 @@ public class AppHeaderPanel extends JPanel {
         logout.setFont(DentalTheme.textBold(12));
         logout.setForeground(DentalTheme.TEXT2);
 
-        // Icône optionnelle
         Icon icon = loadIcon("/assets/icons/logout.png", 16, 16);
         if (icon != null) {
             logout.setIcon(icon);
             logout.setIconTextGap(8);
         }
 
-        // Fond + bordure (style projet)
         logout.setOpaque(true);
         logout.setBackground(Color.WHITE);
         logout.setBorder(BorderFactory.createCompoundBorder(
@@ -115,7 +127,6 @@ public class AppHeaderPanel extends JPanel {
                 BorderFactory.createEmptyBorder(7, 12, 7, 12)
         ));
 
-        // Hover effect léger
         Color normalBg = Color.WHITE;
         Color hoverBg = new Color(0xF3ECE6);
 
@@ -125,6 +136,42 @@ public class AppHeaderPanel extends JPanel {
             }
             @Override public void mouseExited(MouseEvent e) {
                 logout.setBackground(normalBg);
+            }
+        });
+    }
+
+    private void styleSearchButton() {
+        searchBtn.setFocusable(false);
+        searchBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        searchBtn.setFont(DentalTheme.textBold(12));
+        searchBtn.setForeground(DentalTheme.TEXT2);
+        searchBtn.setText("GO");
+        searchBtn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 1),
+                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+        searchBtn.setBackground(new Color(0xF3, 0xEC, 0xE6));
+        searchBtn.setOpaque(true);
+    }
+
+    private void installSearchPlaceholder() {
+        searchField.setText(SEARCH_PLACEHOLDER);
+        searchField.setForeground(DentalTheme.MUTED);
+        searchField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (SEARCH_PLACEHOLDER.equals(searchField.getText())) {
+                    searchField.setText("");
+                    searchField.setForeground(DentalTheme.TEXT2);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (searchField.getText() == null || searchField.getText().isBlank()) {
+                    searchField.setText(SEARCH_PLACEHOLDER);
+                    searchField.setForeground(DentalTheme.MUTED);
+                }
             }
         });
     }
@@ -140,9 +187,6 @@ public class AppHeaderPanel extends JPanel {
         }
     }
 
-    // =========================
-    // Logo + avatar fallback
-    // =========================
     private Icon loadLogoIcon() {
         java.net.URL url = getClass().getResource("/assets/logo.png");
         if (url == null) {
@@ -156,31 +200,11 @@ public class AppHeaderPanel extends JPanel {
         return new ImageIcon(img);
     }
 
-    private Icon loadAvatarFallback(int w, int h) {
-        return new Icon() {
-            @Override public int getIconWidth() { return w; }
-            @Override public int getIconHeight() { return h; }
-            @Override
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0xD9C6B5));
-                g2.fillOval(x, y, w, h);
-                g2.setColor(DentalTheme.STROKE);
-                g2.setStroke(new BasicStroke(2f));
-                g2.drawOval(x, y, w, h);
-                g2.dispose();
-            }
-        };
-    }
-
-    // =========================
-    // Public API
-    // =========================
     public void setUser(String fullName, String roleLabel) {
         String n = (fullName == null || fullName.isBlank()) ? "Utilisateur" : fullName.trim();
         String r = (roleLabel == null || roleLabel.isBlank()) ? "" : roleLabel.trim();
-        userLabel.setText(r.isEmpty() ? n : (n + " • " + r));
+        userLabel.setText(r.isEmpty() ? n : (n + " - " + r));
+        avatarLabel.setText(initials(n));
     }
 
     public JButton logoutButton() {
@@ -191,11 +215,32 @@ public class AppHeaderPanel extends JPanel {
         this.onSearchChanged = listener;
     }
 
+    public void onSearchSubmit(Consumer<String> listener) {
+        this.onSearchSubmit = listener;
+    }
+
     public void clearSearch() {
         searchField.setText("");
     }
 
     public String getSearchText() {
-        return searchField.getText();
+        String v = searchField.getText();
+        return SEARCH_PLACEHOLDER.equals(v) ? "" : v;
+    }
+
+    private void fireSearchSubmit() {
+        String v = getSearchText();
+        if (onSearchSubmit != null) {
+            onSearchSubmit.accept(v);
+        } else if (onSearchChanged != null) {
+            onSearchChanged.accept(v);
+        }
+    }
+
+    private String initials(String name) {
+        if (name == null || name.isBlank()) return "U";
+        String[] parts = name.trim().split("\s+");
+        if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
+        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
     }
 }

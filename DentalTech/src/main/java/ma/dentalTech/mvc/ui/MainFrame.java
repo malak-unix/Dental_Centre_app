@@ -62,6 +62,7 @@ public class MainFrame extends JFrame {
         // Header (haut)
         header.setUser(this.fullName, RoleMenuConfig.roleLabel(this.role));
         header.logoutButton().addActionListener(e -> doLogout());
+        header.onSearchSubmit(q -> showPage("patients"));
         shell.header().add(header, BorderLayout.CENTER);
 
         // Sidebar (gauche)
