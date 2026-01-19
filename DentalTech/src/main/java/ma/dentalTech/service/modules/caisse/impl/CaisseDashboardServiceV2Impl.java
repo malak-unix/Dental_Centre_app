@@ -12,6 +12,14 @@ import ma.dentalTech.mvc.dto.caisse.CaisseFactureRowDTO;
 import ma.dentalTech.repository.modules.caisse.api.ChargesRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.caisse.api.RevenuesRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
+import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepository;
+import ma.dentalTech.repository.modules.dossierMedical.impl.ConsultationRepositoryImpl;
+import ma.dentalTech.repository.modules.dossierMedical.impl.DossierMedicalRepositoryImpl;
+import ma.dentalTech.repository.modules.patient.api.PatientRepository;
+import ma.dentalTech.repository.modules.patient.impl.PatientRepositoryImpl;
+import ma.dentalTech.repository.modules.users.api.MedecinRepository;
+import ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl;
 import ma.dentalTech.service.modules.caisse.api.CaisseDashboardServiceV2;
 import ma.dentalTech.service.modules.caisse.api.CaisseValidationService;
 
@@ -21,9 +29,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -49,8 +59,20 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
         factures = applyStatutFilter(factures, req == null ? null : req.getStatut());
         factures = applySearchFilter(factures, req == null ? null : req.getSearch());
 
+        ConsultationRepository consultationRepo = new ConsultationRepositoryImpl();
+        DossierMedicalRepository dossierRepo = new DossierMedicalRepositoryImpl();
+        PatientRepository patientRepo = new PatientRepositoryImpl();
+        MedecinRepository medecinRepo = new MedecinRepositoryImpl();
+
+        Map<Long, String> patientNames = new HashMap<>();
+        Map<Long, String> medecinNames = new HashMap<>();
+
         List<CaisseFactureRowDTO> rows = factures.stream()
-                .map(f -> toRowDTO(f, role))
+                .map(f -> {
+                    CaisseFactureRowDTO row = toRowDTO(f, role);
+                    enrichRow(row, f, consultationRepo, dossierRepo, patientRepo, medecinRepo, patientNames, medecinNames);
+                    return row;
+                })
                 .collect(Collectors.toList());
 
         double totalFactures = sumDouble(factures, Facture::getTotalFacture);
@@ -130,12 +152,73 @@ public class CaisseDashboardServiceV2Impl implements CaisseDashboardServiceV2 {
                 .totalFacture(BigDecimal.valueOf(total))
                 .totalPaye(BigDecimal.valueOf(paye))
                 .reste(BigDecimal.valueOf(reste))
+                .numeroFacture(f.getId() == null ? null : ("F-" + f.getId()))
+                .dateEmission(f.getDateFacture())
+                .montant(total)
                 .statut(f.getStatut() == null ? null : f.getStatut().name())
                 .canView(true)
                 .canPrint(true)
                 .canPay(canPay)
                 .canCancel(canCancel)
                 .build();
+    }
+
+    private void enrichRow(CaisseFactureRowDTO row,
+                           Facture f,
+                           ConsultationRepository consultationRepo,
+                           DossierMedicalRepository dossierRepo,
+                           PatientRepository patientRepo,
+                           MedecinRepository medecinRepo,
+                           Map<Long, String> patientNames,
+                           Map<Long, String> medecinNames) {
+        if (row == null || f == null) return;
+        Long consultationId = f.getConsultationId();
+        if (consultationId == null) return;
+
+        ma.dentalTech.entities.dossierMedical.Consultation c = consultationRepo.findById(consultationId);
+        if (c == null) return;
+        Long dossierId = c.getDossierId();
+        if (dossierId == null) return;
+
+        ma.dentalTech.entities.dossierMedical.DossierMedical d = dossierRepo.findById(dossierId);
+        if (d == null) return;
+
+        Long patientId = d.getPatientId();
+        Long medecinId = d.getMedecinId();
+
+        String patientNom = resolvePatientName(patientId, patientRepo, patientNames);
+        String medecinNom = resolveMedecinName(medecinId, medecinRepo, medecinNames);
+
+        row.setPatientNom(patientNom);
+        row.setMedecinNom(medecinNom);
+    }
+
+    private String resolvePatientName(Long patientId, PatientRepository repo, Map<Long, String> cache) {
+        if (patientId == null) return null;
+        String cached = cache.get(patientId);
+        if (cached != null) return cached;
+        ma.dentalTech.entities.patient.Patient p = repo.findById(patientId);
+        if (p == null) return null;
+        String name = (safe(p.getNom()) + " " + safe(p.getPrenom())).trim();
+        if (name.isBlank()) name = "Patient #" + patientId;
+        cache.put(patientId, name);
+        return name;
+    }
+
+    private String resolveMedecinName(Long medecinId, MedecinRepository repo, Map<Long, String> cache) {
+        if (medecinId == null) return null;
+        String cached = cache.get(medecinId);
+        if (cached != null) return cached;
+        ma.dentalTech.entities.users.Medecin m = repo.findById(medecinId);
+        if (m == null) return null;
+        String name = (safe(m.getNom()) + " " + safe(m.getPrenom())).trim();
+        if (name.isBlank()) name = "Medecin #" + medecinId;
+        cache.put(medecinId, name);
+        return name;
+    }
+
+    private String safe(String s) {
+        return s == null ? "" : s;
     }
 
     private List<Facture> applyStatutFilter(List<Facture> list, String statutUi) {

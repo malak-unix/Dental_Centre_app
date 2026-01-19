@@ -26,6 +26,8 @@ public class AgendaMensuelPagePanel extends JPanel {
 
     private Long selectedAgendaId;
     private Long selectedDetailId;
+    private Long medecinIdFilter = null;
+    private boolean medecinLocked = false;
 
     public AgendaMensuelPagePanel() {
         setLayout(new BorderLayout(12, 12));
@@ -116,10 +118,31 @@ public class AgendaMensuelPagePanel extends JPanel {
         loadAgendas();
     }
 
+    public void setMedecinId(Long medecinId, boolean locked) {
+        this.medecinIdFilter = medecinId;
+        this.medecinLocked = locked;
+    }
+
+    public void reload() {
+        loadAgendas();
+    }
+
     private void loadAgendas() {
         try {
             if (controller == null) throw new IllegalStateException("AgendaController introuvable (ApplicationContext)");
             List<AgendaMensuelDto> list = controller.getAllAgendas();
+            if (medecinIdFilter != null) {
+                Long filter = medecinIdFilter;
+                List<AgendaMensuelDto> filtered = new java.util.ArrayList<>();
+                if (list != null) {
+                    for (AgendaMensuelDto a : list) {
+                        if (a != null && filter.equals(a.getMedecinId())) {
+                            filtered.add(a);
+                        }
+                    }
+                }
+                list = filtered;
+            }
 
             agendaModel.setRowCount(0);
             if (list != null) {
@@ -169,7 +192,10 @@ public class AgendaMensuelPagePanel extends JPanel {
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(this), "Creer agenda mensuel", Dialog.ModalityType.APPLICATION_MODAL);
         d.setLayout(new BorderLayout(10, 10));
 
-        JComboBox<MedecinItem> cbMedecin = new JComboBox<>(loadMedecins());
+        JComboBox<MedecinItem> cbMedecin = new JComboBox<>(loadMedecins(medecinIdFilter));
+        if (medecinLocked) {
+            cbMedecin.setEnabled(false);
+        }
         JComboBox<Mois> cbMois = new JComboBox<>(Mois.values());
         JTextField tfAnnee = new JTextField(String.valueOf(LocalDate.now().getYear()));
 
@@ -349,11 +375,17 @@ public class AgendaMensuelPagePanel extends JPanel {
         @Override public String toString() { return label; }
     }
 
-    private static DefaultComboBoxModel<MedecinItem> loadMedecins() {
+    private static DefaultComboBoxModel<MedecinItem> loadMedecins(Long onlyMedecinId) {
         DefaultComboBoxModel<MedecinItem> model = new DefaultComboBoxModel<>();
         try {
             var repo = new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
-            var list = repo.findAll();
+            List<ma.dentalTech.entities.users.Medecin> list;
+            if (onlyMedecinId != null) {
+                var m = repo.findById(onlyMedecinId);
+                list = (m == null) ? List.of() : List.of(m);
+            } else {
+                list = repo.findAll();
+            }
             if (list != null) {
                 for (var m : list) {
                     String label = (m.getNom() + " " + m.getPrenom()).trim();

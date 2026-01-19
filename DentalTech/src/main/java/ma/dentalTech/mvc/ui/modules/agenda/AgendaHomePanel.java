@@ -1,6 +1,7 @@
 package ma.dentalTech.mvc.ui.modules.agenda;
 
 import ma.dentalTech.entities.users.Medecin;
+import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
@@ -21,6 +22,7 @@ public class AgendaHomePanel extends JPanel {
     private final ListeAttentePagePanel listeAttentePage = new ListeAttentePagePanel();
 
     private Long selectedMedecinId = null;
+    private final Long fixedMedecinId;
 
     // item list
     private static class MedecinItem {
@@ -38,9 +40,15 @@ public class AgendaHomePanel extends JPanel {
     }
 
     public AgendaHomePanel() {
+        this(null, null);
+    }
+
+    public AgendaHomePanel(LibelleRole role, Long userId) {
         setLayout(new BorderLayout(12, 12));
         setBackground(DentalTheme.BG);
         setBorder(new EmptyBorder(14, 14, 14, 14));
+
+        this.fixedMedecinId = (role == LibelleRole.MEDECIN && userId != null) ? userId : null;
 
         add(buildHeader(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
@@ -102,7 +110,7 @@ public class AgendaHomePanel extends JPanel {
         doctorsCard.setPreferredSize(new Dimension(220, 0));
 
         DefaultListModel<MedecinItem> doctorsModel = new DefaultListModel<>();
-        loadDoctors(doctorsModel);
+        loadDoctors(doctorsModel, fixedMedecinId);
 
         JList<MedecinItem> doctorsList = new JList<>(doctorsModel);
         doctorsList.setFont(DentalTheme.textBold(12));
@@ -121,7 +129,13 @@ public class AgendaHomePanel extends JPanel {
         });
 
         // sélection initiale
-        if (!doctorsModel.isEmpty()) {
+        if (fixedMedecinId != null) {
+            selectedMedecinId = fixedMedecinId;
+            if (!doctorsModel.isEmpty()) {
+                doctorsList.setSelectedIndex(0);
+            }
+            doctorsList.setEnabled(false);
+        } else if (!doctorsModel.isEmpty()) {
             doctorsList.setSelectedIndex(0);
             selectedMedecinId = doctorsModel.getElementAt(0).id;
         } else {
@@ -131,12 +145,13 @@ public class AgendaHomePanel extends JPanel {
         // 🔥 listener : quand on change médecin => reload pages
         doctorsList.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
+            if (fixedMedecinId != null) return;
             MedecinItem item = doctorsList.getSelectedValue();
             if (item == null) return;
 
             selectedMedecinId = item.id;
 
-            // ✅ passe l'id à semaine (et reload)
+            // �o. passe l'id �� semaine (et reload)
             semainePage.setMedecinId(selectedMedecinId);
             semainePage.reload();
 
@@ -144,7 +159,8 @@ public class AgendaHomePanel extends JPanel {
             // rdvPage.setMedecinId(selectedMedecinId); rdvPage.reload();
 
             // optionnel agenda mensuel
-            // agendaMensuelPage.setMedecinId(selectedMedecinId); agendaMensuelPage.reload();
+            agendaMensuelPage.setMedecinId(selectedMedecinId, false);
+            agendaMensuelPage.reload();
         });
 
         doctorsCard.add(new JScrollPane(doctorsList), BorderLayout.CENTER);
@@ -167,6 +183,8 @@ public class AgendaHomePanel extends JPanel {
         // ✅ set medecinId sur semaine dès le début
         semainePage.setMedecinId(selectedMedecinId);
         semainePage.reload();
+        agendaMensuelPage.setMedecinId(selectedMedecinId, fixedMedecinId != null);
+        agendaMensuelPage.reload();
 
         return body;
     }
@@ -181,13 +199,17 @@ public class AgendaHomePanel extends JPanel {
             semainePage.setMedecinId(selectedMedecinId);
             semainePage.reload();
         }
+        if ("AGENDA".equals(key)) {
+            agendaMensuelPage.setMedecinId(selectedMedecinId, fixedMedecinId != null);
+            agendaMensuelPage.reload();
+        }
     }
 
     public void open(String key) {
         showPage(key);
     }
 
-    private void loadDoctors(DefaultListModel<MedecinItem> model) {
+    private void loadDoctors(DefaultListModel<MedecinItem> model, Long onlyMedecinId) {
         model.clear();
 
         try {
@@ -195,7 +217,14 @@ public class AgendaHomePanel extends JPanel {
             ma.dentalTech.repository.modules.users.api.MedecinRepository repo =
                     new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
 
-            List<Medecin> list = repo.findAll();
+            List<Medecin> list;
+
+            if (onlyMedecinId != null) {
+                Medecin m = repo.findById(onlyMedecinId);
+                list = (m == null) ? List.of() : List.of(m);
+            } else {
+                list = repo.findAll();
+            }
 
             if (list == null || list.isEmpty()) {
                 model.addElement(new MedecinItem(1L, "Médecin #1"));

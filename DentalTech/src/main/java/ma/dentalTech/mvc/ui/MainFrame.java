@@ -248,7 +248,7 @@ public class MainFrame extends JFrame {
     private JComponent buildAgendaPage() {
         JPanel wrap = new JPanel(new BorderLayout());
         wrap.setOpaque(false);
-        wrap.add(new AgendaHomePanel(), BorderLayout.CENTER);
+        wrap.add(new AgendaHomePanel(role, userId), BorderLayout.CENTER);
         return wrap;
     }
 

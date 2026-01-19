@@ -56,6 +56,7 @@ public class AgendaSemainePagePanel extends JPanel {
     private Long selectedRdvId = null;
     private Long selectedDetailId = null;
     private LocalDate selectedDate = null;
+    private DetailJourneeDto selectedDetail = null;
     private RdvCardPanel selectedCard = null;
 
     public AgendaSemainePagePanel() {
@@ -436,6 +437,7 @@ public class AgendaSemainePagePanel extends JPanel {
         if (dj == null) {
             selectedDetailId = null;
             selectedDate = null;
+            selectedDetail = null;
             rdvDayModel.clear();
             plageModel.clear();
             showCard(rdvCard, "EMPTY");
@@ -444,6 +446,7 @@ public class AgendaSemainePagePanel extends JPanel {
         }
         selectedDetailId = dj.getId();
         selectedDate = dj.getDateJour();
+        selectedDetail = dj;
 
         rdvDayModel.clear();
         for (RdvDto r : currentRdvsByDay.getOrDefault(day, List.of())) {
@@ -460,6 +463,11 @@ public class AgendaSemainePagePanel extends JPanel {
     private void onProgrammer() {
         if (selectedDetailId == null || selectedDate == null) {
             JOptionPane.showMessageDialog(this, "Selectionne une journee d'abord.");
+            return;
+        }
+        if (selectedDetail != null && selectedDetail.getEtatJour() != null
+                && !"OUVERT".equalsIgnoreCase(selectedDetail.getEtatJour())) {
+            JOptionPane.showMessageDialog(this, "Journee fermee ou feriee, choisissez un autre jour.");
             return;
         }
 
@@ -518,6 +526,8 @@ public class AgendaSemainePagePanel extends JPanel {
 
         if (dj == null || dj.getEtatJour() == null || !"OUVERT".equalsIgnoreCase(dj.getEtatJour())) {
             header.setBackground(new Color(0xDD, 0xDD, 0xDD));
+            String status = (dj == null || dj.getEtatJour() == null) ? "FERME" : dj.getEtatJour();
+            header.setToolTipText("Statut: " + status);
             return;
         }
 
@@ -531,6 +541,7 @@ public class AgendaSemainePagePanel extends JPanel {
         if (free == 0) header.setBackground(new Color(0xF1, 0xD6, 0xD6));
         else if (free <= 2) header.setBackground(new Color(0xF8, 0xE6, 0xCC));
         else header.setBackground(new Color(0xD6, 0xF0, 0xE0));
+        header.setToolTipText("Plages libres: " + free);
     }
 
     private void shiftWeek(int days) {

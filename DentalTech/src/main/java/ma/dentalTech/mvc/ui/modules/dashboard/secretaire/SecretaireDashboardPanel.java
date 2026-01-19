@@ -272,8 +272,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        sp.setPreferredSize(new Dimension(10, 200));
-        sp.setMinimumSize(new Dimension(10, 200));
+        sp.setPreferredSize(new Dimension(10, 160));
+        sp.setMinimumSize(new Dimension(10, 160));
 
         JPanel emptyWrap = new JPanel(new GridBagLayout());
         emptyWrap.setOpaque(false);
@@ -309,8 +309,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        sp.setPreferredSize(new Dimension(10, 200));
-        sp.setMinimumSize(new Dimension(10, 200));
+        sp.setPreferredSize(new Dimension(10, 220));
+        sp.setMinimumSize(new Dimension(10, 220));
 
         container.add(top, BorderLayout.NORTH);
         container.add(sp, BorderLayout.CENTER);
@@ -770,6 +770,26 @@ public class SecretaireDashboardPanel extends JPanel {
         name.setFont(DentalTheme.textBold(14));
         name.setForeground(DentalTheme.PRIMARY_DARK);
 
+        JCheckBox passed = new JCheckBox();
+        passed.setOpaque(false);
+        passed.setToolTipText("Marquer comme passe");
+        passed.setEnabled(listeAttenteController != null && p.getId() != null);
+        passed.addActionListener(e -> {
+            if (!passed.isSelected()) return;
+            int ok = JOptionPane.showConfirmDialog(
+                    this,
+                    "Retirer ce patient de la file d'attente ?",
+                    "Confirmation",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (ok == JOptionPane.YES_OPTION && listeAttenteController != null && p.getId() != null) {
+                listeAttenteController.deleteById(p.getId());
+                reload();
+            } else {
+                passed.setSelected(false);
+            }
+        });
+
         JLabel motif = new JLabel("Motif: " + firstNonBlank(safe(p.getMotif()), "-"));
         motif.setFont(DentalTheme.textFont(11));
         motif.setForeground(DentalTheme.MUTED_TEXT);
@@ -778,10 +798,14 @@ public class SecretaireDashboardPanel extends JPanel {
         priorite.setFont(DentalTheme.textFont(11));
         priorite.setForeground(DentalTheme.MUTED_TEXT);
 
+        JPanel top = new JPanel(new BorderLayout(6, 0));
+        top.setOpaque(false);
+        top.add(passed, BorderLayout.WEST);
+        top.add(name, BorderLayout.CENTER);
+
         JPanel center = new JPanel();
         center.setOpaque(false);
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.add(name);
         center.add(Box.createVerticalStrut(4));
         center.add(motif);
         center.add(priorite);
@@ -798,6 +822,7 @@ public class SecretaireDashboardPanel extends JPanel {
         actions.add(dossier);
         actions.add(modifier);
 
+        card.add(top, BorderLayout.NORTH);
         card.add(center, BorderLayout.CENTER);
         card.add(actions, BorderLayout.SOUTH);
 
