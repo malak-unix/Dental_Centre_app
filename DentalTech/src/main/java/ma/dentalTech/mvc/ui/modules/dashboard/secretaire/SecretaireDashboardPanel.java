@@ -19,6 +19,7 @@ import ma.dentalTech.repository.modules.dossierMedical.impl.DossierMedicalReposi
 import ma.dentalTech.entities.dossierMedical.DossierMedical;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.components.StatCardPro;
 import ma.dentalTech.mvc.ui.modules.patient.PatientFormDialog;
 
 import javax.swing.*;
@@ -48,10 +49,10 @@ public class SecretaireDashboardPanel extends JPanel {
     private final JTextField searchField = new JTextField();
 
     // Revue du jour (cards)
-    private final JLabel vPatients = valueLabel("0");
-    private final JLabel vRecette  = valueLabel("0 DH");
-    private final JLabel vRdv      = valueLabel("0");
-    private final JLabel vAttente  = valueLabel("0");
+    private final StatCardPro statPatients = new StatCardPro("Nb patients", "0", "");
+    private final StatCardPro statRecette  = new StatCardPro("Recette du jour", "0 DH", "");
+    private final StatCardPro statRdv      = new StatCardPro("RDV du jour", "0", "");
+    private final StatCardPro statAttente  = new StatCardPro("Patients en attente", "0", "");
 
         // File d'attente
     private final JPanel fileAttentePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
@@ -90,8 +91,6 @@ public class SecretaireDashboardPanel extends JPanel {
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
         setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
-        vRecette.setFont(DentalTheme.titleFont(22));
-
         // IMPORTANT : init notifications AVANT buildMain()
         notificationsPanel.setOpaque(false);
         notificationsPanel.setLayout(new BoxLayout(notificationsPanel, BoxLayout.Y_AXIS));
@@ -264,12 +263,12 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel container = cardContainer();
         container.setLayout(new BorderLayout(12, 12));
 
-        JPanel kpiGrid = new JPanel(new GridLayout(1, 4, 12, 12));
+        JPanel kpiGrid = new JPanel(new GridLayout(1, 4, 18, 18));
         kpiGrid.setOpaque(false);
-        kpiGrid.add(statCard("Nb patients", vPatients, ""));
-        kpiGrid.add(statCard("Recette du jour", vRecette, ""));
-        kpiGrid.add(statCard("RDV du jour", vRdv, ""));
-        kpiGrid.add(statCard("Patients en attente", vAttente, ""));
+        kpiGrid.add(statPatients);
+        kpiGrid.add(statRecette);
+        kpiGrid.add(statRdv);
+        kpiGrid.add(statAttente);
 
         DentalButton stats = new DentalButton("Voir +statistiques");
         stylePrimaryButton(stats);
@@ -691,10 +690,10 @@ public class SecretaireDashboardPanel extends JPanel {
             if (dto == null) return;
 
             // Stats
-            vPatients.setText(String.valueOf(nvl(dto.getNbPatients())));
-        vRecette.setText(formatMoney(dto.getRecetteDuJour()));
-            vRdv.setText(String.valueOf(nvl(dto.getNbRdvDuJour())));
-            vAttente.setText(String.valueOf(nvl(dto.getNbEnAttente())));
+            statPatients.setValue(String.valueOf(nvl(dto.getNbPatients())));
+            statRecette.setValue(formatMoney(dto.getRecetteDuJour()));
+            statRdv.setValue(String.valueOf(nvl(dto.getNbRdvDuJour())));
+            statAttente.setValue(String.valueOf(nvl(dto.getNbEnAttente())));
 
             // RDV du jour
             rdvDuJourCache.clear();

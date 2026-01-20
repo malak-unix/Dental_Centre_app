@@ -5,6 +5,7 @@ import ma.dentalTech.entities.enums.LibelleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+import java.awt.image.BufferedImage;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,17 +15,20 @@ public class SidebarCommonPanel extends JPanel {
 
     private final Map<String, NavButton> navButtons = new LinkedHashMap<>();
     private final Consumer<String> onNavigate;
-
     private final LibelleRole role;
 
     public SidebarCommonPanel(LibelleRole role, String fullName, Consumer<String> onNavigate) {
         this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
         this.onNavigate = onNavigate;
 
-        setPreferredSize(new Dimension(270, 780));
+        setPreferredSize(new Dimension(340, 780));
+        setMinimumSize(new Dimension(320, 780));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
-        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+        // ✅ même fond que header
+        setOpaque(true);
+        setBackground(DentalTheme.BG2);
 
         buildUi();
     }
@@ -35,12 +39,14 @@ public class SidebarCommonPanel extends JPanel {
         CardPanel navCard = new CardPanel((String) null);
         navCard.setLayout(new BoxLayout(navCard, BoxLayout.Y_AXIS));
         navCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 18));
 
         List<NavItem> items = RoleMenuConfig.menuFor(role);
         for (int i = 0; i < items.size(); i++) {
             NavItem it = items.get(i);
 
-            Icon icon = loadIcon(iconPathFor(it.getId()), 18, 18);
+            // ✅ icônes plus visibles
+            Icon icon = loadIcon(iconPathFor(it.getId()), 22, 22);
             navCard.add(makeNav(it.getLabel(), icon, it.getId()));
 
             if (i < items.size() - 1) navCard.add(Box.createVerticalStrut(8));
@@ -48,17 +54,14 @@ public class SidebarCommonPanel extends JPanel {
 
         add(navCard);
         add(Box.createVerticalGlue());
+        addBottomLogo();
     }
 
     private NavButton makeNav(String text, Icon icon, String pageKey) {
         NavButton b = new NavButton(text, icon, false);
         b.setAlignmentX(Component.LEFT_ALIGNMENT);
-        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-
-        b.addActionListener(e -> {
-            if (onNavigate != null) onNavigate.accept(pageKey);
-        });
-
+        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
+        b.addActionListener(e -> { if (onNavigate != null) onNavigate.accept(pageKey); });
         navButtons.put(pageKey, b);
         return b;
     }
@@ -74,7 +77,52 @@ public class SidebarCommonPanel extends JPanel {
         try {
             URL url = getClass().getResource(path);
             if (url == null) return null;
-            Image img = new ImageIcon(url).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            ImageIcon icon = new ImageIcon(url);
+            Image img = scaleImage(icon.getImage(), w, h);
+            return new ImageIcon(img);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void addBottomLogo() {
+        // ✅ un peu plus grand + mieux centré + marges
+        ImageIcon icon = loadIconKeepRatio("/assets/logo_enbas_gauche.png", 165);
+        if (icon == null) return;
+
+        JLabel logo = new JLabel(icon);
+        logo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        wrap.setOpaque(false);
+        wrap.setBorder(BorderFactory.createEmptyBorder(16, 0, 6, 0));
+        wrap.add(logo);
+        add(wrap);
+    }
+
+    private Image scaleImage(Image src, int w, int h) {
+        if (src == null) return null;
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.drawImage(src, 0, 0, w, h, null);
+        g.dispose();
+        return image;
+    }
+
+    private ImageIcon loadIconKeepRatio(String path, int w) {
+        if (path == null) return null;
+        try {
+            URL url = getClass().getResource(path);
+            if (url == null) return null;
+            ImageIcon icon = new ImageIcon(url);
+            int ow = icon.getIconWidth();
+            int oh = icon.getIconHeight();
+            if (ow <= 0 || oh <= 0) return null;
+            int h = Math.max(1, (int) Math.round((double) oh * w / ow));
+            Image img = scaleImage(icon.getImage(), w, h);
             return new ImageIcon(img);
         } catch (Exception ignored) {
             return null;

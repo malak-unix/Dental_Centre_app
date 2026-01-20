@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Interface pour consulter les détails d'une consultation.
- * Toutes les fonctionnalités sont implémentées.
+ * Interface pour consulter les details d'une consultation.
+ * Toutes les fonctionnalites sont implementees.
  */
 public class ConsultationDetailUI extends JPanel {
 
@@ -46,9 +46,9 @@ public class ConsultationDetailUI extends JPanel {
     public ConsultationDetailUI(ConsultationController controller, Long consultationId, Runnable onBack) {
         this.controller = controller;
         this.onBack = onBack;
-        this.username = "medecin_1"; // TODO: récupérer depuis la session
+        this.username = "medecin_1"; // TODO: recuperer depuis la session
 
-        // Charger les détails
+        // Charger les details
         reloadDetail(consultationId);
 
         setLayout(new BorderLayout());
@@ -71,7 +71,7 @@ public class ConsultationDetailUI extends JPanel {
                 modelActes.reload();
             }
         } catch (Exception e) {
-            throw new RuntimeException("Erreur lors du chargement des détails", e);
+            throw new RuntimeException("Erreur lors du chargement des details", e);
         }
     }
 
@@ -88,8 +88,7 @@ public class ConsultationDetailUI extends JPanel {
         lblPatient.setForeground(DentalTheme.TEXT2);
         infoPanel.add(lblPatient);
 
-        String dateStr = detail.getDateConsultation() != null ? 
-            detail.getDateConsultation().format(DATE_FMT) : "";
+        String dateStr = detail.getDateConsultation() != null ? detail.getDateConsultation().format(DATE_FMT) : "";
         JLabel lblDate = new JLabel("Date: " + dateStr);
         lblDate.setFont(DentalTheme.textFont(14));
         lblDate.setForeground(DentalTheme.TEXT2);
@@ -107,9 +106,9 @@ public class ConsultationDetailUI extends JPanel {
         // Badge de statut
         JLabel badge = new JLabel(statut != null ? statut.name() : "");
         badge.setFont(DentalTheme.textBold(12));
-        badge.setForeground(Color.WHITE);
-        badge.setOpaque(true);
+        badge.setForeground(DentalTheme.PRIMARY_DARK);
         badge.setBorder(new EmptyBorder(4, 12, 4, 12));
+        badge.setOpaque(true);
         if (statut == StatutConsultation.TERMINE) badge.setBackground(new Color(0xD7, 0xF2, 0xD7));
         else if (statut == StatutConsultation.EN_COURS) badge.setBackground(new Color(0xD6, 0xE9, 0xFF));
         else if (statut == StatutConsultation.ANNULE) badge.setBackground(new Color(0xFF, 0xD6, 0xD6));
@@ -131,7 +130,7 @@ public class ConsultationDetailUI extends JPanel {
         gc.insets = new Insets(10, 10, 10, 10);
         gc.anchor = GridBagConstraints.NORTHWEST;
 
-        // Section Actes effectués (gauche)
+        // Section Actes effectues (gauche)
         gc.gridx = 0;
         gc.gridy = 0;
         gc.weightx = 0.6;
@@ -147,81 +146,59 @@ public class ConsultationDetailUI extends JPanel {
         return content;
     }
 
+
     private JComponent buildActesSection() {
-        JPanel section = new JPanel(new BorderLayout(10, 10));
-        section.setOpaque(false);
+        CardPanel section = new CardPanel("Actes effectues");
+        section.setLayout(new BorderLayout(10, 10));
 
-        JLabel title = new JLabel("Actes effectués");
-        title.setFont(DentalTheme.titleFont(18));
-        title.setForeground(DentalTheme.TEXT2);
-        section.add(title, BorderLayout.NORTH);
-
-        // Tableau des actes
         modelActes = new ActeTableModel();
         tableActes.setModel(modelActes);
-        tableActes.setRowHeight(35);
+        tableActes.setRowHeight(36);
         tableActes.setFont(DentalTheme.textFont(13));
         tableActes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tableActes.setSelectionBackground(new Color(0xF5, 0xE8, 0xD8));
         tableActes.setGridColor(DentalTheme.BORDER);
         tableActes.setShowGrid(true);
+        tableActes.getTableHeader().setFont(DentalTheme.textBold(13));
+        tableActes.getTableHeader().setBackground(DentalTheme.PANEL);
+        tableActes.getTableHeader().setForeground(DentalTheme.TEXT2);
 
-        tableActes.getColumnModel().getColumn(0).setPreferredWidth(250); // Acte
-        tableActes.getColumnModel().getColumn(1).setPreferredWidth(100); // Prix
+        tableActes.getColumnModel().getColumn(0).setPreferredWidth(250);
+        tableActes.getColumnModel().getColumn(1).setPreferredWidth(100);
 
         JScrollPane scroll = new JScrollPane(tableActes);
-        scroll.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(5, 5, 5, 5)
-        ));
+        scroll.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true));
 
         JPanel tablePanel = new JPanel(new BorderLayout(10, 10));
         tablePanel.setOpaque(false);
         tablePanel.add(scroll, BorderLayout.CENTER);
 
-        // Total
         Double total = detail.getTotalActes();
-        JLabel lblTotal = new JLabel("Total des actes: " + (total != null ? String.format("%.2f €", total) : "0.00 €"));
-        lblTotal.setFont(DentalTheme.textBold(16));
-        lblTotal.setForeground(new Color(0xFF, 0x8C, 0x00)); // Orange selon maquette
+        JLabel lblTotal = new JLabel("Total des actes: " + (total != null ? String.format("%.2f DH", total) : "0.00 DH"));
+        lblTotal.setFont(DentalTheme.textBold(15));
+        lblTotal.setForeground(new Color(0xFF, 0x8C, 0x00));
         tablePanel.add(lblTotal, BorderLayout.SOUTH);
 
-        section.add(tablePanel, BorderLayout.CENTER);
-
-        // Boutons actions actes
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         btnPanel.setOpaque(false);
 
         JButton btnAddActe = new JButton("+ Ajouter un acte");
-        btnAddActe.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnAddActe.setForeground(Color.WHITE);
-        btnAddActe.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                new EmptyBorder(6, 12, 6, 12)
-        ));
+        stylePrimaryButton(btnAddActe);
         btnAddActe.addActionListener(e -> onAddActe());
 
         JButton btnDeleteActe = new JButton("Supprimer un acte");
-        btnDeleteActe.setBackground(DentalTheme.BEIGE);
-        btnDeleteActe.setForeground(DentalTheme.TEXT2);
-        btnDeleteActe.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(6, 12, 6, 12)
-        ));
+        styleDangerButton(btnDeleteActe);
         btnDeleteActe.addActionListener(e -> onDeleteActe());
 
-        JButton btnPrint = new JButton("🖨️");
-        btnPrint.setBackground(DentalTheme.BEIGE);
-        btnPrint.setForeground(DentalTheme.TEXT2);
-        btnPrint.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(6, 12, 6, 12)
-        ));
+        JButton btnPrint = new JButton("Imprimer");
+        styleOutlineButton(btnPrint);
         btnPrint.addActionListener(e -> onPrint());
 
         btnPanel.add(btnAddActe);
         btnPanel.add(btnDeleteActe);
         btnPanel.add(btnPrint);
 
+        section.add(tablePanel, BorderLayout.CENTER);
         section.add(btnPanel, BorderLayout.SOUTH);
 
         return section;
@@ -243,7 +220,7 @@ public class ConsultationDetailUI extends JPanel {
         int selectedRow = tableActes.getSelectedRow();
         if (selectedRow < 0) {
             JOptionPane.showMessageDialog(this,
-                    "Veuillez sélectionner un acte à supprimer",
+                    "Veuillez selectionner un acte a supprimer",
                     "Information",
                     JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -264,8 +241,8 @@ public class ConsultationDetailUI extends JPanel {
                 service.delete(new ma.dentalTech.mvc.dto.dossierMedicale.common.IdRequestDTO(acte.getInterventionId()));
                 reloadDetail(detail.getConsultationId());
                 JOptionPane.showMessageDialog(this,
-                        "Acte supprimé avec succès",
-                        "Succès",
+                        "Acte supprime avec succes",
+                        "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (Exception ex) {
@@ -278,7 +255,7 @@ public class ConsultationDetailUI extends JPanel {
 
     private void onPrint() {
         try {
-            // Générer un PDF simple de la consultation
+            // Generer un PDF simple de la consultation
             JOptionPane.showMessageDialog(this,
                     "Impression de la consultation #" + detail.getConsultationId() + "\n" +
                             "Patient: " + detail.getPatientNomComplet() + "\n" +
@@ -312,69 +289,50 @@ public class ConsultationDetailUI extends JPanel {
         return right;
     }
 
-    private JComponent buildObservationSection() {
-        JPanel section = new JPanel(new BorderLayout(10, 10));
-        section.setOpaque(false);
 
-        JLabel title = new JLabel("Observation du médecin:");
-        title.setFont(DentalTheme.textBold(14));
-        title.setForeground(DentalTheme.TEXT2);
-        section.add(title, BorderLayout.NORTH);
+    private JComponent buildObservationSection() {
+        CardPanel section = new CardPanel("Observation du medecin");
+        section.setLayout(new BorderLayout(10, 10));
 
         txtObservation.setFont(DentalTheme.textFont(13));
         txtObservation.setLineWrap(true);
         txtObservation.setWrapStyleWord(true);
-        txtObservation.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
+        txtObservation.setBorder(new EmptyBorder(8, 8, 8, 8));
         txtObservation.setText(detail.getObservationMedecin() != null ? detail.getObservationMedecin() : "");
         txtObservation.setEditable(false);
 
         JScrollPane scroll = new JScrollPane(txtObservation);
-        scroll.setBorder(null);
+        scroll.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true));
         section.add(scroll, BorderLayout.CENTER);
 
         return section;
     }
 
-    private JComponent buildOrdonnancesSection() {
-        JPanel section = new JPanel(new BorderLayout(10, 10));
-        section.setOpaque(false);
 
-        JLabel title = new JLabel("Ordonnances");
-        title.setFont(DentalTheme.textBold(14));
-        title.setForeground(DentalTheme.TEXT2);
-        section.add(title, BorderLayout.NORTH);
+    private JComponent buildOrdonnancesSection() {
+        CardPanel section = new CardPanel("Ordonnances");
+        section.setLayout(new BorderLayout(10, 10));
 
         List<ConsultationDetailDTO.OrdonnanceSimpleDTO> ordonnances = detail.getOrdonnances();
         if (ordonnances == null || ordonnances.isEmpty()) {
-            CardPanel emptyCard = new CardPanel();
-            emptyCard.setLayout(new BorderLayout());
             JLabel empty = new JLabel("Aucune ordonnance pour ce patient");
             empty.setFont(DentalTheme.textFont(13));
             empty.setForeground(DentalTheme.MUTED);
             empty.setHorizontalAlignment(SwingConstants.CENTER);
             empty.setBorder(new EmptyBorder(20, 20, 20, 20));
-            emptyCard.add(empty, BorderLayout.CENTER);
-            section.add(emptyCard, BorderLayout.CENTER);
+            section.add(empty, BorderLayout.CENTER);
         } else {
-            // Liste des ordonnances
             JList<String> list = new JList<>(ordonnances.stream()
                 .map(o -> "Ordonnance du " + (o.getDate() != null ? o.getDate().format(DATE_FMT) : ""))
                 .toArray(String[]::new));
             list.setFont(DentalTheme.textFont(13));
             JScrollPane scroll = new JScrollPane(list);
+            scroll.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true));
             section.add(scroll, BorderLayout.CENTER);
         }
 
         JButton btnAdd = new JButton("+ Ajouter une ordonnance");
-        btnAdd.setBackground(new Color(0xD6, 0xE9, 0xFF));
-        btnAdd.setForeground(new Color(0x1C, 0x25, 0x41));
-        btnAdd.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x1C, 0x25, 0x41), 1),
-                new EmptyBorder(6, 12, 6, 12)
-        ));
+        styleOutlineButton(btnAdd);
         btnAdd.addActionListener(e -> onAddOrdonnance());
         section.add(btnAdd, BorderLayout.SOUTH);
 
@@ -383,21 +341,21 @@ public class ConsultationDetailUI extends JPanel {
 
     private void onAddOrdonnance() {
         try {
-            // Récupérer les controllers nécessaires
+            // Recuperer les controllers necessaires
             Object ordonnanceBean = ApplicationContext.getBean("ordonnanceController");
             if (!(ordonnanceBean instanceof OrdonnanceController ordonnanceController)) {
                 JOptionPane.showMessageDialog(this, "Controller ordonnance introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Créer une liste avec la consultation courante
+            // Creer une liste avec la consultation courante
             List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
             consultations.add(new OrdonnanceAddFormUI.ConsultationComboItem(
                     detail.getConsultationId(),
                     "Consultation #" + detail.getConsultationId() + " - " + detail.getDateConsultation().format(DATE_FMT)
             ));
 
-            // Récupérer les médicaments (liste vide pour l'instant, sera chargée dans le formulaire)
+            // Recuperer les medicaments (liste vide pour l'instant, sera chargee dans le formulaire)
             List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
 
             OrdonnanceAddFormUI dialog = new OrdonnanceAddFormUI(
@@ -419,44 +377,32 @@ public class ConsultationDetailUI extends JPanel {
         }
     }
 
-    private JComponent buildCertificatsSection() {
-        JPanel section = new JPanel(new BorderLayout(10, 10));
-        section.setOpaque(false);
 
-        JLabel title = new JLabel("Certificats");
-        title.setFont(DentalTheme.textBold(14));
-        title.setForeground(DentalTheme.TEXT2);
-        section.add(title, BorderLayout.NORTH);
+    private JComponent buildCertificatsSection() {
+        CardPanel section = new CardPanel("Certificats");
+        section.setLayout(new BorderLayout(10, 10));
 
         List<ConsultationDetailDTO.CertificatSimpleDTO> certificats = detail.getCertificats();
         if (certificats == null || certificats.isEmpty()) {
-            CardPanel emptyCard = new CardPanel();
-            emptyCard.setLayout(new BorderLayout());
             JLabel empty = new JLabel("Aucun certificat pour ce patient");
             empty.setFont(DentalTheme.textFont(13));
             empty.setForeground(DentalTheme.MUTED);
             empty.setHorizontalAlignment(SwingConstants.CENTER);
             empty.setBorder(new EmptyBorder(20, 20, 20, 20));
-            emptyCard.add(empty, BorderLayout.CENTER);
-            section.add(emptyCard, BorderLayout.CENTER);
+            section.add(empty, BorderLayout.CENTER);
         } else {
-            // Liste des certificats
             JList<String> list = new JList<>(certificats.stream()
-                .map(c -> "Certificat " + (c.getDateDebut() != null ? c.getDateDebut().format(DATE_FMT) : "") + 
+                .map(c -> "Certificat " + (c.getDateDebut() != null ? c.getDateDebut().format(DATE_FMT) : "") +
                     " - " + (c.getDuree() != null ? c.getDuree() + " jours" : ""))
                 .toArray(String[]::new));
             list.setFont(DentalTheme.textFont(13));
             JScrollPane scroll = new JScrollPane(list);
+            scroll.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true));
             section.add(scroll, BorderLayout.CENTER);
         }
 
         JButton btnAdd = new JButton("+ Ajouter un certificat");
-        btnAdd.setBackground(new Color(0xCB, 0xA1, 0x35));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                new EmptyBorder(6, 12, 6, 12)
-        ));
+        styleOutlineButton(btnAdd);
         btnAdd.addActionListener(e -> onAddCertificat());
         section.add(btnAdd, BorderLayout.SOUTH);
 
@@ -465,14 +411,14 @@ public class ConsultationDetailUI extends JPanel {
 
     private void onAddCertificat() {
         try {
-            // Récupérer le controller
+            // Recuperer le controller
             Object certificatBean = ApplicationContext.getBean("certificatController");
             if (!(certificatBean instanceof CertificatController certificatController)) {
                 JOptionPane.showMessageDialog(this, "Controller certificat introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Créer une liste avec le dossier de la consultation
+            // Creer une liste avec le dossier de la consultation
             List<CertificatAddFormUI.DossierComboItem> dossiers = new ArrayList<>();
             dossiers.add(new CertificatAddFormUI.DossierComboItem(
                     detail.getDossierId(),
@@ -497,30 +443,20 @@ public class ConsultationDetailUI extends JPanel {
         }
     }
 
+
     private JComponent buildFooter() {
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
 
-        JButton btnBack = new JButton("← Retour");
-        btnBack.setBackground(DentalTheme.BEIGE);
-        btnBack.setForeground(DentalTheme.TEXT2);
-        btnBack.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+        JButton btnBack = new JButton("Retour");
+        styleOutlineButton(btnBack);
         btnBack.addActionListener(e -> {
             if (onBack != null) onBack.run();
         });
         footer.add(btnBack, BorderLayout.WEST);
 
-        JButton btnFacture = new JButton("Générer facture");
-        btnFacture.setBackground(new Color(0xCB, 0xA1, 0x35));
-        btnFacture.setForeground(Color.WHITE);
-        btnFacture.setFont(DentalTheme.textBold(14));
-        btnFacture.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
-                new EmptyBorder(10, 20, 10, 20)
-        ));
+        JButton btnFacture = new JButton("Generer facture");
+        styleGoldButton(btnFacture);
         btnFacture.addActionListener(e -> onGenerateFacture());
         footer.add(btnFacture, BorderLayout.EAST);
 
@@ -528,11 +464,11 @@ public class ConsultationDetailUI extends JPanel {
     }
 
     private void onGenerateFacture() {
-        // Vérifier si une facture existe déjà
+        // Verifier si une facture existe deja
         if (detail.getFactureId() != null) {
             int option = JOptionPane.showConfirmDialog(this,
-                    "Une facture existe déjà pour cette consultation (ID: " + detail.getFactureId() + ").\n" +
-                            "Voulez-vous en créer une nouvelle ?",
+                    "Une facture existe deja pour cette consultation (ID: " + detail.getFactureId() + ").\n" +
+                            "Voulez-vous en creer une nouvelle ?",
                     "Facture existante",
                     JOptionPane.YES_NO_OPTION);
             if (option != JOptionPane.YES_OPTION) {
@@ -541,7 +477,7 @@ public class ConsultationDetailUI extends JPanel {
         }
 
         try {
-            // Récupérer le controller facture
+            // Recuperer le controller facture
             Object factureBean = ApplicationContext.getBean("factureControllerV2");
             if (!(factureBean instanceof FactureControllerV2 factureController)) {
                 JOptionPane.showMessageDialog(this, "Controller facture introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
@@ -559,11 +495,11 @@ public class ConsultationDetailUI extends JPanel {
                 // Prix de consultation sans acte
                 montantTotal = detail.getTotalFacture();
             } else {
-                // Montant par défaut
+                // Montant par defaut
                 montantTotal = 100.0; // Prix consultation standard
             }
 
-            // Créer la facture
+            // Creer la facture
             FactureCreateDTO factureDTO = FactureCreateDTO.builder()
                     .consultationId(detail.getConsultationId())
                     .dateFacture(LocalDate.now())
@@ -573,17 +509,16 @@ public class ConsultationDetailUI extends JPanel {
             factureController.create(factureDTO);
 
             JOptionPane.showMessageDialog(this,
-                    "Facture générée avec succès\n" +
-                            "Montant total: " + String.format("%.2f €", montantTotal),
-                    "Succès",
+                    "Facture generee avec succes\n" + "Montant total: " + String.format("%.2f DH", montantTotal),
+                    "Succes",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Recharger les détails pour avoir la facture
+            // Recharger les details pour avoir la facture
             reloadDetail(detail.getConsultationId());
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
-                    "Erreur lors de la génération de la facture: " + ex.getMessage(),
+                    "Erreur lors de la generation de la facture: " + ex.getMessage(),
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
         }
@@ -593,7 +528,7 @@ public class ConsultationDetailUI extends JPanel {
     // Table model pour actes
     // =========================================================
     private class ActeTableModel extends AbstractTableModel {
-        private final String[] cols = {"Médicament", "Prix"};
+        private final String[] cols = {"Acte", "Prix"};
         private List<ActeInterventionDTO> rows = new ArrayList<>();
 
         ActeTableModel() {
@@ -631,9 +566,58 @@ public class ConsultationDetailUI extends JPanel {
             ActeInterventionDTO r = rows.get(rowIndex);
             return switch (columnIndex) {
                 case 0 -> r.getActeLibelle() != null ? r.getActeLibelle() : "";
-                case 1 -> r.getPrixPatient() != null ? String.format("%.2f €", r.getPrixPatient()) : "0.00 €";
+                case 1 -> r.getPrixPatient() != null ? String.format("%.2f DH", r.getPrixPatient()) : "0.00 DH";
                 default -> "";
             };
         }
+    }
+
+
+    private void stylePrimaryButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(12));
+        b.setFocusPainted(false);
+        b.setOpaque(true);
+        b.setBackground(DentalTheme.PRIMARY_DARK);
+        b.setForeground(Color.WHITE);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(6, 14, 6, 14)
+        ));
+    }
+
+    private void styleOutlineButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(12));
+        b.setFocusPainted(false);
+        b.setOpaque(true);
+        b.setBackground(Color.WHITE);
+        b.setForeground(DentalTheme.PRIMARY_DARK);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(6, 14, 6, 14)
+        ));
+    }
+
+    private void styleDangerButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(12));
+        b.setFocusPainted(false);
+        b.setOpaque(true);
+        b.setBackground(new Color(0xC9, 0x43, 0x43));
+        b.setForeground(Color.WHITE);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xC9, 0x43, 0x43), 2, true),
+                new EmptyBorder(6, 14, 6, 14)
+        ));
+    }
+
+    private void styleGoldButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(13));
+        b.setFocusPainted(false);
+        b.setOpaque(true);
+        b.setBackground(DentalTheme.GOLD);
+        b.setForeground(Color.WHITE);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(8, 18, 8, 18)
+        ));
     }
 }

@@ -33,7 +33,7 @@ public class ConsultationPagePanel extends JPanel {
 
     private final ConsultationController controller;
     private final Long medecinId;
-    private final String username; // Username du médecin pour créer les consultations
+    private final String username; // Username du medecin pour creer les consultations
 
     private final JTextField txtPatient = new JTextField();
     private final JTextField txtDate = new JTextField(); // yyyy-MM-dd
@@ -76,12 +76,12 @@ public class ConsultationPagePanel extends JPanel {
         refresh();
     }
 
+
     private JComponent buildHeader() {
         JPanel wrap = new JPanel();
         wrap.setOpaque(false);
         wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
 
-        // Titre avec bouton "Ajouter"
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setOpaque(false);
         titlePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -90,16 +90,8 @@ public class ConsultationPagePanel extends JPanel {
         title.setFont(DentalTheme.titleFont(22));
         title.setForeground(DentalTheme.TEXT2);
 
-        // Bouton "+ Ajouter une consultation" (selon maquette)
-        btnAdd.setFont(DentalTheme.textBold(13));
-        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé selon maquette
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2), // Bordure dorée
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-        btnAdd.setFocusPainted(false);
-        btnAdd.setPreferredSize(new Dimension(220, 40));
+        styleOutlineButton(btnAdd);
+        btnAdd.setPreferredSize(new Dimension(240, 40));
         btnAdd.addActionListener(e -> onAddConsultation());
 
         titlePanel.add(title, BorderLayout.WEST);
@@ -114,36 +106,37 @@ public class ConsultationPagePanel extends JPanel {
         gc.gridy = 0;
         gc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Patient
         gc.gridx = 0;
         gc.weightx = 0;
         filters.add(new JLabel("Patient:"), gc);
         gc.gridx = 1;
         gc.weightx = 0.6;
         txtPatient.setPreferredSize(new Dimension(220, 30));
+        styleInput(txtPatient);
         filters.add(txtPatient, gc);
 
-        // Date
         gc.gridx = 2;
         gc.weightx = 0;
         filters.add(new JLabel("Date (yyyy-MM-dd):"), gc);
         gc.gridx = 3;
         gc.weightx = 0.3;
         txtDate.setPreferredSize(new Dimension(140, 30));
+        styleInput(txtDate);
         filters.add(txtDate, gc);
 
-        // Statut
         gc.gridx = 4;
         gc.weightx = 0;
         filters.add(new JLabel("Statut:"), gc);
         gc.gridx = 5;
         gc.weightx = 0.2;
         cbStatut.setPreferredSize(new Dimension(140, 30));
+        styleCombo(cbStatut);
         filters.add(cbStatut, gc);
 
-        // Buttons
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
+        styleOutlineButton(btnSearch);
+        styleOutlineButton(btnReset);
         actions.add(btnSearch);
         actions.add(btnReset);
 
@@ -159,22 +152,50 @@ public class ConsultationPagePanel extends JPanel {
         return wrap;
     }
 
+
     private JComponent buildTable() {
-        table.setRowHeight(36);
+        table.setRowHeight(38);
         table.setFillsViewportHeight(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setShowGrid(true);
+        table.setGridColor(DentalTheme.BORDER);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        table.setSelectionBackground(new Color(0xF5, 0xE8, 0xD8));
+        table.setFont(DentalTheme.textFont(13));
+        table.getTableHeader().setFont(DentalTheme.textBold(13));
+        table.getTableHeader().setBackground(DentalTheme.PANEL);
+        table.getTableHeader().setForeground(DentalTheme.TEXT2);
 
-        // Status color
+        DefaultTableCellRenderer baseRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                           boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (isSelected) return this;
+                setBackground(row % 2 == 0 ? new Color(0xFB, 0xF6, 0xEF) : Color.WHITE);
+                setForeground(DentalTheme.TEXT2);
+                return this;
+            }
+        };
+        table.setDefaultRenderer(Object.class, baseRenderer);
+
         table.getColumnModel().getColumn(2).setCellRenderer(new StatusCellRenderer());
 
-        // Actions column
         table.getColumnModel().getColumn(4).setCellRenderer(new ActionsCellRenderer());
         table.getColumnModel().getColumn(4).setCellEditor(new ActionsCellEditor());
-        table.getColumnModel().getColumn(4).setPreferredWidth(260);
+        table.getColumnModel().getColumn(0).setPreferredWidth(200);
+        table.getColumnModel().getColumn(1).setPreferredWidth(160);
+        table.getColumnModel().getColumn(2).setPreferredWidth(110);
+        table.getColumnModel().getColumn(3).setPreferredWidth(120);
+        table.getColumnModel().getColumn(4).setPreferredWidth(320);
 
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createTitledBorder("Résultats"));
-        return sp;
+        sp.setBorder(BorderFactory.createEmptyBorder());
+
+        CardPanel card = new CardPanel("Resultats");
+        card.setLayout(new BorderLayout());
+        card.add(sp, BorderLayout.CENTER);
+        return card;
     }
 
     private void wireActions() {
@@ -190,7 +211,7 @@ public class ConsultationPagePanel extends JPanel {
 
     private void onAddConsultation() {
         // Pour l'instant, on utilise une liste vide pour les dossiers
-        // TODO: Récupérer la liste réelle des dossiers médicaux pour le médecin
+        // TODO: Recuperer la liste reelle des dossiers medicaux pour le medecin
         java.util.List<ConsultationAddFormUI.DossierComboItem> dossiers = new ArrayList<>();
 
         Optional<ConsultationDTO> result = ConsultationAddFormUI.showDialog(this, dossiers);
@@ -200,10 +221,10 @@ public class ConsultationPagePanel extends JPanel {
                 ConsultationDTO consultation = result.get();
                 Long consultationId = controller.create(consultation, username);
                 JOptionPane.showMessageDialog(this,
-                        "Consultation créée avec succès (ID: " + consultationId + ")",
-                        "Succès",
+                        "Consultation creee avec succes (ID: " + consultationId + ")",
+                        "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                refresh(); // Rafraîchir la liste
+                refresh(); // Rafraichir la liste
             } catch (Exception ex) {
                 showError(ex);
             }
@@ -281,7 +302,7 @@ public class ConsultationPagePanel extends JPanel {
                 case 0 -> r.getPatientNomComplet();
                 case 1 -> r.getDateConsultation() == null ? "" : r.getDateConsultation().format(DATE_TIME_FMT);
                 case 2 -> r.getStatut();
-                case 3 -> r.getTotalFacture() == null ? "—" : (r.getTotalFacture() + " DH");
+                case 3 -> r.getTotalFacture() == null ? "0,00 DH" : (r.getTotalFacture() + " DH");
                 case 4 -> ""; // actions renderer
                 default -> "";
             };
@@ -312,10 +333,12 @@ public class ConsultationPagePanel extends JPanel {
             else if (st == StatutConsultation.ANNULE) setBackground(new Color(0xFF, 0xD6, 0xD6));
             else if (st == StatutConsultation.PLANIFIE) setBackground(new Color(0xFF, 0xF1, 0xCC));
             else setBackground(Color.WHITE);
+            setForeground(DentalTheme.TEXT2);
 
             return this;
         }
     }
+
 
     private class ActionsCellRenderer implements TableCellRenderer {
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
@@ -327,11 +350,9 @@ public class ConsultationPagePanel extends JPanel {
         ActionsCellRenderer() {
             panel.setOpaque(true);
             for (JButton b : List.of(b1, b2, b3, b4)) {
-                b.setFocusable(false);
-                b.setMargin(new Insets(2, 6, 2, 6));
+                styleTableActionButton(b);
                 panel.add(b);
             }
-            // renderer: pas de listeners
         }
 
         @Override
@@ -354,39 +375,9 @@ public class ConsultationPagePanel extends JPanel {
         ActionsCellEditor() {
             panel.setOpaque(true);
             for (JButton b : List.of(b1, b2, b3, b4)) {
-                b.setFocusable(false);
-                b.setMargin(new Insets(2, 6, 2, 6));
+                styleTableActionButton(b);
                 panel.add(b);
             }
-
-            // Style des boutons selon la maquette
-            b1.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé
-            b1.setForeground(Color.WHITE);
-            b1.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
-
-            b2.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré
-            b2.setForeground(Color.WHITE);
-            b2.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
-
-            b3.setBackground(new Color(0xDC, 0x35, 0x45)); // Rouge
-            b3.setForeground(Color.WHITE);
-            b3.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xDC, 0x35, 0x45), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
-
-            b4.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré pour Facture
-            b4.setForeground(Color.WHITE);
-            b4.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
 
             b1.addActionListener(e -> {
                 stopCellEditing();
@@ -394,7 +385,7 @@ public class ConsultationPagePanel extends JPanel {
                 if (r == null) return;
                 // Ouvrir l'interface de consultation
                 JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(ConsultationPagePanel.this),
-                        "Détails de la consultation", true);
+                        "Details de la consultation", true);
                 ConsultationDetailUI detailUI = new ConsultationDetailUI(controller, r.getConsultationId(), () -> dialog.dispose());
                 dialog.setContentPane(detailUI);
                 dialog.setSize(1000, 700);
@@ -406,14 +397,14 @@ public class ConsultationPagePanel extends JPanel {
                 stopCellEditing();
                 ConsultationListItemDTO r = model.getAt(currentRow);
                 JOptionPane.showMessageDialog(ConsultationPagePanel.this,
-                        "À brancher: modifier consultation id=" + (r == null ? null : r.getConsultationId()));
+                        "A brancher: modifier consultation id=" + (r == null ? null : r.getConsultationId()));
             });
 
             b4.addActionListener(e -> {
                 stopCellEditing();
                 ConsultationListItemDTO r = model.getAt(currentRow);
                 JOptionPane.showMessageDialog(ConsultationPagePanel.this,
-                        "À brancher: générer / ouvrir facture pour consultation id=" + (r == null ? null : r.getConsultationId()));
+                        "A brancher: generer / ouvrir facture pour consultation id=" + (r == null ? null : r.getConsultationId()));
             });
 
             b3.addActionListener(e -> {
@@ -448,5 +439,44 @@ public class ConsultationPagePanel extends JPanel {
         public Object getCellEditorValue() {
             return "";
         }
+    }
+
+
+    private void styleInput(JTextField tf) {
+        tf.setFont(DentalTheme.textFont(13));
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
+    }
+
+    private void styleCombo(JComboBox<?> cb) {
+        cb.setFont(DentalTheme.textFont(13));
+        cb.setBackground(Color.WHITE);
+        cb.setBorder(BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true));
+    }
+
+    private void styleOutlineButton(AbstractButton b) {
+        b.setFont(DentalTheme.textBold(12));
+        b.setFocusPainted(false);
+        b.setOpaque(true);
+        b.setBackground(Color.WHITE);
+        b.setForeground(DentalTheme.PRIMARY_DARK);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+    }
+
+    private void styleTableActionButton(AbstractButton b) {
+        b.setFocusable(false);
+        b.setFont(DentalTheme.textBold(11));
+        b.setOpaque(true);
+        b.setBackground(Color.WHITE);
+        b.setForeground(DentalTheme.PRIMARY_DARK);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 1, true),
+                new EmptyBorder(4, 8, 4, 8)
+        ));
     }
 }

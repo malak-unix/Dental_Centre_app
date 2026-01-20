@@ -6,6 +6,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.util.function.Consumer;
 
 public class AppHeaderPanel extends JPanel {
@@ -28,11 +30,18 @@ public class AppHeaderPanel extends JPanel {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(0, 76));
         setOpaque(true);
-        setBackground(DentalTheme.BG_HEADER);
+
+        // ✅ même couleur que la sidebar
+        setBackground(DentalTheme.BG2);
 
         // LEFT logo
         logoLabel.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 10));
-        logoLabel.setIcon(loadLogoIcon());
+        logoLabel.setIcon(loadLogoKeepRatio("/assets/logo.png", 150)); // ✅ net + ratio
+        if (logoLabel.getIcon() == null) {
+            logoLabel.setText("DENTAL CENTER");
+            logoLabel.setFont(new Font("Serif", Font.BOLD, 20));
+            logoLabel.setForeground(DentalTheme.TEXT2);
+        }
         add(logoLabel, BorderLayout.WEST);
 
         // CENTER search
@@ -47,7 +56,8 @@ public class AppHeaderPanel extends JPanel {
                 BorderFactory.createLineBorder(DentalTheme.STROKE, 2),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
-        searchWrap.setPreferredSize(new Dimension(380, 40));
+        searchWrap.setPreferredSize(new Dimension(520, 40));
+
         Icon searchIcon = loadIcon("/assets/icons/search.png", 16, 16);
         if (searchIcon != null) {
             JLabel iconLabel = new JLabel(searchIcon);
@@ -94,7 +104,7 @@ public class AppHeaderPanel extends JPanel {
 
         add(right, BorderLayout.EAST);
 
-        // Search listener
+        // Search listeners
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void fire() {
                 if (onSearchChanged != null) onSearchChanged.accept(getSearchText());
@@ -103,6 +113,7 @@ public class AppHeaderPanel extends JPanel {
             @Override public void removeUpdate(DocumentEvent e) { fire(); }
             @Override public void changedUpdate(DocumentEvent e) { fire(); }
         });
+
         searchField.addActionListener(e -> fireSearchSubmit());
         searchBtn.addActionListener(e -> fireSearchSubmit());
     }
@@ -131,12 +142,8 @@ public class AppHeaderPanel extends JPanel {
         Color hoverBg = new Color(0xF3ECE6);
 
         logout.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) {
-                logout.setBackground(hoverBg);
-            }
-            @Override public void mouseExited(MouseEvent e) {
-                logout.setBackground(normalBg);
-            }
+            @Override public void mouseEntered(MouseEvent e) { logout.setBackground(hoverBg); }
+            @Override public void mouseExited(MouseEvent e) { logout.setBackground(normalBg); }
         });
     }
 
@@ -146,9 +153,10 @@ public class AppHeaderPanel extends JPanel {
         searchBtn.setFont(DentalTheme.textBold(12));
         searchBtn.setForeground(DentalTheme.TEXT2);
         searchBtn.setText("GO");
+
         searchBtn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.STROKE, 1),
-                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
         ));
         searchBtn.setBackground(new Color(0xF3, 0xEC, 0xE6));
         searchBtn.setOpaque(true);
@@ -165,7 +173,6 @@ public class AppHeaderPanel extends JPanel {
                     searchField.setForeground(DentalTheme.TEXT2);
                 }
             }
-
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (searchField.getText() == null || searchField.getText().isBlank()) {
@@ -178,26 +185,44 @@ public class AppHeaderPanel extends JPanel {
 
     private Icon loadIcon(String path, int w, int h) {
         try {
-            java.net.URL url = getClass().getResource(path);
+            URL url = getClass().getResource(path);
             if (url == null) return null;
-            Image img = new ImageIcon(url).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            ImageIcon icon = new ImageIcon(url);
+            Image img = scaleImage(icon.getImage(), w, h);
             return new ImageIcon(img);
         } catch (Exception e) {
             return null;
         }
     }
 
-    private Icon loadLogoIcon() {
-        java.net.URL url = getClass().getResource("/assets/logo.png");
-        if (url == null) {
-            logoLabel.setText("DENTAL CENTER");
-            logoLabel.setFont(new Font("Serif", Font.BOLD, 20));
-            logoLabel.setForeground(DentalTheme.TEXT2);
+    // ✅ logo net + ratio conservé
+    private ImageIcon loadLogoKeepRatio(String path, int targetW) {
+        try {
+            URL url = getClass().getResource(path);
+            if (url == null) return null;
+            ImageIcon icon = new ImageIcon(url);
+            int ow = icon.getIconWidth();
+            int oh = icon.getIconHeight();
+            if (ow <= 0 || oh <= 0) return null;
+
+            int targetH = Math.max(1, (int) Math.round((double) oh * targetW / ow));
+            Image img = scaleImage(icon.getImage(), targetW, targetH);
+            return new ImageIcon(img);
+        } catch (Exception e) {
             return null;
         }
-        ImageIcon icon = new ImageIcon(url);
-        Image img = icon.getImage().getScaledInstance(140, 46, Image.SCALE_SMOOTH);
-        return new ImageIcon(img);
+    }
+
+    private Image scaleImage(Image src, int w, int h) {
+        if (src == null) return null;
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.drawImage(src, 0, 0, w, h, null);
+        g.dispose();
+        return image;
     }
 
     public void setUser(String fullName, String roleLabel) {
@@ -207,40 +232,27 @@ public class AppHeaderPanel extends JPanel {
         avatarLabel.setText(initials(n));
     }
 
-    public JButton logoutButton() {
-        return logout;
-    }
-
-    public void onSearchChanged(Consumer<String> listener) {
-        this.onSearchChanged = listener;
-    }
-
-    public void onSearchSubmit(Consumer<String> listener) {
-        this.onSearchSubmit = listener;
-    }
-
-    public void clearSearch() {
-        searchField.setText("");
-    }
-
-    public String getSearchText() {
-        String v = searchField.getText();
-        return SEARCH_PLACEHOLDER.equals(v) ? "" : v;
-    }
-
-    private void fireSearchSubmit() {
-        String v = getSearchText();
-        if (onSearchSubmit != null) {
-            onSearchSubmit.accept(v);
-        } else if (onSearchChanged != null) {
-            onSearchChanged.accept(v);
-        }
-    }
-
     private String initials(String name) {
-        if (name == null || name.isBlank()) return "U";
-        String[] parts = name.trim().split("\s+");
+        if (name == null) return "U";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 0) return "U";
         if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
         return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
     }
+
+    private void fireSearchSubmit() {
+        if (onSearchSubmit != null) onSearchSubmit.accept(getSearchText());
+    }
+
+    private String getSearchText() {
+        String t = searchField.getText();
+        if (t == null) return "";
+        if (SEARCH_PLACEHOLDER.equals(t)) return "";
+        return t.trim();
+    }
+
+    public void onSearchChanged(Consumer<String> cb) { this.onSearchChanged = cb; }
+    public void onSearchSubmit(Consumer<String> cb) { this.onSearchSubmit = cb; }
+
+    public JButton logoutButton() { return logout; }
 }

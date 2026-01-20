@@ -22,7 +22,7 @@ public class NavButton extends JButton {
         super(text);
         this.active = active;
 
-        setFont(DentalTheme.textBold(13));
+        setFont(DentalTheme.textBold(15));
         setForeground(DentalTheme.TEXT2);
 
         setFocusPainted(false);
@@ -32,11 +32,14 @@ public class NavButton extends JButton {
 
         setHorizontalAlignment(SwingConstants.LEFT);
         setIcon(icon);
-        setIconTextGap(10);
 
-        // ✅ Très important: on réserve de la place pour l’icône
-        int left = (icon != null) ? 18 : 14;
-        setBorder(BorderFactory.createEmptyBorder(10, left, 10, 14));
+        // un peu plus d'espace entre icone et texte
+        setIconTextGap(12);
+
+        // padding + place icone
+        int left = (icon != null) ? 24 : 18;
+        setBorder(BorderFactory.createEmptyBorder(14, left, 14, 18)); // plus de padding
+        setFont(DentalTheme.textBold(15)); // texte plus lisible
 
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -49,14 +52,6 @@ public class NavButton extends JButton {
     public void setActive(boolean value) {
         this.active = value;
         repaint();
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setSelectedStyle(boolean value) {
-        setActive(value);
     }
 
     @Override
@@ -88,7 +83,6 @@ public class NavButton extends JButton {
             g2.drawRoundRect(0, 0, w - 6, h - 6, arc, arc);
         }
 
-        // Couleur texte selon active
         setForeground(active ? Color.WHITE : DentalTheme.TEXT2);
 
         g2.dispose();

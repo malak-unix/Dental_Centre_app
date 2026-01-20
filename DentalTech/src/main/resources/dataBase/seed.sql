@@ -11,6 +11,11 @@ SET @TUESDAY = DATE_ADD(@MONDAY, INTERVAL 1 DAY);
 SET @WEDNESDAY = DATE_ADD(@MONDAY, INTERVAL 2 DAY);
 SET @THURSDAY = DATE_ADD(@MONDAY, INTERVAL 3 DAY);
 SET @FRIDAY = DATE_ADD(@MONDAY, INTERVAL 4 DAY);
+SET @NEXT_MONDAY = DATE_ADD(@MONDAY, INTERVAL 7 DAY);
+SET @NEXT_TUESDAY = DATE_ADD(@MONDAY, INTERVAL 8 DAY);
+SET @NEXT_WEDNESDAY = DATE_ADD(@MONDAY, INTERVAL 9 DAY);
+SET @NEXT_THURSDAY = DATE_ADD(@MONDAY, INTERVAL 10 DAY);
+SET @NEXT_FRIDAY = DATE_ADD(@MONDAY, INTERVAL 11 DAY);
 SET @YEAR = YEAR(@TODAY);
 SET @MOIS = CASE MONTH(@TODAY)
   WHEN 1 THEN 'JANVIER'
@@ -116,7 +121,8 @@ VALUES
 INSERT INTO agenda_mensuel (id, medecin_id, mois, annee, cree_par)
 VALUES
   (1, 5, @MOIS, @YEAR, 'aya'),
-  (2, 6, @MOIS, @YEAR, 'aya');
+  (2, 6, @MOIS, @YEAR, 'aya'),
+  (3, 7, @MOIS, @YEAR, 'aya');
 
 INSERT INTO detail_journee (id, agenda_id, date_jour,
                             heure_debut_travail, heure_fin_travail,
@@ -124,6 +130,48 @@ INSERT INTO detail_journee (id, agenda_id, date_jour,
 VALUES
   (1, 1, @MONDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'aya'),
   (2, 1, @TUESDAY, '09:00:00', '13:00:00', 'OUVERT', 'Matinee uniquement', 'aya');
+
+--  DETAILS JOURNEE (SEMAINE COURANTE + SEMAINE PROCHAINE) - TOUS LES MEDECINS
+INSERT INTO detail_journee (id, agenda_id, date_jour,
+                            heure_debut_travail, heure_fin_travail,
+                            etat_jour, commentaire, cree_par)
+VALUES
+  -- Medecin 5 (agenda_id = 1) : semaine courante
+  (3, 1, @WEDNESDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (4, 1, @THURSDAY,  '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (5, 1, @FRIDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  -- Medecin 5 : semaine prochaine
+  (6, 1, @NEXT_MONDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (7, 1, @NEXT_TUESDAY,   '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (8, 1, @NEXT_WEDNESDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (9, 1, @NEXT_THURSDAY,  '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (10, 1, @NEXT_FRIDAY,   '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+
+  -- Medecin 6 (agenda_id = 2) : semaine courante
+  (11, 2, @MONDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (12, 2, @TUESDAY,   '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (13, 2, @WEDNESDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (14, 2, @THURSDAY,  '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (15, 2, @FRIDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  -- Medecin 6 : semaine prochaine
+  (16, 2, @NEXT_MONDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (17, 2, @NEXT_TUESDAY,   '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (18, 2, @NEXT_WEDNESDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (19, 2, @NEXT_THURSDAY,  '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (20, 2, @NEXT_FRIDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+
+  -- Medecin 7 (agenda_id = 3) : semaine courante
+  (21, 3, @MONDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (22, 3, @TUESDAY,   '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (23, 3, @WEDNESDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (24, 3, @THURSDAY,  '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (25, 3, @FRIDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  -- Medecin 7 : semaine prochaine
+  (26, 3, @NEXT_MONDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (27, 3, @NEXT_TUESDAY,   '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (28, 3, @NEXT_WEDNESDAY, '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (29, 3, @NEXT_THURSDAY,  '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed'),
+  (30, 3, @NEXT_FRIDAY,    '09:00:00', '17:00:00', 'OUVERT', 'Journee normale', 'seed');
 
 
 --  PATIENTS
@@ -203,6 +251,28 @@ VALUES
   (1, 1, 1, 1, @TODAY, '10:30:00', 'Douleur molaire', 'TERMINE', 'Voir radio panoramique', 'aya'),
   (2, 2, 1, 1, @TODAY, '11:30:00', 'Suivi appareil', 'TERMINE', 'Tout est stable', 'aya'),
   (3, 3, 2, NULL, @TOMORROW, '10:00:00', 'Controle annuel', 'PLANIFIE', NULL, 'aya');
+
+-- RDV supplementaires (tous les medecins, semaine courante + prochaine)
+INSERT INTO rdv (id, patient_id, detail_journee_id, liste_attente_id,
+                 date_rdv, heure, motif, statut, note_medecin, cree_par)
+SELECT
+  10 + (id - 3) AS id,
+  CASE (id % 3) WHEN 0 THEN 1 WHEN 1 THEN 2 ELSE 3 END AS patient_id,
+  id AS detail_journee_id,
+  NULL AS liste_attente_id,
+  date_jour AS date_rdv,
+  '09:00:00' AS heure,
+  'Consultation controle' AS motif,
+  CASE (id % 4)
+    WHEN 0 THEN 'PLANIFIE'
+    WHEN 1 THEN 'CONFIRME'
+    WHEN 2 THEN 'TERMINE'
+    ELSE 'ANNULE'
+  END AS statut,
+  NULL AS note_medecin,
+  'seed' AS cree_par
+FROM detail_journee
+WHERE id BETWEEN 3 AND 30;
 
 --  ORDONNANCES, MEDICAMENTS, PRESCRIPTIONS (simple)
 INSERT INTO medicament (id, nom, laboratoire, type_medicament, forme,
@@ -287,6 +357,27 @@ VALUES
   (1, '10:00:00', '10:30:00', 0, 'aya'),
   (1, '10:30:00', '11:00:00', 0, 'aicha'),
   (1, '11:00:00', '11:30:00', 1, 'aya');
+
+--  PLAGES HORAIRES (tous les details journees, semaine courante + prochaine)
+INSERT INTO plage_horaire (detail_journee_id, heure_debut, heure_fin, disponible, cree_par)
+SELECT id, '09:00:00', '09:30:00', 0, 'seed'
+FROM detail_journee
+WHERE id BETWEEN 2 AND 30;
+
+INSERT INTO plage_horaire (detail_journee_id, heure_debut, heure_fin, disponible, cree_par)
+SELECT id, '09:30:00', '10:00:00', 1, 'seed'
+FROM detail_journee
+WHERE id BETWEEN 2 AND 30;
+
+INSERT INTO plage_horaire (detail_journee_id, heure_debut, heure_fin, disponible, cree_par)
+SELECT id, '10:00:00', '10:30:00', 1, 'seed'
+FROM detail_journee
+WHERE id BETWEEN 2 AND 30;
+
+UPDATE plage_horaire
+SET disponible = 0
+WHERE detail_journee_id = 2
+  AND heure_debut = '10:00:00';
 
 SET FOREIGN_KEY_CHECKS = 1;
 

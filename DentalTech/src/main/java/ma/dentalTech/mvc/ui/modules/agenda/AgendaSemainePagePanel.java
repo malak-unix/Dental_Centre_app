@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class AgendaSemainePagePanel extends JPanel {
 
@@ -36,6 +37,9 @@ public class AgendaSemainePagePanel extends JPanel {
     private final JTextField dateField = new JTextField();
     private final JLabel weekLabel = new JLabel("Semaine du --/--/---- au --/--/----");
     private final JLabel medecinLabel = new JLabel("Agenda de : Dr --");
+    private final JComboBox<MedecinItem> medecinCombo = new JComboBox<>();
+    private Consumer<Long> onMedecinChanged;
+    private Long fixedMedecinId = null;
 
     private final Map<DayOfWeek, DayColumnPanel> dayColumns = new EnumMap<>(DayOfWeek.class);
     private final Map<DayOfWeek, JLabel> dayHeaders = new EnumMap<>(DayOfWeek.class);
@@ -93,6 +97,7 @@ public class AgendaSemainePagePanel extends JPanel {
 
         medecinIdField.setText("1");
         dateField.setText(LocalDate.now().toString());
+        loadMedecins();
         updateMedecinLabel(medecinId);
         updateButtonsState();
 
@@ -110,6 +115,18 @@ public class AgendaSemainePagePanel extends JPanel {
         String t = dateField.getText() == null ? "" : dateField.getText().trim();
         if (t.isBlank()) dateField.setText(LocalDate.now().toString());
         loadSemaine();
+    }
+
+    public void setOnMedecinChanged(Consumer<Long> listener) {
+        this.onMedecinChanged = listener;
+    }
+
+    public void setFixedMedecinId(Long medecinId) {
+        this.fixedMedecinId = medecinId;
+        loadMedecins();
+        if (medecinId != null) {
+            medecinCombo.setEnabled(false);
+        }
     }
 
     public void setDate(LocalDate date) {
@@ -164,6 +181,13 @@ public class AgendaSemainePagePanel extends JPanel {
         nav.add(next);
         nav.add(today);
 
+        JLabel medLbl = new JLabel("Medecin:");
+        medLbl.setFont(DentalTheme.textBold(12));
+        nav.add(medLbl);
+
+        medecinCombo.setPreferredSize(new Dimension(200, 30));
+        nav.add(medecinCombo);
+
         top.add(left, BorderLayout.WEST);
         top.add(weekLabel, BorderLayout.CENTER);
         top.add(nav, BorderLayout.EAST);
@@ -180,6 +204,7 @@ public class AgendaSemainePagePanel extends JPanel {
             dateField.setText(LocalDate.now().toString());
             loadSemaine();
         });
+        medecinCombo.addActionListener(e -> onMedecinSelected());
         return top;
     }
 
@@ -723,6 +748,65 @@ public class AgendaSemainePagePanel extends JPanel {
             }
         } catch (Exception ignored) {}
         medecinLabel.setText(label);
+    }
+
+    private void onMedecinSelected() {
+        MedecinItem item = (MedecinItem) medecinCombo.getSelectedItem();
+        if (item == null || item.id == null) return;
+        setMedecinId(item.id);
+        if (onMedecinChanged != null) {
+            onMedecinChanged.accept(item.id);
+        }
+        loadSemaine();
+    }
+
+    private void loadMedecins() {
+        DefaultComboBoxModel<MedecinItem> model = new DefaultComboBoxModel<>();
+        try {
+            var repo = new ma.dentalTech.repository.modules.users.impl.MedecinRepositoryImpl();
+            List<ma.dentalTech.entities.users.Medecin> list;
+            if (fixedMedecinId != null) {
+                var m = repo.findById(fixedMedecinId);
+                list = (m == null) ? List.of() : List.of(m);
+            } else {
+                list = repo.findAll();
+            }
+            if (list == null || list.isEmpty()) {
+                model.addElement(new MedecinItem(1L, "Medecin #1"));
+            } else {
+                for (var m : list) {
+                    String label = ((m.getNom() == null ? "" : m.getNom()) + " " +
+                            (m.getPrenom() == null ? "" : m.getPrenom())).trim();
+                    if (label.isBlank()) label = "Medecin #" + m.getId();
+                    model.addElement(new MedecinItem(m.getId(), label));
+                }
+            }
+        } catch (Exception ex) {
+            model.addElement(new MedecinItem(1L, "Medecin #1"));
+        }
+        medecinCombo.setModel(model);
+        if (model.getSize() > 0) {
+            medecinCombo.setSelectedIndex(0);
+            MedecinItem item = (MedecinItem) model.getSelectedItem();
+            if (item != null && item.id != null) {
+                setMedecinId(item.id);
+            }
+        }
+    }
+
+    private static class MedecinItem {
+        final Long id;
+        final String label;
+
+        MedecinItem(Long id, String label) {
+            this.id = id;
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     private static String firstNonBlank(String... vals) {

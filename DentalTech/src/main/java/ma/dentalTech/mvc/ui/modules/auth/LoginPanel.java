@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.net.URL;
 
 public class LoginPanel extends JPanel {
@@ -14,7 +15,7 @@ public class LoginPanel extends JPanel {
     private final JTextField tfLogin = new JTextField();
     private final JPasswordField tfPassword = new JPasswordField();
     private final DentalButton btnLogin = new DentalButton("Connexion");
-    private final JButton btnCancel = new JButton("Annuler");
+    private final JButton btnCancel = new OutlineButton("Annuler");
 
     private final JLabel title = new JLabel("Connexion", SwingConstants.CENTER);
 
@@ -137,6 +138,10 @@ public class LoginPanel extends JPanel {
         b.setPreferredSize(new Dimension(240, 44));
         b.setFont(DentalTheme.textBold(15));
         b.setFocusPainted(false);
+        if (b instanceof OutlineButton) {
+            b.setForeground(DentalTheme.PRIMARY_DARK);
+            return;
+        }
         b.setBackground(new Color(0xF1, 0xE7, 0xDB));
         b.setForeground(DentalTheme.PRIMARY_DARK);
         b.setOpaque(true);
@@ -158,8 +163,26 @@ public class LoginPanel extends JPanel {
             return null;
         }
         ImageIcon icon = new ImageIcon(url);
-        Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        int ow = icon.getIconWidth();
+        int oh = icon.getIconHeight();
+        if (ow <= 0 || oh <= 0) return icon;
+        double scale = Math.min((double) w / ow, (double) h / oh);
+        int nw = Math.max(1, (int) Math.round(ow * scale));
+        int nh = Math.max(1, (int) Math.round(oh * scale));
+        Image img = scaleImage(icon.getImage(), nw, nh);
         return new ImageIcon(img);
+    }
+
+    private Image scaleImage(Image src, int w, int h) {
+        Image scaled = src.getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.drawImage(scaled, 0, 0, null);
+        g.dispose();
+        return image;
     }
 
     @Override
@@ -218,6 +241,52 @@ public class LoginPanel extends JPanel {
 
             g2.dispose();
 
+        }
+    }
+
+    static class OutlineButton extends JButton {
+        private boolean hover = false;
+
+        OutlineButton(String text) {
+            super(text);
+            setFocusPainted(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setBorderPainted(false);
+            setContentAreaFilled(false);
+            setOpaque(false);
+            setForeground(DentalTheme.PRIMARY_DARK);
+            setFont(DentalTheme.textBold(16));
+            setBorder(new EmptyBorder(10, 16, 10, 16));
+
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { hover = true; repaint(); }
+                @Override public void mouseExited(java.awt.event.MouseEvent e) { hover = false; repaint(); }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int arc = DentalTheme.BTN_RADIUS;
+            int w = getWidth();
+            int h = getHeight();
+
+            Color bg = hover ? new Color(0xF3, 0xEC, 0xE6) : Color.WHITE;
+
+            g2.setColor(new Color(0, 0, 0, 18));
+            g2.fillRoundRect(3, 3, w - 6, h - 6, arc, arc);
+
+            g2.setColor(bg);
+            g2.fillRoundRect(0, 0, w - 6, h - 6, arc, arc);
+
+            g2.setStroke(new BasicStroke(2f));
+            g2.setColor(DentalTheme.STROKE);
+            g2.drawRoundRect(0, 0, w - 6, h - 6, arc, arc);
+
+            g2.dispose();
+            super.paintComponent(g);
         }
     }
 }

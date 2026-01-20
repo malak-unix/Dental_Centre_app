@@ -2,24 +2,25 @@ package ma.dentalTech.mvc.ui.common;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 
 public final class UiTheme {
 
     private UiTheme() {}
 
-    public static final Font FONT_BASE = new Font("Segoe UI", Font.PLAIN, 13);
-    public static final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 13);
-    public static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 18);
+    public static final Font FONT_BASE = DentalTheme.textFont(13);
+    public static final Font FONT_BOLD = DentalTheme.textBold(13);
+    public static final Font FONT_TITLE = DentalTheme.titleFont(18);
 
-    public static final Color BG = new Color(245, 247, 250);
-    public static final Color CARD = Color.WHITE;
-    public static final Color TEXT = new Color(33, 37, 41);
-    public static final Color MUTED = new Color(110, 117, 125);
+    public static final Color BG = DentalTheme.BG;
+    public static final Color CARD = DentalTheme.CARD;
+    public static final Color TEXT = DentalTheme.TEXT2;
+    public static final Color MUTED = DentalTheme.MUTED;
 
-    public static final Color PRIMARY = new Color(13, 110, 253);
-    public static final Color DANGER = new Color(220, 53, 69);
-    public static final Color BORDER = new Color(222, 226, 230);
+    public static final Color PRIMARY = DentalTheme.PRIMARY_DARK;
+    public static final Color DANGER = new Color(0xC9, 0x43, 0x43);
+    public static final Color BORDER = DentalTheme.STROKE;
 
     public static void install() {
         // Look & Feel
@@ -28,17 +29,42 @@ public final class UiTheme {
         } catch (Exception ignored) {}
 
         // Fonts / colors globales
-        setUI("Label.font", FONT_BASE);
-        setUI("Button.font", FONT_BOLD);
-        setUI("TextField.font", FONT_BASE);
-        setUI("TextArea.font", FONT_BASE);
-        setUI("ComboBox.font", FONT_BASE);
-        setUI("Table.font", FONT_BASE);
-        setUI("TableHeader.font", FONT_BOLD);
+        setUI("Label.font", new FontUIResource(FONT_BASE));
+        setUI("Button.font", new FontUIResource(FONT_BOLD));
+        setUI("TextField.font", new FontUIResource(FONT_BASE));
+        setUI("TextArea.font", new FontUIResource(FONT_BASE));
+        setUI("ComboBox.font", new FontUIResource(FONT_BASE));
+        setUI("Table.font", new FontUIResource(FONT_BASE));
+        setUI("TableHeader.font", new FontUIResource(FONT_BOLD));
 
         setUI("Panel.background", BG);
+        setUI("ScrollPane.background", BG);
         setUI("Table.background", CARD);
         setUI("Table.gridColor", BORDER);
+        setUI("TableHeader.background", DentalTheme.PANEL);
+        setUI("TableHeader.foreground", TEXT);
+        setUI("Label.foreground", TEXT);
+
+        setUI("TextField.background", Color.WHITE);
+        setUI("TextField.foreground", TEXT);
+        setUI("TextArea.background", Color.WHITE);
+        setUI("TextArea.foreground", TEXT);
+        setUI("ComboBox.background", Color.WHITE);
+        setUI("ComboBox.foreground", TEXT);
+
+        setUI("Button.background", PRIMARY);
+        setUI("Button.foreground", Color.WHITE);
+        setUI("Button.border", BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(6, 14, 6, 14)
+        ));
+
+        setUI("TextField.border", BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
+        setUI("ComboBox.border", BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true));
+        setUI("TitledBorder.titleColor", TEXT);
     }
 
     private static void setUI(String key, Object value) {
@@ -49,7 +75,7 @@ public final class UiTheme {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(CARD);
         p.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER),
+                BorderFactory.createLineBorder(BORDER, 2, true),
                 new EmptyBorder(12,12,12,12)
         ));
         p.add(content, BorderLayout.CENTER);

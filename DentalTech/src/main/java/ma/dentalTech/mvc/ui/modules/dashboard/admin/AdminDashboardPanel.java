@@ -7,7 +7,7 @@ import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-import ma.dentalTech.mvc.ui.common.components.StatCard;
+import ma.dentalTech.mvc.ui.common.components.StatCardPro;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -23,10 +23,10 @@ public class AdminDashboardPanel extends JPanel {
     private final Long userId;
     private final Consumer<String> navigate;
 
-    private final StatCard statUsers       = new StatCard("Utilisateurs", "0", "");
-    private final StatCard statMedecins    = new StatCard("Medecins", "0", "");
-    private final StatCard statSecretaires = new StatCard("Secretaires", "0", "");
-    private final StatCard statRecette     = new StatCard("Recette du jour", "0 DH", "");
+    private final StatCardPro statUsers       = new StatCardPro("Utilisateurs", "0", "");
+    private final StatCardPro statMedecins    = new StatCardPro("Medecins", "0", "");
+    private final StatCardPro statSecretaires = new StatCardPro("Secretaires", "0", "");
+    private final StatCardPro statRecette     = new StatCardPro("Recette du jour", "0 DH", "");
 
     private final DefaultTableModel model = new DefaultTableModel(
             new Object[]{"Nom", "Role", "Statut", "Derniere activite"}, 0
@@ -59,7 +59,7 @@ public class AdminDashboardPanel extends JPanel {
     }
 
     private JPanel buildTopStats() {
-        JPanel p = new JPanel(new GridLayout(1, 4, 15, 15));
+        JPanel p = new JPanel(new GridLayout(1, 4, 18, 18));
         p.setOpaque(false);
         p.add(statUsers);
         p.add(statMedecins);
