@@ -22,7 +22,7 @@ public class NavButton extends JButton {
         super(text);
         this.active = active;
 
-        setFont(DentalTheme.textBold(15));
+        setFont(DentalTheme.textBold(13));
         setForeground(DentalTheme.TEXT2);
 
         setFocusPainted(false);
@@ -34,12 +34,12 @@ public class NavButton extends JButton {
         setIcon(icon);
 
         // un peu plus d'espace entre icone et texte
-        setIconTextGap(12);
+        setIconTextGap(6);
 
         // padding + place icone
-        int left = (icon != null) ? 24 : 18;
-        setBorder(BorderFactory.createEmptyBorder(14, left, 14, 18)); // plus de padding
-        setFont(DentalTheme.textBold(15)); // texte plus lisible
+        int left = (icon != null) ? 8 : 4;
+        setBorder(BorderFactory.createEmptyBorder(10, left, 10, 8)); // plus de padding
+        setFont(DentalTheme.textBold(13)); // texte plus lisible
 
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 

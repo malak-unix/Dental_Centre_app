@@ -21,34 +21,37 @@ public class SidebarCommonPanel extends JPanel {
         this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
         this.onNavigate = onNavigate;
 
-        setPreferredSize(new Dimension(340, 780));
-        setMinimumSize(new Dimension(320, 780));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        // ✅ même fond que header
+        // IMPORTANT: no left padding so the card can start at x=0
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        setAlignmentX(Component.LEFT_ALIGNMENT);
+
         setOpaque(true);
         setBackground(DentalTheme.BG2);
-
         buildUi();
     }
 
     private void buildUi() {
-        add(Box.createVerticalStrut(8));
+        add(Box.createVerticalStrut(6));
 
         CardPanel navCard = new CardPanel((String) null);
         navCard.setLayout(new BoxLayout(navCard, BoxLayout.Y_AXIS));
         navCard.setAlignmentX(Component.LEFT_ALIGNMENT);
-        setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 18));
+        navCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+        // ✅ THIS is the key: remove CardPanel internal padding for sidebar
+        navCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        // ✅ let it expand full width
+        navCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         List<NavItem> items = RoleMenuConfig.menuFor(role);
         for (int i = 0; i < items.size(); i++) {
             NavItem it = items.get(i);
+            Icon icon = loadIcon(iconPathFor(it.getId()), 18, 18);
 
-            // ✅ icônes plus visibles
-            Icon icon = loadIcon(iconPathFor(it.getId()), 22, 22);
             navCard.add(makeNav(it.getLabel(), icon, it.getId()));
-
             if (i < items.size() - 1) navCard.add(Box.createVerticalStrut(8));
         }
 
@@ -86,8 +89,7 @@ public class SidebarCommonPanel extends JPanel {
     }
 
     private void addBottomLogo() {
-        // ✅ un peu plus grand + mieux centré + marges
-        ImageIcon icon = loadIconKeepRatio("/assets/logo_enbas_gauche.png", 165);
+        ImageIcon icon = loadIconKeepRatio("/assets/logo_enbas_gauche.png", 160);
         if (icon == null) return;
 
         JLabel logo = new JLabel(icon);

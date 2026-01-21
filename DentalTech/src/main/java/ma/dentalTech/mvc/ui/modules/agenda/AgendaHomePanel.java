@@ -51,7 +51,8 @@ public class AgendaHomePanel extends JPanel {
         content.add(agendaMensuelPage, "AGENDA");
         content.add(listeAttentePage, "LISTE");
 
-        CardPanel centerCard = new CardPanel(null, new BorderLayout());
+        CardPanel centerCard = new CardPanel();
+        centerCard.setLayout(new BorderLayout());
         centerCard.add(content, BorderLayout.CENTER);
 
         body.add(centerCard, BorderLayout.CENTER);

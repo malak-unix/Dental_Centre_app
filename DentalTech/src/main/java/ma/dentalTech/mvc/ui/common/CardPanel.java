@@ -1,74 +1,83 @@
 package ma.dentalTech.mvc.ui.common;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class CardPanel extends JPanel {
 
     private String title;
-    private int padding = 16;
 
-    /* =====================
-       CONSTRUCTEURS SUPPORTÉS
-       ===================== */
+    private int arc = 22;
+    private int shadowSize = 10;     // épaisseur du shadow
+    private int shadowOffset = 6;    // décalage du shadow (en bas/droite)
 
     public CardPanel() {
-        this(null, new BorderLayout());
+        this(null);
     }
 
     public CardPanel(String title) {
-        this(title, new BorderLayout());
-    }
-
-    public CardPanel(LayoutManager layout) {
-        this(null, layout);
-    }
-
-    public CardPanel(String title, LayoutManager layout) {
         this.title = title;
-        setLayout(layout);
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(
-                padding + (title != null ? 24 : 0),
-                padding,
-                padding,
-                padding
-        ));
+        setLayout(new BorderLayout());
+        // padding interne (contenu)
+        setBorder(new EmptyBorder(16, 16, 16, 16));
     }
 
-    /* =====================
-       RENDER MAQUETTE
-       ===================== */
+    public void setTitle(String title) {
+        this.title = title;
+        repaint();
+    }
+
+    public void setArc(int arc) {
+        this.arc = arc;
+        repaint();
+    }
+
+    public void setShadow(int shadowSize, int shadowOffset) {
+        this.shadowSize = shadowSize;
+        this.shadowOffset = shadowOffset;
+        repaint();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int arc = DentalTheme.RADIUS;
-        int w = getWidth();
-        int h = getHeight();
+            int w = getWidth();
+            int h = getHeight();
 
-        // Ombre
-        g2.setColor(new Color(0, 0, 0, 25));
-        g2.fillRoundRect(6, 6, w - 12, h - 12, arc, arc);
+            // IMPORTANT: on dessine la carte à x=0,y=0 (donc collée à gauche si le conteneur le permet)
+            int cardX = 0;
+            int cardY = 0;
+            int cardW = w - shadowOffset;
+            int cardH = h - shadowOffset;
 
-        // Fond
-        g2.setColor(DentalTheme.PANEL);
-        g2.fillRoundRect(0, 0, w - 12, h - 12, arc, arc);
+            // Shadow
+            g2.setColor(new Color(0, 0, 0, 28));
+            g2.fillRoundRect(cardX + shadowOffset, cardY + shadowOffset, cardW, cardH, arc, arc);
 
-        // Bordure dorée
-        g2.setStroke(new BasicStroke(2f));
-        g2.setColor(DentalTheme.STROKE);
-        g2.drawRoundRect(0, 0, w - 12, h - 12, arc, arc);
+            // Card background
+            g2.setColor(getBackground() != null ? getBackground() : new Color(250, 246, 240));
+            g2.fillRoundRect(cardX, cardY, cardW, cardH, arc, arc);
 
-        // Titre (si présent)
-        if (title != null) {
-            g2.setFont(DentalTheme.H2);
-            g2.setColor(DentalTheme.TEXT);
-            g2.drawString(title, 24, 34);
+            // Border
+            g2.setColor(DentalTheme.BORDER);
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawRoundRect(cardX, cardY, cardW, cardH, arc, arc);
+
+            // Title
+            if (title != null && !title.isBlank()) {
+                g2.setFont(DentalTheme.titleFont(18));
+                g2.setColor(DentalTheme.TEXT1);
+                g2.drawString(title, cardX + 18, cardY + 28);
+            }
+        } finally {
+            g2.dispose();
         }
 
-        g2.dispose(); //l'interface est charge dans la ram mais elle n est plus visible pour nous
+        super.paintComponent(g);
     }
 }

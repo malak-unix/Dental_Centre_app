@@ -35,7 +35,18 @@ public class LoginPanel extends JPanel {
 
         JLabel logo = new JLabel(loadLogoIcon(260, 70));
         logo.setHorizontalAlignment(SwingConstants.CENTER);
+        if (logo.getIcon() == null) {
+            logo.setText("DENTAL CENTER");
+            logo.setFont(new Font("Serif", Font.BOLD, 24));
+            logo.setForeground(DentalTheme.TEXT2);
+        }
 
+        JLabel dent = new JLabel(loadSideIcon(60, 60));
+        dent.setHorizontalAlignment(SwingConstants.CENTER);
+        dent.setPreferredSize(new Dimension(70, 70));
+        dent.setBorder(new EmptyBorder(0, 6, 0, 0));
+
+        top.add(dent, BorderLayout.WEST);
         top.add(logo, BorderLayout.CENTER);
         top.add(new JSeparator(), BorderLayout.SOUTH);
 
@@ -153,16 +164,19 @@ public class LoginPanel extends JPanel {
     }
 
     private Icon loadLogoIcon(int w, int h) {
-        // logo: src/main/resources/assets/logo.png
-        URL url = getClass().getResource("/assets/logo.png");
-        if (url == null) {
-            // fallback text
-            JLabel fallback = new JLabel("DENTALTech CENTER", SwingConstants.CENTER);
-            fallback.setFont(new Font("Serif", Font.BOLD, 24));
-            fallback.setForeground(DentalTheme.TEXT);
-            return null;
+        return loadIconWithFallback("/assets/logo.png", "src/main/resources/assets/logo.png", w, h);
+    }
+
+    private Icon loadSideIcon(int w, int h) {
+        return loadIconWithFallback("/assets/dent.png", "src/main/resources/assets/dent.png", w, h);
+    }
+
+    private Icon loadIconWithFallback(String resourcePath, String filePath, int w, int h) {
+        ImageIcon icon = loadIconFromResource(resourcePath);
+        if (icon == null) {
+            icon = loadIconFromFile(filePath);
         }
-        ImageIcon icon = new ImageIcon(url);
+        if (icon == null) return null;
         int ow = icon.getIconWidth();
         int oh = icon.getIconHeight();
         if (ow <= 0 || oh <= 0) return icon;
@@ -171,6 +185,17 @@ public class LoginPanel extends JPanel {
         int nh = Math.max(1, (int) Math.round(oh * scale));
         Image img = scaleImage(icon.getImage(), nw, nh);
         return new ImageIcon(img);
+    }
+
+    private ImageIcon loadIconFromResource(String path) {
+        URL url = getClass().getResource(path);
+        return (url == null) ? null : new ImageIcon(url);
+    }
+
+    private ImageIcon loadIconFromFile(String path) {
+        java.nio.file.Path p = java.nio.file.Paths.get(path);
+        if (!java.nio.file.Files.exists(p)) return null;
+        return new ImageIcon(p.toAbsolutePath().toString());
     }
 
     private Image scaleImage(Image src, int w, int h) {

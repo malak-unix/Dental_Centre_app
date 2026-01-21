@@ -55,7 +55,7 @@ public class SecretaireDashboardPanel extends JPanel {
     private final StatCardPro statAttente  = new StatCardPro("Patients en attente", "0", "");
 
         // File d'attente
-    private final JPanel fileAttentePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
+    private final JPanel fileAttentePanel = new JPanel();
     private final JLabel fileAttenteEmptyLabel = new JLabel("Aucun patient en attente aujourd'hui");
 
     // Notifications (apres file d'attente)
@@ -341,8 +341,12 @@ public class SecretaireDashboardPanel extends JPanel {
         top.add(addPatient, BorderLayout.EAST);
 
         fileAttentePanel.setOpaque(false);
+        fileAttentePanel.setLayout(new BoxLayout(fileAttentePanel, BoxLayout.Y_AXIS));
+
         JScrollPane sp = new JScrollPane(fileAttentePanel);
-        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setBorder(null);
+        sp.setOpaque(false);
+        sp.getViewport().setOpaque(false);
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         sp.setPreferredSize(new Dimension(10, 240));
@@ -628,8 +632,13 @@ public class SecretaireDashboardPanel extends JPanel {
         styleHeaderRightButton(markAll);
         markAll.addActionListener(e -> markAllNotificationsRead());
 
+        JPanel topActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        topActions.setOpaque(false);
+        topActions.setMinimumSize(new Dimension(160, 1));
+        topActions.add(markAll);
+
         header.add(notifTitle, BorderLayout.WEST);
-        header.add(markAll, BorderLayout.EAST);
+        header.add(topActions, BorderLayout.EAST);
 
         wrap.add(header, BorderLayout.NORTH);
         wrap.add(notificationsScroll, BorderLayout.CENTER);
@@ -662,8 +671,14 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         header.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
+
+        JPanel topActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        topActions.setOpaque(false);
+        topActions.setMinimumSize(new Dimension(160, 1));
+        topActions.add(more);
+
         header.add(title, BorderLayout.WEST);
-        header.add(more, BorderLayout.EAST);
+        header.add(topActions, BorderLayout.EAST);
 
         wrap.add(header, BorderLayout.NORTH);
         wrap.add(sp, BorderLayout.CENTER);
@@ -950,7 +965,7 @@ public class SecretaireDashboardPanel extends JPanel {
         msg.setEditable(false);
         msg.setOpaque(false);
         msg.setForeground(DentalTheme.TEXT);
-        msg.setFont(DentalTheme.textFont(12));
+        msg.setFont(DentalTheme.textFont(13));
 
         center.add(title);
         center.add(Box.createVerticalStrut(4));
