@@ -8,6 +8,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierListEnrichedItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -106,6 +107,7 @@ public class DossierMedicalListUI extends JPanel {
                 new EmptyBorder(8, 16, 8, 16)
         ));
         btnSearch.setFocusPainted(false);
+        UiStyles.stylePrimaryButton(btnSearch);
 
         btnAdd.setFont(DentalTheme.textBold(13));
         btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
@@ -115,6 +117,7 @@ public class DossierMedicalListUI extends JPanel {
                 new EmptyBorder(8, 16, 8, 16)
         ));
         btnAdd.setFocusPainted(false);
+        UiStyles.stylePrimaryButton(btnAdd);
         
         buttonsPanel.add(btnSearch);
         buttonsPanel.add(btnAdd);
@@ -128,6 +131,7 @@ public class DossierMedicalListUI extends JPanel {
 
     private JComponent buildTable() {
         table.setModel(model);
+        UiStyles.styleTable(table);
         table.setRowHeight(60);
         table.setFont(DentalTheme.textFont(13));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -387,3 +391,4 @@ public class DossierMedicalListUI extends JPanel {
         }
     }
 }
+

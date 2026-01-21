@@ -4,6 +4,7 @@ import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.mvc.ui.common.CardPanel;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.repository.modules.users.api.RoleRepository;
 
@@ -43,10 +44,10 @@ public class RolesPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
 
-        JButton btnAdd = new JButton("Ajouter");
-        JButton btnEdit = new JButton("Modifier");
-        JButton btnDelete = new JButton("Supprimer");
-        JButton btnRefresh = new JButton("Rafraichir");
+        JButton btnAdd = new DentalButton("Ajouter");
+        JButton btnEdit = new DentalButton("Modifier");
+        JButton btnDelete = new DentalButton("Supprimer");
+        JButton btnRefresh = new DentalButton("Rafraichir");
 
         btnAdd.addActionListener(e -> openForm(null));
         btnEdit.addActionListener(e -> {

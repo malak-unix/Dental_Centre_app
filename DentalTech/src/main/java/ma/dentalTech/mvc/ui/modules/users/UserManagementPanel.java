@@ -3,6 +3,7 @@ package ma.dentalTech.mvc.ui.modules.users;
 import ma.dentalTech.entities.enums.LibelleRole;
 import ma.dentalTech.mvc.controllers.modules.users.api.UserManagementController;
 import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -45,7 +46,7 @@ public class UserManagementPanel extends JPanel {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
         p.setOpaque(false);
 
-        JButton refreshBtn = new JButton("Rafraîchir la liste");
+        JButton refreshBtn = new DentalButton("Rafraîchir la liste");
         refreshBtn.addActionListener(e -> refreshTableSafe());
 
         p.add(refreshBtn);

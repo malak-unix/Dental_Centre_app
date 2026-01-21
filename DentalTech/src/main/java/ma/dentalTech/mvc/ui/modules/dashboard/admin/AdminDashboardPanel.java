@@ -5,12 +5,13 @@ import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
+import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.mvc.ui.common.components.StatCardPro;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
@@ -73,15 +74,16 @@ public class AdminDashboardPanel extends JPanel {
         root.setOpaque(false);
 
         JTable table = new JTable(model);
+        UiStyles.styleTable(table);
         table.setRowHeight(34);
-        table.setFont(DentalTheme.textFont(12));
-        table.getTableHeader().setFont(DentalTheme.textBold(12));
 
         JScrollPane sp = new JScrollPane(table);
-        TitledBorder t = BorderFactory.createTitledBorder("Utilisateurs");
-        t.setTitleFont(DentalTheme.textBold(13));
-        sp.setBorder(t);
-        root.add(sp, BorderLayout.CENTER);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+
+        CardPanel tableCard = new CardPanel("Utilisateurs");
+        tableCard.setLayout(new BorderLayout(10, 10));
+        tableCard.add(sp, BorderLayout.CENTER);
+        root.add(tableCard, BorderLayout.CENTER);
 
         root.add(buildActivitiesCard(), BorderLayout.EAST);
 
@@ -89,9 +91,11 @@ public class AdminDashboardPanel extends JPanel {
         actions.setOpaque(false);
 
         DentalButton bUsers = new DentalButton("Utilisateurs");
+        UiStyles.stylePrimaryButton(bUsers);
         bUsers.addActionListener(e -> navigate.accept("utilisateurs"));
 
         DentalButton bBackups = new DentalButton("Sauvegardes");
+        UiStyles.stylePrimaryButton(bBackups);
         bBackups.addActionListener(e -> navigate.accept("sauvegardes"));
 
         actions.add(bUsers);
@@ -102,13 +106,9 @@ public class AdminDashboardPanel extends JPanel {
     }
 
     private JComponent buildActivitiesCard() {
-        JPanel right = new JPanel(new BorderLayout(10, 10));
-        right.setOpaque(false);
+        CardPanel right = new CardPanel("Activites recentes");
+        right.setLayout(new BorderLayout(10, 10));
         right.setPreferredSize(new Dimension(320, 10));
-
-        TitledBorder t = BorderFactory.createTitledBorder("Activites recentes");
-        t.setTitleFont(DentalTheme.textBold(13));
-        right.setBorder(t);
 
         JScrollPane sp = new JScrollPane(activitiesPanel);
         sp.setBorder(BorderFactory.createEmptyBorder());

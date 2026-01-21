@@ -17,8 +17,10 @@ import ma.dentalTech.mvc.dto.patient.PatientListDto;
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier.DossierMedicalDetailUI;
 import ma.dentalTech.repository.modules.dossierMedical.impl.DossierMedicalRepositoryImpl;
 import ma.dentalTech.entities.dossierMedical.DossierMedical;
+import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.mvc.ui.common.components.StatCardPro;
 import ma.dentalTech.mvc.ui.modules.patient.PatientFormDialog;
 
@@ -52,7 +54,7 @@ public class SecretaireDashboardPanel extends JPanel {
     private final StatCardPro statPatients = new StatCardPro("Nb patients", "0", "");
     private final StatCardPro statRecette  = new StatCardPro("Recette du jour", "0 DH", "");
     private final StatCardPro statRdv      = new StatCardPro("RDV du jour", "0", "");
-    private final StatCardPro statAttente  = new StatCardPro("Patients en attente", "0", "");
+    private final StatCardPro statAttente  = new StatCardPro("En attente", "0", "");
 
         // File d'attente
     private final JPanel fileAttentePanel = new JPanel();
@@ -107,12 +109,11 @@ public class SecretaireDashboardPanel extends JPanel {
         rdvEmptyLabel.setForeground(DentalTheme.MUTED_TEXT);
         rdvEmptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        rdvTable.setRowHeight(34);
+        UiStyles.styleTable(rdvTable);
+        rdvTable.setRowHeight(30);
         rdvTable.setFillsViewportHeight(true);
         rdvTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         rdvTable.getTableHeader().setReorderingAllowed(false);
-        rdvTable.setFont(DentalTheme.textFont(12));
-        rdvTable.getTableHeader().setFont(DentalTheme.textBold(12));
         rdvTable.getColumnModel().getColumn(0).setPreferredWidth(70);
         rdvTable.getColumnModel().getColumn(1).setPreferredWidth(160);
         rdvTable.getColumnModel().getColumn(2).setPreferredWidth(120);
@@ -219,12 +220,12 @@ public class SecretaireDashboardPanel extends JPanel {
         c.insets = new Insets(0, 0, 0, 0);
 
         c.gridx = 0;
-        c.weightx = 0.68;
+        c.weightx = 0.70;
         columns.add(buildLeftColumn(), c);
 
         c.gridx = 1;
-        c.weightx = 0.32;
-        c.insets = new Insets(0, 14, 0, 0);
+        c.weightx = 0.30;
+        c.insets = new Insets(0, 12, 0, 0);
         columns.add(buildRightColumn(), c);
 
         root.add(columns, BorderLayout.CENTER);
@@ -235,13 +236,11 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel left = new JPanel();
         left.setOpaque(false);
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-
-        left.add(buildSectionTitle("Revue du Jour"));
         left.add(Box.createVerticalStrut(8));
         left.add(buildRevueDuJour());
-        left.add(Box.createVerticalStrut(12));
+        left.add(Box.createVerticalStrut(10));
         left.add(buildRdvDuJourSection());
-        left.add(Box.createVerticalStrut(12));
+        left.add(Box.createVerticalStrut(10));
         left.add(buildFileAttenteSection());
 
         return left;
@@ -261,9 +260,9 @@ public class SecretaireDashboardPanel extends JPanel {
 
     private JComponent buildRevueDuJour() {
         JPanel container = cardContainer();
-        container.setLayout(new BorderLayout(12, 12));
+        container.setLayout(new BorderLayout(10, 10));
 
-        JPanel kpiGrid = new JPanel(new GridLayout(1, 4, 18, 18));
+        JPanel kpiGrid = new JPanel(new GridLayout(1, 4, 10, 10));
         kpiGrid.setOpaque(false);
         kpiGrid.add(statPatients);
         kpiGrid.add(statRecette);
@@ -274,12 +273,12 @@ public class SecretaireDashboardPanel extends JPanel {
         stylePrimaryButton(stats);
         stats.addActionListener(e -> navigate.accept("caisse"));
 
-        JPanel btnWrap = new JPanel(new GridBagLayout());
+        JPanel btnWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnWrap.setOpaque(false);
         btnWrap.add(stats);
 
         container.add(kpiGrid, BorderLayout.CENTER);
-        container.add(btnWrap, BorderLayout.EAST);
+        container.add(btnWrap, BorderLayout.SOUTH);
         return container;
     }
 
@@ -307,8 +306,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        sp.setPreferredSize(new Dimension(10, 150));
-        sp.setMinimumSize(new Dimension(10, 150));
+        sp.setPreferredSize(new Dimension(10, 140));
+        sp.setMinimumSize(new Dimension(10, 140));
 
         JPanel emptyWrap = new JPanel(new GridBagLayout());
         emptyWrap.setOpaque(false);
@@ -349,8 +348,8 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.getViewport().setOpaque(false);
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        sp.setPreferredSize(new Dimension(10, 240));
-        sp.setMinimumSize(new Dimension(10, 240));
+        sp.setPreferredSize(new Dimension(10, 120));
+        sp.setMinimumSize(new Dimension(10, 120));
 
         container.add(top, BorderLayout.NORTH);
         container.add(sp, BorderLayout.CENTER);
@@ -649,7 +648,7 @@ public class SecretaireDashboardPanel extends JPanel {
         JPanel wrap = cardContainer();
         wrap.setLayout(new BorderLayout(10, 10));
 
-        JLabel title = new JLabel("<html>Activit&eacute;s r&eacute;centes</html>");
+        JLabel title = new JLabel("<html>Activit&eacute;s </html>");
         title.setFont(DentalTheme.titleFont(15));
         title.setForeground(DentalTheme.PRIMARY_DARK);
 
@@ -664,7 +663,7 @@ public class SecretaireDashboardPanel extends JPanel {
         sp.setPreferredSize(new Dimension(10, 200));
         sp.setMinimumSize(new Dimension(10, 200));
 
-        DentalButton more = new DentalButton("Voir +Activites");
+        DentalButton more = new DentalButton("Voir +");
         styleHeaderRightButton(more);
         more.addActionListener(e -> navigate.accept("rdv"));
 
@@ -792,13 +791,10 @@ public class SecretaireDashboardPanel extends JPanel {
     // ---------------- COMPONENTS ----------------
 
     private JPanel cardContainer() {
-        JPanel c = new JPanel();
+        CardPanel c = new CardPanel((String) null);
         c.setBackground(DentalTheme.CARD);
-        c.setBorder(BorderFactory.createCompoundBorder(
-                uniformCardBorder(),
-                BorderFactory.createEmptyBorder(12, 12, 12, 12)
-        ));
-        c.setOpaque(true);
+        c.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        c.setOpaque(false);
         return c;
     }
 
@@ -837,7 +833,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
     private JComponent buildPatientCard(ListeAttenteDto p, int position) {
         JPanel card = new JPanel(new BorderLayout(10, 8));
-        card.setPreferredSize(new Dimension(220, 150));
+        card.setPreferredSize(new Dimension(220, 125));
         card.setBackground(DentalTheme.CARD);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.BORDER),
@@ -1041,7 +1037,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
     private class RdvActionsRenderer implements javax.swing.table.TableCellRenderer {
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-        private final DentalButton btnConfirm = new DentalButton("Confirmer");
+        private final DentalButton btnConfirm = new DentalButton("ok");
         private final DentalButton btnCancel = new DentalButton("Annuler");
 
         RdvActionsRenderer() {
@@ -1140,18 +1136,19 @@ public class SecretaireDashboardPanel extends JPanel {
     }
 
     private void stylePrimaryButton(AbstractButton b) {
-        styleActionButton(b);
+        UiStyles.stylePrimaryButton(b);
         b.setPreferredSize(new Dimension(170, 36));
     }
 
     private void styleHeaderRightButton(AbstractButton b) {
-        styleActionButton(b);
+        UiStyles.stylePrimaryButton(b);
         b.setPreferredSize(new Dimension(135, 32));
     }
 
     private void styleMiniButton(AbstractButton b) {
-        b.setFont(DentalTheme.textBold(11));
-        b.setPreferredSize(new Dimension(78, 26));
+        UiStyles.stylePrimaryButton(b);
+        b.setFont(DentalTheme.textBold(10));
+        b.setPreferredSize(new Dimension(74, 24));
     }
 
     private void markAllNotificationsRead() {

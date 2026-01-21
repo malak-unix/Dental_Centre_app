@@ -5,6 +5,7 @@ import ma.dentalTech.entities.dossierMedical.Acte;
 import ma.dentalTech.entities.dossierMedical.Medicament;
 import ma.dentalTech.entities.enums.FormeMedicament;
 import ma.dentalTech.mvc.ui.common.CardPanel;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
@@ -73,7 +74,7 @@ public class ReferentielsPanel extends JPanel {
         // Load Data
         reloadActes(model);
 
-        JButton btnAdd = new JButton("Nouvel Acte");
+        JButton btnAdd = new DentalButton("Nouvel Acte");
         btnAdd.setFont(DentalTheme.textFont(13));
         btnAdd.setBackground(DentalTheme.PRIMARY);
         btnAdd.setForeground(Color.WHITE);
@@ -204,7 +205,7 @@ public class ReferentielsPanel extends JPanel {
             } catch (Exception e) { e.printStackTrace(); }
         }
 
-        JButton btnAdd = new JButton("Nouveau Médicament");
+        JButton btnAdd = new DentalButton("Nouveau Médicament");
         btnAdd.setFont(DentalTheme.textFont(13));
         btnAdd.setBackground(DentalTheme.PRIMARY);
         btnAdd.setForeground(Color.WHITE);

@@ -1,21 +1,21 @@
 package ma.dentalTech.mvc.ui.modules.auth;
 
-import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.DentalButton;
+import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiAssets;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
-import java.net.URL;
 
 public class LoginPanel extends JPanel {
 
     private final JTextField tfLogin = new JTextField();
     private final JPasswordField tfPassword = new JPasswordField();
     private final DentalButton btnLogin = new DentalButton("Connexion");
-    private final JButton btnCancel = new OutlineButton("Annuler");
+    private final JButton btnCancel = new DentalButton("Annuler");
 
     private final JLabel title = new JLabel("Connexion", SwingConstants.CENTER);
 
@@ -27,26 +27,27 @@ public class LoginPanel extends JPanel {
         card.setLayout(new BorderLayout());
         card.setBackground(new Color(0xF6, 0xF0, 0xE8));
         card.setBorder(new EmptyBorder(16, 22, 18, 22));
-        card.setPreferredSize(new Dimension(620, 340));
+        card.setPreferredSize(new Dimension(680, 400));
 
         // Top: logo + separator
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
 
-        JLabel logo = new JLabel(loadLogoIcon(260, 70));
+        JLabel logo = new JLabel(UiAssets.loadIconFallback(
+                "/assets/logo2.png",
+                "src/main/resources/assets/logo2.png",
+                360,
+                120
+        ));
         logo.setHorizontalAlignment(SwingConstants.CENTER);
-        if (logo.getIcon() == null) {
-            logo.setText("DENTAL CENTER");
-            logo.setFont(new Font("Serif", Font.BOLD, 24));
+
+            logo.setText("DENTAL CENTER ");
+            logo.setFont(new Font("Poppins", Font.BOLD, 24));
             logo.setForeground(DentalTheme.TEXT2);
-        }
 
-        JLabel dent = new JLabel(loadSideIcon(60, 60));
-        dent.setHorizontalAlignment(SwingConstants.CENTER);
-        dent.setPreferredSize(new Dimension(70, 70));
-        dent.setBorder(new EmptyBorder(0, 6, 0, 0));
 
-        top.add(dent, BorderLayout.WEST);
+
+
         top.add(logo, BorderLayout.CENTER);
         top.add(new JSeparator(), BorderLayout.SOUTH);
 
@@ -56,7 +57,7 @@ public class LoginPanel extends JPanel {
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
         center.setBorder(new EmptyBorder(18, 10, 10, 10));
 
-        title.setFont(new Font("Serif", Font.BOLD, 30));
+        title.setFont(new Font("Poppins", Font.BOLD, 30));
         title.setForeground(new Color(0x2A2A2A));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -67,22 +68,34 @@ public class LoginPanel extends JPanel {
         center.add(Box.createVerticalStrut(12));
         center.add(buildRow("Mot de passe:", "*", tfPassword));
 
-        // Bottom: buttons
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 10));
-        bottom.setOpaque(false);
-        bottom.setBorder(new EmptyBorder(18, 0, 0, 0));
+        // Bottom: logo left + buttons
+        JPanel bottomWrap = new JPanel(new BorderLayout());
+        bottomWrap.setOpaque(false);
+        bottomWrap.setBorder(new EmptyBorder(18, 0, 0, 0));
 
-        stylePrimary(btnLogin);
-        styleSecondary(btnCancel);
+
+
+
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 0));
+        buttons.setOpaque(false);
+
+        UiStyles.stylePrimaryButton(btnLogin);
+        UiStyles.styleSecondaryButton(btnCancel);
         btnLogin.setFont(DentalTheme.textBold(16));
-        btnLogin.setForeground(Color.WHITE);
+        btnCancel.setFont(DentalTheme.textBold(16));
+        btnLogin.setPreferredSize(new Dimension(240, 44));
+        btnCancel.setPreferredSize(new Dimension(240, 44));
 
-        bottom.add(btnLogin);
-        bottom.add(btnCancel);
+        buttons.add(btnLogin);
+        buttons.add(btnCancel);
+
+
+        bottomWrap.add(buttons, BorderLayout.CENTER);
 
         card.add(top, BorderLayout.NORTH);
         card.add(center, BorderLayout.CENTER);
-        card.add(bottom, BorderLayout.SOUTH);
+        card.add(bottomWrap, BorderLayout.SOUTH);
 
         add(new ShadowWrapper(card));
     }
@@ -130,86 +143,6 @@ public class LoginPanel extends JPanel {
         return row;
     }
 
-    private void stylePrimary(AbstractButton b) {
-        b.setPreferredSize(new Dimension(240, 44));
-        b.setFont(DentalTheme.textBold(16));
-        b.setFocusPainted(false);
-        if (b instanceof DentalButton) return;
-        b.setBackground(new Color(0x12, 0x2B, 0x3B));
-        b.setForeground(Color.WHITE);
-        b.setOpaque(true);
-        b.setContentAreaFilled(true);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x0C, 0x1D, 0x29), 1),
-                new EmptyBorder(8, 14, 8, 14)
-        ));
-    }
-
-    private void styleSecondary(AbstractButton b) {
-        b.setPreferredSize(new Dimension(240, 44));
-        b.setFont(DentalTheme.textBold(15));
-        b.setFocusPainted(false);
-        if (b instanceof OutlineButton) {
-            b.setForeground(DentalTheme.PRIMARY_DARK);
-            return;
-        }
-        b.setBackground(new Color(0xF1, 0xE7, 0xDB));
-        b.setForeground(DentalTheme.PRIMARY_DARK);
-        b.setOpaque(true);
-        b.setContentAreaFilled(true);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 1),
-                new EmptyBorder(8, 14, 8, 14)
-        ));
-    }
-
-    private Icon loadLogoIcon(int w, int h) {
-        return loadIconWithFallback("/assets/logo.png", "src/main/resources/assets/logo.png", w, h);
-    }
-
-    private Icon loadSideIcon(int w, int h) {
-        return loadIconWithFallback("/assets/dent.png", "src/main/resources/assets/dent.png", w, h);
-    }
-
-    private Icon loadIconWithFallback(String resourcePath, String filePath, int w, int h) {
-        ImageIcon icon = loadIconFromResource(resourcePath);
-        if (icon == null) {
-            icon = loadIconFromFile(filePath);
-        }
-        if (icon == null) return null;
-        int ow = icon.getIconWidth();
-        int oh = icon.getIconHeight();
-        if (ow <= 0 || oh <= 0) return icon;
-        double scale = Math.min((double) w / ow, (double) h / oh);
-        int nw = Math.max(1, (int) Math.round(ow * scale));
-        int nh = Math.max(1, (int) Math.round(oh * scale));
-        Image img = scaleImage(icon.getImage(), nw, nh);
-        return new ImageIcon(img);
-    }
-
-    private ImageIcon loadIconFromResource(String path) {
-        URL url = getClass().getResource(path);
-        return (url == null) ? null : new ImageIcon(url);
-    }
-
-    private ImageIcon loadIconFromFile(String path) {
-        java.nio.file.Path p = java.nio.file.Paths.get(path);
-        if (!java.nio.file.Files.exists(p)) return null;
-        return new ImageIcon(p.toAbsolutePath().toString());
-    }
-
-    private Image scaleImage(Image src, int w, int h) {
-        Image scaled = src.getScaledInstance(w, h, Image.SCALE_SMOOTH);
-        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.drawImage(scaled, 0, 0, null);
-        g.dispose();
-        return image;
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
@@ -221,6 +154,7 @@ public class LoginPanel extends JPanel {
         g2.dispose();
         super.paintComponent(g);
     }
+
     // Getters
     public JTextField loginField() { return tfLogin; }
     public JPasswordField passwordField() { return tfPassword; }
@@ -315,5 +249,3 @@ public class LoginPanel extends JPanel {
         }
     }
 }
-
-

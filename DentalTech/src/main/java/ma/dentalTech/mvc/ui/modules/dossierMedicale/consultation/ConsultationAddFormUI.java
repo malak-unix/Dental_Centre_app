@@ -2,7 +2,9 @@ package ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation;
 
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
+import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -108,6 +110,7 @@ public class ConsultationAddFormUI extends JDialog {
         c.gridx = 1; c.weightx = 1.0;
         cbDossier.setPreferredSize(new Dimension(300, 35));
         cbDossier.setFont(DentalTheme.BASE);
+        styleField(cbDossier);
         form.add(cbDossier, c);
 
         // Date de consultation
@@ -117,6 +120,7 @@ public class ConsultationAddFormUI extends JDialog {
         c.gridx = 1; c.weightx = 1.0;
         tfDate.setPreferredSize(new Dimension(300, 35));
         tfDate.setFont(DentalTheme.BASE);
+        styleField(tfDate);
         // Ajouter une icône de calendrier (placeholder text)
         JPanel datePanel = new JPanel(new BorderLayout());
         datePanel.setOpaque(false);
@@ -134,6 +138,7 @@ public class ConsultationAddFormUI extends JDialog {
         cbStatut.setPreferredSize(new Dimension(300, 35));
         cbStatut.setFont(DentalTheme.BASE);
         cbStatut.setSelectedItem(StatutConsultation.PLANIFIE); // Par défaut
+        styleField(cbStatut);
         form.add(cbStatut, c);
 
         // Observation du médecin
@@ -144,10 +149,7 @@ public class ConsultationAddFormUI extends JDialog {
         c.gridx = 1; c.weightx = 1.0;
         c.fill = GridBagConstraints.BOTH;
         taObservation.setFont(DentalTheme.BASE);
-        taObservation.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
+        styleField(taObservation);
         taObservation.setLineWrap(true);
         taObservation.setWrapStyleWord(true);
         JScrollPane scrollObservation = new JScrollPane(taObservation);
@@ -169,8 +171,10 @@ public class ConsultationAddFormUI extends JDialog {
         buttonPanel.add(btnAjouter);
 
         // Assemblage
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setOpaque(false);
+        CardPanel contentPanel = new CardPanel(null);
+        contentPanel.setLayout(new BorderLayout());
+        contentPanel.setBackground(DentalTheme.CARD);
+        contentPanel.setBorder(new EmptyBorder(16, 16, 16, 16));
         contentPanel.add(title, BorderLayout.NORTH);
         contentPanel.add(form, BorderLayout.CENTER);
         contentPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -189,29 +193,33 @@ public class ConsultationAddFormUI extends JDialog {
 
     private JButton createButton(String text, boolean primary) {
         JButton button = new JButton(text);
-        button.setFont(DentalTheme.textBold(13));
-        button.setPreferredSize(new Dimension(primary ? 200 : 120, 40));
-        button.setFocusPainted(false);
-
-        if (primary) {
-            // Bouton principal (bleu foncé avec bordure dorée selon thème)
-            button.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé
-            button.setForeground(Color.WHITE);
-            button.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2), // Bordure dorée
-                    new EmptyBorder(8, 16, 8, 16)
-            ));
-        } else {
-            // Bouton secondaire (beige clair)
-            button.setBackground(DentalTheme.BG);
-            button.setForeground(DentalTheme.TEXT2);
-            button.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                    new EmptyBorder(8, 16, 8, 16)
-            ));
-        }
-
+        button.setPreferredSize(new Dimension(primary ? 220 : 140, 40));
+        if (primary) UiStyles.stylePrimaryButton(button);
+        else UiStyles.styleSecondaryButton(button);
         return button;
+    }
+
+    private void styleField(JComponent field) {
+        if (field == null) return;
+        if (field instanceof JTextField tf) {
+            tf.setBorder(BorderFactory.createCompoundBorder(
+                    UiStyles.roundedBorder(),
+                    new EmptyBorder(6, 10, 6, 10)
+            ));
+            tf.setBackground(Color.WHITE);
+        } else if (field instanceof JComboBox<?> cb) {
+            cb.setBorder(BorderFactory.createCompoundBorder(
+                    UiStyles.roundedBorder(),
+                    new EmptyBorder(4, 8, 4, 8)
+            ));
+            cb.setBackground(Color.WHITE);
+        } else if (field instanceof JTextArea ta) {
+            ta.setBorder(BorderFactory.createCompoundBorder(
+                    UiStyles.roundedBorder(),
+                    new EmptyBorder(6, 10, 6, 10)
+            ));
+            ta.setBackground(Color.WHITE);
+        }
     }
 
     private void onSave() {
@@ -276,3 +284,4 @@ public class ConsultationAddFormUI extends JDialog {
         }
     }
 }
+

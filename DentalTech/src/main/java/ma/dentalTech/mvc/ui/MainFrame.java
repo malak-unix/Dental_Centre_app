@@ -66,7 +66,7 @@ public class MainFrame extends JFrame {
         shell.header().add(header, BorderLayout.CENTER);
 
         // ===== Sidebar (IMPORTANT: force container width) =====
-        int SIDEBAR_W = 180;
+        int SIDEBAR_W = 170;
 
         shell.sidebar().removeAll();
         shell.sidebar().setLayout(new BorderLayout());
@@ -94,13 +94,7 @@ public class MainFrame extends JFrame {
     }
 
     private void doLogout() {
-        int ok = JOptionPane.showConfirmDialog(
-                this,
-                "Voulez-vous vous déconnecter ?",
-                "Déconnexion",
-                JOptionPane.YES_NO_OPTION
-        );
-        if (ok != JOptionPane.YES_OPTION) return;
+        if (!LogoutDialog.confirm(this, fullName)) return;
 
         dispose();
         SwingUtilities.invokeLater(() -> {
@@ -259,3 +253,4 @@ public class MainFrame extends JFrame {
         return p;
     }
 }
+

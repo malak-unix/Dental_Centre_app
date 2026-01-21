@@ -37,6 +37,7 @@ public class SituationFinanciereListUI extends JPanel {
 
     private final JTable table = new JTable();
     private final SituationFinanciereTableModel model = new SituationFinanciereTableModel();
+    private final JLabel statusLabel = new JLabel("");
 
     public SituationFinanciereListUI(SituationFinanciereController controller, Long medecinId, String username) {
         this.controller = controller;
@@ -112,6 +113,11 @@ public class SituationFinanciereListUI extends JPanel {
 
         wrap.add(searchRow);
 
+        statusLabel.setFont(DentalTheme.textFont(12));
+        statusLabel.setForeground(DentalTheme.MUTED);
+        statusLabel.setBorder(new EmptyBorder(6, 2, 0, 0));
+        wrap.add(statusLabel);
+
         return wrap;
     }
 
@@ -163,18 +169,15 @@ public class SituationFinanciereListUI extends JPanel {
             );
             List<SituationFinanciereListItemDTO> list = controller.searchForList(request);
             model.setRows(list);
+            statusLabel.setText("");
         } catch (Exception ex) {
-            showError(ex);
+            model.setRows(new ArrayList<>());
+            statusLabel.setText("Situation financiere indisponible.");
         }
     }
 
     private void showError(Exception ex) {
-        JOptionPane.showMessageDialog(
-                this,
-                ex.getMessage(),
-                "Erreur",
-                JOptionPane.ERROR_MESSAGE
-        );
+        statusLabel.setText("Situation financiere indisponible.");
     }
 
     // =========================================================
@@ -354,7 +357,8 @@ public class SituationFinanciereListUI extends JPanel {
                             "Succès",
                             JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {
-                    showError(ex);
+                    model.setRows(new ArrayList<>());
+                    statusLabel.setText("Situation financiere indisponible.");
                 }
             });
         }
@@ -372,3 +376,4 @@ public class SituationFinanciereListUI extends JPanel {
         }
     }
 }
+

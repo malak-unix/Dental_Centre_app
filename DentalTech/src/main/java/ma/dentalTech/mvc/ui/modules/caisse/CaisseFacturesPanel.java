@@ -97,6 +97,8 @@ public class CaisseFacturesPanel extends JPanel {
         table.getTableHeader().setFont(DentalTheme.textBold(13));
 
         JScrollPane sp = new JScrollPane(table);
+        sp.setPreferredSize(new Dimension(10, 200));
+        sp.setMinimumSize(new Dimension(10, 180));
         sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
         card.add(sp, BorderLayout.CENTER);
         emptyLabel.setFont(DentalTheme.textFont(12));
@@ -115,29 +117,41 @@ public class CaisseFacturesPanel extends JPanel {
 
         return card;
     }
-
     private JComponent buildBottomTotals() {
         JPanel bottom = new JPanel(new GridLayout(1, 4, 12, 12));
         bottom.setOpaque(false);
 
         bottom.add(kpi("Total Factures", vTotalFactures));
-        bottom.add(kpi("Total Payé", vTotalPaye));
-        bottom.add(kpi("Total Impayé", vTotalImpaye));
+        bottom.add(kpi("Total Paye", vTotalPaye));
+        bottom.add(kpi("Total Impaye", vTotalImpaye));
         bottom.add(kpi("Total", vTotal));
 
         return bottom;
     }
-
     private JPanel kpi(String label, JLabel value) {
-        CardPanel c = new CardPanel(label);
+        CardPanel c = new CardPanel(null);
+
+        JLabel t = new JLabel(label);
+        t.setFont(DentalTheme.titleFont(14));
+        t.setForeground(DentalTheme.TEXT2);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(t, BorderLayout.WEST);
+
+        JPanel center = new JPanel(new BorderLayout());
+        center.setOpaque(false);
+        center.setBorder(new EmptyBorder(4, 0, 0, 0));
+        center.add(value, BorderLayout.WEST);
+
         c.setLayout(new BorderLayout());
-        c.add(value, BorderLayout.CENTER);
+        c.add(header, BorderLayout.NORTH);
+        c.add(center, BorderLayout.CENTER);
         return c;
     }
-
     private JLabel kpiValue() {
-        JLabel l = new JLabel("—");
-        l.setFont(DentalTheme.titleFont(18));
+        JLabel l = new JLabel("�");
+        l.setFont(DentalTheme.titleFont(12));
         l.setForeground(DentalTheme.PRIMARY_DARK);
         return l;
     }
@@ -291,5 +305,8 @@ public class CaisseFacturesPanel extends JPanel {
         cb.setBackground(Color.WHITE);
     }
 }
+
+
+
 
 

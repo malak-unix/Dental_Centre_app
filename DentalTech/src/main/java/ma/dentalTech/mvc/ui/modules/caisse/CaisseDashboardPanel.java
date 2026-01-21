@@ -10,6 +10,7 @@ import ma.dentalTech.mvc.dto.caisse.CaisseFactureRowDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.mvc.ui.modules.caisse.table.CaisseFacturesTableModel;
 import ma.dentalTech.mvc.ui.modules.caisse.table.FactureActionsColumn;
 import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
@@ -74,7 +75,7 @@ public class CaisseDashboardPanel extends JPanel {
         setBackground(DentalTheme.BG);
         setBorder(new EmptyBorder(14, 14, 14, 14));
         // Hauteur contrôlée pour éviter que le graphe soit coupé sur certains écrans
-        chartHolder.setPreferredSize(new Dimension(10, 220));
+        chartHolder.setPreferredSize(new Dimension(220, 220));
 
         add(buildTopFilters(), BorderLayout.NORTH);
         add(buildBody(), BorderLayout.CENTER);
@@ -129,36 +130,34 @@ public class CaisseDashboardPanel extends JPanel {
     }
 
     private JComponent buildKpisAndChart() {
-        JPanel block = new JPanel(new BorderLayout(16, 16));
-        block.setOpaque(false);
-
         JPanel kpis = new JPanel(new GridLayout(1, 4, 12, 12));
         kpis.setOpaque(false);
 
         kpis.add(kpiCard("CA du mois", vCaMois));
         kpis.add(kpiCard("Charges du mois", vCharges));
-        kpis.add(kpiCard("Bénéfice", vBenefice));
-        kpis.add(kpiCard("Impayés", vImpayes));
+        kpis.add(kpiCard("Benefice", vBenefice));
+        kpis.add(kpiCard("Impayes", vImpayes));
 
-        CardPanel chartCard = new CardPanel("Revenus vs Charges (6 derniers mois)");
-        chartCard.add(chartHolder, BorderLayout.CENTER);
-
-        block.add(kpis, BorderLayout.NORTH);
-        block.add(chartCard, BorderLayout.CENTER);
-
-        return block;
+        return kpis;
     }
 
     private JComponent buildTableBlock() {
         CardPanel tableCard = new CardPanel("Liste des factures");
-
-        table.setRowHeight(30);
+        UiStyles.styleTable(table);
+        table.setRowHeight(28);
         table.setFillsViewportHeight(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+
         sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
         tableCard.add(sp, BorderLayout.CENTER);
+
+        CardPanel chartCard = new CardPanel("Revenus vs Charges");
+        chartCard.setPreferredSize(new Dimension(240, 240));
+        chartCard.setMinimumSize(new Dimension(220, 200));
+        chartCard.add(chartHolder, BorderLayout.CENTER);
 
         FactureActionsColumn.install(table, this::onView, this::onPdf, this::onPay, this::onCancel);
 
@@ -173,7 +172,27 @@ public class CaisseDashboardPanel extends JPanel {
             }
         });
 
-        return tableCard;
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setOpaque(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 0, 0, 16);
+        row.add(tableCard, gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        row.add(chartCard, gbc);
+
+        return row;
     }
 
     private JComponent buildBottomTotals() {
@@ -189,14 +208,25 @@ public class CaisseDashboardPanel extends JPanel {
     }
 
     private CardPanel kpiCard(String title, JLabel value) {
-        CardPanel c = new CardPanel(title);
-        value.setFont(DentalTheme.titleFont(22));
+        CardPanel c = new CardPanel(null);
+
+        JLabel t = new JLabel(title);
+        t.setFont(DentalTheme.titleFont(14));
+        t.setForeground(DentalTheme.TEXT2);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(t, BorderLayout.WEST);
+
+        value.setFont(DentalTheme.titleFont(12));
         value.setForeground(DentalTheme.PRIMARY_DARK);
 
         JPanel center = new JPanel(new BorderLayout());
         center.setOpaque(false);
+        center.setBorder(new EmptyBorder(4, 0, 0, 0));
         center.add(value, BorderLayout.WEST);
 
+        c.add(header, BorderLayout.NORTH);
         c.add(center, BorderLayout.CENTER);
         return c;
     }
@@ -278,7 +308,7 @@ public class CaisseDashboardPanel extends JPanel {
 
             // ✅ Un seul ChartPanel (pas de double "cp")
             ChartPanel chartPanel = new ChartPanel(jchart);
-            chartPanel.setPreferredSize(new Dimension(10, 260));
+            chartPanel.setPreferredSize(new Dimension(220, 220));
             chartPanel.setMouseWheelEnabled(true);
             chartPanel.setDomainZoomable(true);
             chartPanel.setRangeZoomable(true);
@@ -427,3 +457,5 @@ public class CaisseDashboardPanel extends JPanel {
 
 
 }
+
+

@@ -7,6 +7,7 @@ import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationCon
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatDTO;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation.ConsultationAddFormUI;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.document.DocumentMedicalDTO;
@@ -131,7 +132,7 @@ public class DossierMedicalDetailUI extends JPanel {
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonsPanel.setOpaque(false);
 
-        JButton btnModifier = new JButton("Modifier infos dossier");
+        JButton btnModifier = new DentalButton("Modifier infos dossier");
         btnModifier.setFont(DentalTheme.textFont(13));
         btnModifier.setBackground(new Color(0x1C, 0x25, 0x41));
         btnModifier.setForeground(Color.WHITE);
@@ -167,7 +168,7 @@ public class DossierMedicalDetailUI extends JPanel {
             }
         });
 
-        JButton btnSupprimer = new JButton("Supprimer dossier");
+        JButton btnSupprimer = new DentalButton("Supprimer dossier");
         btnSupprimer.setFont(DentalTheme.textFont(13));
         btnSupprimer.setBackground(new Color(0xDC, 0x35, 0x45));
         btnSupprimer.setForeground(Color.WHITE);
@@ -239,7 +240,7 @@ public class DossierMedicalDetailUI extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
 
-        JButton btnAdd = new JButton("+ Nouvelle consultation");
+        JButton btnAdd = new DentalButton("+ Nouvelle consultation");
         btnAdd.setFont(DentalTheme.textBold(13));
         btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
         btnAdd.setForeground(Color.WHITE);
@@ -446,7 +447,7 @@ public class DossierMedicalDetailUI extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
 
-        JButton btnAdd = new JButton("+ Charger document");
+        JButton btnAdd = new DentalButton("+ Charger document");
         btnAdd.setFont(DentalTheme.textBold(13));
         btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
         btnAdd.setForeground(Color.WHITE);
@@ -500,7 +501,7 @@ public class DossierMedicalDetailUI extends JPanel {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         footer.setOpaque(false);
 
-        JButton btnClose = new JButton("Fermer");
+        JButton btnClose = new DentalButton("Fermer");
         btnClose.setFont(DentalTheme.textFont(13));
         btnClose.setBackground(DentalTheme.BEIGE);
         btnClose.setForeground(DentalTheme.TEXT2);

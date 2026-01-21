@@ -1,6 +1,7 @@
 package ma.dentalTech.mvc.ui.modules.admin;
 
 import ma.dentalTech.mvc.ui.common.CardPanel;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ public class SauvegardesPanel extends JPanel {
         title.setFont(DentalTheme.titleFont(22));
         title.setForeground(DentalTheme.TEXT);
 
-        JButton btn = new JButton("Lancer une sauvegarde manuelle");
+        JButton btn = new DentalButton("Lancer une sauvegarde manuelle");
         btn.setFont(DentalTheme.textFont(14));
         btn.addActionListener(e -> JOptionPane.showMessageDialog(this, "Sauvegarde simulée effectuée avec succès !"));
 

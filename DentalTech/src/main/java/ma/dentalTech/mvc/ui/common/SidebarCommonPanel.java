@@ -21,11 +21,10 @@ public class SidebarCommonPanel extends JPanel {
         this.role = (role != null) ? role : LibelleRole.SECRETAIRE;
         this.onNavigate = onNavigate;
 
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setLayout(new BorderLayout());
 
         // IMPORTANT: no left padding so the card can start at x=0
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        setAlignmentX(Component.LEFT_ALIGNMENT);
 
         setOpaque(true);
         setBackground(DentalTheme.BG2);
@@ -33,18 +32,12 @@ public class SidebarCommonPanel extends JPanel {
     }
 
     private void buildUi() {
-        add(Box.createVerticalStrut(6));
+        SidebarNavCardPanel navCard = new SidebarNavCardPanel();
 
-        CardPanel navCard = new CardPanel((String) null);
-        navCard.setLayout(new BoxLayout(navCard, BoxLayout.Y_AXIS));
-        navCard.setAlignmentX(Component.LEFT_ALIGNMENT);
-        navCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-
-        // ✅ THIS is the key: remove CardPanel internal padding for sidebar
-        navCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-        // ✅ let it expand full width
-        navCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        JPanel navWrap = new JPanel(new BorderLayout());
+        navWrap.setOpaque(false);
+        navWrap.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
+        navWrap.add(navCard, BorderLayout.NORTH);
 
         List<NavItem> items = RoleMenuConfig.menuFor(role);
         for (int i = 0; i < items.size(); i++) {
@@ -55,9 +48,12 @@ public class SidebarCommonPanel extends JPanel {
             if (i < items.size() - 1) navCard.add(Box.createVerticalStrut(8));
         }
 
-        add(navCard);
-        add(Box.createVerticalGlue());
-        addBottomLogo();
+        add(navWrap, BorderLayout.NORTH);
+
+        JComponent bottomLogo = buildBottomLogo();
+        if (bottomLogo != null) {
+            add(bottomLogo, BorderLayout.SOUTH);
+        }
     }
 
     private NavButton makeNav(String text, Icon icon, String pageKey) {
@@ -88,9 +84,9 @@ public class SidebarCommonPanel extends JPanel {
         }
     }
 
-    private void addBottomLogo() {
-        ImageIcon icon = loadIconKeepRatio("/assets/logo_enbas_gauche.png", 160);
-        if (icon == null) return;
+    private JComponent buildBottomLogo() {
+        ImageIcon icon = loadIconKeepRatio("/assets/office.png", 160);
+        if (icon == null) return null;
 
         JLabel logo = new JLabel(icon);
         logo.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -99,7 +95,7 @@ public class SidebarCommonPanel extends JPanel {
         wrap.setOpaque(false);
         wrap.setBorder(BorderFactory.createEmptyBorder(16, 0, 6, 0));
         wrap.add(logo);
-        add(wrap);
+        return wrap;
     }
 
     private Image scaleImage(Image src, int w, int h) {
@@ -155,3 +151,4 @@ public class SidebarCommonPanel extends JPanel {
         };
     }
 }
+

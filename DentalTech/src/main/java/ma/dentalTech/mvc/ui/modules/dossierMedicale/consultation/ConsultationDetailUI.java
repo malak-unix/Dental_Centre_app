@@ -13,6 +13,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDetailDTO;
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance.OrdonnanceAddFormUI;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService;
 
 import javax.swing.*;
@@ -153,8 +154,8 @@ public class ConsultationDetailUI extends JPanel {
 
         modelActes = new ActeTableModel();
         tableActes.setModel(modelActes);
+        UiStyles.styleTable(tableActes);
         tableActes.setRowHeight(36);
-        tableActes.setFont(DentalTheme.textFont(13));
         tableActes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tableActes.setSelectionBackground(new Color(0xF5, 0xE8, 0xD8));
         tableActes.setGridColor(DentalTheme.BORDER);
@@ -297,7 +298,10 @@ public class ConsultationDetailUI extends JPanel {
         txtObservation.setFont(DentalTheme.textFont(13));
         txtObservation.setLineWrap(true);
         txtObservation.setWrapStyleWord(true);
-        txtObservation.setBorder(new EmptyBorder(8, 8, 8, 8));
+        txtObservation.setBorder(BorderFactory.createCompoundBorder(
+                UiStyles.roundedBorder(),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
         txtObservation.setText(detail.getObservationMedecin() != null ? detail.getObservationMedecin() : "");
         txtObservation.setEditable(false);
 
@@ -574,27 +578,11 @@ public class ConsultationDetailUI extends JPanel {
 
 
     private void stylePrimaryButton(AbstractButton b) {
-        b.setFont(DentalTheme.textBold(12));
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setBackground(DentalTheme.PRIMARY_DARK);
-        b.setForeground(Color.WHITE);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                new EmptyBorder(6, 14, 6, 14)
-        ));
+        UiStyles.stylePrimaryButton(b);
     }
 
     private void styleOutlineButton(AbstractButton b) {
-        b.setFont(DentalTheme.textBold(12));
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setBackground(Color.WHITE);
-        b.setForeground(DentalTheme.PRIMARY_DARK);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                new EmptyBorder(6, 14, 6, 14)
-        ));
+        UiStyles.styleSecondaryButton(b);
     }
 
     private void styleDangerButton(AbstractButton b) {

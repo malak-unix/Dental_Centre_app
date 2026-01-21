@@ -22,7 +22,7 @@ public class NavButton extends JButton {
         super(text);
         this.active = active;
 
-        setFont(DentalTheme.textBold(13));
+        setFont(DentalTheme.textBold(12));
         setForeground(DentalTheme.TEXT2);
 
         setFocusPainted(false);
@@ -34,12 +34,11 @@ public class NavButton extends JButton {
         setIcon(icon);
 
         // un peu plus d'espace entre icone et texte
-        setIconTextGap(6);
+        setIconTextGap(5);
 
         // padding + place icone
-        int left = (icon != null) ? 8 : 4;
-        setBorder(BorderFactory.createEmptyBorder(10, left, 10, 8)); // plus de padding
-        setFont(DentalTheme.textBold(13)); // texte plus lisible
+        int left = (icon != null) ? 6 : 4;
+        setBorder(BorderFactory.createEmptyBorder(8, left, 8, 6));
 
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -71,16 +70,16 @@ public class NavButton extends JButton {
 
             // shadow
             g2.setColor(new Color(0, 0, 0, 22));
-            g2.fillRoundRect(3, 3, w - 6, h - 6, arc, arc);
+            g2.fillRoundRect(3, 3, w - 4, h - 4, arc, arc);
 
             // fill
             g2.setColor(bg);
-            g2.fillRoundRect(0, 0, w - 6, h - 6, arc, arc);
+            g2.fillRoundRect(0, 0, w - 1, h - 1, arc, arc);
 
             // stroke
             g2.setStroke(new BasicStroke(2f));
             g2.setColor(DentalTheme.STROKE);
-            g2.drawRoundRect(0, 0, w - 6, h - 6, arc, arc);
+            g2.drawRoundRect(0, 0, w - 1, h - 1, arc, arc);
         }
 
         setForeground(active ? Color.WHITE : DentalTheme.TEXT2);

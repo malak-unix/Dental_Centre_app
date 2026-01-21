@@ -7,6 +7,7 @@ import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -93,9 +94,8 @@ public class RdvPagePanel extends JPanel {
         CardPanel results = new CardPanel((String) null);
         results.setLayout(new BorderLayout());
 
+        UiStyles.styleTable(table);
         table.setRowHeight(28);
-        table.setFont(DentalTheme.textFont(12));
-        table.getTableHeader().setFont(DentalTheme.textBold(12));
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
@@ -341,26 +341,13 @@ public class RdvPagePanel extends JPanel {
         PillButton(String text) {
             super(text);
             setFocusPainted(false);
-            setFont(DentalTheme.textBold(12));
-            setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true),
-                    BorderFactory.createEmptyBorder(7, 16, 7, 16)
-            ));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setPillSelected(false);
         }
 
         void setPillSelected(boolean v) {
             pillSelected = v;
-
-            if (pillSelected) {
-                setBackground(DentalTheme.PRIMARY_DARK);
-                setForeground(Color.WHITE);
-            } else {
-                setBackground(DentalTheme.BG);
-                setForeground(DentalTheme.TEXT2);
-            }
-            setOpaque(true);
+            UiStyles.stylePillButton(this, pillSelected);
             repaint();
         }
 
@@ -373,6 +360,10 @@ public class RdvPagePanel extends JPanel {
         bAll.setPillSelected(selected == bAll);
         bToday.setPillSelected(selected == bToday);
         bUpcoming.setPillSelected(selected == bUpcoming);
+        if (selected == bAll) {
+            // Keep "Tous" text dark like the other filters
+            UiStyles.stylePillButton(bAll, false);
+        }
     }
 
     private static class RdvFormDialog extends JDialog {
@@ -396,7 +387,8 @@ public class RdvPagePanel extends JPanel {
             super(owner, (initial == null ? "Ajouter RDV" : "Modifier RDV"), ModalityType.APPLICATION_MODAL);
             this.defaultMedecinId = defaultMedecinId;
 
-            setSize(520, 420);
+            setSize(600, 520);
+            setMinimumSize(new Dimension(560, 480));
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout(12, 12));
 
@@ -420,38 +412,40 @@ public class RdvPagePanel extends JPanel {
         }
 
         private JComponent buildForm() {
-            JPanel p = new JPanel(new GridLayout(0, 2, 10, 10));
+            CardPanel p = new CardPanel((String) null);
+            p.setBackground(DentalTheme.CARD);
             p.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+            p.setLayout(new GridBagLayout());
+            p.setPreferredSize(new Dimension(540, 420));
 
-            p.add(new JLabel("ID (auto)"));
-            p.add(tfId);
+            styleField(tfId);
+            styleField(cbPatient);
+            styleField(cbMedecin);
+            styleField(tfDetailJourneeId);
+            styleField(tfListeAttenteId);
+            styleField(tfDate);
+            styleField(tfHeure);
+            styleField(tfMotif);
+            styleField(cbStatut);
+            styleField(tfNote);
 
-            p.add(new JLabel("Patient *"));
-            p.add(cbPatient);
+            GridBagConstraints c = new GridBagConstraints();
+            c.insets = new Insets(6, 6, 6, 6);
+            c.fill = GridBagConstraints.HORIZONTAL;
+            c.gridx = 0;
+            c.gridy = 0;
+            c.weightx = 0;
 
-            p.add(new JLabel("Medecin *"));
-            p.add(cbMedecin);
-
-            p.add(new JLabel("DetailJournee (auto)"));
-            p.add(tfDetailJourneeId);
-
-            p.add(new JLabel("ListeAttente ID (optionnel)"));
-            p.add(tfListeAttenteId);
-
-            p.add(new JLabel("Date RDV (yyyy-MM-dd) *"));
-            p.add(tfDate);
-
-            p.add(new JLabel("Heure (HH:mm) *"));
-            p.add(tfHeure);
-
-            p.add(new JLabel("Motif *"));
-            p.add(tfMotif);
-
-            p.add(new JLabel("Statut"));
-            p.add(cbStatut);
-
-            p.add(new JLabel("Note medecin (optionnel)"));
-            p.add(tfNote);
+            addFormRow(p, c, "ID (auto)", tfId);
+            addFormRow(p, c, "Patient *", cbPatient);
+            addFormRow(p, c, "Medecin *", cbMedecin);
+            addFormRow(p, c, "DetailJournee (auto)", tfDetailJourneeId);
+            addFormRow(p, c, "ListeAttente ID (optionnel)", tfListeAttenteId);
+            addFormRow(p, c, "Date RDV (yyyy-MM-dd) *", tfDate);
+            addFormRow(p, c, "Heure (HH:mm) *", tfHeure);
+            addFormRow(p, c, "Motif *", tfMotif);
+            addFormRow(p, c, "Statut", cbStatut);
+            addFormRow(p, c, "Note medecin (optionnel)", tfNote);
 
             return p;
         }
@@ -461,6 +455,8 @@ public class RdvPagePanel extends JPanel {
 
             JButton btnCancel = new DentalButton("Annuler");
             JButton btnOk = new DentalButton("Enregistrer");
+            UiStyles.styleSecondaryButton(btnCancel);
+            UiStyles.stylePrimaryButton(btnOk);
 
             btnCancel.addActionListener(e -> {
                 result = null;
@@ -479,6 +475,38 @@ public class RdvPagePanel extends JPanel {
             p.add(btnCancel);
             p.add(btnOk);
             return p;
+        }
+
+        private void addFormRow(JPanel p, GridBagConstraints c, String label, JComponent field) {
+            JLabel l = new JLabel(label);
+            l.setFont(DentalTheme.textFont(12));
+            l.setForeground(DentalTheme.TEXT2);
+
+            c.gridx = 0;
+            c.weightx = 0;
+            p.add(l, c);
+
+            c.gridx = 1;
+            c.weightx = 1;
+            p.add(field, c);
+
+            c.gridy++;
+        }
+
+        private void styleField(JComponent field) {
+            if (field == null) return;
+            field.setFont(DentalTheme.textFont(12));
+            if (field instanceof JTextField tf) {
+                tf.setBorder(BorderFactory.createCompoundBorder(
+                        UiStyles.roundedBorder(),
+                        BorderFactory.createEmptyBorder(6, 10, 6, 10)
+                ));
+            } else if (field instanceof JComboBox<?> cb) {
+                cb.setBorder(BorderFactory.createCompoundBorder(
+                        UiStyles.roundedBorder(),
+                        BorderFactory.createEmptyBorder(4, 8, 4, 8)
+                ));
+            }
         }
 
         private void selectPatientById(Long patientId) {

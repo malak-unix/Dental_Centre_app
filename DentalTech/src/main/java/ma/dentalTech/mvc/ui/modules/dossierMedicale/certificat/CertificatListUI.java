@@ -7,6 +7,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatListItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -93,6 +94,7 @@ public class CertificatListUI extends JPanel {
                 new EmptyBorder(8, 16, 8, 16)
         ));
         btnAdd.setFocusPainted(false);
+        UiStyles.stylePrimaryButton(btnAdd);
         btnAdd.addActionListener(e -> onAddCertificat());
         titleRow.add(btnAdd, BorderLayout.EAST);
 
@@ -117,6 +119,8 @@ public class CertificatListUI extends JPanel {
         filters.add(txtNote);
 
         filters.add(Box.createHorizontalStrut(10));
+        UiStyles.styleSecondaryButton(btnSearch);
+        UiStyles.styleSecondaryButton(btnReset);
         filters.add(btnSearch);
         filters.add(btnReset);
 
@@ -127,6 +131,7 @@ public class CertificatListUI extends JPanel {
 
     private JComponent buildTable() {
         table.setModel(model);
+        UiStyles.styleTable(table);
         table.setRowHeight(40);
         table.setFont(DentalTheme.textFont(13));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -461,3 +466,4 @@ public class CertificatListUI extends JPanel {
         }
     }
 }
+

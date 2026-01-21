@@ -7,6 +7,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListItemDT
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -90,7 +91,7 @@ public class ConsultationPagePanel extends JPanel {
         title.setFont(DentalTheme.titleFont(22));
         title.setForeground(DentalTheme.TEXT2);
 
-        styleOutlineButton(btnAdd);
+        UiStyles.stylePrimaryButton(btnAdd);
         btnAdd.setPreferredSize(new Dimension(240, 40));
         btnAdd.addActionListener(e -> onAddConsultation());
 
@@ -135,8 +136,8 @@ public class ConsultationPagePanel extends JPanel {
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
-        styleOutlineButton(btnSearch);
-        styleOutlineButton(btnReset);
+        UiStyles.styleSecondaryButton(btnSearch);
+        UiStyles.styleSecondaryButton(btnReset);
         actions.add(btnSearch);
         actions.add(btnReset);
 
@@ -445,7 +446,7 @@ public class ConsultationPagePanel extends JPanel {
     private void styleInput(JTextField tf) {
         tf.setFont(DentalTheme.textFont(13));
         tf.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                UiStyles.roundedBorder(),
                 new EmptyBorder(6, 10, 6, 10)
         ));
     }
@@ -453,27 +454,15 @@ public class ConsultationPagePanel extends JPanel {
     private void styleCombo(JComboBox<?> cb) {
         cb.setFont(DentalTheme.textFont(13));
         cb.setBackground(Color.WHITE);
-        cb.setBorder(BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true));
-    }
-
-    private void styleOutlineButton(AbstractButton b) {
-        b.setFont(DentalTheme.textBold(12));
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setBackground(Color.WHITE);
-        b.setForeground(DentalTheme.PRIMARY_DARK);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+        cb.setBorder(UiStyles.roundedBorder());
     }
 
     private void styleTableActionButton(AbstractButton b) {
         b.setFocusable(false);
         b.setFont(DentalTheme.textBold(11));
         b.setOpaque(true);
-        b.setBackground(Color.WHITE);
-        b.setForeground(DentalTheme.PRIMARY_DARK);
+        b.setBackground(DentalTheme.PRIMARY_DARK);
+        b.setForeground(Color.WHITE);
         b.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.STROKE, 1, true),
                 new EmptyBorder(4, 8, 4, 8)

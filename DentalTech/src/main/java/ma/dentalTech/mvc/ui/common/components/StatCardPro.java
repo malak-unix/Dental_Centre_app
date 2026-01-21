@@ -20,11 +20,11 @@ public class StatCardPro extends JPanel {
         card.setBorder(BorderFactory.createEmptyBorder(18, 18, 16, 18));
 
         titleLabel.setText(title);
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 22)); // style “Caisse”
+        titleLabel.setFont(new Font("Serif", Font.BOLD, 18));
         titleLabel.setForeground(DentalTheme.TEXT2);
 
         valueLabel.setText(value);
-        valueLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
+        valueLabel.setFont(new Font("Serif", Font.BOLD, 18));
         valueLabel.setForeground(DentalTheme.PRIMARY);
 
         card.add(titleLabel, BorderLayout.NORTH);

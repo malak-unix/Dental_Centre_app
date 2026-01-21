@@ -6,6 +6,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -89,6 +90,7 @@ public class OrdonnanceListUI extends JPanel {
                 new EmptyBorder(8, 16, 8, 16)
         ));
         btnAdd.setFocusPainted(false);
+        UiStyles.stylePrimaryButton(btnAdd);
         btnAdd.addActionListener(e -> onAddOrdonnance());
         titleRow.add(btnAdd, BorderLayout.EAST);
 
@@ -109,6 +111,8 @@ public class OrdonnanceListUI extends JPanel {
         filters.add(txtDateTo);
 
         filters.add(Box.createHorizontalStrut(10));
+        UiStyles.styleSecondaryButton(btnSearch);
+        UiStyles.styleSecondaryButton(btnReset);
         filters.add(btnSearch);
         filters.add(btnReset);
 
@@ -119,6 +123,7 @@ public class OrdonnanceListUI extends JPanel {
 
     private JComponent buildTable() {
         table.setModel(model);
+        UiStyles.styleTable(table);
         table.setRowHeight(40);
         table.setFont(DentalTheme.textFont(13));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -396,3 +401,4 @@ public class OrdonnanceListUI extends JPanel {
         }
     }
 }
+
