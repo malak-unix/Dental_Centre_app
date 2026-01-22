@@ -387,8 +387,8 @@ public class RdvPagePanel extends JPanel {
             super(owner, (initial == null ? "Ajouter RDV" : "Modifier RDV"), ModalityType.APPLICATION_MODAL);
             this.defaultMedecinId = defaultMedecinId;
 
-            setSize(600, 520);
-            setMinimumSize(new Dimension(560, 480));
+            setSize(680, 600);
+            setMinimumSize(new Dimension(640, 560));
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout(12, 12));
 
@@ -416,7 +416,8 @@ public class RdvPagePanel extends JPanel {
             p.setBackground(DentalTheme.CARD);
             p.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
             p.setLayout(new GridBagLayout());
-            p.setPreferredSize(new Dimension(540, 420));
+            p.setPreferredSize(new Dimension(600, 460));
+            p.setMinimumSize(new Dimension(580, 440));
 
             styleField(tfId);
             styleField(cbPatient);

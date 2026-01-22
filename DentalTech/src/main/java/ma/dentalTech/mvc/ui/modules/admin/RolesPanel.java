@@ -6,6 +6,7 @@ import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.repository.modules.users.api.RoleRepository;
 
 import javax.swing.*;
@@ -49,6 +50,11 @@ public class RolesPanel extends JPanel {
         JButton btnDelete = new DentalButton("Supprimer");
         JButton btnRefresh = new DentalButton("Rafraichir");
 
+        UiStyles.stylePrimaryButton(btnAdd);
+        UiStyles.styleSecondaryButton(btnEdit);
+        UiStyles.styleSecondaryButton(btnDelete);
+        UiStyles.styleSecondaryButton(btnRefresh);
+
         btnAdd.addActionListener(e -> openForm(null));
         btnEdit.addActionListener(e -> {
             Role r = selectedRole();
@@ -68,13 +74,21 @@ public class RolesPanel extends JPanel {
     }
 
     private JComponent buildList() {
-        table.setRowHeight(26);
-        table.getTableHeader().setFont(DentalTheme.textBold(12));
-        table.setFont(DentalTheme.textFont(12));
+        UiStyles.styleTable(table);
+        table.setRowHeight(30);
+        table.setFillsViewportHeight(true);
 
-        CardPanel p = new CardPanel();
-        p.setLayout(new BorderLayout());
-        p.add(new JScrollPane(table), BorderLayout.CENTER);
+        CardPanel p = new CardPanel(null);
+        p.setBackground(DentalTheme.CARD);
+        p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        p.setOpaque(false);
+        p.setLayout(new BorderLayout(8, 8));
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        p.add(sp, BorderLayout.CENTER);
         return p;
     }
 
@@ -181,3 +195,4 @@ public class RolesPanel extends JPanel {
         dialog.setVisible(true);
     }
 }
+

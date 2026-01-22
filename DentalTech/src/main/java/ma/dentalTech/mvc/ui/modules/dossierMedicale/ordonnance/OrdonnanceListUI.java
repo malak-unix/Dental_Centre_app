@@ -91,6 +91,7 @@ public class OrdonnanceListUI extends JPanel {
         ));
         btnAdd.setFocusPainted(false);
         UiStyles.stylePrimaryButton(btnAdd);
+        styleReadableButton(btnAdd);
         btnAdd.addActionListener(e -> onAddOrdonnance());
         titleRow.add(btnAdd, BorderLayout.EAST);
 
@@ -112,7 +113,9 @@ public class OrdonnanceListUI extends JPanel {
 
         filters.add(Box.createHorizontalStrut(10));
         UiStyles.styleSecondaryButton(btnSearch);
+        styleReadableButton(btnSearch);
         UiStyles.styleSecondaryButton(btnReset);
+        styleReadableButton(btnReset);
         filters.add(btnSearch);
         filters.add(btnReset);
 
@@ -272,6 +275,7 @@ public class OrdonnanceListUI extends JPanel {
             for (JButton b : List.of(b1, b2, b3)) {
                 b.setFocusable(false);
                 b.setMargin(new Insets(2, 6, 2, 6));
+                styleReadableButton(b);
                 panel.add(b);
             }
         }
@@ -297,31 +301,9 @@ public class OrdonnanceListUI extends JPanel {
             for (JButton b : List.of(b1, b2, b3)) {
                 b.setFocusable(false);
                 b.setMargin(new Insets(2, 6, 2, 6));
+                styleReadableButton(b);
                 panel.add(b);
             }
-
-            // Style des boutons selon la maquette
-            b1.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé
-            b1.setForeground(Color.WHITE);
-            b1.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
-
-            b2.setBackground(new Color(0xCB, 0xA1, 0x35)); // Doré
-            b2.setForeground(Color.WHITE);
-            b2.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
-
-            b3.setBackground(new Color(0xDC, 0x35, 0x45)); // Rouge
-            b3.setForeground(Color.WHITE);
-            b3.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(0xDC, 0x35, 0x45), 1),
-                    new EmptyBorder(4, 8, 4, 8)
-            ));
-
             b1.addActionListener(e -> {
                 stopCellEditing();
                 OrdonnanceListItemDTO r = model.getAt(currentRow);
@@ -399,6 +381,18 @@ public class OrdonnanceListUI extends JPanel {
         public Object getCellEditorValue() {
             return "";
         }
+    }
+
+    private void styleReadableButton(AbstractButton b) {
+        if (b == null) return;
+        b.setForeground(DentalTheme.TEXT2);
+        b.setBackground(DentalTheme.CARD);
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.STROKE, 1, true),
+                new EmptyBorder(4, 8, 4, 8)
+        ));
     }
 }
 

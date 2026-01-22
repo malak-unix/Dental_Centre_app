@@ -3,6 +3,7 @@ package ma.dentalTech.mvc.ui.modules.caisse;
 import ma.dentalTech.mvc.dto.caisse.CaisseFactureRowDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -51,19 +52,53 @@ public class CaisseFactureDetailPanel extends JPanel {
         JPanel body = new JPanel(new BorderLayout(16, 16));
         body.setOpaque(false);
 
-        CardPanel lignes = new CardPanel("Désignation");
+        CardPanel lignes = new CardPanel(null);
+        lignes.setBackground(DentalTheme.CARD);
+        lignes.setBorder(new EmptyBorder(10, 10, 10, 10));
+        lignes.setOpaque(false);
+        lignes.setLayout(new BorderLayout(8, 8));
+
+        JLabel lignesTitle = new JLabel("Designation");
+        lignesTitle.setFont(DentalTheme.titleFont(18));
+        lignesTitle.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel lignesHeader = new JPanel(new BorderLayout());
+        lignesHeader.setOpaque(false);
+        lignesHeader.add(lignesTitle, BorderLayout.WEST);
 
         JTable t = new JTable(new DefaultTableModel(
                 new Object[][]{
-                        {"Consultation de contrôle", "1", money(facture.getMontant())}
+                        {"Consultation de controle", "1", money(facture.getMontant())}
                 },
-                new Object[]{"Acte", "Quantité", "Montant"}
+                new Object[]{"Acte", "Quantite", "Montant"}
         ));
         t.setRowHeight(28);
+        UiStyles.styleTable(t);
 
-        lignes.add(new JScrollPane(t), BorderLayout.CENTER);
+        JScrollPane lignesSp = new JScrollPane(t);
+        lignesSp.setBorder(BorderFactory.createEmptyBorder());
+        lignesSp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        lignesSp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        CardPanel totals = new CardPanel("Totaux");
+        lignes.add(lignesHeader, BorderLayout.NORTH);
+        lignes.add(lignesSp, BorderLayout.CENTER);
+
+        CardPanel totals = new CardPanel(null);
+        totals.setBackground(DentalTheme.CARD);
+        totals.setBorder(new EmptyBorder(10, 10, 10, 10));
+        totals.setOpaque(false);
+        totals.setLayout(new BorderLayout(8, 8));
+        totals.setPreferredSize(new Dimension(260, 10));
+
+        JLabel totalsTitle = new JLabel("Totaux");
+        totalsTitle.setFont(DentalTheme.titleFont(18));
+        totalsTitle.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel totalsHeader = new JPanel(new BorderLayout());
+        totalsHeader.setOpaque(false);
+        totalsHeader.add(totalsTitle, BorderLayout.WEST);
+
+        totals.add(totalsHeader, BorderLayout.NORTH);
         totals.add(buildTotalsBlock(), BorderLayout.CENTER);
 
         body.add(lignes, BorderLayout.CENTER);

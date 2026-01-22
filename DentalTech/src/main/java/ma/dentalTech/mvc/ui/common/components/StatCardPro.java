@@ -13,18 +13,19 @@ public class StatCardPro extends JPanel {
     public StatCardPro(String title, String value) {
         setOpaque(false);
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6)); // espace pour l'ombre
+        setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8)); // espace pour l'ombre
+        setPreferredSize(new Dimension(200, 110));
 
         JPanel card = new ShadowCard();
         card.setLayout(new BorderLayout());
-        card.setBorder(BorderFactory.createEmptyBorder(18, 18, 16, 18));
+        card.setBorder(BorderFactory.createEmptyBorder(20, 20, 18, 20));
 
         titleLabel.setText(title);
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 18));
+        titleLabel.setFont(new Font("Serif", Font.BOLD, 19));
         titleLabel.setForeground(DentalTheme.TEXT2);
 
         valueLabel.setText(value);
-        valueLabel.setFont(new Font("Serif", Font.BOLD, 18));
+        valueLabel.setFont(new Font("Serif", Font.BOLD, 20));
         valueLabel.setForeground(DentalTheme.PRIMARY);
 
         card.add(titleLabel, BorderLayout.NORTH);

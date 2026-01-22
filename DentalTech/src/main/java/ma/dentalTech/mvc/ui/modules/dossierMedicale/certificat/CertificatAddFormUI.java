@@ -223,8 +223,8 @@ public class CertificatAddFormUI extends JDialog {
         ));
 
         btnCreate.setFont(DentalTheme.textBold(13));
-        btnCreate.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé
-        btnCreate.setForeground(Color.WHITE);
+        btnCreate.setBackground(DentalTheme.CARD); // Bleu fonce
+        btnCreate.setForeground(DentalTheme.TEXT2);
         btnCreate.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2), // Bordure dorée
                 new EmptyBorder(8, 16, 8, 16)

@@ -176,8 +176,8 @@ public class CertificatDetailUI extends JPanel {
 
         JButton btnPrint = new JButton("🖨️ Imprimer le certificat");
         btnPrint.setFont(DentalTheme.textBold(14));
-        btnPrint.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnPrint.setForeground(Color.WHITE);
+        btnPrint.setBackground(DentalTheme.CARD);
+        btnPrint.setForeground(DentalTheme.TEXT2);
         btnPrint.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
                 new EmptyBorder(10, 20, 10, 20)

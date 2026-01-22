@@ -6,6 +6,7 @@ import ma.dentalTech.mvc.dto.patient.PatientListDto;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -95,16 +96,30 @@ public class PatientView extends JPanel {
     }
 
     private JComponent buildTableCard() {
-        CardPanel results = new CardPanel("Résultats");
-        results.setLayout(new BorderLayout());
+        CardPanel results = new CardPanel((String) null);
+        results.setBackground(DentalTheme.CARD);
+        results.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        results.setOpaque(false);
+        results.setLayout(new BorderLayout(8, 8));
 
-        table.setRowHeight(28);
-        table.setFont(DentalTheme.textFont(12));
-        table.getTableHeader().setFont(DentalTheme.textBold(12));
+        JLabel title = new JLabel("Resultats");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+
+        UiStyles.styleTable(table);
+        table.setRowHeight(30);
+        table.setFillsViewportHeight(true);
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
+        results.add(header, BorderLayout.NORTH);
         results.add(sp, BorderLayout.CENTER);
         return results;
     }

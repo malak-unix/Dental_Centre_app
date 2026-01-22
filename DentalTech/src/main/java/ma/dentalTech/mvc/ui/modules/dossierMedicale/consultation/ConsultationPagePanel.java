@@ -92,6 +92,7 @@ public class ConsultationPagePanel extends JPanel {
         title.setForeground(DentalTheme.TEXT2);
 
         UiStyles.stylePrimaryButton(btnAdd);
+        styleReadableButton(btnAdd);
         btnAdd.setPreferredSize(new Dimension(240, 40));
         btnAdd.addActionListener(e -> onAddConsultation());
 
@@ -138,6 +139,8 @@ public class ConsultationPagePanel extends JPanel {
         actions.setOpaque(false);
         UiStyles.styleSecondaryButton(btnSearch);
         UiStyles.styleSecondaryButton(btnReset);
+        styleReadableButton(btnSearch);
+        styleReadableButton(btnReset);
         actions.add(btnSearch);
         actions.add(btnReset);
 
@@ -461,11 +464,19 @@ public class ConsultationPagePanel extends JPanel {
         b.setFocusable(false);
         b.setFont(DentalTheme.textBold(11));
         b.setOpaque(true);
-        b.setBackground(DentalTheme.PRIMARY_DARK);
-        b.setForeground(Color.WHITE);
+        b.setBackground(DentalTheme.CARD);
+        b.setForeground(DentalTheme.TEXT2);
         b.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(DentalTheme.STROKE, 1, true),
                 new EmptyBorder(4, 8, 4, 8)
         ));
+    }
+
+    private void styleReadableButton(AbstractButton b) {
+        if (b == null) return;
+        b.setForeground(DentalTheme.TEXT2);
+        b.setBackground(DentalTheme.CARD);
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
     }
 }

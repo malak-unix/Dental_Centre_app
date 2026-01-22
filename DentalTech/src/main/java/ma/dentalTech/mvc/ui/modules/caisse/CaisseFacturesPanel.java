@@ -88,7 +88,19 @@ public class CaisseFacturesPanel extends JPanel {
     }
 
     private JComponent buildCenter() {
-        CardPanel card = new CardPanel("Liste des factures");
+        CardPanel card = new CardPanel(null);
+        card.setBackground(DentalTheme.CARD);
+        card.setBorder(new EmptyBorder(10, 10, 10, 10));
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout(8, 8));
+
+        JLabel title = new JLabel("Liste des factures");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
 
         table.setRowHeight(36);
         table.setFillsViewportHeight(true);
@@ -99,12 +111,17 @@ public class CaisseFacturesPanel extends JPanel {
         JScrollPane sp = new JScrollPane(table);
         sp.setPreferredSize(new Dimension(10, 200));
         sp.setMinimumSize(new Dimension(10, 180));
-        sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
-        card.add(sp, BorderLayout.CENTER);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
         emptyLabel.setFont(DentalTheme.textFont(12));
         emptyLabel.setForeground(DentalTheme.MUTED);
         emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
         emptyLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        card.add(header, BorderLayout.NORTH);
+        card.add(sp, BorderLayout.CENTER);
         card.add(emptyLabel, BorderLayout.SOUTH);
 
         FactureActionsColumn.install(
@@ -305,6 +322,8 @@ public class CaisseFacturesPanel extends JPanel {
         cb.setBackground(Color.WHITE);
     }
 }
+
+
 
 
 

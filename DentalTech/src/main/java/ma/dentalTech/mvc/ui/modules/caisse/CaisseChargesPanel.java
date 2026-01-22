@@ -110,38 +110,108 @@ public class CaisseChargesPanel extends JPanel {
         return top;
     }
 
+    
     private JComponent buildBody() {
-        JPanel body = new JPanel(new GridLayout(1, 2, 16, 16));
-        body.setOpaque(false);
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setOpaque(false);
 
-        CardPanel left = new CardPanel("Liste des charges");
+        CardPanel left = new CardPanel(null);
+        left.setBackground(DentalTheme.CARD);
+        left.setBorder(new EmptyBorder(10, 10, 10, 10));
+        left.setOpaque(false);
+        left.setLayout(new BorderLayout(8, 8));
+
+        JLabel title = new JLabel("Liste des charges");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+
         table.setRowHeight(30);
         table.setFillsViewportHeight(true);
         ChargesActionsColumn.install(table, this::onEditRow, this::onDeleteRow);
+
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
+        sp.setPreferredSize(new Dimension(10, 200));
+        sp.setMinimumSize(new Dimension(10, 180));
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        left.add(header, BorderLayout.NORTH);
         left.add(sp, BorderLayout.CENTER);
 
-        CardPanel right = new CardPanel("Répartition des charges");
+        CardPanel right = new CardPanel(null);
+        right.setBackground(DentalTheme.CARD);
+        right.setBorder(new EmptyBorder(10, 10, 10, 10));
+        right.setOpaque(false);
+        right.setLayout(new BorderLayout(8, 8));
+        right.setPreferredSize(new Dimension(240, 240));
+        right.setMinimumSize(new Dimension(220, 200));
+
+        JLabel chartTitle = new JLabel("Repartition des charges");
+        chartTitle.setFont(DentalTheme.titleFont(18));
+        chartTitle.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel chartHeader = new JPanel(new BorderLayout());
+        chartHeader.setOpaque(false);
+        chartHeader.add(chartTitle, BorderLayout.WEST);
+
+        right.add(chartHeader, BorderLayout.NORTH);
         right.add(pieHolder, BorderLayout.CENTER);
 
-        body.add(left);
-        body.add(right);
-        return body;
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 0, 0, 16);
+        row.add(left, gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        row.add(right, gbc);
+
+        return row;
     }
 
+    
     private JComponent buildBottom() {
-        CardPanel bottom = new CardPanel("Toutes les charges");
-        JPanel p = new JPanel(new BorderLayout());
-        p.setOpaque(false);
-        p.add(vTotalCharges, BorderLayout.WEST);
-        bottom.add(p, BorderLayout.CENTER);
+        CardPanel bottom = new CardPanel(null);
+        bottom.setBackground(DentalTheme.CARD);
+        bottom.setBorder(new EmptyBorder(10, 10, 10, 10));
+        bottom.setOpaque(false);
+        bottom.setLayout(new BorderLayout(8, 8));
+
+        JLabel title = new JLabel("Toutes les charges");
+        title.setFont(DentalTheme.titleFont(14));
+        title.setForeground(DentalTheme.TEXT2);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+
+        JPanel center = new JPanel(new BorderLayout());
+        center.setOpaque(false);
+        center.setBorder(new EmptyBorder(4, 0, 0, 0));
+        center.add(vTotalCharges, BorderLayout.WEST);
+
+        bottom.add(header, BorderLayout.NORTH);
+        bottom.add(center, BorderLayout.CENTER);
         return bottom;
     }
 
+    
     private JLabel totalValue() {
-        JLabel l = new JLabel("—");
-        l.setFont(DentalTheme.titleFont(18));
+        JLabel l = new JLabel("-");
+        l.setFont(DentalTheme.textBold(16));
         l.setForeground(DentalTheme.PRIMARY_DARK);
         return l;
     }
@@ -343,18 +413,23 @@ public class CaisseChargesPanel extends JPanel {
         txtDateFin.setText(now.toString());
     }
 
+    
     private void renderPie(double personnel, double materiel, double conso, double logiciels, double maintenance) {
         DefaultPieDataset<String> ds = new DefaultPieDataset<>();
         ds.setValue("Charges de personnel", personnel);
-        ds.setValue("Matériel dentaire", materiel);
+        ds.setValue("Mat??riel dentaire", materiel);
         ds.setValue("Consommables", conso);
         ds.setValue("Logiciels", logiciels);
         ds.setValue("Maintenance", maintenance);
 
         JFreeChart chart = ChartFactory.createPieChart("", ds, true, true, false);
 
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setPreferredSize(new Dimension(220, 220));
+        cp.setMouseWheelEnabled(true);
+
         pieHolder.removeAll();
-        pieHolder.add(new ChartPanel(chart), BorderLayout.CENTER);
+        pieHolder.add(cp, BorderLayout.CENTER);
         pieHolder.revalidate();
         pieHolder.repaint();
     }

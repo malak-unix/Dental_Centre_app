@@ -1,6 +1,7 @@
 package ma.dentalTech.mvc.ui.modules.caisse.dialogs;
 
 import ma.dentalTech.mvc.dto.caisse.FacturePaiementDTO;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -42,8 +43,8 @@ public class FacturePaiementDialog extends JDialog {
         form.add(tfMontant, c);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnCancel = new JButton("Annuler");
-        JButton btnOk = new JButton("Valider");
+        JButton btnCancel = new DentalButton("Annuler");
+        JButton btnOk = new DentalButton("Valider");
         buttons.add(btnCancel);
         buttons.add(btnOk);
 

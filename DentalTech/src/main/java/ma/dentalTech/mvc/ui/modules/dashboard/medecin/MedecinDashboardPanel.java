@@ -62,10 +62,13 @@ public class MedecinDashboardPanel extends JPanel {
         setLayout(new BorderLayout(15, 15));
         setBackground(DentalTheme.BG);
         setOpaque(true);
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        add(buildTopStats(), BorderLayout.NORTH);
-        add(buildBody(), BorderLayout.CENTER);
+        CardPanel card = new CardPanel((String) null);
+        card.setLayout(new BorderLayout(14, 14));
+        card.add(buildTopStats(), BorderLayout.NORTH);
+        card.add(buildBody(), BorderLayout.CENTER);
+        add(card, BorderLayout.CENTER);
 
         reload();
     }

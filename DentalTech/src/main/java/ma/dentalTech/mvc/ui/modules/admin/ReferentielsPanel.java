@@ -3,10 +3,10 @@ package ma.dentalTech.mvc.ui.modules.admin;
 import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.dossierMedical.Acte;
 import ma.dentalTech.entities.dossierMedical.Medicament;
-import ma.dentalTech.entities.enums.FormeMedicament;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
 
@@ -42,7 +42,6 @@ public class ReferentielsPanel extends JPanel {
         add(tabs, BorderLayout.CENTER);
     }
 
-    // === helpers refresh ===
     private void reloadActes(DefaultTableModel model) {
         model.setRowCount(0);
         if (acteRepo == null) return;
@@ -63,26 +62,31 @@ public class ReferentielsPanel extends JPanel {
         p.setOpaque(false);
         p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        DefaultTableModel model = new DefaultTableModel(new Object[]{"ID", "Libellé", "Catégorie", "Prix Base"}, 0) {
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"ID", "Libelle", "Categorie", "Prix Base"}, 0) {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         JTable table = new JTable(model);
+        UiStyles.styleTable(table);
         table.setRowHeight(30);
-        table.setFont(DentalTheme.textFont(13));
-        table.getTableHeader().setFont(DentalTheme.textBold(13));
+        table.setFillsViewportHeight(true);
 
-        // Load Data
         reloadActes(model);
 
         JButton btnAdd = new DentalButton("Nouvel Acte");
-        btnAdd.setFont(DentalTheme.textFont(13));
-        btnAdd.setBackground(DentalTheme.PRIMARY);
-        btnAdd.setForeground(Color.WHITE);
+        UiStyles.stylePrimaryButton(btnAdd);
         btnAdd.addActionListener(e -> createActeDialog(model));
 
-        CardPanel card = new CardPanel();
-        card.setLayout(new BorderLayout());
-        card.add(new JScrollPane(table), BorderLayout.CENTER);
+        CardPanel card = new CardPanel(null);
+        card.setBackground(DentalTheme.CARD);
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout(8, 8));
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        card.add(sp, BorderLayout.CENTER);
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         top.setOpaque(false);
@@ -116,12 +120,12 @@ public class ReferentielsPanel extends JPanel {
         c.weightx = 1.0;
 
         c.gridx = 0; c.gridy = 0; c.weightx = 0;
-        d.add(new JLabel("Libellé:"), c);
+        d.add(new JLabel("Libelle:"), c);
         c.gridx = 1; c.weightx = 1.0;
         d.add(libelleF, c);
 
         c.gridx = 0; c.gridy++; c.weightx = 0;
-        d.add(new JLabel("Catégorie:"), c);
+        d.add(new JLabel("Categorie:"), c);
         c.gridx = 1; c.weightx = 1.0;
         d.add(categorieF, c);
 
@@ -135,9 +139,8 @@ public class ReferentielsPanel extends JPanel {
 
         JButton cancel = new JButton("Annuler");
         JButton save = new JButton("Enregistrer");
-
-        save.setBackground(DentalTheme.PRIMARY);
-        save.setForeground(Color.WHITE);
+        UiStyles.styleSecondaryButton(cancel);
+        UiStyles.stylePrimaryButton(save);
 
         cancel.addActionListener(e -> d.dispose());
         save.addActionListener(e -> {
@@ -145,7 +148,7 @@ public class ReferentielsPanel extends JPanel {
                 String lib = libelleF.getText() == null ? "" : libelleF.getText().trim();
                 String cat = categorieF.getText() == null ? "" : categorieF.getText().trim();
                 if (lib.isBlank()) {
-                    JOptionPane.showMessageDialog(d, "Libellé obligatoire");
+                    JOptionPane.showMessageDialog(d, "Libelle obligatoire");
                     return;
                 }
                 double prix = 0.0;
@@ -160,11 +163,8 @@ public class ReferentielsPanel extends JPanel {
 
                 acteRepo.create(a);
                 d.dispose();
-
-                // refresh
                 reloadActes(modelToRefresh);
-
-                JOptionPane.showMessageDialog(this, "Acte ajouté avec succès");
+                JOptionPane.showMessageDialog(this, "Acte ajoute avec succes");
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(d, "Erreur: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
@@ -191,32 +191,36 @@ public class ReferentielsPanel extends JPanel {
             public boolean isCellEditable(int row, int col) { return false; }
         };
         JTable table = new JTable(model);
+        UiStyles.styleTable(table);
         table.setRowHeight(30);
-        table.setFont(DentalTheme.textFont(13));
-        table.getTableHeader().setFont(DentalTheme.textBold(13));
+        table.setFillsViewportHeight(true);
 
-        // Load Data
         if (medicamentRepo != null) {
             try {
                 List<Medicament> list = medicamentRepo.findAll();
                 for (Medicament m : list) {
                     model.addRow(new Object[]{m.getId(), m.getNom(), m.getLaboratoire(), m.getPrixUnitaire(), m.isRemboursable() ? "OUI" : "NON"});
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        JButton btnAdd = new DentalButton("Nouveau Médicament");
-        btnAdd.setFont(DentalTheme.textFont(13));
-        btnAdd.setBackground(DentalTheme.PRIMARY);
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.addActionListener(e -> {
-            // Simple mockup create
-            createMedicamentDialog();
-        });
+        JButton btnAdd = new DentalButton("Nouveau Medicament");
+        UiStyles.stylePrimaryButton(btnAdd);
+        btnAdd.addActionListener(e -> createMedicamentDialog());
 
-        CardPanel card = new CardPanel();
-        card.setLayout(new BorderLayout());
-        card.add(new JScrollPane(table), BorderLayout.CENTER);
+        CardPanel card = new CardPanel(null);
+        card.setBackground(DentalTheme.CARD);
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout(8, 8));
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        card.add(sp, BorderLayout.CENTER);
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         top.setOpaque(false);
@@ -228,9 +232,8 @@ public class ReferentielsPanel extends JPanel {
     }
 
     private void createMedicamentDialog() {
-        // Quick dialog to add medicament
         JDialog d = new JDialog();
-        d.setTitle("Nouveau Médicament");
+        d.setTitle("Nouveau Medicament");
         d.setModal(true);
         d.setSize(400, 300);
         d.setLocationRelativeTo(this);
@@ -247,23 +250,14 @@ public class ReferentielsPanel extends JPanel {
         d.add(new JLabel("")); d.add(rembF);
 
         JButton ok = new JButton("Enregistrer");
-        ok.addActionListener(e -> {
-            try {
-                Medicament m = Medicament.builder()
-                        .nom(nomF.getText())
-                        .laboratoire(laboF.getText())
-                        .prixUnitaire(Double.parseDouble(prixF.getText()))
-                        .remboursable(rembF.isSelected())
-                        .forme(FormeMedicament.COMPRIME) // Default
-                        .build();
-                medicamentRepo.create(m); // direct repo call for speed
-                d.dispose();
-                JOptionPane.showMessageDialog(this, "Médicament ajouté ! (Rafraichir pour voir)");
-            } catch(Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Erreur: " + ex.getMessage());
-            }
-        });
+        JButton cancel = new JButton("Annuler");
+        UiStyles.stylePrimaryButton(ok);
+        UiStyles.styleSecondaryButton(cancel);
+
+        ok.addActionListener(e -> d.dispose());
+        cancel.addActionListener(e -> d.dispose());
+
+        d.add(cancel);
         d.add(ok);
         d.setVisible(true);
     }

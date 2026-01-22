@@ -126,6 +126,11 @@ public class DossierMedicalAddFormUI extends JDialog {
 
         setContentPane(content);
 
+        btnCancel.setForeground(DentalTheme.TEXT2);
+        btnCancel.setBackground(DentalTheme.CARD);
+        btnSave.setForeground(DentalTheme.TEXT2);
+        btnSave.setBackground(DentalTheme.CARD);
+
         btnCancel.addActionListener(e -> {
             confirmed = false;
             dispose();

@@ -140,23 +140,52 @@ public class CaisseDashboardPanel extends JPanel {
 
         return kpis;
     }
-
     private JComponent buildTableBlock() {
-        CardPanel tableCard = new CardPanel("Liste des factures");
-        UiStyles.styleTable(table);
-        table.setRowHeight(28);
+        CardPanel tableCard = new CardPanel(null);
+        tableCard.setBackground(DentalTheme.CARD);
+        tableCard.setBorder(new EmptyBorder(10, 10, 10, 10));
+        tableCard.setOpaque(false);
+
+        JLabel title = new JLabel("Liste des factures");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+
+        table.setRowHeight(30);
         table.setFillsViewportHeight(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane sp = new JScrollPane(table);
+        sp.setPreferredSize(new Dimension(10, 200));
+        sp.setMinimumSize(new Dimension(10, 180));
         sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        sp.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 2, true));
+        tableCard.setLayout(new BorderLayout(8, 8));
+        tableCard.add(header, BorderLayout.NORTH);
         tableCard.add(sp, BorderLayout.CENTER);
 
-        CardPanel chartCard = new CardPanel("Revenus vs Charges");
+        CardPanel chartCard = new CardPanel(null);
+        chartCard.setBackground(DentalTheme.CARD);
+        chartCard.setBorder(new EmptyBorder(10, 10, 10, 10));
+        chartCard.setOpaque(false);
+        chartCard.setLayout(new BorderLayout(8, 8));
         chartCard.setPreferredSize(new Dimension(240, 240));
         chartCard.setMinimumSize(new Dimension(220, 200));
+
+        JLabel chartTitle = new JLabel("Revenus vs Charges");
+        chartTitle.setFont(DentalTheme.titleFont(18));
+        chartTitle.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel chartHeader = new JPanel(new BorderLayout());
+        chartHeader.setOpaque(false);
+        chartHeader.add(chartTitle, BorderLayout.WEST);
+
+        chartCard.add(chartHeader, BorderLayout.NORTH);
         chartCard.add(chartHolder, BorderLayout.CENTER);
 
         FactureActionsColumn.install(table, this::onView, this::onPdf, this::onPay, this::onCancel);
@@ -200,8 +229,8 @@ public class CaisseDashboardPanel extends JPanel {
         bottom.setOpaque(false);
 
         bottom.add(kpiCard("Total Factures", vTotalFacturesCount));
-        bottom.add(kpiCard("Total Payé", vTotalPaye));
-        bottom.add(kpiCard("Total Impayé", vTotalImpaye));
+        bottom.add(kpiCard("Total Paye", vTotalPaye));
+        bottom.add(kpiCard("Total Impaye", vTotalImpaye));
         bottom.add(kpiCard("Total", vTotalGlobal));
 
         return bottom;
@@ -258,11 +287,11 @@ public class CaisseDashboardPanel extends JPanel {
 
             double revenus = n(res.getTotalRevenus());
             double charges = n(res.getTotalCharges());
-            double benefice = revenus - charges;
+            double Benefice = revenus - charges;
 
             vCaMois.setText(money(revenus) + " DH");
             vCharges.setText(money(charges) + " DH");
-            vBenefice.setText(money(benefice) + " DH");
+            vBenefice.setText(money(Benefice) + " DH");
 
             List<CaisseFactureRowDTO> list = res.getFactures();
             long nbImpayees = list == null ? 0 : list.stream().filter(f -> isImpaye(f.getStatut())).count();
@@ -457,5 +486,12 @@ public class CaisseDashboardPanel extends JPanel {
 
 
 }
+
+
+
+
+
+
+
 
 

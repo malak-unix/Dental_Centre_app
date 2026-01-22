@@ -48,13 +48,16 @@ public class AdminDashboardPanel extends JPanel {
         setLayout(new BorderLayout(15, 15));
         setBackground(DentalTheme.BG);
         setOpaque(true);
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         activitiesPanel.setOpaque(false);
         activitiesPanel.setLayout(new BoxLayout(activitiesPanel, BoxLayout.Y_AXIS));
 
-        add(buildTopStats(), BorderLayout.NORTH);
-        add(buildBody(), BorderLayout.CENTER);
+        CardPanel card = new CardPanel((String) null);
+        card.setLayout(new BorderLayout(14, 14));
+        card.add(buildTopStats(), BorderLayout.NORTH);
+        card.add(buildBody(), BorderLayout.CENTER);
+        add(card, BorderLayout.CENTER);
 
         reload();
     }
@@ -76,12 +79,32 @@ public class AdminDashboardPanel extends JPanel {
         JTable table = new JTable(model);
         UiStyles.styleTable(table);
         table.setRowHeight(34);
+        table.getColumnModel().getColumn(0).setPreferredWidth(160);
+        table.getColumnModel().getColumn(1).setPreferredWidth(90);
+        table.getColumnModel().getColumn(2).setPreferredWidth(90);
+        table.getColumnModel().getColumn(3).setPreferredWidth(170);
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setPreferredSize(new Dimension(10, 220));
+        sp.setMinimumSize(new Dimension(10, 200));
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        CardPanel tableCard = new CardPanel("Utilisateurs");
-        tableCard.setLayout(new BorderLayout(10, 10));
+        CardPanel tableCard = new CardPanel((String) null);
+        tableCard.setBackground(DentalTheme.CARD);
+        tableCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tableCard.setLayout(new BorderLayout(8, 8));
+
+        JLabel title = new JLabel("Utilisateurs");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+
+        tableCard.add(header, BorderLayout.NORTH);
         tableCard.add(sp, BorderLayout.CENTER);
         root.add(tableCard, BorderLayout.CENTER);
 
@@ -106,8 +129,10 @@ public class AdminDashboardPanel extends JPanel {
     }
 
     private JComponent buildActivitiesCard() {
-        CardPanel right = new CardPanel("Activites recentes");
-        right.setLayout(new BorderLayout(10, 10));
+        CardPanel right = new CardPanel((String) null);
+        right.setBackground(DentalTheme.CARD);
+        right.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        right.setLayout(new BorderLayout(8, 8));
         right.setPreferredSize(new Dimension(320, 10));
 
         JScrollPane sp = new JScrollPane(activitiesPanel);
@@ -115,7 +140,17 @@ public class AdminDashboardPanel extends JPanel {
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         sp.getVerticalScrollBar().setUnitIncrement(16);
+        sp.setPreferredSize(new Dimension(10, 220));
 
+        JLabel title = new JLabel("Activites recentes");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
+
+        right.add(header, BorderLayout.NORTH);
         right.add(sp, BorderLayout.CENTER);
         return right;
     }

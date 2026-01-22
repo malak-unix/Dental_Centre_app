@@ -4,7 +4,7 @@ import ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentAdminControll
 import ma.dentalTech.mvc.dto.patient.AntecedentAdminRowDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
-
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -27,12 +27,16 @@ public class AntecedentsAdminPanel extends JPanel {
 
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
+        UiStyles.styleTable(table);
+        table.setRowHeight(28);
+        table.setFillsViewportHeight(true);
 
         JLabel title = new JLabel("Antécédents (Tous les patients)");
         title.setFont(DentalTheme.titleFont(18));
         title.setForeground(DentalTheme.TEXT2);
 
-        JButton refresh = new JButton("Rafraîchir");
+        JButton refresh = new JButton("Rafraichir");
+        UiStyles.styleSecondaryButton(refresh);
         refresh.addActionListener(e -> reload());
 
         JPanel top = new JPanel(new BorderLayout());
@@ -40,9 +44,17 @@ public class AntecedentsAdminPanel extends JPanel {
         top.add(title, BorderLayout.WEST);
         top.add(refresh, BorderLayout.EAST);
 
-        CardPanel card = new CardPanel((String) null);
-        card.setLayout(new BorderLayout());
-        card.add(new JScrollPane(table), BorderLayout.CENTER);
+        CardPanel card = new CardPanel(null);
+        card.setBackground(DentalTheme.CARD);
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout(8, 8));
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        card.add(sp, BorderLayout.CENTER);
 
         add(top, BorderLayout.NORTH);
         add(card, BorderLayout.CENTER);
@@ -65,3 +77,6 @@ public class AntecedentsAdminPanel extends JPanel {
         }
     }
 }
+
+
+

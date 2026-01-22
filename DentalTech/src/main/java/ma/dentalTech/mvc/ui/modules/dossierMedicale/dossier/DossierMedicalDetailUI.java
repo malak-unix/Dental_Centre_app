@@ -134,8 +134,8 @@ public class DossierMedicalDetailUI extends JPanel {
 
         JButton btnModifier = new DentalButton("Modifier infos dossier");
         btnModifier.setFont(DentalTheme.textFont(13));
-        btnModifier.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnModifier.setForeground(Color.WHITE);
+        btnModifier.setBackground(DentalTheme.CARD);
+        btnModifier.setForeground(DentalTheme.TEXT2);
         btnModifier.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
                 new EmptyBorder(6, 12, 6, 12)
@@ -170,8 +170,8 @@ public class DossierMedicalDetailUI extends JPanel {
 
         JButton btnSupprimer = new DentalButton("Supprimer dossier");
         btnSupprimer.setFont(DentalTheme.textFont(13));
-        btnSupprimer.setBackground(new Color(0xDC, 0x35, 0x45));
-        btnSupprimer.setForeground(Color.WHITE);
+        btnSupprimer.setBackground(DentalTheme.CARD);
+        btnSupprimer.setForeground(DentalTheme.TEXT2);
         btnSupprimer.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xDC, 0x35, 0x45), 1),
                 new EmptyBorder(6, 12, 6, 12)
@@ -242,8 +242,8 @@ public class DossierMedicalDetailUI extends JPanel {
 
         JButton btnAdd = new DentalButton("+ Nouvelle consultation");
         btnAdd.setFont(DentalTheme.textBold(13));
-        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnAdd.setForeground(Color.WHITE);
+        btnAdd.setBackground(DentalTheme.CARD);
+        btnAdd.setForeground(DentalTheme.TEXT2);
         btnAdd.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
                 new EmptyBorder(8, 16, 8, 16)
@@ -449,8 +449,8 @@ public class DossierMedicalDetailUI extends JPanel {
 
         JButton btnAdd = new DentalButton("+ Charger document");
         btnAdd.setFont(DentalTheme.textBold(13));
-        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnAdd.setForeground(Color.WHITE);
+        btnAdd.setBackground(DentalTheme.CARD);
+        btnAdd.setForeground(DentalTheme.TEXT2);
         btnAdd.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
                 new EmptyBorder(8, 16, 8, 16)

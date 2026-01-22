@@ -131,7 +131,10 @@ public class SecretaireDashboardPanel extends JPanel {
         });
 
 
-        add(buildMain(), BorderLayout.CENTER);
+        CardPanel card = new CardPanel((String) null);
+        card.setLayout(new BorderLayout(14, 14));
+        card.add(buildMain(), BorderLayout.CENTER);
+        add(card, BorderLayout.CENTER);
 
         reload();
     }

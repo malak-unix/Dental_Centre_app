@@ -203,8 +203,8 @@ public class OrdonnanceAddFormUI extends JDialog {
         gc.fill = GridBagConstraints.NONE;
         gc.anchor = GridBagConstraints.EAST;
         btnAddMedicament.setFont(DentalTheme.textBold(12));
-        btnAddMedicament.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnAddMedicament.setForeground(Color.WHITE);
+        btnAddMedicament.setBackground(DentalTheme.CARD);
+        btnAddMedicament.setForeground(DentalTheme.TEXT2);
         btnAddMedicament.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
                 new EmptyBorder(6, 12, 6, 12)
@@ -249,8 +249,8 @@ public class OrdonnanceAddFormUI extends JDialog {
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                            boolean hasFocus, int row, int column) {
                 JButton btn = new JButton("Supprimer");
-                btn.setBackground(new Color(0xDC, 0x35, 0x45));
-                btn.setForeground(Color.WHITE);
+                btn.setBackground(DentalTheme.CARD);
+                btn.setForeground(DentalTheme.TEXT2);
                 btn.setFocusPainted(false);
                 btn.setMargin(new Insets(2, 6, 2, 6));
                 return btn;
@@ -281,8 +281,8 @@ public class OrdonnanceAddFormUI extends JDialog {
         ));
 
         btnCreate.setFont(DentalTheme.textBold(13));
-        btnCreate.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnCreate.setForeground(Color.WHITE);
+        btnCreate.setBackground(DentalTheme.CARD);
+        btnCreate.setForeground(DentalTheme.TEXT2);
         btnCreate.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
                 new EmptyBorder(8, 16, 8, 16)
@@ -494,8 +494,8 @@ public class OrdonnanceAddFormUI extends JDialog {
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentRow = row;
             JButton btn = new JButton("Supprimer");
-            btn.setBackground(new Color(0xDC, 0x35, 0x45));
-            btn.setForeground(Color.WHITE);
+            btn.setBackground(DentalTheme.CARD);
+            btn.setForeground(DentalTheme.TEXT2);
             btn.setFocusPainted(false);
             btn.setMargin(new Insets(2, 6, 2, 6));
             btn.addActionListener(e -> {
