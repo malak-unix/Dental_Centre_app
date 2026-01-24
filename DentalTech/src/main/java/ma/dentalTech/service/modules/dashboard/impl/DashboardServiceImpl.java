@@ -11,12 +11,14 @@ import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.entities.users.Notification;
 import ma.dentalTech.entities.users.Utilisateur;
+import ma.dentalTech.entities.log.Log;
 import ma.dentalTech.mvc.dto.agenda.ListeAttenteDto;
 import ma.dentalTech.mvc.dto.agenda.RdvDto;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.DashboardFeaturesDTO;
 import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.AlerteDTO;
+import ma.dentalTech.mvc.dto.dashboard.common.ActivityDTO;
 import ma.dentalTech.mvc.dto.dashboard.common.NotificationDTO;
 import ma.dentalTech.mvc.dto.dashboard.medecin.MedecinDashboardResponseDTO;
 import ma.dentalTech.mvc.dto.dashboard.medecin.PatientCurrentDTO;
@@ -27,6 +29,7 @@ import ma.dentalTech.repository.modules.agenda.api.RdvRepository;
 import ma.dentalTech.repository.modules.caisse.api.FactureRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepository;
+import ma.dentalTech.repository.modules.log.api.LogRepository;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.repository.modules.users.api.NotificationRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
@@ -49,6 +52,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final ConsultationRepository consultationRepo;
     private final UtilisateurRepository utilisateurRepo;
     private final NotificationRepository notificationRepo;
+    private final LogRepository logRepo;
 
     /**
      * ✅ Constructeur SANS ARGUMENTS
@@ -66,7 +70,8 @@ public class DashboardServiceImpl implements DashboardService {
                 beanOrNull(ActeRepository.class),
                 bean(ConsultationRepository.class),
                 bean(UtilisateurRepository.class),
-                bean(NotificationRepository.class));
+                bean(NotificationRepository.class),
+                beanOrNull(LogRepository.class));
     }
 
     /**
@@ -79,7 +84,8 @@ public class DashboardServiceImpl implements DashboardService {
             ActeRepository acteRepo,
             ConsultationRepository consultationRepo,
             UtilisateurRepository utilisateurRepo,
-            NotificationRepository notificationRepo) {
+            NotificationRepository notificationRepo,
+            LogRepository logRepo) {
         this.rdvRepo = rdvRepo;
         this.listeAttenteRepo = listeAttenteRepo;
         this.patientRepo = patientRepo;
@@ -88,6 +94,7 @@ public class DashboardServiceImpl implements DashboardService {
         this.consultationRepo = consultationRepo;
         this.utilisateurRepo = utilisateurRepo;
         this.notificationRepo = notificationRepo;
+        this.logRepo = logRepo;
     }
 
     /**
@@ -102,7 +109,7 @@ public class DashboardServiceImpl implements DashboardService {
             UtilisateurRepository utilisateurRepo,
             NotificationRepository notificationRepo) {
         this(rdvRepo, listeAttenteRepo, patientRepo, factureRepo, null, consultationRepo, utilisateurRepo,
-                notificationRepo);
+                notificationRepo, null);
     }
 
     @Override
@@ -402,6 +409,12 @@ public class DashboardServiceImpl implements DashboardService {
         List<Utilisateur> users = safeList(utilisateurRepo.findPage(50, 0));
         List<UserSummaryDTO> userDTOs = users.stream().map(this::toUserSummaryDTO).toList();
 
+        List<ActivityDTO> activities = new ArrayList<>();
+        if (logRepo != null) {
+            List<Log> logs = safeList(logRepo.findRecent(8));
+            activities = logs.stream().map(this::toActivityDTO).toList();
+        }
+
         System.out.println("countAll users=" + utilisateurRepo.countAll());
         System.out.println("count admins=" + utilisateurRepo.countByRole(LibelleRole.ADMIN));
         System.out.println("recetteJour=" + factureRepo.totalRecetteDuJour());
@@ -413,6 +426,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .nbActesRealises(nbActesRealises)
                 .recetteDuJour(recetteDuJour)
                 .utilisateurs(userDTOs)
+                .activities(activities)
                 .referentiels(null)
                 .sauvegarde(null)
                 .build();
@@ -456,6 +470,29 @@ public class DashboardServiceImpl implements DashboardService {
                 .motif(l.getMotif())
                 .dateAjout(l.getDateAjout())
                 .priorite(l.getPriorite())
+                .build();
+    }
+
+    private ActivityDTO toActivityDTO(Log log) {
+        if (log == null) return null;
+        String userLabel = "";
+        if (log.getUtilisateurId() != null) {
+            Utilisateur u = safeFindUser(log.getUtilisateurId());
+            if (u != null) {
+                userLabel = (safe(u.getPrenom()) + " " + safe(u.getNom())).trim();
+            }
+        }
+        String message = safe(log.getDescription());
+        if (message.isBlank()) {
+            String action = safe(log.getAction());
+            message = action.isBlank() ? "Activite systeme" : action;
+        }
+        if (!userLabel.isBlank()) {
+            message = userLabel + " : " + message;
+        }
+        return ActivityDTO.builder()
+                .message(message)
+                .date(log.getDateAction() != null ? log.getDateAction() : log.getDateCreation())
                 .build();
     }
 
@@ -528,6 +565,16 @@ public class DashboardServiceImpl implements DashboardService {
         }
     }
 
+    private Utilisateur safeFindUser(Long userId) {
+        try {
+            if (userId == null)
+                return null;
+            return utilisateurRepo.findById(userId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private String buildPatientNom(Patient p) {
         if (p == null)
             return "";
@@ -569,6 +616,10 @@ public class DashboardServiceImpl implements DashboardService {
 
     private String nullSafe(Object v) {
         return v == null ? "" : String.valueOf(v);
+    }
+
+    private String safe(String v) {
+        return v == null ? "" : v;
     }
 
     private <T> List<T> safeList(List<T> v) {

@@ -4,6 +4,7 @@ import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.dto.dashboard.DashboardDTO;
 import ma.dentalTech.mvc.dto.dashboard.admin.AdminDashboardResponseDTO;
+import ma.dentalTech.mvc.dto.dashboard.common.ActivityDTO;
 import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalButton;
@@ -191,13 +192,14 @@ public class AdminDashboardPanel extends JPanel {
             statSecretaires.setValue(String.valueOf(nbSecretaires));
 
             activitiesPanel.removeAll();
-            if (users != null && !users.isEmpty()) {
-                int limit = Math.min(6, users.size());
+            List<ActivityDTO> activities = dto.getActivities();
+            if (activities != null && !activities.isEmpty()) {
+                int limit = Math.min(6, activities.size());
                 for (int i = 0; i < limit; i++) {
-                    UserSummaryDTO u = users.get(i);
-                    String line = safe(u.getPrenom()) + " " + safe(u.getNom());
-                    String last = (u.getDerniereActivite() != null) ? u.getDerniereActivite().format(fmt) : "-";
-                    JLabel row = new JLabel(line.trim() + " - " + last);
+                    ActivityDTO a = activities.get(i);
+                    String line = safe(a.getMessage());
+                    String last = (a.getDate() != null) ? a.getDate().format(fmt) : "-";
+                    JLabel row = new JLabel(line + " - " + last);
                     row.setFont(DentalTheme.textFont(12));
                     row.setForeground(DentalTheme.TEXT2);
                     row.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));

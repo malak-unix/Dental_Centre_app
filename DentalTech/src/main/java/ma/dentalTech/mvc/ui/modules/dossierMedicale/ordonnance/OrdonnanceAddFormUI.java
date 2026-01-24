@@ -37,6 +37,9 @@ public class OrdonnanceAddFormUI extends JDialog {
     private final JButton btnCancel = new JButton("Annuler");
     private final JButton btnCreate = new JButton("Enregistrer l'ordonnance");
 
+    private final OrdonnanceDTO ordonnanceToEdit;
+    private final boolean editMode;
+
     private boolean confirmed = false;
 
     /**
@@ -104,10 +107,21 @@ public class OrdonnanceAddFormUI extends JDialog {
     }
 
     public OrdonnanceAddFormUI(Frame parent, OrdonnanceController controller,
-                                List<ConsultationComboItem> consultations,
-                                List<MedicamentComboItem> medicaments,
-                                String username) {
-        super(parent, "Ajout d'une ordonnance", true);
+                               List<ConsultationComboItem> consultations,
+                               List<MedicamentComboItem> medicaments,
+                               String username) {
+        this(parent, controller, consultations, medicaments, username, null);
+    }
+
+    public OrdonnanceAddFormUI(Frame parent, OrdonnanceController controller,
+                               List<ConsultationComboItem> consultations,
+                               List<MedicamentComboItem> medicaments,
+                               String username,
+                               OrdonnanceDTO ordonnanceToEdit) {
+        super(parent, (ordonnanceToEdit == null) ? "Ajout d'une ordonnance" : "Modification de l'ordonnance", true);
+
+        this.ordonnanceToEdit = ordonnanceToEdit;
+        this.editMode = ordonnanceToEdit != null;
 
         setSize(700, 600);
         setLocationRelativeTo(parent);
@@ -137,6 +151,18 @@ public class OrdonnanceAddFormUI extends JDialog {
 
         setContentPane(content);
 
+        if (editMode) {
+            cbMedicament.setEnabled(false);
+            btnAddMedicament.setEnabled(false);
+            tableMedicaments.setEnabled(false);
+            if (ordonnanceToEdit.date() != null) {
+                txtDate.setText(ordonnanceToEdit.date().format(DATE_INPUT_FORMATTER));
+            }
+            if (ordonnanceToEdit.consultationId() != null) {
+                selectConsultation(ordonnanceToEdit.consultationId());
+            }
+        }
+
         // Actions
         btnCancel.addActionListener(e -> {
             confirmed = false;
@@ -144,6 +170,10 @@ public class OrdonnanceAddFormUI extends JDialog {
         });
 
         btnAddMedicament.addActionListener(e -> addMedicamentToTable());
+
+        if (editMode) {
+            btnCreate.setText("Enregistrer les modifications");
+        }
 
         btnCreate.addActionListener(e -> {
             if (validateAndCreate(controller, username)) {
@@ -320,7 +350,7 @@ public class OrdonnanceAddFormUI extends JDialog {
         // Validation: Consultation
         ConsultationComboItem selectedConsultation = (ConsultationComboItem) cbConsultation.getSelectedItem();
         if (selectedConsultation == null || selectedConsultation.getConsultationId() == null) {
-            showError("Veuillez sélectionner une consultation.");
+            showError("Veuillez selectionner une consultation.");
             cbConsultation.requestFocus();
             return false;
         }
@@ -337,65 +367,80 @@ public class OrdonnanceAddFormUI extends JDialog {
                 return false;
             }
         } else {
-            date = LocalDate.now(); // Par défaut aujourd'hui
+            date = LocalDate.now();
         }
 
-        // Validation: Au moins un médicament
-        if (modelMedicaments.getRowCount() == 0) {
-            showError("Veuillez ajouter au moins un médicament à l'ordonnance.");
-            return false;
-        }
+        if (!editMode) {
+            if (modelMedicaments.getRowCount() == 0) {
+                showError("Veuillez ajouter au moins un medicament a l'ordonnance.");
+                return false;
+            }
 
-        // Validation des médicaments
-        for (int i = 0; i < modelMedicaments.getRowCount(); i++) {
-            MedicamentRow row = modelMedicaments.getRowAt(i);
-            if (row.quantite == null || row.quantite.trim().isEmpty()) {
-                showError("La quantité est obligatoire pour le médicament: " + row.medicamentNom);
-                return false;
-            }
-            if (row.frequence == null || row.frequence.trim().isEmpty()) {
-                showError("La fréquence est obligatoire pour le médicament: " + row.medicamentNom);
-                return false;
-            }
-            if (row.duree == null || row.duree.trim().isEmpty()) {
-                showError("La durée est obligatoire pour le médicament: " + row.medicamentNom);
-                return false;
-            }
-            try {
-                int d = Integer.parseInt(row.duree.trim());
-                if (d <= 0) {
-                    showError("La durée doit être un nombre positif pour: " + row.medicamentNom);
+            for (int i = 0; i < modelMedicaments.getRowCount(); i++) {
+                MedicamentRow row = modelMedicaments.getRowAt(i);
+                if (row.quantite == null || row.quantite.trim().isEmpty()) {
+                    showError("La quantite est obligatoire pour le medicament: " + row.medicamentNom);
                     return false;
                 }
-            } catch (NumberFormatException e) {
-                showError("Durée invalide pour: " + row.medicamentNom);
-                return false;
+                if (row.frequence == null || row.frequence.trim().isEmpty()) {
+                    showError("La frequence est obligatoire pour le medicament: " + row.medicamentNom);
+                    return false;
+                }
+                if (row.duree == null || row.duree.trim().isEmpty()) {
+                    showError("La duree est obligatoire pour le medicament: " + row.medicamentNom);
+                    return false;
+                }
+                try {
+                    int d = Integer.parseInt(row.duree.trim());
+                    if (d <= 0) {
+                        showError("La duree doit etre un nombre positif pour: " + row.medicamentNom);
+                        return false;
+                    }
+                } catch (NumberFormatException e) {
+                    showError("Duree invalide pour: " + row.medicamentNom);
+                    return false;
+                }
             }
         }
 
-        // Création de l'ordonnance
         try {
-            // Récupérer le dossierId depuis la consultation (à implémenter si nécessaire)
-            // Pour l'instant, on utilise null
-            Long dossierId = null; // TODO: récupérer depuis la consultation
-
+            Long dossierId = (ordonnanceToEdit == null) ? null : ordonnanceToEdit.dossierId();
             OrdonnanceDTO ordonnance = new OrdonnanceDTO(
-                    null, // id
+                    editMode ? ordonnanceToEdit.id() : null,
                     dossierId,
                     selectedConsultation.getConsultationId(),
                     date
             );
 
-            Long ordonnanceId = controller.create(ordonnance, username);
-            JOptionPane.showMessageDialog(this,
-                    "Ordonnance créée avec succès (ID: " + ordonnanceId + ")\n" +
-                    "Note: Les prescriptions (médicaments) doivent être ajoutées séparément.",
-                    "Succès",
-                    JOptionPane.INFORMATION_MESSAGE);
+            if (editMode) {
+                controller.update(ordonnance, username);
+                JOptionPane.showMessageDialog(this,
+                        "Ordonnance mise a jour avec succes.",
+                        "Succes",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                Long ordonnanceId = controller.create(ordonnance, username);
+                JOptionPane.showMessageDialog(this,
+                        "Ordonnance creee avec succes (ID: " + ordonnanceId + ").",
+                        "Succes",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
             return true;
         } catch (Exception ex) {
-            showError("Erreur lors de la création: " + ex.getMessage());
+            showError("Erreur lors de la sauvegarde: " + ex.getMessage());
             return false;
+        }
+    }
+
+    private void selectConsultation(Long consultationId) {
+        if (consultationId == null) return;
+        ComboBoxModel<ConsultationComboItem> m = cbConsultation.getModel();
+        for (int i = 0; i < m.getSize(); i++) {
+            ConsultationComboItem item = m.getElementAt(i);
+            if (item != null && consultationId.equals(item.getConsultationId())) {
+                cbConsultation.setSelectedIndex(i);
+                return;
+            }
         }
     }
 

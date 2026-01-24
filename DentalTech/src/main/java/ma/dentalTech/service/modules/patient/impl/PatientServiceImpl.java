@@ -1,6 +1,19 @@
 package ma.dentalTech.service.modules.patient.impl;
 
 import ma.dentalTech.common.exceptions.ServiceException;
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.entities.enums.PrioriteNotification;
+import ma.dentalTech.entities.enums.TitreNotification;
+import ma.dentalTech.entities.enums.TypeNotification;
+import ma.dentalTech.entities.log.Log;
+import ma.dentalTech.entities.users.Notification;
+import ma.dentalTech.entities.users.Utilisateur;
+import ma.dentalTech.repository.modules.log.api.LogRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+import ma.dentalTech.service.modules.users.api.NotificationService;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.service.modules.patient.api.PatientService;
@@ -47,6 +60,7 @@ public class PatientServiceImpl implements PatientService {
                 if (exist != null) throw ServiceException.validation("Téléphone déjà utilisé");
             }
             patientRepo.create(p);
+            emitPatientCreatedLog(p);
         } catch (ServiceException se) {
             throw se;
         } catch (Exception e) {
@@ -145,4 +159,50 @@ public class PatientServiceImpl implements PatientService {
         if (p.getPrenom() == null || p.getPrenom().isBlank()) throw ServiceException.validation("Prénom obligatoire");
         if (p.getTelephone() == null || p.getTelephone().isBlank()) throw ServiceException.validation("Téléphone obligatoire");
     }
+
+
+    private void emitPatientCreatedLog(Patient p) {
+        if (p == null) return;
+
+        String login = p.getCreePar();
+        UtilisateurRepository userRepo = ApplicationContext.getBean(UtilisateurRepository.class);
+        Utilisateur user = null;
+        if (login != null && !login.isBlank() && userRepo != null) {
+            Optional<Utilisateur> u = userRepo.findByLogin(login);
+            if (u.isPresent()) user = u.get();
+        }
+
+        LogRepository logRepo = ApplicationContext.getBean(LogRepository.class);
+        if (logRepo != null) {
+            Log log = new Log();
+            if (user != null) log.setUtilisateurId(user.getId());
+            log.setAction("PATIENT_CREATE");
+            log.setDescription("Nouveau patient: " + p.getNom() + " " + p.getPrenom());
+            log.setCreePar(login);
+            log.setModifiePar(login);
+            try {
+                logRepo.create(log);
+            } catch (Exception ignored) {}
+        }
+
+        NotificationService notifService = ApplicationContext.getBean(NotificationService.class);
+        if (notifService != null && user != null) {
+            Notification n = Notification.builder()
+                    .titre(TitreNotification.MESSAGE_SYSTEME)
+                    .message("Nouveau patient: " + p.getNom() + " " + p.getPrenom())
+                    .date(LocalDate.now())
+                    .time(LocalTime.now())
+                    .type(TypeNotification.INFORMATION)
+                    .priorite(PrioriteNotification.MOYENNE)
+                    .lue(false)
+                    .utilisateur(user)
+                    .creePar(login)
+                    .modifiePar(login)
+                    .build();
+            try {
+                notifService.create(n);
+            } catch (Exception ignored) {}
+        }
+    }
+
 }

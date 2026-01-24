@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ma.dentalTech.mvc.dto.dashboard.common.ActivityDTO;
 import ma.dentalTech.mvc.dto.users.UserSummaryDTO;
 
 import java.math.BigDecimal;
@@ -23,6 +24,9 @@ public class AdminDashboardResponseDTO {
 
     // table users
     private List<UserSummaryDTO> utilisateurs;
+
+    // activites recentes
+    private List<ActivityDTO> activities;
 
     // referentiels + securite
     private ReferentielStatsDTO referentiels;

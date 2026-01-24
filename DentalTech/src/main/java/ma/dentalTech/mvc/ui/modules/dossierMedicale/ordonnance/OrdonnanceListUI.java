@@ -14,7 +14,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.Frame;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -83,10 +82,10 @@ public class OrdonnanceListUI extends JPanel {
         titleRow.add(title, BorderLayout.WEST);
 
         btnAdd.setFont(DentalTheme.textBold(13));
-        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41)); // Bleu foncé selon maquette
+        btnAdd.setBackground(new Color(0x1C, 0x25, 0x41));
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2), // Bordure dorée
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
                 new EmptyBorder(8, 16, 8, 16)
         ));
         btnAdd.setFocusPainted(false);
@@ -98,7 +97,7 @@ public class OrdonnanceListUI extends JPanel {
         wrap.add(titleRow);
         wrap.add(Box.createVerticalStrut(12));
 
-        // Filtres (optionnels)
+        // Filtres
         JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
         filters.setOpaque(false);
 
@@ -108,7 +107,7 @@ public class OrdonnanceListUI extends JPanel {
         filters.add(Box.createHorizontalStrut(10));
         filters.add(new JLabel("Date:"));
         filters.add(txtDateFrom);
-        filters.add(new JLabel("à"));
+        filters.add(new JLabel("a"));
         filters.add(txtDateTo);
 
         filters.add(Box.createHorizontalStrut(10));
@@ -133,12 +132,10 @@ public class OrdonnanceListUI extends JPanel {
         table.setGridColor(DentalTheme.BORDER);
         table.setShowGrid(true);
 
-        // Colonnes
-        table.getColumnModel().getColumn(0).setPreferredWidth(250); // Nom patient
-        table.getColumnModel().getColumn(1).setPreferredWidth(120); // Date
-        table.getColumnModel().getColumn(2).setPreferredWidth(300); // Actions
+        table.getColumnModel().getColumn(0).setPreferredWidth(250);
+        table.getColumnModel().getColumn(1).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(300);
 
-        // Renderer pour les actions
         table.getColumnModel().getColumn(2).setCellRenderer(new ActionsCellRenderer());
         table.getColumnModel().getColumn(2).setCellEditor(new ActionsCellEditor());
 
@@ -161,13 +158,18 @@ public class OrdonnanceListUI extends JPanel {
         btnSearch.addActionListener(e -> refresh());
     }
 
+    private Frame getParentFrame() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner instanceof Frame f) return f;
+        if (owner instanceof Dialog d && d.getOwner() instanceof Frame f) return f;
+        return null;
+    }
+
     private void onAddOrdonnance() {
-        // Pour l'instant, on utilise une liste vide pour les consultations
-        // TODO: Récupérer la liste réelle des consultations pour le médecin
-        java.util.List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
-        java.util.List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
+        List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
+        List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
         OrdonnanceAddFormUI dialog = new OrdonnanceAddFormUI(
-                (Frame) SwingUtilities.getWindowAncestor(this),
+                getParentFrame(),
                 controller,
                 consultations,
                 medicaments,
@@ -201,7 +203,7 @@ public class OrdonnanceListUI extends JPanel {
             try {
                 req.setDateFrom(LocalDate.parse(d1.trim()));
             } catch (DateTimeParseException e) {
-                // Ignorer
+                // ignore
             }
         }
 
@@ -210,7 +212,7 @@ public class OrdonnanceListUI extends JPanel {
             try {
                 req.setDateTo(LocalDate.parse(d2.trim()));
             } catch (DateTimeParseException e) {
-                // Ignorer
+                // ignore
             }
         }
 
@@ -255,15 +257,12 @@ public class OrdonnanceListUI extends JPanel {
             return switch (columnIndex) {
                 case 0 -> r.getPatientNomComplet() == null ? "" : r.getPatientNomComplet();
                 case 1 -> r.getDate() == null ? "" : r.getDate().format(DATE_FMT);
-                case 2 -> ""; // actions renderer
+                case 2 -> "";
                 default -> "";
             };
         }
     }
 
-    // =========================================================
-    // Renderers / Editors
-    // =========================================================
     private class ActionsCellRenderer implements TableCellRenderer {
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
         private final JButton b1 = new JButton("Consulter");
@@ -283,7 +282,7 @@ public class OrdonnanceListUI extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+            panel.setBackground(table.getSelectionBackground());
             return panel;
         }
     }
@@ -304,14 +303,15 @@ public class OrdonnanceListUI extends JPanel {
                 styleReadableButton(b);
                 panel.add(b);
             }
+
             b1.addActionListener(e -> {
                 stopCellEditing();
                 OrdonnanceListItemDTO r = model.getAt(currentRow);
                 if (r == null) return;
-                // Ouvrir l'interface de consultation
-                JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(OrdonnanceListUI.this),
-                        "Consultation de l'ordonnance", true);
-                OrdonnanceDetailUI detailUI = new OrdonnanceDetailUI(controller, r.getOrdonnanceId(), () -> dialog.dispose());
+
+                Window owner = SwingUtilities.getWindowAncestor(OrdonnanceListUI.this);
+                JDialog dialog = new JDialog(owner, "Consultation de l'ordonnance", Dialog.ModalityType.APPLICATION_MODAL);
+                OrdonnanceDetailUI detailUI = new OrdonnanceDetailUI(controller, r.getOrdonnanceId(), dialog::dispose);
                 dialog.setContentPane(detailUI);
                 dialog.setSize(900, 700);
                 dialog.setLocationRelativeTo(OrdonnanceListUI.this);
@@ -322,7 +322,7 @@ public class OrdonnanceListUI extends JPanel {
                 stopCellEditing();
                 OrdonnanceListItemDTO r = model.getAt(currentRow);
                 if (r == null) return;
-                
+
                 try {
                     OrdonnanceDTO ordonnanceDTO = controller.getById(r.getOrdonnanceId());
                     if (ordonnanceDTO == null) {
@@ -332,14 +332,27 @@ public class OrdonnanceListUI extends JPanel {
                                 JOptionPane.ERROR_MESSAGE);
                         return;
                     }
-                    
-                    // TODO: Créer un formulaire de modification OrdonnanceEditFormUI si nécessaire
-                    // Pour l'instant, on affiche un message
-                    JOptionPane.showMessageDialog(OrdonnanceListUI.this,
-                            "Modification de l'ordonnance #" + r.getOrdonnanceId() + "\n" +
-                            "Fonctionnalité à implémenter (formulaire de modification)",
-                            "Information",
-                            JOptionPane.INFORMATION_MESSAGE);
+
+                    List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
+                    consultations.add(new OrdonnanceAddFormUI.ConsultationComboItem(
+                            ordonnanceDTO.consultationId(),
+                            "Consultation #" + ordonnanceDTO.consultationId()
+                    ));
+
+                    List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
+
+                    OrdonnanceAddFormUI editDialog = new OrdonnanceAddFormUI(
+                            getParentFrame(),
+                            controller,
+                            consultations,
+                            medicaments,
+                            username,
+                            ordonnanceDTO
+                    );
+                    editDialog.setVisible(true);
+                    if (editDialog.isConfirmed()) {
+                        refresh();
+                    }
                 } catch (Exception ex) {
                     showError(ex);
                 }
@@ -361,8 +374,8 @@ public class OrdonnanceListUI extends JPanel {
                     controller.delete(r.getOrdonnanceId());
                     refresh();
                     JOptionPane.showMessageDialog(OrdonnanceListUI.this,
-                            "Ordonnance supprimée avec succès",
-                            "Succès",
+                            "Ordonnance supprimee avec succes",
+                            "Succes",
                             JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {
                     showError(ex);
@@ -395,4 +408,3 @@ public class OrdonnanceListUI extends JPanel {
         ));
     }
 }
-

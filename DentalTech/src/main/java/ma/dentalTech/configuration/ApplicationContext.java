@@ -8,6 +8,7 @@ import ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepository;
 import ma.dentalTech.repository.modules.patient.api.*;
 import ma.dentalTech.repository.modules.users.api.*;
+import ma.dentalTech.repository.modules.log.api.LogRepository;
 import ma.dentalTech.service.modules.dashboard.api.DashboardService;
 import ma.dentalTech.service.modules.patient.api.*;
 
@@ -450,6 +451,13 @@ public final class ApplicationContext {
                 notificationRepo = newRepoInstance(props, "notificationRepo", NotificationRepository.class, known);
                 put(NotificationRepository.class, notificationRepo, "notificationRepo");
                 registerKnown(known, notificationRepo);
+            }
+
+            if (hasKey(props, "logRepo")) {
+                currentBean = "logRepo";
+                LogRepository logRepo = newRepoInstance(props, "logRepo", LogRepository.class, known);
+                put(LogRepository.class, logRepo, "logRepo");
+                registerKnown(known, logRepo);
             }
 
             if (hasKey(props, "utilisateurRepo")) {

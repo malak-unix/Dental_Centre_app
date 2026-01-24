@@ -153,7 +153,44 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     // CrudRepository stubs
     @Override public Notification findById(Long id) { return null; }
     @Override public List<Notification> findAll() { return new ArrayList<>(); }
-    @Override public void create(Notification n) {}
+
+    @Override
+    public void create(Notification n) {
+        if (n == null) return;
+        if (n.getUtilisateur() == null || n.getUtilisateur().getId() == null) return;
+
+        String sql = """
+            INSERT INTO notification
+              (utilisateur_id, titre, message, lue, date_notification, priorite,
+               date_creation, date_modification, cree_par, modifie_par)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?)
+            """;
+
+        try (Connection cn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setLong(1, n.getUtilisateur().getId());
+            ps.setString(2, n.getTitre() != null ? n.getTitre().name() : null);
+            ps.setString(3, n.getMessage());
+            ps.setBoolean(4, n.isLue());
+
+            java.time.LocalDate date = n.getDate() != null ? n.getDate() : LocalDate.now();
+            java.time.LocalTime time = n.getTime() != null ? n.getTime() : java.time.LocalTime.now();
+            ps.setTimestamp(5, Timestamp.valueOf(date.atTime(time)));
+
+            ps.setString(6, n.getPriorite() != null ? n.getPriorite().name() : null);
+            ps.setString(7, n.getCreePar());
+            ps.setString(8, n.getModifiePar());
+
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) n.setId(keys.getLong(1));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur create(Notification)", e);
+        }
+    }
+
     @Override public void update(Notification n) {}
     @Override public void deleteById(Long id) {}
     @Override public void delete(Notification n) { if (n != null) deleteById(n.getId()); }
@@ -180,7 +217,8 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         try {
             String titre = rs.getString("titre");
             if (titre != null) {
-                n.getClass().getMethod("setTitre", String.class).invoke(n, titre);
+                n.getClass().getMethod("setTitre", TitreNotification.class)
+                        .invoke(n, TitreNotification.valueOf(titre));
             }
         } catch (Exception ignored) {}
 
