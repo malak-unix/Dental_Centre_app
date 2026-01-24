@@ -5,15 +5,19 @@ import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.CertificatController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController;
 import ma.dentalTech.mvc.dto.caisse.FactureCreateDTO;
+import ma.dentalTech.mvc.dto.caisse.CaisseFactureRowDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.acte.ActeInterventionDTO;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeAddFormUI;
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.certificat.CertificatAddFormUI;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDetailDTO;
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance.OrdonnanceAddFormUI;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.UiStyles;
+import ma.dentalTech.mvc.ui.modules.caisse.CaisseFactureDetailPanel;
 import ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService;
 
 import javax.swing.*;
@@ -148,9 +152,21 @@ public class ConsultationDetailUI extends JPanel {
     }
 
 
+    
     private JComponent buildActesSection() {
-        CardPanel section = new CardPanel("Actes effectues");
-        section.setLayout(new BorderLayout(10, 10));
+        CardPanel section = new CardPanel((String) null);
+        section.setBackground(DentalTheme.CARD);
+        section.setBorder(new EmptyBorder(10, 10, 10, 10));
+        section.setOpaque(false);
+        section.setLayout(new BorderLayout(8, 8));
+
+        JLabel title = new JLabel("Actes effectues");
+        title.setFont(DentalTheme.titleFont(18));
+        title.setForeground(DentalTheme.PRIMARY_DARK);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.WEST);
 
         modelActes = new ActeTableModel();
         tableActes.setModel(modelActes);
@@ -168,9 +184,13 @@ public class ConsultationDetailUI extends JPanel {
         tableActes.getColumnModel().getColumn(1).setPreferredWidth(100);
 
         JScrollPane scroll = new JScrollPane(tableActes);
-        scroll.setBorder(BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true));
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setPreferredSize(new Dimension(10, 220));
+        scroll.setMinimumSize(new Dimension(10, 200));
 
-        JPanel tablePanel = new JPanel(new BorderLayout(10, 10));
+        JPanel tablePanel = new JPanel(new BorderLayout(8, 8));
         tablePanel.setOpaque(false);
         tablePanel.add(scroll, BorderLayout.CENTER);
 
@@ -199,15 +219,37 @@ public class ConsultationDetailUI extends JPanel {
         btnPanel.add(btnDeleteActe);
         btnPanel.add(btnPrint);
 
+        section.add(header, BorderLayout.NORTH);
         section.add(tablePanel, BorderLayout.CENTER);
         section.add(btnPanel, BorderLayout.SOUTH);
 
         return section;
     }
 
+
+    private Frame getParentFrame() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner instanceof Frame f) return f;
+        if (owner instanceof Dialog d && d.getOwner() instanceof Frame f) return f;
+        return null;
+    }
+
+    
     private void onAddActe() {
+        Frame parent = getParentFrame();
+
+        try {
+            Object acteBean = ApplicationContext.getBean("acteController");
+            if (acteBean instanceof ActeController acteController) {
+                ActeAddFormUI createDialog = new ActeAddFormUI(parent, acteController, username);
+                createDialog.setVisible(true);
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+
         ActeAddToConsultationUI dialog = new ActeAddToConsultationUI(
-                (Frame) SwingUtilities.getWindowAncestor(this),
+                parent,
                 detail.getConsultationId(),
                 username
         );
@@ -363,7 +405,7 @@ public class ConsultationDetailUI extends JPanel {
             List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
 
             OrdonnanceAddFormUI dialog = new OrdonnanceAddFormUI(
-                    (Frame) SwingUtilities.getWindowAncestor(this),
+                    getParentFrame(),
                     ordonnanceController,
                     consultations,
                     medicaments,
@@ -430,7 +472,7 @@ public class ConsultationDetailUI extends JPanel {
             ));
 
             CertificatAddFormUI dialog = new CertificatAddFormUI(
-                    (Frame) SwingUtilities.getWindowAncestor(this),
+                    getParentFrame(),
                     certificatController,
                     dossiers,
                     username
@@ -467,6 +509,17 @@ public class ConsultationDetailUI extends JPanel {
         return footer;
     }
 
+
+    private void openFactureDetail(CaisseFactureRowDTO dto) {
+        if (dto == null) return;
+        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Facture", Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setContentPane(new CaisseFactureDetailPanel(dto));
+        dlg.pack();
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+
+    
     private void onGenerateFacture() {
         // Verifier si une facture existe deja
         if (detail.getFactureId() != null) {
@@ -476,48 +529,44 @@ public class ConsultationDetailUI extends JPanel {
                     "Facture existante",
                     JOptionPane.YES_NO_OPTION);
             if (option != JOptionPane.YES_OPTION) {
+                try {
+                    Object factureBean = ApplicationContext.getBean("factureControllerV2");
+                    if (factureBean instanceof FactureControllerV2 factureController) {
+                        CaisseFactureRowDTO existing = factureController.getById(detail.getFactureId());
+                        openFactureDetail(existing);
+                    }
+                } catch (Exception ignored) {}
                 return;
             }
         }
 
         try {
-            // Recuperer le controller facture
             Object factureBean = ApplicationContext.getBean("factureControllerV2");
             if (!(factureBean instanceof FactureControllerV2 factureController)) {
                 JOptionPane.showMessageDialog(this, "Controller facture introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Calculer le montant total
             double montantTotal = 0.0;
             if (detail.getActes() != null && !detail.getActes().isEmpty()) {
-                // Somme des prix des actes
                 montantTotal = detail.getActes().stream()
                         .mapToDouble(a -> a.getPrixPatient() != null ? a.getPrixPatient() : 0.0)
                         .sum();
             } else if (detail.getTotalFacture() != null) {
-                // Prix de consultation sans acte
                 montantTotal = detail.getTotalFacture();
             } else {
-                // Montant par defaut
-                montantTotal = 100.0; // Prix consultation standard
+                montantTotal = 100.0;
             }
 
-            // Creer la facture
             FactureCreateDTO factureDTO = FactureCreateDTO.builder()
                     .consultationId(detail.getConsultationId())
                     .dateFacture(LocalDate.now())
                     .totalFacture(BigDecimal.valueOf(montantTotal))
                     .build();
 
-            factureController.create(factureDTO);
+            CaisseFactureRowDTO created = factureController.create(factureDTO);
+            openFactureDetail(created);
 
-            JOptionPane.showMessageDialog(this,
-                    "Facture generee avec succes\n" + "Montant total: " + String.format("%.2f DH", montantTotal),
-                    "Succes",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            // Recharger les details pour avoir la facture
             reloadDetail(detail.getConsultationId());
 
         } catch (Exception ex) {
@@ -529,6 +578,7 @@ public class ConsultationDetailUI extends JPanel {
     }
 
     // =========================================================
+
     // Table model pour actes
     // =========================================================
     private class ActeTableModel extends AbstractTableModel {

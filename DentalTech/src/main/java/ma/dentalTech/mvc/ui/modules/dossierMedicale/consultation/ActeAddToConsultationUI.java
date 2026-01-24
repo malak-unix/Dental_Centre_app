@@ -7,6 +7,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.common.ActorDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.intervention.InterventionMedecinDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.intervention.SaveInterventionRequestDTO;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeAddFormUI;
 import ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ public class ActeAddToConsultationUI extends JDialog {
 
     private final JButton btnCancel = new JButton("Annuler");
     private final JButton btnSave = new JButton("Ajouter");
+    private final JButton btnNewActe = new JButton("+ Nouveau acte");
 
     private boolean confirmed = false;
 
@@ -101,6 +103,19 @@ public class ActeAddToConsultationUI extends JDialog {
             }
         });
 
+        btnNewActe.addActionListener(e -> {
+            Frame parentFrame = null;
+            Window owner = SwingUtilities.getWindowAncestor(this);
+            if (owner instanceof Frame f) parentFrame = f;
+            else if (owner instanceof Dialog d && d.getOwner() instanceof Frame f) parentFrame = f;
+
+            ActeAddFormUI dialog = new ActeAddFormUI(parentFrame, acteController, username);
+            dialog.setVisible(true);
+            if (dialog.isConfirmed()) {
+                reloadActes();
+            }
+        });
+
         // Quand un acte est sélectionné, remplir le prix de base
         cbActe.addActionListener(e -> {
             ActeComboItem selected = (ActeComboItem) cbActe.getSelectedItem();
@@ -110,8 +125,13 @@ public class ActeAddToConsultationUI extends JDialog {
         });
     }
 
+    private void reloadActes() {
+        loadActes();
+    }
+
     private void loadActes() {
         try {
+            cbActe.removeAllItems();
             List<ActeListItemDTO> actes = acteController.findAll();
             cbActe.addItem(new ActeComboItem(null, "-- Sélectionner un acte --", null));
             for (ActeListItemDTO acte : actes) {
@@ -184,6 +204,15 @@ public class ActeAddToConsultationUI extends JDialog {
         ));
         btnSave.setFocusPainted(false);
 
+        btnNewActe.setFont(DentalTheme.textFont(13));
+        btnNewActe.setBackground(DentalTheme.BEIGE);
+        btnNewActe.setForeground(DentalTheme.TEXT2);
+        btnNewActe.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+
+        buttons.add(btnNewActe);
         buttons.add(btnCancel);
         buttons.add(btnSave);
 

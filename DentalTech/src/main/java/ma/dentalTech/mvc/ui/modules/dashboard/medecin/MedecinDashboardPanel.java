@@ -18,6 +18,7 @@ import ma.dentalTech.entities.dossierMedical.DossierMedical;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,16 +104,42 @@ public class MedecinDashboardPanel extends JPanel {
         });
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sp.setPreferredSize(new Dimension(10, 220));
+        sp.setMinimumSize(new Dimension(10, 200));
 
-        CardPanel rdvCard = new CardPanel("Rendez-vous du Jour");
-        rdvCard.setLayout(new BorderLayout(10, 10));
+        CardPanel rdvCard = new CardPanel((String) null);
+        rdvCard.setBackground(DentalTheme.CARD);
+        rdvCard.setBorder(new EmptyBorder(10, 10, 10, 10));
+        rdvCard.setOpaque(false);
+        rdvCard.setLayout(new BorderLayout(8, 8));
+
+        JLabel rdvTitle = new JLabel("Rendez-vous du Jour");
+        rdvTitle.setFont(DentalTheme.titleFont(18));
+        rdvTitle.setForeground(DentalTheme.PRIMARY_DARK);
+        JPanel rdvHeader = new JPanel(new BorderLayout());
+        rdvHeader.setOpaque(false);
+        rdvHeader.add(rdvTitle, BorderLayout.WEST);
+
+        rdvCard.add(rdvHeader, BorderLayout.NORTH);
         rdvCard.add(sp, BorderLayout.CENTER);
 
         root.add(rdvCard, BorderLayout.CENTER);
 
-        CardPanel right = new CardPanel("Client en cours");
-        right.setLayout(new BorderLayout(10, 10));
+        CardPanel right = new CardPanel((String) null);
+        right.setBackground(DentalTheme.CARD);
+        right.setBorder(new EmptyBorder(10, 10, 10, 10));
+        right.setOpaque(false);
+        right.setLayout(new BorderLayout(8, 8));
         right.setPreferredSize(new Dimension(360, 10));
+
+        JLabel clientTitle = new JLabel("Client en cours");
+        clientTitle.setFont(DentalTheme.titleFont(18));
+        clientTitle.setForeground(DentalTheme.PRIMARY_DARK);
+        JPanel clientHeader = new JPanel(new BorderLayout());
+        clientHeader.setOpaque(false);
+        clientHeader.add(clientTitle, BorderLayout.WEST);
 
         JPanel info = new JPanel();
         info.setOpaque(false);
@@ -141,8 +168,10 @@ public class MedecinDashboardPanel extends JPanel {
         info.add(lblCurrentStatus);
         info.setBorder(BorderFactory.createEmptyBorder(6, 6, 0, 6));
 
-        right.add(info, BorderLayout.NORTH);
-        right.add(new TeethChartPanel(), BorderLayout.CENTER);
+        JPanel rightBody = new JPanel(new BorderLayout(10, 10));
+        rightBody.setOpaque(false);
+        rightBody.add(info, BorderLayout.NORTH);
+        rightBody.add(new TeethChartPanel(), BorderLayout.CENTER);
 
         JPanel btns = new JPanel(new GridLayout(4, 1, 8, 8));
         btns.setOpaque(false);
@@ -170,7 +199,10 @@ public class MedecinDashboardPanel extends JPanel {
         btns.add(bOrdo);
         btns.add(bCertif);
 
-        right.add(btns, BorderLayout.SOUTH);
+        rightBody.add(btns, BorderLayout.SOUTH);
+
+        right.add(clientHeader, BorderLayout.NORTH);
+        right.add(rightBody, BorderLayout.CENTER);
 
         root.add(right, BorderLayout.EAST);
 
