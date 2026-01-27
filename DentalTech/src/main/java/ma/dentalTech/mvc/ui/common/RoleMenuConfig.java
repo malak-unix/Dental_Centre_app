@@ -41,13 +41,13 @@ public final class RoleMenuConfig {
     }
 
     public static List<NavItem> menuFor(LibelleRole role, String privilegesCsv) {
-        if (role == null) role = LibelleRole.SECRETAIRE;
+        LibelleRole resolvedRole = (role == null) ? LibelleRole.SECRETAIRE : role;
         if (privilegesCsv == null || privilegesCsv.isBlank()) {
-            return menuFor(role);
+            return menuFor(resolvedRole);
         }
         String upper = privilegesCsv.toUpperCase();
         if (upper.contains("ALL")) {
-            return menuFor(role);
+            return menuFor(resolvedRole);
         }
 
         java.util.Set<String> privs = new java.util.HashSet<>();
@@ -56,8 +56,8 @@ public final class RoleMenuConfig {
             if (!v.isBlank()) privs.add(v);
         }
 
-        List<NavItem> base = menuFor(role);
-        return base.stream().filter(it -> isAllowed(it.getId(), role, privs))
+        List<NavItem> base = menuFor(resolvedRole);
+        return base.stream().filter(it -> isAllowed(it.getId(), resolvedRole, privs))
                 .collect(java.util.stream.Collectors.toList());
     }
 

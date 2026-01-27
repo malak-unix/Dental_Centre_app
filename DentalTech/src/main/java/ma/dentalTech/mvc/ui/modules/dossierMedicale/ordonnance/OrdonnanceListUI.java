@@ -462,8 +462,8 @@ public class OrdonnanceListUI extends JPanel {
                 for (Medicament m : meds) {
                     if (m == null || m.getId() == null) continue;
                     String label = m.getNom() != null ? m.getNom() : ("Medicament #" + m.getId());
-                    if (!isBlank(m.getForme())) {
-                        label += " (" + m.getForme() + ")";
+                    if (m.getForme() != null) {
+                        label += " (" + m.getForme().name() + ")";
                     }
                     out.add(new OrdonnanceAddFormUI.MedicamentComboItem(m.getId(), label));
                 }
