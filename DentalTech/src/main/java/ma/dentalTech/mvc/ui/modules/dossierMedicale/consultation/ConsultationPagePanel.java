@@ -1,13 +1,18 @@
 package ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation;
 
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.ActorDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListRequestDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.intervention.InterventionMedecinDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.intervention.SaveInterventionRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.UiStyles;
+import ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -218,12 +223,15 @@ public class ConsultationPagePanel extends JPanel {
         // TODO: Recuperer la liste reelle des dossiers medicaux pour le medecin
         java.util.List<ConsultationAddFormUI.DossierComboItem> dossiers = new ArrayList<>();
 
-        Optional<ConsultationDTO> result = ConsultationAddFormUI.showDialog(this, dossiers);
+        Optional<ConsultationAddFormUI.ConsultationFormResult> result =
+                ConsultationAddFormUI.showDialog(this, dossiers, username);
 
         if (result.isPresent()) {
             try {
-                ConsultationDTO consultation = result.get();
+                ConsultationAddFormUI.ConsultationFormResult res = result.get();
+                ConsultationDTO consultation = res.getConsultation();
                 Long consultationId = controller.create(consultation, username);
+                createInterventions(consultationId, res.getActes());
                 JOptionPane.showMessageDialog(this,
                         "Consultation creee avec succes (ID: " + consultationId + ")",
                         "Succes",
@@ -232,6 +240,24 @@ public class ConsultationPagePanel extends JPanel {
             } catch (Exception ex) {
                 showError(ex);
             }
+        }
+    }
+
+    private void createInterventions(Long consultationId, List<ConsultationAddFormUI.SelectedActe> actes) {
+        if (consultationId == null || actes == null || actes.isEmpty()) return;
+        Object bean = ApplicationContext.getBean("interventionMedecinService");
+        if (!(bean instanceof InterventionMedecinService service)) return;
+
+        for (ConsultationAddFormUI.SelectedActe a : actes) {
+            if (a == null || a.getActeId() == null) continue;
+            InterventionMedecinDTO dto = new InterventionMedecinDTO(
+                    null,
+                    consultationId,
+                    a.getActeId(),
+                    a.getPrix() != null ? a.getPrix() : 0.0,
+                    null
+            );
+            service.create(new SaveInterventionRequestDTO(dto, new ActorDTO(username)));
         }
     }
 

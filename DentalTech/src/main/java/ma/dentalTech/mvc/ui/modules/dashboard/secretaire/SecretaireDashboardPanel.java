@@ -92,7 +92,7 @@ public class SecretaireDashboardPanel extends JPanel {
 
         setLayout(new BorderLayout(16, 16));
         setBackground(DentalTheme.BG);
-        setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        setBorder(null);
         // IMPORTANT : init notifications AVANT buildMain()
         notificationsPanel.setOpaque(false);
         notificationsPanel.setLayout(new BoxLayout(notificationsPanel, BoxLayout.Y_AXIS));

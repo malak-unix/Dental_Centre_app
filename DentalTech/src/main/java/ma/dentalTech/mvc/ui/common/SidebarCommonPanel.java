@@ -1,6 +1,9 @@
 package ma.dentalTech.mvc.ui.common;
 
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.LibelleRole;
+import ma.dentalTech.entities.users.Role;
+import ma.dentalTech.repository.modules.users.api.RoleRepository;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,7 +42,16 @@ public class SidebarCommonPanel extends JPanel {
         navWrap.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
         navWrap.add(navCard, BorderLayout.NORTH);
 
-        List<NavItem> items = RoleMenuConfig.menuFor(role);
+        String privileges = null;
+        try {
+            RoleRepository repo = ApplicationContext.getBean(RoleRepository.class);
+            if (repo != null) {
+                Role r = repo.findByType(role).orElse(null);
+                if (r != null) privileges = r.getPrivileges();
+            }
+        } catch (Exception ignored) {}
+
+        List<NavItem> items = RoleMenuConfig.menuFor(role, privileges);
         for (int i = 0; i < items.size(); i++) {
             NavItem it = items.get(i);
             Icon icon = loadIcon(iconPathFor(it.getId()), 18, 18);
