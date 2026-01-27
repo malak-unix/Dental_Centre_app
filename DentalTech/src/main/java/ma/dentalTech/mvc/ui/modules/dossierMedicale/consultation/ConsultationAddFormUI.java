@@ -1,10 +1,14 @@
 package ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation;
 
+import ma.dentalTech.configuration.ApplicationContext;
 import ma.dentalTech.entities.enums.StatutConsultation;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController;
+import ma.dentalTech.mvc.dto.dossierMedicale.acte.ActeListItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.UiStyles;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeAddFormUI;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,6 +16,8 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,7 +34,17 @@ public class ConsultationAddFormUI extends JDialog {
     private final JComboBox<StatutConsultation> cbStatut = new JComboBox<>(StatutConsultation.values());
     private final JTextArea taObservation = new JTextArea(4, 30);
 
-    private Optional<ConsultationDTO> result = Optional.empty();
+    private final JComboBox<ActeComboItem> cbActe = new JComboBox<>();
+    private final DefaultListModel<ActeComboItem> modelActes = new DefaultListModel<>();
+    private final JList<ActeComboItem> listActes = new JList<>(modelActes);
+    private final JButton btnAddActe = new JButton("Ajouter acte");
+    private final JButton btnRemoveActe = new JButton("Retirer acte");
+    private final JButton btnNewActe = new JButton("+ Nouveau acte");
+
+    private final String username;
+    private ActeController acteController;
+
+    private Optional<ConsultationFormResult> result = Optional.empty();
 
     /**
      * Item pour le combobox des dossiers médicaux.
@@ -53,27 +69,92 @@ public class ConsultationAddFormUI extends JDialog {
     }
 
     /**
-     * Affiche le dialog et retourne le DTO de consultation créé.
+     * Item pour le combobox des actes.
+     */
+    public static class ActeComboItem {
+        private final Long acteId;
+        private final String displayText;
+        private final Double prixBase;
+
+        public ActeComboItem(Long acteId, String displayText, Double prixBase) {
+            this.acteId = acteId;
+            this.displayText = displayText;
+            this.prixBase = prixBase;
+        }
+
+        public Long getActeId() { return acteId; }
+        public Double getPrixBase() { return prixBase; }
+
+        @Override
+        public String toString() {
+            return displayText;
+        }
+    }
+
+    /**
+     * Acte selectionne pour la consultation.
+     */
+    public static class SelectedActe {
+        private final Long acteId;
+        private final Double prix;
+
+        public SelectedActe(Long acteId, Double prix) {
+            this.acteId = acteId;
+            this.prix = prix;
+        }
+
+        public Long getActeId() { return acteId; }
+        public Double getPrix() { return prix; }
+    }
+
+    /**
+     * Resultat du formulaire.
+     */
+    public static class ConsultationFormResult {
+        private final ConsultationDTO consultation;
+        private final List<SelectedActe> actes;
+
+        public ConsultationFormResult(ConsultationDTO consultation, List<SelectedActe> actes) {
+            this.consultation = consultation;
+            this.actes = actes;
+        }
+
+        public ConsultationDTO getConsultation() { return consultation; }
+        public List<SelectedActe> getActes() { return actes; }
+    }
+
+    /**
+     * Affiche le dialog et retourne le resultat de consultation créé.
      * @param parent Composant parent
      * @param dossiers Liste des dossiers disponibles (pour le dropdown)
-     * @return Optional avec ConsultationDTO si validé, empty si annulé
+     * @return Optional avec ConsultationFormResult si validé, empty si annulé
      */
-    public static Optional<ConsultationDTO> showDialog(Component parent, java.util.List<DossierComboItem> dossiers) {
-        ConsultationAddFormUI dialog = new ConsultationAddFormUI(parent, dossiers);
+    public static Optional<ConsultationFormResult> showDialog(Component parent, java.util.List<DossierComboItem> dossiers) {
+        return showDialog(parent, dossiers, "user");
+    }
+
+    public static Optional<ConsultationFormResult> showDialog(Component parent,
+                                                              java.util.List<DossierComboItem> dossiers,
+                                                              String username) {
+        ConsultationAddFormUI dialog = new ConsultationAddFormUI(parent, dossiers, username);
         dialog.setVisible(true);
         return dialog.result;
     }
 
-    private ConsultationAddFormUI(Component parent, java.util.List<DossierComboItem> dossiers) {
+    private ConsultationAddFormUI(Component parent, java.util.List<DossierComboItem> dossiers, String username) {
         super(SwingUtilities.getWindowAncestor(parent), "Ajouter une consultation", ModalityType.APPLICATION_MODAL);
 
+        this.username = username == null ? "user" : username;
+
         // Initialiser le dropdown des dossiers
-        cbDossier.addItem(new DossierComboItem(null, "Sélectionner un dossier médical..."));
+        cbDossier.addItem(new DossierComboItem(null, "Selectionner un dossier medical..."));
         if (dossiers != null) {
             for (DossierComboItem item : dossiers) {
                 cbDossier.addItem(item);
             }
         }
+
+        loadActes();
 
         setContentPane(buildUI());
         pack();
@@ -125,7 +206,7 @@ public class ConsultationAddFormUI extends JDialog {
         JPanel datePanel = new JPanel(new BorderLayout());
         datePanel.setOpaque(false);
         datePanel.add(tfDate, BorderLayout.CENTER);
-        JLabel calendarIcon = new JLabel("📅");
+        JLabel calendarIcon = new JLabel("CAL");
         calendarIcon.setBorder(new EmptyBorder(0, 5, 0, 5));
         datePanel.add(calendarIcon, BorderLayout.EAST);
         form.add(datePanel, c);
@@ -141,10 +222,50 @@ public class ConsultationAddFormUI extends JDialog {
         styleField(cbStatut);
         form.add(cbStatut, c);
 
-        // Observation du médecin
+        // Actes (selection)
         c.gridx = 0; c.gridy = 3; c.weightx = 0;
         c.anchor = GridBagConstraints.NORTHWEST;
-        JLabel lblObservation = createLabel("Observation du médecin");
+        JLabel lblActes = createLabel("Actes");
+        form.add(lblActes, c);
+        c.gridx = 1; c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        JPanel acteSelectPanel = new JPanel(new BorderLayout(8, 0));
+        acteSelectPanel.setOpaque(false);
+        cbActe.setFont(DentalTheme.BASE);
+        cbActe.setPreferredSize(new Dimension(300, 32));
+        styleField(cbActe);
+        acteSelectPanel.add(cbActe, BorderLayout.CENTER);
+
+        JPanel acteBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        acteBtns.setOpaque(false);
+        UiStyles.styleSecondaryButton(btnNewActe);
+        UiStyles.styleSecondaryButton(btnAddActe);
+        acteBtns.add(btnNewActe);
+        acteBtns.add(btnAddActe);
+        acteSelectPanel.add(acteBtns, BorderLayout.EAST);
+        form.add(acteSelectPanel, c);
+
+        // Liste des actes selectionnes
+        c.gridx = 1; c.gridy = 4; c.weightx = 1.0;
+        c.fill = GridBagConstraints.BOTH;
+        listActes.setVisibleRowCount(4);
+        listActes.setFont(DentalTheme.textFont(12));
+        JScrollPane actesScroll = new JScrollPane(listActes);
+        actesScroll.setPreferredSize(new Dimension(300, 90));
+        form.add(actesScroll, c);
+
+        // Bouton retirer
+        c.gridx = 1; c.gridy = 5; c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.EAST;
+        UiStyles.styleSecondaryButton(btnRemoveActe);
+        form.add(btnRemoveActe, c);
+
+        // Observation du medecin
+        c.gridx = 0; c.gridy = 6; c.weightx = 0;
+        c.anchor = GridBagConstraints.NORTHWEST;
+        JLabel lblObservation = createLabel("Observation du medecin");
         form.add(lblObservation, c);
         c.gridx = 1; c.weightx = 1.0;
         c.fill = GridBagConstraints.BOTH;
@@ -166,6 +287,9 @@ public class ConsultationAddFormUI extends JDialog {
 
         btnAnnuler.addActionListener(e -> dispose());
         btnAjouter.addActionListener(e -> onSave());
+        btnAddActe.addActionListener(e -> onAddActeToList());
+        btnRemoveActe.addActionListener(e -> onRemoveActeFromList());
+        btnNewActe.addActionListener(e -> onCreateNewActe());
 
         buttonPanel.add(btnAnnuler);
         buttonPanel.add(btnAjouter);
@@ -273,7 +397,15 @@ public class ConsultationAddFormUI extends JDialog {
                     observation
             );
 
-            result = Optional.of(consultation);
+            List<SelectedActe> actes = new ArrayList<>();
+            for (int i = 0; i < modelActes.getSize(); i++) {
+                ActeComboItem item = modelActes.getElementAt(i);
+                if (item != null && item.getActeId() != null) {
+                    actes.add(new SelectedActe(item.getActeId(), item.getPrixBase()));
+                }
+            }
+
+            result = Optional.of(new ConsultationFormResult(consultation, actes));
             dispose();
 
         } catch (Exception e) {
@@ -283,5 +415,58 @@ public class ConsultationAddFormUI extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-}
 
+    private void loadActes() {
+        cbActe.removeAllItems();
+        cbActe.addItem(new ActeComboItem(null, "-- Selectionner un acte --", null));
+        Object bean = ApplicationContext.getBean("acteController");
+        if (bean instanceof ActeController ctrl) {
+            this.acteController = ctrl;
+            try {
+                List<ActeListItemDTO> actes = ctrl.findAll();
+                if (actes != null) {
+                    for (ActeListItemDTO a : actes) {
+                        String label = a.getLibelle() != null ? a.getLibelle() : ("Acte #" + a.getActeId());
+                        cbActe.addItem(new ActeComboItem(a.getActeId(), label, a.getPrixBase()));
+                    }
+                }
+            } catch (Exception ignored) {
+                // ignore load errors
+            }
+        }
+    }
+
+    private void onAddActeToList() {
+        ActeComboItem selected = (ActeComboItem) cbActe.getSelectedItem();
+        if (selected == null || selected.getActeId() == null) {
+            JOptionPane.showMessageDialog(this, "Veuillez selectionner un acte.", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        for (int i = 0; i < modelActes.getSize(); i++) {
+            ActeComboItem item = modelActes.getElementAt(i);
+            if (item != null && selected.getActeId().equals(item.getActeId())) {
+                return;
+            }
+        }
+        modelActes.addElement(selected);
+    }
+
+    private void onRemoveActeFromList() {
+        int idx = listActes.getSelectedIndex();
+        if (idx >= 0) modelActes.remove(idx);
+    }
+
+    private void onCreateNewActe() {
+        if (acteController == null) return;
+        Frame parentFrame = null;
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner instanceof Frame f) parentFrame = f;
+        else if (owner instanceof Dialog d && d.getOwner() instanceof Frame f) parentFrame = f;
+
+        ActeAddFormUI dialog = new ActeAddFormUI(parentFrame, acteController, username);
+        dialog.setVisible(true);
+        if (dialog.isConfirmed()) {
+            loadActes();
+        }
+    }
+}

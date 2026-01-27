@@ -194,16 +194,9 @@ public class AdminDashboardPanel extends JPanel {
             activitiesPanel.removeAll();
             List<ActivityDTO> activities = dto.getActivities();
             if (activities != null && !activities.isEmpty()) {
-                int limit = Math.min(6, activities.size());
-                for (int i = 0; i < limit; i++) {
-                    ActivityDTO a = activities.get(i);
-                    String line = safe(a.getMessage());
-                    String last = (a.getDate() != null) ? a.getDate().format(fmt) : "-";
-                    JLabel row = new JLabel(line + " - " + last);
-                    row.setFont(DentalTheme.textFont(12));
-                    row.setForeground(DentalTheme.TEXT2);
-                    row.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
-                    activitiesPanel.add(row);
+                for (ActivityDTO a : activities) {
+                    activitiesPanel.add(buildActivityRow(a, fmt));
+                    activitiesPanel.add(Box.createVerticalStrut(8));
                 }
             } else {
                 JLabel empty = new JLabel("Aucune activite recente");
@@ -222,4 +215,32 @@ public class AdminDashboardPanel extends JPanel {
     private static int nvl(Integer v) { return (v != null) ? v : 0; }
     private static String nvl(Object v) { return (v != null) ? String.valueOf(v) : "0"; }
     private static String safe(String s) { return (s != null) ? s : ""; }
+
+    private JComponent buildActivityRow(ActivityDTO a, DateTimeFormatter fmt) {
+        JPanel row = new JPanel(new BorderLayout(8, 4));
+        row.setOpaque(false);
+
+        String msg = safe(a.getMessage());
+        String last = (a.getDate() != null) ? a.getDate().format(fmt) : "-";
+
+        JTextArea txt = new JTextArea(msg);
+        txt.setLineWrap(true);
+        txt.setWrapStyleWord(true);
+        txt.setEditable(false);
+        txt.setOpaque(false);
+        txt.setFont(DentalTheme.textFont(12));
+        txt.setForeground(DentalTheme.TEXT2);
+
+        JLabel time = new JLabel(last);
+        time.setFont(DentalTheme.textFont(11));
+        time.setForeground(DentalTheme.MUTED_TEXT);
+
+        row.add(txt, BorderLayout.CENTER);
+        row.add(time, BorderLayout.SOUTH);
+        row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DentalTheme.BORDER, 1, true),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
+        return row;
+    }
 }

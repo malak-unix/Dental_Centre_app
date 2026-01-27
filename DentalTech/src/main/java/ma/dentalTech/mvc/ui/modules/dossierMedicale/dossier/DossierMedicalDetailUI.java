@@ -1,28 +1,45 @@
 package ma.dentalTech.mvc.ui.modules.dossierMedicale.dossier;
 
 import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.entities.dossierMedical.Medicament;
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.entities.enums.StatutFacture;
+import ma.dentalTech.mvc.controllers.modules.caisse.api.FactureControllerV2;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.CertificatController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.DossierMedicalController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.MedicamentController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController;
+import ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.mvc.dto.caisse.FactureCreateDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.ActorDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.certificat.CertificatDTO;
-import ma.dentalTech.mvc.ui.common.DentalButton;
-import ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation.ConsultationAddFormUI;
 import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.document.DocumentMedicalDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.dossier.AntecedentDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.dossier.DossierDetailEnrichedDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.intervention.InterventionMedecinDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.intervention.SaveInterventionRequestDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.readonly.FactureDTO;
+import ma.dentalTech.mvc.dto.patient.AntecedentFormDto;
 import ma.dentalTech.mvc.ui.common.CardPanel;
+import ma.dentalTech.mvc.ui.common.DentalButton;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.certificat.CertificatAddFormUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.consultation.ConsultationAddFormUI;
+import ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance.OrdonnanceAddFormUI;
+import ma.dentalTech.mvc.ui.modules.patient.AntecedentFormDialog;
+import ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
+import java.math.BigDecimal;
 import java.awt.*;
 import java.awt.Frame;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -290,15 +307,17 @@ public class DossierMedicalDetailUI extends JPanel {
             ));
 
             // Ouvrir le formulaire de création de consultation
-            Optional<ConsultationDTO> result = ConsultationAddFormUI.showDialog(this, dossiers);
+            Optional<ConsultationAddFormUI.ConsultationFormResult> result = ConsultationAddFormUI.showDialog(this, dossiers, username);
             if (result.isPresent()) {
-                // Créer la consultation
-                Long consultationId = consultationController.create(result.get(), username);
+                ConsultationAddFormUI.ConsultationFormResult res = result.get();
+                // Cr?er la consultation
+                Long consultationId = consultationController.create(res.getConsultation(), username);
+                createInterventions(consultationId, res.getActes());
                 JOptionPane.showMessageDialog(this,
-                        "Consultation créée avec succès (ID: " + consultationId + ")",
-                        "Succès",
+                        "Consultation cr??e avec succ?s (ID: " + consultationId + ")",
+                        "Succ?s",
                         JOptionPane.INFORMATION_MESSAGE);
-                // TODO: Recharger les détails du dossier pour mettre à jour la liste
+                // TODO: Recharger les d?tails du dossier pour mettre ? jour la liste
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
@@ -325,9 +344,225 @@ public class DossierMedicalDetailUI extends JPanel {
         }
     }
 
+    private Frame getParentFrame() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner instanceof Frame f) return f;
+        if (owner instanceof Dialog d && d.getOwner() instanceof Frame f) return f;
+        return null;
+    }
+
+    private void createInterventions(Long consultationId, List<ConsultationAddFormUI.SelectedActe> actes) {
+        if (consultationId == null || actes == null || actes.isEmpty()) return;
+        Object bean = ApplicationContext.getBean("interventionMedecinService");
+        if (!(bean instanceof InterventionMedecinService service)) return;
+
+        for (ConsultationAddFormUI.SelectedActe acte : actes) {
+            InterventionMedecinDTO dto = new InterventionMedecinDTO(
+                    null,
+                    consultationId,
+                    acte.getActeId(),
+                    acte.getPrix(),
+                    0
+            );
+            SaveInterventionRequestDTO req = new SaveInterventionRequestDTO(dto, new ActorDTO(username));
+            service.create(req);
+        }
+    }
+
+    private void onAddOrdonnanceFromDossier() {
+        try {
+            Object ordonnanceBean = ApplicationContext.getBean("ordonnanceController");
+            if (!(ordonnanceBean instanceof OrdonnanceController ordonnanceController)) {
+                JOptionPane.showMessageDialog(this, "Controller ordonnance introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (detail.consultations() == null || detail.consultations().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Aucune consultation disponible pour ce dossier.", "Information", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
+            for (ConsultationDTO c : detail.consultations()) {
+                if (c == null || c.id() == null) continue;
+                String label = "Consultation du " + (c.date() != null ? c.date().format(DATE_FMT) : "-");
+                consultations.add(new OrdonnanceAddFormUI.ConsultationComboItem(c.id(), label));
+            }
+
+            List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = loadMedicamentsForOrdonnance();
+            OrdonnanceAddFormUI dialog = new OrdonnanceAddFormUI(getParentFrame(), ordonnanceController, consultations, medicaments, username);
+            dialog.setVisible(true);
+            if (dialog.isConfirmed()) {
+                JOptionPane.showMessageDialog(this, "Ordonnance cr??e avec succ?s.", "Succ?s", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout d'ordonnance: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private List<OrdonnanceAddFormUI.MedicamentComboItem> loadMedicamentsForOrdonnance() {
+        List<OrdonnanceAddFormUI.MedicamentComboItem> out = new ArrayList<>();
+        Object bean = ApplicationContext.getBean(MedicamentController.class);
+        if (!(bean instanceof MedicamentController medicamentController)) return out;
+        try {
+            List<Medicament> meds = medicamentController.getAll();
+            if (meds != null) {
+                for (Medicament m : meds) {
+                    String label = m.getNom() != null ? m.getNom() : ("Medicament #" + m.getId());
+                    out.add(new OrdonnanceAddFormUI.MedicamentComboItem(m.getId(), label));
+                }
+            }
+        } catch (Exception ignored) {
+            // ignore load errors
+        }
+        return out;
+    }
+
+    private void onAddCertificatFromDossier() {
+        try {
+            Object certificatBean = ApplicationContext.getBean("certificatController");
+            if (!(certificatBean instanceof CertificatController certificatController)) {
+                JOptionPane.showMessageDialog(this, "Controller certificat introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            List<CertificatAddFormUI.DossierComboItem> dossiers = new ArrayList<>();
+            dossiers.add(new CertificatAddFormUI.DossierComboItem(
+                    detail.dossier().id(),
+                    "Dossier #" + detail.dossier().id() + " - " + detail.patientNomComplet()
+            ));
+
+            CertificatAddFormUI dialog = new CertificatAddFormUI(getParentFrame(), certificatController, dossiers, username);
+            dialog.setVisible(true);
+            if (dialog.isConfirmed()) {
+                JOptionPane.showMessageDialog(this, "Certificat cr?? avec succ?s.", "Succ?s", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du certificat: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void onAddFactureFromDossier() {
+        try {
+            Object factureBean = ApplicationContext.getBean(FactureControllerV2.class);
+            if (!(factureBean instanceof FactureControllerV2 factureController)) {
+                JOptionPane.showMessageDialog(this, "Controller facture introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (detail.consultations() == null || detail.consultations().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Aucune consultation disponible pour cr?er une facture.", "Information", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            JComboBox<ConsultationItem> cb = new JComboBox<>();
+            for (ConsultationDTO c : detail.consultations()) {
+                if (c == null || c.id() == null) continue;
+                String label = "Consultation du " + (c.date() != null ? c.date().format(DATE_FMT) : "-");
+                cb.addItem(new ConsultationItem(c.id(), label));
+            }
+
+            JTextField tfMontant = new JTextField(10);
+            tfMontant.setText("0");
+
+            JPanel p = new JPanel(new GridBagLayout());
+            GridBagConstraints gc = new GridBagConstraints();
+            gc.insets = new Insets(6, 6, 6, 6);
+            gc.gridx = 0; gc.gridy = 0; gc.anchor = GridBagConstraints.WEST;
+            p.add(new JLabel("Consultation:"), gc);
+            gc.gridx = 1; gc.fill = GridBagConstraints.HORIZONTAL; gc.weightx = 1;
+            p.add(cb, gc);
+            gc.gridx = 0; gc.gridy = 1; gc.fill = GridBagConstraints.NONE; gc.weightx = 0;
+            p.add(new JLabel("Montant (DH):"), gc);
+            gc.gridx = 1; gc.fill = GridBagConstraints.HORIZONTAL; gc.weightx = 1;
+            p.add(tfMontant, gc);
+
+            int ok = JOptionPane.showConfirmDialog(this, p, "Nouvelle facture", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (ok != JOptionPane.OK_OPTION) return;
+
+            ConsultationItem item = (ConsultationItem) cb.getSelectedItem();
+            if (item == null || item.id == null) {
+                JOptionPane.showMessageDialog(this, "Veuillez s?lectionner une consultation.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            double montant;
+            try {
+                montant = Double.parseDouble(tfMontant.getText().trim());
+            } catch (NumberFormatException nfe) {
+                JOptionPane.showMessageDialog(this, "Montant invalide.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (montant <= 0) {
+                JOptionPane.showMessageDialog(this, "Le montant doit ?tre > 0.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            FactureCreateDTO dto = FactureCreateDTO.builder()
+                    .consultationId(item.id)
+                    .dateFacture(LocalDate.now())
+                    .totalFacture(BigDecimal.valueOf(montant))
+                    .build();
+            factureController.create(dto);
+            JOptionPane.showMessageDialog(this, "Facture cr??e avec succ?s.", "Succ?s", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur lors de la cr?ation de la facture: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void onAddAntecedentFromDossier() {
+        try {
+            Object antecedentBean = ApplicationContext.getBean("antecedentController");
+            if (!(antecedentBean instanceof AntecedentController antecedentController)) {
+                JOptionPane.showMessageDialog(this, "Controller antecedent introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            AntecedentFormDialog dialog = new AntecedentFormDialog(
+                    SwingUtilities.getWindowAncestor(this),
+                    "Nouvel antecedent",
+                    null,
+                    detail.patientId()
+            );
+            dialog.setVisible(true);
+            if (dialog.isConfirmed()) {
+                AntecedentFormDto dto = dialog.getDto();
+                antecedentController.create(detail.patientId(), dto);
+                JOptionPane.showMessageDialog(this, "Antecedent cr?? avec succ?s.", "Succ?s", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout de l'antecedent: " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static class ConsultationItem {
+        private final Long id;
+        private final String label;
+        ConsultationItem(Long id, String label) {
+            this.id = id;
+            this.label = label;
+        }
+        @Override public String toString() { return label; }
+    }
+
+
     private JComponent buildOrdonnancesTab() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
+        JButton btnAdd = new DentalButton("+ Nouvelle ordonnance");
+        btnAdd.setFont(DentalTheme.textBold(13));
+        btnAdd.setBackground(DentalTheme.CARD);
+        btnAdd.setForeground(DentalTheme.TEXT2);
+        btnAdd.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+        btnAdd.addActionListener(e -> onAddOrdonnanceFromDossier());
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(btnAdd, BorderLayout.EAST);
+        panel.add(header, BorderLayout.NORTH);
+
 
         // Tableau des ordonnances
         JTable table = new JTable(new OrdonnancesTableModel(detail.ordonnances()));
@@ -350,6 +585,20 @@ public class DossierMedicalDetailUI extends JPanel {
     private JComponent buildCertificatsTab() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
+        JButton btnAdd = new DentalButton("+ Certificat");
+        btnAdd.setFont(DentalTheme.textBold(13));
+        btnAdd.setBackground(DentalTheme.CARD);
+        btnAdd.setForeground(DentalTheme.TEXT2);
+        btnAdd.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+        btnAdd.addActionListener(e -> onAddCertificatFromDossier());
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(btnAdd, BorderLayout.EAST);
+        panel.add(header, BorderLayout.NORTH);
+
 
         // Tableau des certificats
         JTable table = new JTable(new CertificatsTableModel(detail.certificats()));
@@ -374,6 +623,19 @@ public class DossierMedicalDetailUI extends JPanel {
     private JComponent buildSituationFinanciereTab() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
+        JButton btnAddFacture = new DentalButton("+ Nouvelle facture");
+        btnAddFacture.setFont(DentalTheme.textBold(13));
+        btnAddFacture.setBackground(DentalTheme.CARD);
+        btnAddFacture.setForeground(DentalTheme.TEXT2);
+        btnAddFacture.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+        btnAddFacture.addActionListener(e -> onAddFactureFromDossier());
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.add(btnAddFacture, BorderLayout.EAST);
+
 
         // Résumé financier
         if (detail.situationFinanciere() != null) {
@@ -391,9 +653,10 @@ public class DossierMedicalDetailUI extends JPanel {
             summary.add(cardTotal);
             summary.add(cardPaye);
             summary.add(cardReste);
-            panel.add(summary, BorderLayout.NORTH);
+            top.add(summary, BorderLayout.WEST);
         }
 
+        panel.add(top, BorderLayout.NORTH);
         // Tableau des factures
         JTable table = new JTable(new FacturesTableModel(detail.factures()));
         table.setRowHeight(40);
@@ -422,6 +685,20 @@ public class DossierMedicalDetailUI extends JPanel {
     private JComponent buildAntecedentsTab() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
+        JButton btnAdd = new DentalButton("+ Nouvel antecedent");
+        btnAdd.setFont(DentalTheme.textBold(13));
+        btnAdd.setBackground(DentalTheme.CARD);
+        btnAdd.setForeground(DentalTheme.TEXT2);
+        btnAdd.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
+                new EmptyBorder(8, 16, 8, 16)
+        ));
+        btnAdd.addActionListener(e -> onAddAntecedentFromDossier());
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(btnAdd, BorderLayout.EAST);
+        panel.add(header, BorderLayout.NORTH);
+
 
         // Tableau des antécédents
         JTable table = new JTable(new AntecedentsTableModel(detail.antecedents()));

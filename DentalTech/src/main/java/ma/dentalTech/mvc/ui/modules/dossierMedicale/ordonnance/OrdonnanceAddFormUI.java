@@ -1,8 +1,18 @@
 package ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance;
 
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.entities.dossierMedical.Medicament;
+import ma.dentalTech.entities.enums.FormeMedicament;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.MedicamentController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController;
+import ma.dentalTech.mvc.dto.dossierMedicale.common.ActorDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.PrescriptionDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.PrescriptionDetailDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.prescription.SavePrescriptionRequestDTO;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.service.modules.dossierMedical.api.PrescriptionService;
+import ma.dentalTech.service.modules.dossierMedical.impl.PrescriptionServiceImpl;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -34,11 +44,13 @@ public class OrdonnanceAddFormUI extends JDialog {
     private final MedicamentTableModel modelMedicaments = new MedicamentTableModel();
 
     private final JButton btnAddMedicament = new JButton("+ Ajouter médicament");
+    private final JButton btnNewMedicament = new JButton("+ Nouveau médicament");
     private final JButton btnCancel = new JButton("Annuler");
     private final JButton btnCreate = new JButton("Enregistrer l'ordonnance");
 
     private final OrdonnanceDTO ordonnanceToEdit;
     private final boolean editMode;
+    private MedicamentController medicamentController;
 
     private boolean confirmed = false;
 
@@ -133,9 +145,14 @@ public class OrdonnanceAddFormUI extends JDialog {
             cbConsultation.addItem(item);
         }
 
-        cbMedicament.addItem(new MedicamentComboItem(null, "-- Sélectionner un médicament --"));
-        for (MedicamentComboItem item : medicaments) {
-            cbMedicament.addItem(item);
+        loadMedicamentController();
+        if (medicamentController != null) {
+            reloadMedicaments();
+        } else {
+            cbMedicament.addItem(new MedicamentComboItem(null, "-- Selectionner un medicament --"));
+            for (MedicamentComboItem item : medicaments) {
+                cbMedicament.addItem(item);
+            }
         }
 
         // Date par défaut = aujourd'hui
@@ -154,6 +171,7 @@ public class OrdonnanceAddFormUI extends JDialog {
         if (editMode) {
             cbMedicament.setEnabled(false);
             btnAddMedicament.setEnabled(false);
+            btnNewMedicament.setEnabled(false);
             tableMedicaments.setEnabled(false);
             if (ordonnanceToEdit.date() != null) {
                 txtDate.setText(ordonnanceToEdit.date().format(DATE_INPUT_FORMATTER));
@@ -170,6 +188,7 @@ public class OrdonnanceAddFormUI extends JDialog {
         });
 
         btnAddMedicament.addActionListener(e -> addMedicamentToTable());
+        btnNewMedicament.addActionListener(e -> onCreateNewMedicament());
 
         if (editMode) {
             btnCreate.setText("Enregistrer les modifications");
@@ -224,7 +243,7 @@ public class OrdonnanceAddFormUI extends JDialog {
         gc.fill = GridBagConstraints.BOTH;
         form.add(buildMedicamentTable(), gc);
 
-        // Bouton Ajouter médicament
+        // Boutons medicaments
         gc.gridx = 1;
         gc.gridy = 3;
         gc.gridwidth = 1;
@@ -239,7 +258,19 @@ public class OrdonnanceAddFormUI extends JDialog {
                 BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
                 new EmptyBorder(6, 12, 6, 12)
         ));
-        form.add(btnAddMedicament, gc);
+        btnNewMedicament.setFont(DentalTheme.textBold(12));
+        btnNewMedicament.setBackground(DentalTheme.CARD);
+        btnNewMedicament.setForeground(DentalTheme.TEXT2);
+        btnNewMedicament.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 1),
+                new EmptyBorder(6, 12, 6, 12)
+        ));
+
+        JPanel medActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        medActions.setOpaque(false);
+        medActions.add(btnNewMedicament);
+        medActions.add(btnAddMedicament);
+        form.add(medActions, gc);
 
         // Date de l'ordonnance
         gc.gridx = 0;
@@ -325,6 +356,124 @@ public class OrdonnanceAddFormUI extends JDialog {
         return buttons;
     }
 
+    private void loadMedicamentController() {
+        Object bean = ApplicationContext.getBean(MedicamentController.class);
+        if (bean instanceof MedicamentController ctrl) {
+            medicamentController = ctrl;
+        }
+    }
+
+    private void reloadMedicaments() {
+        cbMedicament.removeAllItems();
+        cbMedicament.addItem(new MedicamentComboItem(null, "-- Selectionner un medicament --"));
+        if (medicamentController == null) return;
+        try {
+            List<Medicament> meds = medicamentController.getAll();
+            if (meds != null) {
+                for (Medicament m : meds) {
+                    String label = m.getNom() != null ? m.getNom() : ("Medicament #" + m.getId());
+                    cbMedicament.addItem(new MedicamentComboItem(m.getId(), label));
+                }
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+    }
+
+    private void onCreateNewMedicament() {
+        if (medicamentController == null) return;
+        JDialog d = new JDialog(this, "Ajouter medicament", Dialog.ModalityType.APPLICATION_MODAL);
+        d.setLayout(new BorderLayout(10, 10));
+
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(6, 8, 6, 8);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
+
+        JTextField nomF = new JTextField();
+        JTextField laboF = new JTextField();
+        JTextField typeF = new JTextField();
+        JComboBox<FormeMedicament> formeF = new JComboBox<>(FormeMedicament.values());
+        JCheckBox rembF = new JCheckBox("Remboursable");
+        JTextField prixF = new JTextField();
+
+        c.gridx = 0; c.gridy = 0; c.weightx = 0;
+        form.add(new JLabel("Nom *"), c);
+        c.gridx = 1; c.weightx = 1.0;
+        form.add(nomF, c);
+
+        c.gridx = 0; c.gridy++;
+        c.weightx = 0;
+        form.add(new JLabel("Laboratoire"), c);
+        c.gridx = 1; c.weightx = 1.0;
+        form.add(laboF, c);
+
+        c.gridx = 0; c.gridy++;
+        c.weightx = 0;
+        form.add(new JLabel("Type"), c);
+        c.gridx = 1; c.weightx = 1.0;
+        form.add(typeF, c);
+
+        c.gridx = 0; c.gridy++;
+        c.weightx = 0;
+        form.add(new JLabel("Forme"), c);
+        c.gridx = 1; c.weightx = 1.0;
+        form.add(formeF, c);
+
+        c.gridx = 0; c.gridy++;
+        c.weightx = 0;
+        form.add(new JLabel("Prix (DH)"), c);
+        c.gridx = 1; c.weightx = 1.0;
+        form.add(prixF, c);
+
+        c.gridx = 1; c.gridy++;
+        c.weightx = 1.0;
+        form.add(rembF, c);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton cancel = new JButton("Annuler");
+        JButton save = new JButton("Enregistrer");
+        actions.add(cancel);
+        actions.add(save);
+
+        cancel.addActionListener(e -> d.dispose());
+        save.addActionListener(e -> {
+            String nom = nomF.getText() == null ? "" : nomF.getText().trim();
+            if (nom.isBlank()) {
+                JOptionPane.showMessageDialog(d, "Nom obligatoire.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Medicament m = new Medicament();
+            m.setNom(nom);
+            m.setLaboratoire(laboF.getText());
+            m.setType(typeF.getText());
+            m.setForme((FormeMedicament) formeF.getSelectedItem());
+            m.setRemboursable(rembF.isSelected());
+            if (prixF.getText() != null && !prixF.getText().isBlank()) {
+                try {
+                    m.setPrixUnitaire(Double.parseDouble(prixF.getText().trim()));
+                } catch (NumberFormatException nfe) {
+                    JOptionPane.showMessageDialog(d, "Prix invalide.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            } else {
+                m.setPrixUnitaire(0.0);
+            }
+
+            medicamentController.create(m);
+            d.dispose();
+            reloadMedicaments();
+        });
+
+        d.add(form, BorderLayout.CENTER);
+        d.add(actions, BorderLayout.SOUTH);
+        d.pack();
+        d.setLocationRelativeTo(this);
+        d.setVisible(true);
+    }
+
     private void addMedicamentToTable() {
         MedicamentComboItem selected = (MedicamentComboItem) cbMedicament.getSelectedItem();
         if (selected == null || selected.getMedicamentId() == null) {
@@ -378,12 +527,26 @@ public class OrdonnanceAddFormUI extends JDialog {
 
             for (int i = 0; i < modelMedicaments.getRowCount(); i++) {
                 MedicamentRow row = modelMedicaments.getRowAt(i);
+                if (row == null || row.medicamentId == null) {
+                    showError("Medicament invalide dans la liste.");
+                    return false;
+                }
                 if (row.quantite == null || row.quantite.trim().isEmpty()) {
                     showError("La quantite est obligatoire pour le medicament: " + row.medicamentNom);
                     return false;
                 }
                 if (row.frequence == null || row.frequence.trim().isEmpty()) {
                     showError("La frequence est obligatoire pour le medicament: " + row.medicamentNom);
+                    return false;
+                }
+                try {
+                    int q = Integer.parseInt(row.quantite.trim());
+                    if (q <= 0) {
+                        showError("La quantite doit etre un nombre positif pour: " + row.medicamentNom);
+                        return false;
+                    }
+                } catch (NumberFormatException e) {
+                    showError("Quantite invalide pour: " + row.medicamentNom);
                     return false;
                 }
                 if (row.duree == null || row.duree.trim().isEmpty()) {
@@ -420,6 +583,22 @@ public class OrdonnanceAddFormUI extends JDialog {
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
                 Long ordonnanceId = controller.create(ordonnance, username);
+                PrescriptionService prescriptionService = new PrescriptionServiceImpl();
+                for (int i = 0; i < modelMedicaments.getRowCount(); i++) {
+                    MedicamentRow row = modelMedicaments.getRowAt(i);
+                    if (row == null || row.medicamentId == null) continue;
+                    int q = Integer.parseInt(row.quantite.trim());
+                    int d = Integer.parseInt(row.duree.trim());
+                    PrescriptionDTO p = new PrescriptionDTO(
+                            null,
+                            ordonnanceId,
+                            row.medicamentId,
+                            q,
+                            row.frequence,
+                            d
+                    );
+                    prescriptionService.create(new SavePrescriptionRequestDTO(p, new ActorDTO(username)));
+                }
                 JOptionPane.showMessageDialog(this,
                         "Ordonnance creee avec succes (ID: " + ordonnanceId + ").",
                         "Succes",
@@ -455,6 +634,23 @@ public class OrdonnanceAddFormUI extends JDialog {
 
     public boolean isConfirmed() {
         return confirmed;
+    }
+
+    public void setReadOnlyPrescriptions(List<PrescriptionDetailDTO> prescriptions) {
+        if (prescriptions == null || prescriptions.isEmpty()) return;
+        for (PrescriptionDetailDTO p : prescriptions) {
+            modelMedicaments.addRow(new MedicamentRow(
+                    p.getMedicamentId(),
+                    p.getMedicamentNom(),
+                    String.valueOf(p.getQuantite()),
+                    p.getFrequence(),
+                    String.valueOf(p.getDureeEnJours())
+            ));
+        }
+        tableMedicaments.setEnabled(false);
+        btnAddMedicament.setEnabled(false);
+        btnNewMedicament.setEnabled(false);
+        cbMedicament.setEnabled(false);
     }
 
     // =========================================================

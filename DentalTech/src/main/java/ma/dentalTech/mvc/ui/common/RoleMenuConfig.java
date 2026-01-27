@@ -39,6 +39,39 @@ public final class RoleMenuConfig {
             );
         };
     }
+
+    public static List<NavItem> menuFor(LibelleRole role, String privilegesCsv) {
+        if (role == null) role = LibelleRole.SECRETAIRE;
+        if (privilegesCsv == null || privilegesCsv.isBlank()) {
+            return menuFor(role);
+        }
+        String upper = privilegesCsv.toUpperCase();
+        if (upper.contains("ALL")) {
+            return menuFor(role);
+        }
+
+        java.util.Set<String> privs = new java.util.HashSet<>();
+        for (String p : upper.split(",")) {
+            String v = p.trim();
+            if (!v.isBlank()) privs.add(v);
+        }
+
+        List<NavItem> base = menuFor(role);
+        return base.stream().filter(it -> isAllowed(it.getId(), role, privs))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private static boolean isAllowed(String pageId, LibelleRole role, java.util.Set<String> privs) {
+        if (role == LibelleRole.ADMIN) return true;
+        if (privs == null || privs.isEmpty()) return true;
+
+        return switch (pageId) {
+            case "caisse" -> privs.contains("CAISSE") || privs.contains("FACTURATION");
+            case "rdv", "agenda_med", "liste_attente" -> privs.contains("AGENDA");
+            case "consultations", "dossiers", "ordonnances", "certificats" -> privs.contains("CONSULTATION");
+            default -> true;
+        };
+    }
     public static String roleLabel(LibelleRole role) {
         if (role == null) return "Secretaire";
         return switch (role) {

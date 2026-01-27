@@ -279,7 +279,17 @@ INSERT INTO medicament (id, nom, laboratoire, type_medicament, forme,
                         remboursable, prix_unitaire, description, cree_par)
 VALUES
   (1, 'Doliprane 1000mg', 'Sanofi', 'Antalgique', 'COMPRIME', 0, 20.00, 'Douleurs moderees a intenses', 'drjihane'),
-  (2, 'Amoxicilline 1g', 'GSK', 'Antibiotique', 'COMPRIME', 0, 35.00, 'Traitement infection dentaire', 'drjihane');
+  (2, 'Amoxicilline 1g', 'GSK', 'Antibiotique', 'COMPRIME', 0, 35.00, 'Traitement infection dentaire', 'drjihane'),
+  (3, 'Ibuprofene 400mg', 'Biopharma', 'Anti-inflammatoire', 'COMPRIME', 0, 18.00, 'Douleur et inflammation', 'drjihane'),
+  (4, 'Metronidazole 500mg', 'Cooper', 'Antibiotique', 'COMPRIME', 0, 28.00, 'Infection anaerobie dentaire', 'drjihane'),
+  (5, 'Augmentin 1g', 'GSK', 'Antibiotique', 'COMPRIME', 0, 55.00, 'Infections bucco-dentaires', 'drjihane'),
+  (6, 'Chlorhexidine 0.12%', 'Gaba', 'Antiseptique', 'SOLUTION', 0, 30.00, 'Bain de bouche antiseptique', 'drjihane'),
+  (7, 'Lidocaine 2%', 'Astra', 'Anesthesique', 'INJECTION', 0, 45.00, 'Anesthesie locale', 'drjihane'),
+  (8, 'Prednisone 20mg', 'Sanofi', 'Corticoide', 'COMPRIME', 0, 26.00, 'Anti-inflammatoire', 'drjihane'),
+  (9, 'Ketoprofene 100mg', 'Menarini', 'Anti-inflammatoire', 'COMPRIME', 0, 22.00, 'Douleur post-operatoire', 'drjihane'),
+  (10, 'Benzocaine gel', 'Septodont', 'Anesthesique', 'GEL', 0, 38.00, 'Douleur gingivale', 'drjihane'),
+  (11, 'Amoxicilline 500mg', 'GSK', 'Antibiotique', 'COMPRIME', 0, 25.00, 'Infections bucco-dentaires', 'drjihane'),
+  (12, 'Spiramycin Metronidazole', 'Sanofi', 'Antibiotique', 'COMPRIME', 0, 42.00, 'Infections parodontales', 'drjihane');
 
 INSERT INTO ordonnance (id, dossier_id, consultation_id, date_ordo, cree_par)
 VALUES

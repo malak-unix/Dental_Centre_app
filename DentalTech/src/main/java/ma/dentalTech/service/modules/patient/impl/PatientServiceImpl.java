@@ -196,9 +196,9 @@ public class PatientServiceImpl implements PatientService {
                     .priorite(PrioriteNotification.MOYENNE)
                     .lue(false)
                     .utilisateur(user)
-                    .creePar(login)
-                    .modifiePar(login)
                     .build();
+            n.setCreePar(login);
+            n.setModifiePar(login);
             try {
                 notifService.create(n);
             } catch (Exception ignored) {}

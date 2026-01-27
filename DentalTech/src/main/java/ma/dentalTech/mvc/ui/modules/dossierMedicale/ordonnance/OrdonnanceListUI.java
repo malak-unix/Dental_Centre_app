@@ -1,12 +1,19 @@
 package ma.dentalTech.mvc.ui.modules.dossierMedicale.ordonnance;
 
+import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ConsultationController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.MedicamentController;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.OrdonnanceController;
+import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListItemDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.consultation.ConsultationListRequestDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDTO;
+import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceDetailDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListItemDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.ordonnance.OrdonnanceListRequestDTO;
 import ma.dentalTech.mvc.ui.common.CardPanel;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
 import ma.dentalTech.mvc.ui.common.UiStyles;
+import ma.dentalTech.entities.dossierMedical.Medicament;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -166,8 +173,8 @@ public class OrdonnanceListUI extends JPanel {
     }
 
     private void onAddOrdonnance() {
-        List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
-        List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
+        List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = loadConsultations();
+        List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = loadMedicaments();
         OrdonnanceAddFormUI dialog = new OrdonnanceAddFormUI(
                 getParentFrame(),
                 controller,
@@ -196,10 +203,10 @@ public class OrdonnanceListUI extends JPanel {
         req.setMedecinId(medecinId);
 
         String kw = txtPatient.getText();
-        if (kw != null && !kw.isBlank()) req.setPatientKeyword(kw.trim());
+        if (!isBlank(kw)) req.setPatientKeyword(kw.trim());
 
         String d1 = txtDateFrom.getText();
-        if (d1 != null && !d1.isBlank()) {
+        if (!isBlank(d1)) {
             try {
                 req.setDateFrom(LocalDate.parse(d1.trim()));
             } catch (DateTimeParseException e) {
@@ -208,7 +215,7 @@ public class OrdonnanceListUI extends JPanel {
         }
 
         String d2 = txtDateTo.getText();
-        if (d2 != null && !d2.isBlank()) {
+        if (!isBlank(d2)) {
             try {
                 req.setDateTo(LocalDate.parse(d2.trim()));
             } catch (DateTimeParseException e) {
@@ -306,22 +313,33 @@ public class OrdonnanceListUI extends JPanel {
 
             b1.addActionListener(e -> {
                 stopCellEditing();
-                OrdonnanceListItemDTO r = model.getAt(currentRow);
-                if (r == null) return;
-
-                Window owner = SwingUtilities.getWindowAncestor(OrdonnanceListUI.this);
-                JDialog dialog = new JDialog(owner, "Consultation de l'ordonnance", Dialog.ModalityType.APPLICATION_MODAL);
-                OrdonnanceDetailUI detailUI = new OrdonnanceDetailUI(controller, r.getOrdonnanceId(), dialog::dispose);
-                dialog.setContentPane(detailUI);
-                dialog.setSize(900, 700);
-                dialog.setLocationRelativeTo(OrdonnanceListUI.this);
-                dialog.setVisible(true);
+                int row = (currentRow >= 0) ? currentRow : table.getSelectedRow();
+                OrdonnanceListItemDTO r = model.getAt(row);
+                if (r == null || r.getOrdonnanceId() == null) {
+                    JOptionPane.showMessageDialog(OrdonnanceListUI.this,
+                            "Ordonnance introuvable",
+                            "Erreur",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                try {
+                    Window owner = SwingUtilities.getWindowAncestor(OrdonnanceListUI.this);
+                    JDialog dialog = new JDialog(owner, "Consultation de l'ordonnance", Dialog.ModalityType.APPLICATION_MODAL);
+                    OrdonnanceDetailUI detailUI = new OrdonnanceDetailUI(controller, r.getOrdonnanceId(), dialog::dispose);
+                    dialog.setContentPane(detailUI);
+                    dialog.setSize(900, 700);
+                    dialog.setLocationRelativeTo(OrdonnanceListUI.this);
+                    dialog.setVisible(true);
+                } catch (Exception ex) {
+                    showError(ex);
+                }
             });
 
             b2.addActionListener(e -> {
                 stopCellEditing();
-                OrdonnanceListItemDTO r = model.getAt(currentRow);
-                if (r == null) return;
+                int row = (currentRow >= 0) ? currentRow : table.getSelectedRow();
+                OrdonnanceListItemDTO r = model.getAt(row);
+                if (r == null || r.getOrdonnanceId() == null) return;
 
                 try {
                     OrdonnanceDTO ordonnanceDTO = controller.getById(r.getOrdonnanceId());
@@ -333,13 +351,8 @@ public class OrdonnanceListUI extends JPanel {
                         return;
                     }
 
-                    List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = new ArrayList<>();
-                    consultations.add(new OrdonnanceAddFormUI.ConsultationComboItem(
-                            ordonnanceDTO.consultationId(),
-                            "Consultation #" + ordonnanceDTO.consultationId()
-                    ));
-
-                    List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = new ArrayList<>();
+                    List<OrdonnanceAddFormUI.ConsultationComboItem> consultations = loadConsultations();
+                    List<OrdonnanceAddFormUI.MedicamentComboItem> medicaments = loadMedicaments();
 
                     OrdonnanceAddFormUI editDialog = new OrdonnanceAddFormUI(
                             getParentFrame(),
@@ -349,6 +362,12 @@ public class OrdonnanceListUI extends JPanel {
                             username,
                             ordonnanceDTO
                     );
+                    try {
+                        OrdonnanceDetailDTO detail = controller.getDetail(r.getOrdonnanceId());
+                        if (detail != null) {
+                            editDialog.setReadOnlyPrescriptions(detail.getPrescriptions());
+                        }
+                    } catch (Exception ignored) {}
                     editDialog.setVisible(true);
                     if (editDialog.isConfirmed()) {
                         refresh();
@@ -406,5 +425,54 @@ public class OrdonnanceListUI extends JPanel {
                 BorderFactory.createLineBorder(DentalTheme.STROKE, 1, true),
                 new EmptyBorder(4, 8, 4, 8)
         ));
+    }
+
+    private List<OrdonnanceAddFormUI.ConsultationComboItem> loadConsultations() {
+        List<OrdonnanceAddFormUI.ConsultationComboItem> out = new ArrayList<>();
+        try {
+            Object bean = ApplicationContext.getBean("consultationController");
+            if (!(bean instanceof ConsultationController consultationController)) {
+                return out;
+            }
+            ConsultationListRequestDTO req = new ConsultationListRequestDTO();
+            req.setMedecinId(medecinId);
+            List<ConsultationListItemDTO> list = consultationController.searchForList(req);
+            if (list != null) {
+                for (ConsultationListItemDTO c : list) {
+                    if (c == null || c.getConsultationId() == null) continue;
+                    String date = (c.getDateConsultation() != null)
+                            ? c.getDateConsultation().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                            : "";
+                    String label = (c.getPatientNomComplet() != null ? c.getPatientNomComplet() : "Patient")
+                            + " - " + date;
+                    out.add(new OrdonnanceAddFormUI.ConsultationComboItem(c.getConsultationId(), label.trim()));
+                }
+            }
+        } catch (Exception ignored) {}
+        return out;
+    }
+
+    private List<OrdonnanceAddFormUI.MedicamentComboItem> loadMedicaments() {
+        List<OrdonnanceAddFormUI.MedicamentComboItem> out = new ArrayList<>();
+        try {
+            MedicamentController ctrl = ApplicationContext.getBean(MedicamentController.class);
+            if (ctrl == null) return out;
+            List<Medicament> meds = ctrl.getAll();
+            if (meds != null) {
+                for (Medicament m : meds) {
+                    if (m == null || m.getId() == null) continue;
+                    String label = m.getNom() != null ? m.getNom() : ("Medicament #" + m.getId());
+                    if (!isBlank(m.getForme())) {
+                        label += " (" + m.getForme() + ")";
+                    }
+                    out.add(new OrdonnanceAddFormUI.MedicamentComboItem(m.getId(), label));
+                }
+            }
+        } catch (Exception ignored) {}
+        return out;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 }
