@@ -201,6 +201,17 @@ public class UserManagementServiceImpl implements UserManagementService {
         });
     }
 
+    @Override
+    public void deleteUser(Long id) {
+        if (id == null) return;
+
+        Transaction.initTransaction(cnx -> {
+            UtilisateurRepository repo = utilisateurRepoFactory.create(cnx);
+            repo.deleteById(id);
+            return null;
+        });
+    }
+
     // ===================== Helpers =====================
 
     private void assignRoleInternal(java.sql.Connection cnx, Long userId, LibelleRole roleType) {

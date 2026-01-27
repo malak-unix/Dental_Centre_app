@@ -629,43 +629,20 @@ public class ConsultationDetailUI extends JPanel {
 
     private void stylePrimaryButton(AbstractButton b) {
         UiStyles.stylePrimaryButton(b);
-        styleReadableButton(b);
     }
 
     private void styleOutlineButton(AbstractButton b) {
         UiStyles.styleSecondaryButton(b);
-        styleReadableButton(b);
     }
 
     private void styleDangerButton(AbstractButton b) {
-        b.setFont(DentalTheme.textBold(12));
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setBackground(DentalTheme.CARD);
-        b.setForeground(DentalTheme.TEXT2);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                new EmptyBorder(6, 14, 6, 14)
-        ));
+        // Même base visuelle (bleu / bordure dorée), texte rouge pour signaler l'action
+        UiStyles.styleSecondaryButton(b);
+        b.setForeground(new Color(0xFF, 0x66, 0x66));
     }
 
     private void styleGoldButton(AbstractButton b) {
-        b.setFont(DentalTheme.textBold(13));
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-        b.setBackground(DentalTheme.CARD);
-        b.setForeground(DentalTheme.TEXT2);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                new EmptyBorder(8, 18, 8, 18)
-        ));
-    }
-
-    private void styleReadableButton(AbstractButton b) {
-        if (b == null) return;
-        b.setForeground(DentalTheme.TEXT2);
-        b.setBackground(DentalTheme.CARD);
-        b.setOpaque(true);
-        b.setContentAreaFilled(true);
+        // Reste aligné sur le style global
+        UiStyles.stylePrimaryButton(b);
     }
 }

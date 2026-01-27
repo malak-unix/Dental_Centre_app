@@ -19,4 +19,9 @@ public interface UserManagementController {
 
     void assignRoleToUser(Long utilisateurId, LibelleRole roleType);
     void removeRoleFromUser(Long utilisateurId, LibelleRole roleType);
+
+    /**
+     * Suppression d'un utilisateur depuis l'UI admin.
+     */
+    void deleteUser(Long id);
 }

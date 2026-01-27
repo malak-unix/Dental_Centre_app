@@ -68,4 +68,10 @@ public class UserManagementControllerImpl implements UserManagementController {
         if (roleType == null) throw new IllegalArgumentException("removeRoleFromUser: roleType null");
         userManagementService.removeRoleFromUser(utilisateurId, roleType);
     }
+
+    @Override
+    public void deleteUser(Long id) {
+        if (id == null) throw new IllegalArgumentException("deleteUser: id null");
+        userManagementService.deleteUser(id);
+    }
 }

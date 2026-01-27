@@ -499,10 +499,7 @@ public class ConsultationPagePanel extends JPanel {
     }
 
     private void styleReadableButton(AbstractButton b) {
-        if (b == null) return;
-        b.setForeground(DentalTheme.TEXT2);
-        b.setBackground(DentalTheme.CARD);
-        b.setOpaque(true);
-        b.setContentAreaFilled(true);
+        // Uniformiser tous les boutons sur le style bleu + bordure dorée
+        UiStyles.styleSecondaryButton(b);
     }
 }

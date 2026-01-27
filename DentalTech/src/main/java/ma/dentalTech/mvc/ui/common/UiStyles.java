@@ -30,19 +30,23 @@ public final class UiStyles {
     }
 
     public static void styleSecondaryButton(AbstractButton b) {
-        if (b == null) return; b.setFocusable(false);
+        if (b == null) return;
+        b.setFocusable(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.setFont(DentalTheme.textBold(12));
         b.setForeground(Color.WHITE);
 
+        // Même style global que les boutons principaux : fond bleu, bordure dorée
         if (!(b instanceof DentalButton)) {
             b.setOpaque(true);
             b.setContentAreaFilled(true);
-            b.setBackground(Color.WHITE);
-            b.setBorder(BorderFactory.createCompoundBorder( BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
-                    BorderFactory.createEmptyBorder(8, 16, 8, 16) ));
-        }
-        else { b.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+            b.setBackground(DentalTheme.PRIMARY);
+            b.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(DentalTheme.STROKE, 2, true),
+                    BorderFactory.createEmptyBorder(8, 16, 8, 16)
+            ));
+        } else {
+            b.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
         }
     }
 

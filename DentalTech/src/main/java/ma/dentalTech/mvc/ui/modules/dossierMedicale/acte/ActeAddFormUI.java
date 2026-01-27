@@ -3,6 +3,7 @@ package ma.dentalTech.mvc.ui.modules.dossierMedicale.acte;
 import ma.dentalTech.mvc.controllers.modules.dossierMedicale.api.ActeController;
 import ma.dentalTech.mvc.dto.dossierMedicale.acte.ActeDTO;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -151,22 +152,8 @@ public class ActeAddFormUI extends JDialog {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);
 
-        btnCancel.setFont(DentalTheme.textFont(13));
-        btnCancel.setBackground(DentalTheme.BEIGE);
-        btnCancel.setForeground(DentalTheme.TEXT2);
-        btnCancel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-
-        btnSave.setFont(DentalTheme.textBold(13));
-        btnSave.setBackground(new Color(0x1C, 0x25, 0x41));
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-        btnSave.setFocusPainted(false);
+        UiStyles.styleSecondaryButton(btnCancel);
+        UiStyles.stylePrimaryButton(btnSave);
 
         buttons.add(btnCancel);
         buttons.add(btnSave);

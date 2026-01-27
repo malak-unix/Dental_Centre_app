@@ -10,6 +10,7 @@ import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.repository.modules.users.api.RoleRepository;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
@@ -28,8 +29,17 @@ public class RolesPanel extends JPanel {
         setLayout(new BorderLayout(12, 12));
         setOpaque(false);
 
-        add(buildHeader(), BorderLayout.NORTH);
-        add(buildList(), BorderLayout.CENTER);
+        // Carte blanche similaire à SauvegardesPanel
+        CardPanel card = new CardPanel(null);
+        card.setBackground(DentalTheme.CARD);
+        card.setBorder(new EmptyBorder(10, 10, 10, 10));
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout(10, 10));
+
+        card.add(buildHeader(), BorderLayout.NORTH);
+        card.add(buildList(), BorderLayout.CENTER);
+
+        add(card, BorderLayout.CENTER);
 
         refresh();
     }
@@ -78,18 +88,11 @@ public class RolesPanel extends JPanel {
         table.setRowHeight(30);
         table.setFillsViewportHeight(true);
 
-        CardPanel p = new CardPanel(null);
-        p.setBackground(DentalTheme.CARD);
-        p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        p.setOpaque(false);
-        p.setLayout(new BorderLayout(8, 8));
-
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        p.add(sp, BorderLayout.CENTER);
-        return p;
+        return sp;
     }
 
     private void refresh() {

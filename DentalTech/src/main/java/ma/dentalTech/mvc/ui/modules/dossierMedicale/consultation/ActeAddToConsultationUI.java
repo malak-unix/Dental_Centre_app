@@ -7,6 +7,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.common.ActorDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.intervention.InterventionMedecinDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.intervention.SaveInterventionRequestDTO;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.mvc.ui.modules.dossierMedicale.acte.ActeAddFormUI;
 import ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService;
 
@@ -187,30 +188,9 @@ public class ActeAddToConsultationUI extends JDialog {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);
 
-        btnCancel.setFont(DentalTheme.textFont(13));
-        btnCancel.setBackground(DentalTheme.BEIGE);
-        btnCancel.setForeground(DentalTheme.TEXT2);
-        btnCancel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-
-        btnSave.setFont(DentalTheme.textBold(13));
-        btnSave.setBackground(DentalTheme.PRIMARY);
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.GOLD, 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-        btnSave.setFocusPainted(false);
-
-        btnNewActe.setFont(DentalTheme.textFont(13));
-        btnNewActe.setBackground(DentalTheme.BEIGE);
-        btnNewActe.setForeground(DentalTheme.TEXT2);
-        btnNewActe.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
+        UiStyles.styleSecondaryButton(btnNewActe);
+        UiStyles.styleSecondaryButton(btnCancel);
+        UiStyles.stylePrimaryButton(btnSave);
 
         buttons.add(btnNewActe);
         buttons.add(btnCancel);

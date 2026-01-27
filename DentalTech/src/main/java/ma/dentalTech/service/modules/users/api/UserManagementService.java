@@ -17,4 +17,10 @@ public interface UserManagementService {
 
     void assignRoleToUser(Long utilisateurId, LibelleRole roleType);
     void removeRoleFromUser(Long utilisateurId, LibelleRole roleType);
+
+    /**
+     * Suppression logique d'un utilisateur depuis l'interface d'administration.
+     * Actuellement on effectue une suppression simple en base (deleteById).
+     */
+    void deleteUser(Long id);
 }

@@ -11,6 +11,7 @@ import ma.dentalTech.mvc.dto.dossierMedicale.prescription.PrescriptionDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.prescription.PrescriptionDetailDTO;
 import ma.dentalTech.mvc.dto.dossierMedicale.prescription.SavePrescriptionRequestDTO;
 import ma.dentalTech.mvc.ui.common.DentalTheme;
+import ma.dentalTech.mvc.ui.common.UiStyles;
 import ma.dentalTech.service.modules.dossierMedical.api.PrescriptionService;
 import ma.dentalTech.service.modules.dossierMedical.impl.PrescriptionServiceImpl;
 
@@ -333,22 +334,8 @@ public class OrdonnanceAddFormUI extends JDialog {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);
 
-        btnCancel.setFont(DentalTheme.textFont(13));
-        btnCancel.setBackground(DentalTheme.BEIGE);
-        btnCancel.setForeground(DentalTheme.TEXT2);
-        btnCancel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DentalTheme.BORDER, 1),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-
-        btnCreate.setFont(DentalTheme.textBold(13));
-        btnCreate.setBackground(DentalTheme.CARD);
-        btnCreate.setForeground(DentalTheme.TEXT2);
-        btnCreate.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xCB, 0xA1, 0x35), 2),
-                new EmptyBorder(8, 16, 8, 16)
-        ));
-        btnCreate.setFocusPainted(false);
+        UiStyles.styleSecondaryButton(btnCancel);
+        UiStyles.stylePrimaryButton(btnCreate);
 
         buttons.add(btnCancel);
         buttons.add(btnCreate);
@@ -434,6 +421,8 @@ public class OrdonnanceAddFormUI extends JDialog {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton cancel = new JButton("Annuler");
         JButton save = new JButton("Enregistrer");
+        UiStyles.styleSecondaryButton(cancel);
+        UiStyles.stylePrimaryButton(save);
         actions.add(cancel);
         actions.add(save);
 

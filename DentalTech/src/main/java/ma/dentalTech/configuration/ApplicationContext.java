@@ -583,8 +583,8 @@ public final class ApplicationContext {
                 registerKnown(known, authController);
             }
             // =========================================================
-// DOSSIER MEDICAL : services + controllers (pour UI MainFrame)
-// =========================================================
+            // DOSSIER MEDICAL : services + controllers (pour UI MainFrame)
+            // =========================================================
             try {
 
                 // --- Services (constructeurs no-arg existent)
@@ -604,6 +604,13 @@ public final class ApplicationContext {
 
                 var consultationService =
                         new ma.dentalTech.service.modules.dossierMedical.impl.ConsultationServiceImpl();
+
+                // Service pour les interventions du médecin (utilisé par ConsultationDetailUI, ActeAddToConsultationUI, etc.)
+                var interventionService =
+                        new ma.dentalTech.service.modules.dossierMedical.impl.InterventionMedecinServiceImpl();
+                put(ma.dentalTech.service.modules.dossierMedical.api.InterventionMedecinService.class,
+                        interventionService, "interventionMedecinService");
+                registerKnown(known, interventionService);
 
                 // --- Controllers
                 var dossierCtrl =
